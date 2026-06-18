@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../../css/masters/Companies.css';
 
 import {
-  saveCompany,
+  createCompany,
   getCompanies
 } from '../../services/companyService';
 
@@ -29,26 +29,29 @@ function Companies() {
   const loadCompanies = async () => {
     try {
       const data = await getCompanies();
-      setCompanies(data);
+      setCompanies(data || []);
     } catch (error) {
-      console.error(error);
+      console.error('Error loading companies:', error);
     }
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await saveCompany(formData);
 
-      alert('Company Saved Successfully');
+      await createCompany(formData);
+
+      alert('Company saved successfully');
 
       setFormData({
         company_name: '',
@@ -62,9 +65,10 @@ function Companies() {
         financial_year: ''
       });
 
-      loadCompanies();
+      await loadCompanies();
 
     } catch (error) {
+      console.error(error);
       alert(error.message);
     }
   };
@@ -80,6 +84,7 @@ function Companies() {
       >
 
         <input
+          type="text"
           name="company_name"
           placeholder="Company Name"
           value={formData.company_name}
@@ -88,6 +93,7 @@ function Companies() {
         />
 
         <input
+          type="text"
           name="gstin"
           placeholder="GSTIN"
           value={formData.gstin}
@@ -95,6 +101,7 @@ function Companies() {
         />
 
         <input
+          type="text"
           name="pan"
           placeholder="PAN"
           value={formData.pan}
@@ -102,6 +109,15 @@ function Companies() {
         />
 
         <input
+          type="text"
+          name="contact_person"
+          placeholder="Contact Person"
+          value={formData.contact_person}
+          onChange={handleChange}
+        />
+
+        <input
+          type="text"
           name="mobile"
           placeholder="Mobile"
           value={formData.mobile}
@@ -109,9 +125,33 @@ function Companies() {
         />
 
         <input
+          type="email"
           name="email"
           placeholder="Email"
           value={formData.email}
+          onChange={handleChange}
+        />
+
+        <input
+          type="text"
+          name="state"
+          placeholder="State"
+          value={formData.state}
+          onChange={handleChange}
+        />
+
+        <input
+          type="text"
+          name="financial_year"
+          placeholder="Financial Year"
+          value={formData.financial_year}
+          onChange={handleChange}
+        />
+
+        <textarea
+          name="address"
+          placeholder="Address"
+          value={formData.address}
           onChange={handleChange}
         />
 
@@ -128,6 +168,7 @@ function Companies() {
             <th>Company Name</th>
             <th>GSTIN</th>
             <th>PAN</th>
+            <th>Contact Person</th>
             <th>Mobile</th>
             <th>Email</th>
           </tr>
@@ -135,15 +176,24 @@ function Companies() {
 
         <tbody>
 
-          {companies.map((company) => (
-            <tr key={company.id}>
-              <td>{company.company_name}</td>
-              <td>{company.gstin}</td>
-              <td>{company.pan}</td>
-              <td>{company.mobile}</td>
-              <td>{company.email}</td>
+          {companies.length > 0 ? (
+            companies.map((company) => (
+              <tr key={company.id}>
+                <td>{company.company_name}</td>
+                <td>{company.gstin}</td>
+                <td>{company.pan}</td>
+                <td>{company.contact_person}</td>
+                <td>{company.mobile}</td>
+                <td>{company.email}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6">
+                No companies found
+              </td>
             </tr>
-          ))}
+          )}
 
         </tbody>
 
