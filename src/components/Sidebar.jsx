@@ -24,6 +24,9 @@ function Sidebar() {
         </li>
 
         <li>
+      <Link to="/items">Items</Link>
+      </li>
+        <li>
           <Link to="/sales">Sales</Link>
         </li>
 
