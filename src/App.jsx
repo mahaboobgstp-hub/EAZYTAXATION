@@ -6,6 +6,7 @@ import Customers from './pages/masters/Customers';
 import Vendors from './pages/masters/Vendors';
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
+import SalesInvoice from './pages/sales/SalesInvoice';
 
 function App() {
   return (
@@ -33,6 +34,10 @@ function App() {
 <Route
   path="/asset-categories"
   element={<AssetCategories />}
+/>
+          <Route
+  path="/sales"
+  element={<SalesInvoice />}
 />
 
           </Routes>
