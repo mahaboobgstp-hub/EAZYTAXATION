@@ -1,9 +1,26 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+import Layout from './components/Layout';
+import Companies from './pages/masters/Companies';
+
 function App() {
   return (
-    <div>
-      <h1>EAZYTAXATION</h1>
-      <p>Bookkeeping, Accounting & Payroll Platform</p>
-    </div>
+    <BrowserRouter>
+
+      <Layout>
+
+        <Routes>
+
+          <Route
+            path="/"
+            element={<Companies />}
+          />
+
+        </Routes>
+
+      </Layout>
+
+    </BrowserRouter>
   );
 }
 
