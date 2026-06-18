@@ -12,6 +12,18 @@ export async function getCustomersForDropdown() {
     return data;
 }
 
+export async function getItemsForDropdown() {
+
+    const { data, error } = await supabase
+        .from("items")
+        .select("*")
+        .order("item_name");
+
+    if (error) throw error;
+
+    return data;
+}
+
 export async function saveSalesInvoice(invoiceData) {
 
     const { data, error } = await supabase
