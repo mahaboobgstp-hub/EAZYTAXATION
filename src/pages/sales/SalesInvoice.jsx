@@ -21,6 +21,16 @@ function SalesInvoice() {
     remarks: ''
   });
 
+  const [items, setItems] = useState([
+    {
+      particulars: '',
+      qty: 1,
+      rate: 0,
+      gst_rate: 18,
+      amount: 0
+    }
+  ]);
+
   useEffect(() => {
     loadCustomers();
     loadInvoices();
@@ -73,6 +83,70 @@ function SalesInvoice() {
     });
   };
 
+  const addRow = () => {
+
+    setItems([
+      ...items,
+      {
+        particulars: '',
+        qty: 1,
+        rate: 0,
+        gst_rate: 18,
+        amount: 0
+      }
+    ]);
+  };
+
+  const removeRow = (index) => {
+
+    const updated = [...items];
+
+    updated.splice(index, 1);
+
+    setItems(updated);
+  };
+
+  const handleItemChange = (
+    index,
+    field,
+    value
+  ) => {
+
+    const updated = [...items];
+
+    updated[index][field] = value;
+
+    const qty =
+      Number(updated[index].qty) || 0;
+
+    const rate =
+      Number(updated[index].rate) || 0;
+
+    updated[index].amount =
+      qty * rate;
+
+    setItems(updated);
+  };
+
+  const taxableValue = items.reduce(
+    (sum, item) =>
+      sum + Number(item.amount || 0),
+    0
+  );
+
+  const totalGST = items.reduce(
+    (sum, item) =>
+      sum +
+      (
+        Number(item.amount || 0) *
+        Number(item.gst_rate || 0)
+      ) / 100,
+    0
+  );
+
+  const grandTotal =
+    taxableValue + totalGST;
+
   const handleSubmit = async (e) => {
 
     e.preventDefault();
@@ -81,11 +155,11 @@ function SalesInvoice() {
 
       await saveSalesInvoice({
         ...formData,
-        taxable_value: 0,
+        taxable_value: taxableValue,
         cgst: 0,
         sgst: 0,
-        igst: 0,
-        total_amount: 0
+        igst: totalGST,
+        total_amount: grandTotal
       });
 
       alert('Sales Invoice Saved');
@@ -97,6 +171,16 @@ function SalesInvoice() {
         customer_name: '',
         remarks: ''
       });
+
+      setItems([
+        {
+          particulars: '',
+          qty: 1,
+          rate: 0,
+          gst_rate: 18,
+          amount: 0
+        }
+      ]);
 
       loadInvoices();
 
@@ -167,6 +251,145 @@ function SalesInvoice() {
         </button>
 
       </form>
+
+      <h3>Invoice Items</h3>
+
+      <table className="sales-grid">
+
+        <thead>
+
+          <tr>
+            <th>Particulars</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>GST %</th>
+            <th>Amount</th>
+            <th>Action</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {items.map((item, index) => (
+
+            <tr key={index}>
+
+              <td>
+
+                <input
+                  value={item.particulars}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      'particulars',
+                      e.target.value
+                    )
+                  }
+                />
+
+              </td>
+
+              <td>
+
+                <input
+                  type="number"
+                  value={item.qty}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      'qty',
+                      e.target.value
+                    )
+                  }
+                />
+
+              </td>
+
+              <td>
+
+                <input
+                  type="number"
+                  value={item.rate}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      'rate',
+                      e.target.value
+                    )
+                  }
+                />
+
+              </td>
+
+              <td>
+
+                <input
+                  type="number"
+                  value={item.gst_rate}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      'gst_rate',
+                      e.target.value
+                    )
+                  }
+                />
+
+              </td>
+
+              <td>
+                {item.amount}
+              </td>
+
+              <td>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    removeRow(index)
+                  }
+                >
+                  Delete
+                </button>
+
+              </td>
+
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
+
+      <button
+        type="button"
+        onClick={addRow}
+      >
+        Add Row
+      </button>
+
+      <div className="sales-totals">
+
+        <h3>
+          Taxable Value :
+          ₹ {taxableValue.toFixed(2)}
+        </h3>
+
+        <h3>
+          GST :
+          ₹ {totalGST.toFixed(2)}
+        </h3>
+
+        <h2>
+          Grand Total :
+          ₹ {grandTotal.toFixed(2)}
+        </h2>
+
+      </div>
+
+      <h3>Previous Invoices</h3>
 
       <table className="sales-grid">
 
