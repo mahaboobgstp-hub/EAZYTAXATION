@@ -4,6 +4,7 @@ import '../../css/sales/SalesInvoice.css';
 
 import {
   getCustomersForDropdown,
+  getItemsForDropdown,
   saveSalesInvoice,
   getSalesInvoices
 } from '../../services/salesInvoiceService';
@@ -12,6 +13,7 @@ function SalesInvoice() {
 
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [itemsMaster, setItemsMaster] = useState([]);
 
   const [formData, setFormData] = useState({
     invoice_no: '',
@@ -22,17 +24,20 @@ function SalesInvoice() {
   });
 
   const [items, setItems] = useState([
-    {
-      particulars: '',
-      qty: 1,
-      rate: 0,
-      gst_rate: 18,
-      amount: 0
-    }
-  ]);
+  {
+    item_id: '',
+    item_name: '',
+    hsn_sac: '',
+    gst_rate: 18,
+    qty: 1,
+    rate: 0,
+    amount: 0
+  }
+]);
 
   useEffect(() => {
     loadCustomers();
+    loadItemsMaster();
     loadInvoices();
   }, []);
 
@@ -45,7 +50,21 @@ function SalesInvoice() {
       console.error(error);
     }
   };
+const loadItemsMaster = async () => {
 
+  try {
+
+    const data =
+      await getItemsForDropdown();
+
+    setItemsMaster(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
   const loadInvoices = async () => {
 
     try {
@@ -85,18 +104,19 @@ function SalesInvoice() {
 
   const addRow = () => {
 
-    setItems([
-      ...items,
-      {
-        particulars: '',
-        qty: 1,
-        rate: 0,
-        gst_rate: 18,
-        amount: 0
-      }
-    ]);
-  };
-
+  setItems([
+    ...items,
+    {
+      item_id: '',
+      item_name: '',
+      hsn_sac: '',
+      gst_rate: 18,
+      qty: 1,
+      rate: 0,
+      amount: 0
+    }
+  ]);
+};
   const removeRow = (index) => {
 
     const updated = [...items];
@@ -107,12 +127,50 @@ function SalesInvoice() {
   };
 
   const handleItemChange = (
-    index,
-    field,
-    value
-  ) => {
+  index,
+  field,
+  value
+) => {
 
-    const updated = [...items];
+  const updated = [...items];
+
+  if (field === 'item_id') {
+
+    const selectedItem =
+      itemsMaster.find(
+        item => item.id === value
+      );
+
+    if (selectedItem) {
+
+      updated[index] = {
+
+        ...updated[index],
+
+        item_id: selectedItem.id,
+
+        item_name:
+          selectedItem.item_name,
+
+        hsn_sac:
+          selectedItem.hsn_sac,
+
+        gst_rate:
+          selectedItem.gst_rate,
+
+        rate:
+          selectedItem.sales_rate,
+
+        qty: 1,
+
+        amount:
+          Number(
+            selectedItem.sales_rate
+          )
+      };
+    }
+
+  } else {
 
     updated[index][field] = value;
 
@@ -124,9 +182,10 @@ function SalesInvoice() {
 
     updated[index].amount =
       qty * rate;
+  }
 
-    setItems(updated);
-  };
+  setItems(updated);
+};
 
   const taxableValue = items.reduce(
     (sum, item) =>
@@ -261,6 +320,7 @@ function SalesInvoice() {
           <tr>
             <th>Particulars</th>
             <th>Qty</th>
+            <th>HSN/SAC</th>
             <th>Rate</th>
             <th>GST %</th>
             <th>Amount</th>
@@ -277,18 +337,35 @@ function SalesInvoice() {
 
               <td>
 
-                <input
-                  value={item.particulars}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      'particulars',
-                      e.target.value
-                    )
-                  }
-                />
+  <select
+    value={item.item_id}
+    onChange={(e) =>
+      handleItemChange(
+        index,
+        'item_id',
+        e.target.value
+      )
+    }
+  >
 
-              </td>
+    <option value="">
+      Select Item
+    </option>
+
+    {itemsMaster.map(masterItem => (
+
+      <option
+        key={masterItem.id}
+        value={masterItem.id}
+      >
+        {masterItem.item_name}
+      </option>
+
+    ))}
+
+  </select>
+
+</td>
 
               <td>
 
@@ -321,6 +398,9 @@ function SalesInvoice() {
                 />
 
               </td>
+              <td>
+  {item.hsn_sac}
+</td>
 
               <td>
 
