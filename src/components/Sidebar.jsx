@@ -12,7 +12,7 @@ function Sidebar() {
       <ul>
 
         <li>
-          <Link to="/">Companies</Link>
+          <Link to="/">Company</Link>
         </li>
 
         <li>
