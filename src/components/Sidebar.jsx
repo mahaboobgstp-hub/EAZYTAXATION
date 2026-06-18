@@ -38,9 +38,7 @@ function Sidebar() {
         <li>
           <Link to="/reports">Reports</Link>
         </li>
-        <li>
-         <Link to="/expense-categories">Expense Categories</Link>
-         </li>
+        
          <li>
         <Link to="/asset-categories">Asset Categories</Link>
          </li>
