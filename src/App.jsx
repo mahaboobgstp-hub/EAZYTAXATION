@@ -20,7 +20,7 @@ function App() {
             element={<Companies />}
           />
 
-        </Routes>
+        
         <Route path="/customers" element={<Customers />} />
 
 <Route path="/vendors" element={<Vendors />} />
@@ -35,6 +35,7 @@ function App() {
   element={<AssetCategories />}
 />
 
+          </Routes>
       </Layout>
 
     </BrowserRouter>
