@@ -44,6 +44,8 @@ function Sidebar() {
          <li>
         <Link to="/asset-categories">Asset Categories</Link>
          </li>
+        <li>
+
       </ul>
 
     </div>
