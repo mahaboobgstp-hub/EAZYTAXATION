@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import '../../css/Companies.css';
+import '../../css/masters/Companies.css';
 
 import {
   saveCompany,
