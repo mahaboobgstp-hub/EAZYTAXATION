@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createCompany } from "../../services/companyService";
 import "./../../css/masters/Companies.css";
 
 export default function Companies() {
@@ -24,7 +25,23 @@ export default function Companies() {
   const saveCompany = async () => {
     console.log(formData);
   };
+const saveCompany = async () => {
 
+  try {
+
+    await createCompany(formData);
+
+    alert("Company Saved");
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Error Saving Company");
+
+  }
+
+};
   return (
     <div className="company-page">
 
