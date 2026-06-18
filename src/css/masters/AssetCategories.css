@@ -1,1 +1,28 @@
+.asset-categories-page {
+  padding: 20px;
+}
 
+.asset-category-form {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.asset-category-form input {
+  padding: 10px;
+}
+
+.asset-category-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.asset-category-grid th,
+.asset-category-grid td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.asset-category-grid th {
+  background: #f5f5f5;
+}
