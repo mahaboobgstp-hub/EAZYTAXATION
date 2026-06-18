@@ -1,1 +1,37 @@
+.customers-page {
+  padding: 20px;
+}
 
+.customer-form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.customer-form input,
+.customer-form textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.customer-form button {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.customer-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customer-grid th,
+.customer-grid td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.customer-grid th {
+  background: #f5f5f5;
+}
