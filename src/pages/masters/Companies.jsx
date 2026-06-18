@@ -1,19 +1,39 @@
-import { useState } from "react";
-import { createCompany } from "../../services/companyService";
-import "./../../css/masters/Companies.css";
+import React, { useEffect, useState } from 'react';
+import '../../css/Companies.css';
 
-export default function Companies() {
+import {
+  saveCompany,
+  getCompanies
+} from '../../services/companyService';
+
+function Companies() {
+
+  const [companies, setCompanies] = useState([]);
+
   const [formData, setFormData] = useState({
-    company_name: "",
-    gstin: "",
-    pan: "",
-    address: "",
-    state: "",
-    contact_person: "",
-    mobile: "",
-    email: "",
-    financial_year: "2025-26"
+    company_name: '',
+    gstin: '',
+    pan: '',
+    address: '',
+    state: '',
+    contact_person: '',
+    mobile: '',
+    email: '',
+    financial_year: ''
   });
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      const data = await getCompanies();
+      setCompanies(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -22,40 +42,49 @@ export default function Companies() {
     });
   };
 
-  const saveCompany = async () => {
-    console.log(formData);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await saveCompany(formData);
+
+      alert('Company Saved Successfully');
+
+      setFormData({
+        company_name: '',
+        gstin: '',
+        pan: '',
+        address: '',
+        state: '',
+        contact_person: '',
+        mobile: '',
+        email: '',
+        financial_year: ''
+      });
+
+      loadCompanies();
+
+    } catch (error) {
+      alert(error.message);
+    }
   };
-const saveCompany = async () => {
 
-  try {
-
-    await createCompany(formData);
-
-    alert("Company Saved");
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert("Error Saving Company");
-
-  }
-
-};
   return (
-    <div className="company-page">
+    <div className="companies-page">
 
-      <div className="page-header">
-        <h2>Company Master</h2>
-      </div>
+      <h2>Companies Master</h2>
 
-      <div className="company-form">
+      <form
+        className="company-form"
+        onSubmit={handleSubmit}
+      >
 
         <input
           name="company_name"
           placeholder="Company Name"
           value={formData.company_name}
           onChange={handleChange}
+          required
         />
 
         <input
@@ -69,27 +98,6 @@ const saveCompany = async () => {
           name="pan"
           placeholder="PAN"
           value={formData.pan}
-          onChange={handleChange}
-        />
-
-        <textarea
-          name="address"
-          placeholder="Address"
-          value={formData.address}
-          onChange={handleChange}
-        />
-
-        <input
-          name="state"
-          placeholder="State"
-          value={formData.state}
-          onChange={handleChange}
-        />
-
-        <input
-          name="contact_person"
-          placeholder="Contact Person"
-          value={formData.contact_person}
           onChange={handleChange}
         />
 
@@ -107,12 +115,42 @@ const saveCompany = async () => {
           onChange={handleChange}
         />
 
-        <button onClick={saveCompany}>
+        <button type="submit">
           Save Company
         </button>
 
-      </div>
+      </form>
+
+      <table className="company-grid">
+
+        <thead>
+          <tr>
+            <th>Company Name</th>
+            <th>GSTIN</th>
+            <th>PAN</th>
+            <th>Mobile</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {companies.map((company) => (
+            <tr key={company.id}>
+              <td>{company.company_name}</td>
+              <td>{company.gstin}</td>
+              <td>{company.pan}</td>
+              <td>{company.mobile}</td>
+              <td>{company.email}</td>
+            </tr>
+          ))}
+
+        </tbody>
+
+      </table>
 
     </div>
   );
 }
+
+export default Companies;
