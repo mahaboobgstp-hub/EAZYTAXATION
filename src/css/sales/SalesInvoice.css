@@ -1,0 +1,39 @@
+.sales-page {
+  padding: 20px;
+}
+
+.sales-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.sales-form input,
+.sales-form select,
+.sales-form textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.sales-form button {
+  width: 200px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.sales-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sales-grid th,
+.sales-grid td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.sales-grid th {
+  background: #f5f5f5;
+}
