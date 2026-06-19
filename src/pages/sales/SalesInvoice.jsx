@@ -208,46 +208,61 @@ const loadItemsMaster = async () => {
 
   const handleSubmit = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
+  try {
 
-      await saveSalesInvoice({
-        ...formData,
-        taxable_value: taxableValue,
-        cgst: 0,
-        sgst: 0,
-        igst: totalGST,
-        total_amount: grandTotal
-      });
+    const invoiceHeader = {
 
-      alert('Sales Invoice Saved');
+      ...formData,
 
-      setFormData({
-        invoice_no: '',
-        invoice_date: '',
-        customer_id: '',
-        customer_name: '',
-        remarks: ''
-      });
+      taxable_value: taxableValue,
 
-      setItems([
-        {
-          particulars: '',
-          qty: 1,
-          rate: 0,
-          gst_rate: 18,
-          amount: 0
-        }
-      ]);
+      cgst: 0,
 
-      loadInvoices();
+      sgst: 0,
 
-    } catch (error) {
-      alert(error.message);
-    }
-  };
+      igst: totalGST,
 
+      total_amount: grandTotal
+
+    };
+
+    await saveSalesInvoice(
+      invoiceHeader,
+      items
+    );
+
+    alert('Sales Invoice Saved');
+
+    setFormData({
+      invoice_no: '',
+      invoice_date: '',
+      customer_id: '',
+      customer_name: '',
+      remarks: ''
+    });
+
+    setItems([
+      {
+        item_id: '',
+        item_name: '',
+        hsn_sac: '',
+        gst_rate: 18,
+        qty: 1,
+        rate: 0,
+        amount: 0
+      }
+    ]);
+
+    loadInvoices();
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
+};
   return (
     <div className="sales-page">
 
@@ -382,7 +397,9 @@ const loadItemsMaster = async () => {
                 />
 
               </td>
-
+             <td>
+  {item.hsn_sac}
+</td>
               <td>
 
                 <input
@@ -398,9 +415,7 @@ const loadItemsMaster = async () => {
                 />
 
               </td>
-              <td>
-  {item.hsn_sac}
-</td>
+              
 
               <td>
 
