@@ -4,7 +4,7 @@ export async function getCustomersForDropdown() {
 
     const { data, error } = await supabase
         .from("customers")
-        .select("id, customer_name")
+        .select("id, customer_name, state")
         .order("customer_name, state");
 
     if (error) throw error;
