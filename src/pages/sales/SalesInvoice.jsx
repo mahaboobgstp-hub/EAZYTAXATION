@@ -5,6 +5,7 @@ import SalesInvoiceView
 from '../../components/SalesInvoiceView';
 
 import {
+  getCompaniesForDropdown,
   getCustomersForDropdown,
   getItemsForDropdown,
   saveSalesInvoice,
