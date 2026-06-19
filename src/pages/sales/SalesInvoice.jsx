@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
 import '../../css/sales/SalesInvoice.css';
+import SalesInvoiceView
+from '../../components/SalesInvoiceView';
 
 import {
   getCustomersForDropdown,
   getItemsForDropdown,
   saveSalesInvoice,
   getSalesInvoices,
+  getSalesInvoiceById,
+  getSalesInvoiceItems,
   generateInvoiceNumber
 } from '../../services/salesInvoiceService';
 
@@ -206,7 +210,13 @@ const loadItemsMaster = async () => {
 
   setItems(updated);
 };
+const [selectedInvoice,
+setSelectedInvoice] =
+useState(null);
 
+const [selectedItems,
+setSelectedItems] =
+useState([]);
   const taxableValue = items.reduce(
     (sum, item) =>
       sum + Number(item.amount || 0),
@@ -280,6 +290,36 @@ const loadItemsMaster = async () => {
   } catch (error) {
 
     alert(error.message);
+
+  }
+};
+
+  const viewInvoice =
+async (invoiceId) => {
+
+  try {
+
+    const invoice =
+      await getSalesInvoiceById(
+        invoiceId
+      );
+
+    const items =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setSelectedInvoice(
+      invoice
+    );
+
+    setSelectedItems(
+      items
+    );
+
+  } catch (error) {
+
+    console.error(error);
 
   }
 };
@@ -511,7 +551,8 @@ const loadItemsMaster = async () => {
             <th>Invoice No</th>
             <th>Date</th>
             <th>Customer</th>
-            <th>Total Amount</th>
+           <th>Total Amount</th>
+           <th>Action</th>
           </tr>
         </thead>
 
@@ -524,6 +565,21 @@ const loadItemsMaster = async () => {
               <td>{invoice.invoice_date}</td>
               <td>{invoice.customer_name}</td>
               <td>{invoice.total_amount}</td>
+
+<td>
+
+  <button
+    type="button"
+    onClick={() =>
+      viewInvoice(
+        invoice.id
+      )
+    }
+  >
+    View
+  </button>
+
+</td>
             </tr>
 
           ))}
@@ -531,7 +587,17 @@ const loadItemsMaster = async () => {
         </tbody>
 
       </table>
+<SalesInvoiceView
 
+  invoice={selectedInvoice}
+
+  items={selectedItems}
+
+  onClose={() =>
+    setSelectedInvoice(null)
+  }
+
+/>
     </div>
   );
 }
