@@ -11,7 +11,9 @@ import {
   getSalesInvoices,
   getSalesInvoiceById,
   getSalesInvoiceItems,
-  generateInvoiceNumber
+  generateInvoiceNumber,
+  updateSalesInvoice,
+  deleteSalesInvoice
 } from '../../services/salesInvoiceService';
 
 function SalesInvoice() {
@@ -217,6 +219,11 @@ useState(null);
 const [selectedItems,
 setSelectedItems] =
 useState([]);
+
+  const [editingInvoiceId,
+setEditingInvoiceId] =
+useState(null);
+  
   const taxableValue = items.reduce(
     (sum, item) =>
       sum + Number(item.amount || 0),
@@ -258,10 +265,30 @@ useState([]);
 
     };
 
-    await saveSalesInvoice(
-      invoiceHeader,
-      items
-    );
+   if (editingInvoiceId) {
+
+  await updateSalesInvoice(
+    editingInvoiceId,
+    invoiceHeader,
+    items
+  );
+
+  alert(
+    'Invoice Updated'
+  );
+
+} else {
+
+  await saveSalesInvoice(
+    invoiceHeader,
+    items
+  );
+
+  alert(
+    'Invoice Saved'
+  );
+
+}
 
     alert('Sales Invoice Saved');
 
@@ -284,7 +311,11 @@ useState([]);
         amount: 0
       }
     ]);
+setEditingInvoiceId(
+  null
+);
 
+loadInvoiceNumber();
     loadInvoices();
 
   } catch (error) {
@@ -303,7 +334,111 @@ async (invoiceId) => {
       await getSalesInvoiceById(
         invoiceId
       );
+const editInvoice = async (
+  invoiceId
+) => {
 
+  try {
+
+    const invoice =
+      await getSalesInvoiceById(
+        invoiceId
+      );
+
+    const invoiceItems =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setEditingInvoiceId(
+      invoiceId
+    );
+
+    setFormData({
+
+      invoice_no:
+        invoice.invoice_no,
+
+      invoice_date:
+        invoice.invoice_date,
+
+      customer_id:
+        invoice.customer_id,
+
+      customer_name:
+        invoice.customer_name,
+
+      remarks:
+        invoice.remarks || ''
+
+    });
+
+    const loadedItems =
+      invoiceItems.map(item => ({
+
+        item_id:
+          item.item_id,
+
+        item_name:
+          item.item_name,
+
+        hsn_sac:
+          item.hsn_sac,
+
+        gst_rate:
+          item.gst_rate,
+
+        qty:
+          item.qty,
+
+        rate:
+          item.rate,
+
+        amount:
+          item.amount
+
+      }));
+
+    setItems(
+      loadedItems
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+    const handleDeleteInvoice =
+async (invoiceId) => {
+
+  const confirmed =
+    window.confirm(
+      'Delete this invoice?'
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+
+    await deleteSalesInvoice(
+      invoiceId
+    );
+
+    alert(
+      'Invoice Deleted'
+    );
+
+    loadInvoices();
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
+};
     const items =
       await getSalesInvoiceItems(
         invoiceId
@@ -378,9 +513,13 @@ async (invoiceId) => {
           onChange={handleChange}
         />
 
-        <button type="submit">
-          Save Invoice
-        </button>
+       <button type="submit">
+
+  {editingInvoiceId
+    ? 'Update Invoice'
+    : 'Save Invoice'}
+
+</button>
 
       </form>
 
@@ -577,6 +716,28 @@ async (invoiceId) => {
     }
   >
     View
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      editInvoice(
+        invoice.id
+      )
+    }
+  >
+    Edit
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      handleDeleteInvoice(
+        invoice.id
+      )
+    }
+  >
+    Delete
   </button>
 
 </td>
