@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { getStates }
+from '../../services/stateService';
 
 import '../../css/masters/Vendors.css';
 
@@ -10,6 +12,7 @@ import {
 function Vendors() {
 
   const [vendors, setVendors] = useState([]);
+  const [states, setStates]
 
   const [formData, setFormData] = useState({
     vendor_name: '',
@@ -22,6 +25,7 @@ function Vendors() {
   });
 
   useEffect(() => {
+    loadStates()
     loadVendors();
   }, []);
 
