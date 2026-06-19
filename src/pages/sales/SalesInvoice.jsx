@@ -297,7 +297,16 @@ useState(null);
 let sgst = 0;
 
 let igst = 0;
+  
+console.log(
+  "Company State:",
+  formData.company_state
+);
 
+console.log(
+  "Customer State:",
+  formData.customer_state
+);
 if (
 
   formData.company_state &&
