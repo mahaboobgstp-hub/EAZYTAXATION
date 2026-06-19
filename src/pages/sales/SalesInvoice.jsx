@@ -23,12 +23,23 @@ function SalesInvoice() {
   const [itemsMaster, setItemsMaster] = useState([]);
 
   const [formData, setFormData] = useState({
-    invoice_no: '',
-    invoice_date: '',
-    customer_id: '',
-    customer_name: '',
-    remarks: ''
-  });
+
+  company_id: '',
+  company_name: '',
+  company_state: '',
+
+  invoice_no: '',
+  invoice_date: '',
+
+  customer_id: '',
+  customer_name: '',
+  customer_state: '',
+
+  gst_type: '',
+
+  remarks: ''
+
+});
 
   const [items, setItems] = useState([
   {
