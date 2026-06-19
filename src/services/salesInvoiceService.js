@@ -24,16 +24,65 @@ export async function getItemsForDropdown() {
     return data;
 }
 
-export async function saveSalesInvoice(invoiceData) {
+export async function saveSalesInvoice(
+    invoiceHeader,
+    invoiceItems
+) {
 
-    const { data, error } = await supabase
+    const {
+        data: headerData,
+        error: headerError
+    } = await supabase
         .from("sales_invoices")
-        .insert([invoiceData])
+        .insert([invoiceHeader])
         .select();
 
-    if (error) throw error;
+    if (headerError) {
+        throw headerError;
+    }
 
-    return data[0];
+    const invoiceId =
+        headerData[0].id;
+
+    const itemsToInsert =
+        invoiceItems.map(
+            (item, index) => ({
+
+                invoice_id: invoiceId,
+
+                line_no: index + 1,
+
+                item_id: item.item_id,
+
+                item_name: item.item_name,
+
+                hsn_sac: item.hsn_sac,
+
+                particulars: item.item_name,
+
+                qty: Number(item.qty),
+
+                rate: Number(item.rate),
+
+                gst_rate:
+                    Number(item.gst_rate),
+
+                amount:
+                    Number(item.amount)
+
+            })
+        );
+
+    const { error: itemError } =
+        await supabase
+            .from("sales_invoice_items")
+            .insert(itemsToInsert);
+
+    if (itemError) {
+        throw itemError;
+    }
+
+    return invoiceId;
 }
 
 export async function getSalesInvoices() {
