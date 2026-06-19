@@ -325,8 +325,9 @@ loadInvoiceNumber();
   }
 };
 
-  const viewInvoice =
-async (invoiceId) => {
+  const viewInvoice = async (
+  invoiceId
+) => {
 
   try {
 
@@ -334,6 +335,27 @@ async (invoiceId) => {
       await getSalesInvoiceById(
         invoiceId
       );
+
+    const items =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setSelectedInvoice(
+      invoice
+    );
+
+    setSelectedItems(
+      items
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+
 const editInvoice = async (
   invoiceId
 ) => {
@@ -376,26 +398,13 @@ const editInvoice = async (
     const loadedItems =
       invoiceItems.map(item => ({
 
-        item_id:
-          item.item_id,
-
-        item_name:
-          item.item_name,
-
-        hsn_sac:
-          item.hsn_sac,
-
-        gst_rate:
-          item.gst_rate,
-
-        qty:
-          item.qty,
-
-        rate:
-          item.rate,
-
-        amount:
-          item.amount
+        item_id: item.item_id,
+        item_name: item.item_name,
+        hsn_sac: item.hsn_sac,
+        gst_rate: item.gst_rate,
+        qty: item.qty,
+        rate: item.rate,
+        amount: item.amount
 
       }));
 
@@ -409,7 +418,8 @@ const editInvoice = async (
 
   }
 };
-    const handleDeleteInvoice =
+
+const handleDeleteInvoice =
 async (invoiceId) => {
 
   const confirmed =
@@ -436,25 +446,6 @@ async (invoiceId) => {
   } catch (error) {
 
     alert(error.message);
-
-  }
-};
-    const items =
-      await getSalesInvoiceItems(
-        invoiceId
-      );
-
-    setSelectedInvoice(
-      invoice
-    );
-
-    setSelectedItems(
-      items
-    );
-
-  } catch (error) {
-
-    console.error(error);
 
   }
 };
