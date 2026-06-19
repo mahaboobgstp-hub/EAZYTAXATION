@@ -11,7 +11,18 @@ export async function getCustomersForDropdown() {
 
     return data;
 }
+export async function getCompaniesForDropdown() {
 
+    const { data, error } =
+        await supabase
+            .from("companies")
+            .select("id, company_name, state")
+            .order("company_name");
+
+    if (error) throw error;
+
+    return data;
+}
 export async function getItemsForDropdown() {
 
     const { data, error } = await supabase
