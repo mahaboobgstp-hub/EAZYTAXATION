@@ -21,6 +21,7 @@ function SalesInvoice() {
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [itemsMaster, setItemsMaster] = useState([]);
+  const [companies, setCompanies] = useState([]);
 
   const [formData, setFormData] = useState({
 
@@ -54,6 +55,7 @@ function SalesInvoice() {
 ]);
 
   useEffect(() => {
+    loadCompanies();
     loadCustomers();
     loadItemsMaster();
     loadInvoices();
@@ -87,6 +89,23 @@ function SalesInvoice() {
       console.error(error);
     }
   };
+
+ const loadCompanies = async () => {
+
+  try {
+
+    const data =
+      await getCompaniesForDropdown();
+
+    setCompanies(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+  
 const loadItemsMaster = async () => {
 
   try {
@@ -116,22 +135,43 @@ const loadItemsMaster = async () => {
 
     const { name, value } = e.target;
 
+    if (name === 'company_id') {
+
+  const selectedCompany =
+    companies.find(
+      company => company.id === value
+    );
+
+  setFormData({
+    ...formData,
+    company_id: value,
+    company_name:
+      selectedCompany?.company_name || '',
+    company_state:
+      selectedCompany?.state || ''
+  });
+
+  return;
+}
+
     if (name === 'customer_id') {
 
-      const selectedCustomer =
-        customers.find(
-          customer => customer.id === value
-        );
+  const selectedCustomer =
+    customers.find(
+      customer => customer.id === value
+    );
 
-      setFormData({
-        ...formData,
-        customer_id: value,
-        customer_name:
-          selectedCustomer?.customer_name || ''
-      });
+  setFormData({
+    ...formData,
+    customer_id: value,
+    customer_name:
+      selectedCustomer?.customer_name || '',
+    customer_state:
+      selectedCustomer?.state || ''
+  });
 
-      return;
-    }
+  return;
+}
 
     setFormData({
       ...formData,
@@ -251,8 +291,36 @@ useState(null);
     0
   );
 
-  const grandTotal =
-    taxableValue + totalGST;
+ let cgst = 0;
+
+let sgst = 0;
+
+let igst = 0;
+
+if (
+
+  formData.company_state &&
+  formData.customer_state &&
+  formData.company_state ===
+  formData.customer_state
+
+) {
+
+  cgst = totalGST / 2;
+
+  sgst = totalGST / 2;
+
+} else {
+
+  igst = totalGST;
+
+}
+
+const grandTotal =
+  taxableValue +
+  cgst +
+  sgst +
+  igst;
 
   const handleSubmit = async (e) => {
 
@@ -263,14 +331,22 @@ useState(null);
     const invoiceHeader = {
 
       ...formData,
+      gst_type:
+
+  formData.company_state ===
+  formData.customer_state
+
+    ? 'INTRA_STATE'
+
+    : 'INTER_STATE',
 
       taxable_value: taxableValue,
 
-      cgst: 0,
+     cgst: cgst,
 
-      sgst: 0,
+sgst: sgst,
 
-      igst: totalGST,
+igst: igst,
 
       total_amount: grandTotal
 
@@ -469,7 +545,29 @@ async (invoiceId) => {
         className="sales-form"
         onSubmit={handleSubmit}
       >
+      <select
+  name="company_id"
+  value={formData.company_id}
+  onChange={handleChange}
+  required
+>
 
+  <option value="">
+    Select Company
+  </option>
+
+  {companies.map(company => (
+
+    <option
+      key={company.id}
+      value={company.id}
+    >
+      {company.company_name}
+    </option>
+
+  ))}
+
+</select>
         <input
   name="invoice_no"
   value={formData.invoice_no}
@@ -671,10 +769,20 @@ async (invoiceId) => {
           ₹ {taxableValue.toFixed(2)}
         </h3>
 
-        <h3>
-          GST :
-          ₹ {totalGST.toFixed(2)}
-        </h3>
+       <h3>
+  CGST :
+  ₹ {cgst.toFixed(2)}
+</h3>
+
+<h3>
+  SGST :
+  ₹ {sgst.toFixed(2)}
+</h3>
+
+<h3>
+  IGST :
+  ₹ {igst.toFixed(2)}
+</h3>
 
         <h2>
           Grand Total :
