@@ -6,7 +6,8 @@ import {
   getCustomersForDropdown,
   getItemsForDropdown,
   saveSalesInvoice,
-  getSalesInvoices
+  getSalesInvoices,
+  generateInvoiceNumber
 } from '../../services/salesInvoiceService';
 
 function SalesInvoice() {
@@ -39,7 +40,26 @@ function SalesInvoice() {
     loadCustomers();
     loadItemsMaster();
     loadInvoices();
+    loadInvoiceNumber();
   }, []);
+  const loadInvoiceNumber = async () => {
+
+  try {
+
+    const invoiceNumber =
+      await generateInvoiceNumber();
+
+    setFormData(prev => ({
+      ...prev,
+      invoice_no: invoiceNumber
+    }));
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
 
   const loadCustomers = async () => {
 
@@ -274,12 +294,10 @@ const loadItemsMaster = async () => {
       >
 
         <input
-          name="invoice_no"
-          placeholder="Invoice Number"
-          value={formData.invoice_no}
-          onChange={handleChange}
-          required
-        />
+  name="invoice_no"
+  value={formData.invoice_no}
+  readOnly
+/>
 
         <input
           type="date"
