@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import '../../css/masters/Companies.css';
+import { getStates }
+from '../../services/stateService';
 
 import {
   createCompany,
@@ -9,7 +11,8 @@ import {
 function Companies() {
 
   const [companies, setCompanies] = useState([]);
-
+  const [states, setStates] =
+  useState([]);
   const [formData, setFormData] = useState({
     company_name: '',
     gstin: '',
@@ -23,9 +26,24 @@ function Companies() {
   });
 
   useEffect(() => {
+    loadStates();
     loadCompanies();
   }, []);
+const loadStates = async () => {
 
+  try {
+
+    const data =
+      await getStates();
+
+    setStates(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
   const loadCompanies = async () => {
     try {
       const data = await getCompanies();
@@ -132,13 +150,28 @@ function Companies() {
           onChange={handleChange}
         />
 
-        <input
-          type="text"
-          name="state"
-          placeholder="State"
-          value={formData.state}
-          onChange={handleChange}
-        />
+        <select
+  name="state"
+  value={formData.state}
+  onChange={handleChange}
+>
+
+  <option value="">
+    Select State
+  </option>
+
+  {states.map(state => (
+
+    <option
+      key={state.id}
+      value={state.state_name}
+    >
+      {state.state_name}
+    </option>
+
+  ))}
+
+</select>
 
         <input
           type="text"
