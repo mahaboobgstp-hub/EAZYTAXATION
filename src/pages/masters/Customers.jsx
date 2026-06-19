@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { getStates }
+from '../../services/stateService';
 
 import '../../css/masters/Customers.css';
 
@@ -10,6 +12,7 @@ import {
 function Customers() {
 
   const [customers, setCustomers] = useState([]);
+  const [states, setStates]
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -22,6 +25,7 @@ function Customers() {
   });
 
   useEffect(() => {
+    loadStates()
     loadCustomers();
   }, []);
 
