@@ -116,6 +116,7 @@ export async function getSalesInvoices() {
     const { data, error } = await supabase
         .from("sales_invoices")
         .select("*")
+        .eq("is_deleted", false)
         .order("invoice_date", {
             ascending: false
         });
@@ -155,3 +156,92 @@ export async function getSalesInvoiceItems(
 
     return data;
 }
+export async function updateSalesInvoice(
+    invoiceId,
+    invoiceHeader,
+    invoiceItems
+) {
+
+    const { error: headerError } =
+        await supabase
+            .from("sales_invoices")
+            .update({
+                ...invoiceHeader,
+                updated_at: new Date()
+            })
+            .eq("id", invoiceId);
+
+    if (headerError) {
+        throw headerError;
+    }
+
+    const { error: deleteError } =
+        await supabase
+            .from("sales_invoice_items")
+            .delete()
+            .eq("invoice_id", invoiceId);
+
+    if (deleteError) {
+        throw deleteError;
+    }
+
+    const itemsToInsert =
+        invoiceItems.map(
+            (item, index) => ({
+
+                invoice_id: invoiceId,
+
+                line_no: index + 1,
+
+                item_id: item.item_id,
+
+                item_name: item.item_name,
+
+                hsn_sac: item.hsn_sac,
+
+                particulars: item.item_name,
+
+                qty: Number(item.qty),
+
+                rate: Number(item.rate),
+
+                gst_rate: Number(item.gst_rate),
+
+                amount: Number(item.amount),
+
+                updated_at: new Date()
+            })
+        );
+
+    const { error: itemError } =
+        await supabase
+            .from("sales_invoice_items")
+            .insert(itemsToInsert);
+
+    if (itemError) {
+        throw itemError;
+    }
+
+    return true;
+}
+
+export async function deleteSalesInvoice(
+    invoiceId
+) {
+
+    const { error } =
+        await supabase
+            .from("sales_invoices")
+            .update({
+                is_deleted: true,
+                updated_at: new Date()
+            })
+            .eq("id", invoiceId);
+
+    if (error) {
+        throw error;
+    }
+
+    return true;
+}
+
