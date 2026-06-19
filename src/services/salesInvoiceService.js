@@ -124,3 +124,34 @@ export async function getSalesInvoices() {
 
     return data;
 }
+export async function getSalesInvoiceById(
+    invoiceId
+) {
+
+    const { data, error } =
+        await supabase
+            .from("sales_invoices")
+            .select("*")
+            .eq("id", invoiceId)
+            .single();
+
+    if (error) throw error;
+
+    return data;
+}
+
+export async function getSalesInvoiceItems(
+    invoiceId
+) {
+
+    const { data, error } =
+        await supabase
+            .from("sales_invoice_items")
+            .select("*")
+            .eq("invoice_id", invoiceId)
+            .order("line_no");
+
+    if (error) throw error;
+
+    return data;
+}
