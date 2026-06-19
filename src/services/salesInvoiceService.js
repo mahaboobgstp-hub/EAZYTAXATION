@@ -24,6 +24,32 @@ export async function getItemsForDropdown() {
     return data;
 }
 
+export async function generateInvoiceNumber() {
+
+    const { data, error } = await supabase
+        .from("invoice_sequences")
+        .select("*")
+        .eq("document_type", "SALES")
+        .single();
+
+    if (error) throw error;
+
+    const nextNumber =
+        Number(data.last_number) + 1;
+
+    await supabase
+        .from("invoice_sequences")
+        .update({
+            last_number: nextNumber
+        })
+        .eq("id", data.id);
+
+    const invoiceNumber =
+        `ET-${new Date().getFullYear()}-${String(nextNumber).padStart(5, '0')}`;
+
+    return invoiceNumber;
+}
+
 export async function saveSalesInvoice(
     invoiceHeader,
     invoiceItems
