@@ -1,7 +1,7 @@
 import React from "react";
 import "../css/sales/InvoicePrint.css";
 
-function InvoicePrint({ invoice, items }) {
+function InvoicePrint({ invoice, items, onClose }) {
 
   if (!invoice) return null;
 
@@ -11,6 +11,12 @@ function InvoicePrint({ invoice, items }) {
     <div className="invoice-print">
 
       <div className="invoice-header">
+
+        <button
+  onClick={onClose}
+>
+  Close
+</button>
 <button
   onClick={() =>
     window.print()
