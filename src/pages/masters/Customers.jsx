@@ -12,7 +12,7 @@ import {
 function Customers() {
 
   const [customers, setCustomers] = useState([]);
-  const [states, setStates]
+  const [states, setStates] = useState([]);
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -37,7 +37,21 @@ function Customers() {
       console.error(error);
     }
   };
+const loadStates = async () => {
 
+  try {
+
+    const data =
+      await getStates();
+
+    setStates(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -118,12 +132,28 @@ function Customers() {
           onChange={handleChange}
         />
 
-        <input
-          name="state"
-          placeholder="State"
-          value={formData.state}
-          onChange={handleChange}
-        />
+        <select
+  name="state"
+  value={formData.state}
+  onChange={handleChange}
+>
+
+  <option value="">
+    Select State
+  </option>
+
+  {states.map(state => (
+
+    <option
+      key={state.id}
+      value={state.state_name}
+    >
+      {state.state_name}
+    </option>
+
+  ))}
+
+</select>
 
         <textarea
           name="address"
