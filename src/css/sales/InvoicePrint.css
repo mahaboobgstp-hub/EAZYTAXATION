@@ -61,3 +61,25 @@
     min-height: 100vh;
     padding: 30px;
 }
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .invoice-print,
+    .invoice-print * {
+        visibility: visible;
+    }
+
+    .invoice-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    button {
+        display: none;
+    }
+}
