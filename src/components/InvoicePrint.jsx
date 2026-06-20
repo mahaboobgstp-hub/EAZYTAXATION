@@ -6,10 +6,18 @@ function InvoicePrint({ invoice, items }) {
   if (!invoice) return null;
 
   return (
+
+    
     <div className="invoice-print">
 
       <div className="invoice-header">
-
+<button
+  onClick={() =>
+    window.print()
+  }
+>
+  Print Invoice
+</button>
         <h1>TAX INVOICE</h1>
 
         <div>
