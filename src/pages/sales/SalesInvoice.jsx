@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import '../../css/sales/SalesInvoice.css';
 import SalesInvoiceView
 from '../../components/SalesInvoiceView';
+import InvoicePrint
+from '../../components/InvoicePrint';
 
 import {
   getCompaniesForDropdown,
@@ -24,6 +26,7 @@ function SalesInvoice() {
   const [itemsMaster, setItemsMaster] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [sameAsBilling, setSameAsBilling] = useState(true);
+  const [printMode, setPrintMode] = useState(false);
 
   const [formData, setFormData] = useState({
 
@@ -867,7 +870,20 @@ async (invoiceId) => {
           Grand Total :
           ₹ {grandTotal.toFixed(2)}
         </h2>
+<button
+  type="button"
+  onClick={async () => {
 
+    await viewInvoice(
+      invoice.id
+    );
+
+    setPrintMode(true);
+
+  }}
+>
+  Print
+</button>
       </div>
 
       <h3>Previous Invoices</h3>
@@ -948,6 +964,17 @@ async (invoiceId) => {
   }
 
 />
+      {
+  printMode &&
+  selectedInvoice && (
+
+    <InvoicePrint
+      invoice={selectedInvoice}
+      items={selectedItems}
+    />
+
+  )
+}
     </div>
   );
 }
