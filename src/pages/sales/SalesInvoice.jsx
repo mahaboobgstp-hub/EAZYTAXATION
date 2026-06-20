@@ -870,20 +870,7 @@ async (invoiceId) => {
           Grand Total :
           ₹ {grandTotal.toFixed(2)}
         </h2>
-<button
-  type="button"
-  onClick={async () => {
 
-    await viewInvoice(
-      invoice.id
-    );
-
-    setPrintMode(true);
-
-  }}
->
-  Print
-</button>
       </div>
 
       <h3>Previous Invoices</h3>
@@ -944,6 +931,20 @@ async (invoiceId) => {
   >
     Delete
   </button>
+  <button
+  type="button"
+  onClick={async () => {
+
+    await viewInvoice(
+      invoice.id
+    );
+
+    setPrintMode(true);
+
+  }}
+>
+  Print
+</button>
 
 </td>
             </tr>
