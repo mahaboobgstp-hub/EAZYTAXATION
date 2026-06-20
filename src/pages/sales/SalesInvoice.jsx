@@ -1005,9 +1005,18 @@ async (invoiceId) => {
   selectedInvoice && (
 
     <InvoicePrint
-      invoice={selectedInvoice}
-      items={selectedItems}
-    />
+  invoice={selectedInvoice}
+  items={selectedItems}
+  onClose={() => {
+
+    setPrintMode(false);
+
+    setSelectedInvoice(null);
+
+    setSelectedItems([]);
+
+  }}
+/>
 
   )
 }
