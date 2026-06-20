@@ -982,17 +982,24 @@ async (invoiceId) => {
         </tbody>
 
       </table>
-<SalesInvoiceView
+{
+  selectedInvoice &&
+  !printMode && (
 
-  invoice={selectedInvoice}
+    <SalesInvoiceView
 
-  items={selectedItems}
+      invoice={selectedInvoice}
 
-  onClose={() =>
-    setSelectedInvoice(null)
-  }
+      items={selectedItems}
 
-/>
+      onClose={() =>
+        setSelectedInvoice(null)
+      }
+
+    />
+
+  )
+}
       {
   printMode &&
   selectedInvoice && (
