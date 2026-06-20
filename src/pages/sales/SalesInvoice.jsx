@@ -37,6 +37,11 @@ function SalesInvoice() {
   customer_name: '',
   customer_state: '',
 
+  billing_address: '',
+  shipping_address: '',
+  vehicle_no: '',
+  eway_bill_no: '',  
+
   gst_type: '',
 
   remarks: ''
