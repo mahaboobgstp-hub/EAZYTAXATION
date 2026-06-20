@@ -19,6 +19,12 @@
 .invoice-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 12px;
+}
+.invoice-table td,
+.invoice-table th {
+    word-wrap: break-word;
 }
 
 .invoice-table th,
@@ -33,6 +39,8 @@
 
 .invoice-totals {
     margin-top: 20px;
+    width: 300px;
+    margin-left: auto;
     text-align: right;
 }
 .invoice-overlay {
@@ -52,14 +60,15 @@
     justify-content: center;
     align-items: flex-start;
 
-    padding: 30px;
+    padding: 10px;
 }
 
 .invoice-print {
     background: white;
-    width: 900px;
-    min-height: 100vh;
-    padding: 30px;
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+    margin: 0 auto;
 }
 @media print {
 
@@ -82,4 +91,15 @@
     button {
         display: none;
     }
+}
+@page {
+    size: A4 portrait;
+    margin: 10mm;
+}
+@media print {
+
+    button {
+        display: none !important;
+    }
+
 }
