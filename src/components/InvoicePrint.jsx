@@ -7,7 +7,8 @@ function InvoicePrint({ invoice, items, onClose }) {
 
   return (
 
-    
+    <div className="invoice-overlay">
+
     <div className="invoice-print">
 
       <div className="invoice-header">
@@ -169,6 +170,8 @@ function InvoicePrint({ invoice, items, onClose }) {
       </div>
 
     </div>
+    </div>  
+      
   );
 }
 
