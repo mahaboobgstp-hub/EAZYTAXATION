@@ -23,6 +23,7 @@ function SalesInvoice() {
   const [invoices, setInvoices] = useState([]);
   const [itemsMaster, setItemsMaster] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [sameAsBilling, setSameAsBilling] = useState(true);
 
   const [formData, setFormData] = useState({
 
@@ -173,7 +174,12 @@ const loadItemsMaster = async () => {
     customer_name:
       selectedCustomer?.customer_name || '',
     customer_state:
-      selectedCustomer?.state || ''
+      selectedCustomer?.state || '',
+     billing_address:
+    selectedCustomer?.address || '',
+
+  shipping_address:
+    selectedCustomer?.address || ''
   });
 
   return;
@@ -620,6 +626,64 @@ async (invoiceId) => {
           ))}
 
         </select>
+        <textarea
+  name="billing_address"
+  placeholder="Billing Address"
+  value={formData.billing_address}
+  onChange={handleChange}
+/>
+<label>
+
+  <input
+    type="checkbox"
+    checked={sameAsBilling}
+    onChange={(e) => {
+
+      setSameAsBilling(
+        e.target.checked
+      );
+
+      if (
+        e.target.checked
+      ) {
+
+        setFormData(prev => ({
+
+          ...prev,
+
+          shipping_address:
+            prev.billing_address
+
+        }));
+
+      }
+
+    }}
+  />
+
+  Same As Billing Address
+
+</label>
+<textarea
+  name="shipping_address"
+  placeholder="Shipping Address"
+  value={formData.shipping_address}
+  onChange={handleChange}
+/>
+
+<input
+  name="vehicle_no"
+  placeholder="Vehicle Number"
+  value={formData.vehicle_no}
+  onChange={handleChange}
+/>
+
+<input
+  name="eway_bill_no"
+  placeholder="E-Way Bill Number"
+  value={formData.eway_bill_no}
+  onChange={handleChange}
+/>
 
         <textarea
           name="remarks"
