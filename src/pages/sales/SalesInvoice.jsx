@@ -395,9 +395,7 @@ igst: igst,
     items
   );
 
-  alert(
-    'Invoice Saved'
-  );
+  
 
 }
 
