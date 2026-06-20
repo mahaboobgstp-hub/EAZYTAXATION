@@ -560,6 +560,38 @@ async (invoiceId) => {
 
   }
 };
+  const printInvoice = async (
+  invoiceId
+) => {
+
+  try {
+
+    const invoice =
+      await getSalesInvoiceById(
+        invoiceId
+      );
+
+    const invoiceItems =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setSelectedInvoice(
+      invoice
+    );
+
+    setSelectedItems(
+      invoiceItems
+    );
+
+    setPrintMode(true);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
   return (
     <div className="sales-page">
 
@@ -931,17 +963,13 @@ async (invoiceId) => {
   >
     Delete
   </button>
-  <button
+ <button
   type="button"
-  onClick={async () => {
-
-    await viewInvoice(
+  onClick={() =>
+    printInvoice(
       invoice.id
-    );
-
-    setPrintMode(true);
-
-  }}
+    )
+  }
 >
   Print
 </button>
