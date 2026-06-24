@@ -82,43 +82,41 @@ const uploadFile = async (
   bucketName,
   fieldName
 ) => {
-  console.log(
-  "Uploading File:",
-  file
-);
-  await supabase.storage
-  .from(bucketName)
-  .upload(...)
 
   try {
 
     if (!file) return;
 
+    console.log(
+      "Uploading File:",
+      file
+    );
+
     const fileName =
       `${Date.now()}-${file.name}`;
 
-   const {
-  data: uploadData,
-  error
-} =
-     console.log(
-  "Upload Result:",
-  uploadData
-);
+    const {
+      data: uploadData,
+      error
+    } = await supabase.storage
+      .from(bucketName)
+      .upload(
+        fileName,
+        file,
+        {
+          upsert: true
+        }
+      );
 
-console.log(
-  "Upload Error:",
-  error
-);
-      await supabase.storage
-        .from(bucketName)
-        .upload(
-          fileName,
-          file,
-          {
-            upsert: true
-          }
-        );
+    console.log(
+      "Upload Result:",
+      uploadData
+    );
+
+    console.log(
+      "Upload Error:",
+      error
+    );
 
     if (error) {
       throw error;
@@ -142,6 +140,8 @@ console.log(
     }));
 
   } catch (error) {
+
+    console.error(error);
 
     alert(
       error.message
