@@ -8,6 +8,8 @@ import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
 import Items from './pages/masters/Items';
+import InvoiceSettings
+from './pages/settings/InvoiceSettings';
 
 function App() {
   return (
@@ -43,6 +45,10 @@ function App() {
 <Route
   path="/items"
   element={<Items />}
+/>
+          <Route
+  path="/invoice-settings"
+  element={<InvoiceSettings />}
 />
           </Routes>
       </Layout>
