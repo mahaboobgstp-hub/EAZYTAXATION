@@ -82,6 +82,13 @@ const uploadFile = async (
   bucketName,
   fieldName
 ) => {
+  console.log(
+  "Uploading File:",
+  file
+);
+  await supabase.storage
+  .from(bucketName)
+  .upload(...)
 
   try {
 
@@ -90,7 +97,19 @@ const uploadFile = async (
     const fileName =
       `${Date.now()}-${file.name}`;
 
-    const { error } =
+   const {
+  data: uploadData,
+  error
+} =
+     console.log(
+  "Upload Result:",
+  uploadData
+);
+
+console.log(
+  "Upload Error:",
+  error
+);
       await supabase.storage
         .from(bucketName)
         .upload(
