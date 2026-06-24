@@ -31,9 +31,7 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
 </button>
         <h1>TAX INVOICE</h1>
 
-        <pre>
-{JSON.stringify(settings, null, 2)}
-</pre>
+       
         {
   settings?.show_logo &&
   settings?.logo_url && (
@@ -189,7 +187,7 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
           Grand Total :
           ₹ {invoice.total_amount}
         </h2>
-        {
+       {
   settings?.show_bank_details && (
 
     <div
@@ -201,6 +199,32 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
       <h3>
         Bank Details
       </h3>
+
+      <p>
+        Bank :
+        {settings.bank_name}
+      </p>
+
+      <p>
+        A/C :
+        {settings.account_number}
+      </p>
+
+      <p>
+        IFSC :
+        {settings.ifsc_code}
+      </p>
+
+      <p>
+        UPI :
+        {settings.upi_id}
+      </p>
+
+    </div>
+
+  )
+}
+
 {
   settings?.show_signature &&
   settings?.signature_url && (
@@ -213,9 +237,7 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
     >
 
       <img
-        src={
-          settings.signature_url
-        }
+        src={settings.signature_url}
         alt="Signature"
         style={{
           width: "180px"
@@ -230,7 +252,7 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
 
   )
 }
-      <p>
+        <p>
         Bank :
         {settings.bank_name}
       </p>
