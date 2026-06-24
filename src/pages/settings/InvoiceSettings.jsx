@@ -29,6 +29,9 @@ function InvoiceSettings() {
       logo_url: "",
 
       signature_url: "",
+      show_logo: true,
+      show_signature: true,
+      show_bank_details: true,
 
       bank_name: "",
 
@@ -283,7 +286,28 @@ const uploadFile = async (
 
   )
 }
+<label>
 
+  <input
+    type="checkbox"
+    checked={
+      formData.show_logo
+    }
+    onChange={(e) =>
+      setFormData({
+
+        ...formData,
+
+        show_logo:
+          e.target.checked
+
+      })
+    }
+  />
+
+  Show On Invoice
+
+</label>
         <label>
           Signature
         </label>
@@ -314,6 +338,28 @@ const uploadFile = async (
 
   )
 }
+        <label>
+
+  <input
+    type="checkbox"
+    checked={
+      formData.show_signature
+    }
+    onChange={(e) =>
+      setFormData({
+
+        ...formData,
+
+        show_signature:
+          e.target.checked
+
+      })
+    }
+  />
+
+  Show On Invoice
+
+</label>
         <input
           name="bank_name"
           placeholder="Bank Name"
@@ -357,6 +403,28 @@ const uploadFile = async (
             handleChange
           }
         />
+        <label>
+
+  <input
+    type="checkbox"
+    checked={
+      formData.show_bank_details
+    }
+    onChange={(e) =>
+      setFormData({
+
+        ...formData,
+
+        show_bank_details:
+          e.target.checked
+
+      })
+    }
+  />
+
+  Show Bank Details On Invoice
+
+</label>
 
         <textarea
           name="invoice_footer"
