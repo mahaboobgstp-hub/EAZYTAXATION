@@ -1,1 +1,43 @@
+.invoice-settings-page {
 
+    padding: 20px;
+
+}
+
+.invoice-settings-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+    max-width: 700px;
+
+}
+
+.invoice-settings-form input,
+.invoice-settings-form select,
+.invoice-settings-form textarea {
+
+    padding: 10px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 5px;
+
+}
+
+.invoice-settings-form textarea {
+
+    min-height: 100px;
+
+}
+
+.invoice-settings-form button {
+
+    padding: 12px;
+
+    cursor: pointer;
+
+}
