@@ -31,7 +31,7 @@ getInvoiceSettingsByCompany(
       "company_id",
       companyId
     )
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw error;
