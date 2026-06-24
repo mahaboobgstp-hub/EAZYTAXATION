@@ -456,7 +456,10 @@ const settings =
 await getInvoiceSettingsByCompany(
   invoice.company_id
 );
-
+console.log(
+  "Settings Loaded:",
+  settings
+);
 setInvoiceSettings(
   settings
 );
