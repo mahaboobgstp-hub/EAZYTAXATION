@@ -5,6 +5,11 @@ import SalesInvoiceView
 from '../../components/SalesInvoiceView';
 import InvoicePrint
 from '../../components/InvoicePrint';
+import {
+  getInvoiceSettingsByCompany
+}
+from
+'../../services/invoiceSettingsService';
 
 import {
   getCompaniesForDropdown,
@@ -285,6 +290,9 @@ useState(null);
 const [selectedItems,
 setSelectedItems] =
 useState([]);
+  const [invoiceSettings,
+setInvoiceSettings] =
+useState(null);
 
   const [editingInvoiceId,
 setEditingInvoiceId] =
