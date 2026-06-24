@@ -30,6 +30,10 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
   Print Invoice
 </button>
         <h1>TAX INVOICE</h1>
+
+        <pre>
+{JSON.stringify(settings, null, 2)}
+</pre>
         {
   settings?.show_logo &&
   settings?.logo_url && (
