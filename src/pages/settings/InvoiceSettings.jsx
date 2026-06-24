@@ -310,7 +310,7 @@ const uploadFile = async (
     }
   />
 
-  Show On Invoice
+  Show Logo On Invoice
 
 </label>
         <label>
@@ -362,7 +362,7 @@ const uploadFile = async (
     }
   />
 
-  Show On Invoice
+  Show Signature On Invoice
 
 </label>
         <input
