@@ -452,7 +452,14 @@ loadInvoiceNumber();
       await getSalesInvoiceById(
         invoiceId
       );
+const settings =
+await getInvoiceSettingsByCompany(
+  invoice.company_id
+);
 
+setInvoiceSettings(
+  settings
+);
     const items =
       await getSalesInvoiceItems(
         invoiceId
@@ -1013,6 +1020,7 @@ async (invoiceId) => {
     <InvoicePrint
   invoice={selectedInvoice}
   items={selectedItems}
+  settings={invoiceSettings}    
   onClose={() => {
 
     setPrintMode(false);
@@ -1020,6 +1028,9 @@ async (invoiceId) => {
     setSelectedInvoice(null);
 
     setSelectedItems([]);
+    
+    setInvoiceSettings(null);
+  
 
   }}
 />
