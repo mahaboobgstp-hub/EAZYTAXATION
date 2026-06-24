@@ -1,9 +1,13 @@
 import React from "react";
 import "../css/sales/InvoicePrint.css";
 
-function InvoicePrint({ invoice, items, onClose }) {
+function InvoicePrint({ invoice, items, settings, onClose }) {
 
   if (!invoice) return null;
+  console.log(
+  "Invoice Settings:",
+  settings
+);
 
   return (
 
