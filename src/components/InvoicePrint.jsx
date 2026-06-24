@@ -303,10 +303,7 @@ function InvoicePrint({ invoice, items, settings, company, onClose }) {
        
     </div>
 
-  )
-}
-
-      </div>
+        </div>
 
     </div>
     
