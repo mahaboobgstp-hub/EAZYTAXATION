@@ -45,7 +45,11 @@ function Sidebar() {
          <li>
         <Link to="/asset-categories">Asset Categories</Link>
          </li>
-       
+       <li>
+  <Link to="/invoice-settings">
+    Invoice Settings
+  </Link>
+</li>
 
       </ul>
 
