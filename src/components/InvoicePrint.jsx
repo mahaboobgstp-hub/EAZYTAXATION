@@ -252,26 +252,7 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
 
   )
 }
-        <p>
-        Bank :
-        {settings.bank_name}
-      </p>
-
-      <p>
-        A/C :
-        {settings.account_number}
-      </p>
-
-      <p>
-        IFSC :
-        {settings.ifsc_code}
-      </p>
-
-      <p>
-        UPI :
-        {settings.upi_id}
-      </p>
-
+       
     </div>
 
   )
