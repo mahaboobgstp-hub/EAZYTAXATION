@@ -31,7 +31,55 @@ function InvoicePrint({ invoice, items, settings, company, onClose }) {
 </button>
         <h1>TAX INVOICE</h1>
 
-       
+       <div className="company-header">
+
+  <div className="company-logo">
+
+    {
+      settings?.show_logo &&
+      settings?.logo_url && (
+
+        <img
+          src={settings.logo_url}
+          alt="Logo"
+          style={{
+            width: "120px"
+          }}
+        />
+
+      )
+    }
+
+  </div>
+
+  <div className="company-details">
+
+    <h2>
+      {company?.company_name}
+    </h2>
+
+    <p>
+      {company?.address}
+    </p>
+
+    <p>
+      GSTIN :
+      {company?.gstin}
+    </p>
+
+    <p>
+      Mobile :
+      {company?.mobile}
+    </p>
+
+    <p>
+      Email :
+      {company?.email}
+    </p>
+
+  </div>
+
+</div>
         {
   settings?.show_logo &&
   settings?.logo_url && (
