@@ -587,6 +587,20 @@ async (invoiceId) => {
         invoiceId
       );
 
+    const settings =
+      await getInvoiceSettingsByCompany(
+        invoice.company_id
+      );
+
+    console.log(
+      "Print Settings:",
+      settings
+    );
+
+    setInvoiceSettings(
+      settings
+    );
+
     const invoiceItems =
       await getSalesInvoiceItems(
         invoiceId
@@ -608,6 +622,7 @@ async (invoiceId) => {
 
   }
 };
+  
   return (
     <div className="sales-page">
 
