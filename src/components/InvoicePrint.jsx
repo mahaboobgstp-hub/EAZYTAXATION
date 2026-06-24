@@ -30,6 +30,21 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
   Print Invoice
 </button>
         <h1>TAX INVOICE</h1>
+        {
+  settings?.show_logo &&
+  settings?.logo_url && (
+
+    <img
+      src={settings.logo_url}
+      alt="Company Logo"
+      style={{
+        width: "150px",
+        marginBottom: "10px"
+      }}
+    />
+
+  )
+}
 
         <div>
           <strong>Invoice No :</strong>
@@ -170,6 +185,71 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
           Grand Total :
           ₹ {invoice.total_amount}
         </h2>
+        {
+  settings?.show_bank_details && (
+
+    <div
+      style={{
+        marginTop: "30px"
+      }}
+    >
+
+      <h3>
+        Bank Details
+      </h3>
+{
+  settings?.show_signature &&
+  settings?.signature_url && (
+
+    <div
+      style={{
+        marginTop: "30px",
+        textAlign: "right"
+      }}
+    >
+
+      <img
+        src={
+          settings.signature_url
+        }
+        alt="Signature"
+        style={{
+          width: "180px"
+        }}
+      />
+
+      <p>
+        Authorized Signatory
+      </p>
+
+    </div>
+
+  )
+}
+      <p>
+        Bank :
+        {settings.bank_name}
+      </p>
+
+      <p>
+        A/C :
+        {settings.account_number}
+      </p>
+
+      <p>
+        IFSC :
+        {settings.ifsc_code}
+      </p>
+
+      <p>
+        UPI :
+        {settings.upi_id}
+      </p>
+
+    </div>
+
+  )
+}
 
       </div>
 
