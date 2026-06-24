@@ -13,6 +13,8 @@ import {
   getInvoiceSettings,
   saveInvoiceSettings
 } from "../../services/invoiceSettingsService";
+import { supabase }
+from "../../supabase/supabaseClient";
 
 function InvoiceSettings() {
 
@@ -75,7 +77,59 @@ function InvoiceSettings() {
 
     });
   };
+const uploadFile = async (
+  file,
+  bucketName,
+  fieldName
+) => {
 
+  try {
+
+    if (!file) return;
+
+    const fileName =
+      `${Date.now()}-${file.name}`;
+
+    const { error } =
+      await supabase.storage
+        .from(bucketName)
+        .upload(
+          fileName,
+          file,
+          {
+            upsert: true
+          }
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    const {
+      data
+    } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(
+        fileName
+      );
+
+    setFormData(prev => ({
+
+      ...prev,
+
+      [fieldName]:
+        data.publicUrl
+
+    }));
+
+  } catch (error) {
+
+    alert(
+      error.message
+    );
+
+  }
+};
   const loadSettings =
     async (companyId) => {
 
@@ -185,17 +239,62 @@ function InvoiceSettings() {
         </label>
 
         <input
-          type="file"
-        />
+  type="file"
+  accept="image/*"
+  onChange={(e) =>
+
+    uploadFile(
+      e.target.files[0],
+      "company-logos",
+      "logo_url"
+    )
+
+  }
+/>
+        {
+  formData.logo_url && (
+
+    <img
+      src={
+        formData.logo_url
+      }
+      alt="Logo"
+      width="150"
+    />
+
+  )
+}
 
         <label>
           Signature
         </label>
 
-        <input
-          type="file"
-        />
+       <input
+  type="file"
+  accept="image/*"
+  onChange={(e) =>
 
+    uploadFile(
+      e.target.files[0],
+      "company-signatures",
+      "signature_url"
+    )
+
+  }
+/>
+{
+  formData.signature_url && (
+
+    <img
+      src={
+        formData.signature_url
+      }
+      alt="Signature"
+      width="200"
+    />
+
+  )
+}
         <input
           name="bank_name"
           placeholder="Bank Name"
