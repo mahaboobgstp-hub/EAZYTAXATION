@@ -23,6 +23,9 @@ import {
   updateSalesInvoice,
   deleteSalesInvoice
 } from '../../services/salesInvoiceService';
+import {
+  getCompanyById
+} from "../../services/companyService";
 
 function SalesInvoice() {
 
@@ -35,6 +38,10 @@ function SalesInvoice() {
  const [invoiceSettings,
 setInvoiceSettings] =
 useState(null);
+  const [
+  companyDetails,
+  setCompanyDetails
+] = useState(null);
   const [formData, setFormData] = useState({
 
   company_id: '',
@@ -452,6 +459,14 @@ loadInvoiceNumber();
       await getSalesInvoiceById(
         invoiceId
       );
+    const company =
+await getCompanyById(
+  invoice.company_id
+);
+
+setCompanyDetails(
+  company
+);
 const settings =
 await getInvoiceSettingsByCompany(
   invoice.company_id
@@ -1038,7 +1053,8 @@ async (invoiceId) => {
     <InvoicePrint
   invoice={selectedInvoice}
   items={selectedItems}
-  settings={invoiceSettings}    
+  settings={invoiceSettings}
+  company={companyDetails}    
   onClose={() => {
 
     setPrintMode(false);
