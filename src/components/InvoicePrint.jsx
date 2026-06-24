@@ -80,21 +80,7 @@ function InvoicePrint({ invoice, items, settings, company, onClose }) {
   </div>
 
 </div>
-        {
-  settings?.show_logo &&
-  settings?.logo_url && (
-
-    <img
-      src={settings.logo_url}
-      alt="Company Logo"
-      style={{
-        width: "150px",
-        marginBottom: "10px"
-      }}
-    />
-
-  )
-}
+        
 
         <div>
           <strong>Invoice No :</strong>
