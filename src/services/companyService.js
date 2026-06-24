@@ -38,3 +38,20 @@ export async function getCompaniesForDropdown() {
 
     return data;
 }
+export async function getCompanyById(
+  companyId
+) {
+
+  const { data, error } =
+    await supabase
+      .from("companies")
+      .select("*")
+      .eq("id", companyId)
+      .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
