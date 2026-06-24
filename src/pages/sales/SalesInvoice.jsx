@@ -32,7 +32,9 @@ function SalesInvoice() {
   const [companies, setCompanies] = useState([]);
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [printMode, setPrintMode] = useState(false);
-
+ const [invoiceSettings,
+setInvoiceSettings] =
+useState(null);
   const [formData, setFormData] = useState({
 
   company_id: '',
@@ -290,9 +292,7 @@ useState(null);
 const [selectedItems,
 setSelectedItems] =
 useState([]);
-  const [invoiceSettings,
-setInvoiceSettings] =
-useState(null);
+ 
 
   const [editingInvoiceId,
 setEditingInvoiceId] =
@@ -1029,7 +1029,7 @@ async (invoiceId) => {
 
     setSelectedItems([]);
     
-    setInvoiceSettings(null);
+   
   
 
   }}
