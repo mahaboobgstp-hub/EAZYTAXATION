@@ -16,7 +16,29 @@ export async function getInvoiceSettings(
 
   return data;
 }
+export async function
+getInvoiceSettingsByCompany(
+  companyId
+) {
 
+  const {
+    data,
+    error
+  } = await supabase
+    .from("invoice_settings")
+    .select("*")
+    .eq(
+      "company_id",
+      companyId
+    )
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
 export async function saveInvoiceSettings(
   settings
 ) {
