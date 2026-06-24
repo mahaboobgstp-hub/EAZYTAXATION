@@ -32,6 +32,11 @@ function InvoiceSettings() {
       show_logo: true,
       show_signature: true,
       show_bank_details: true,
+      show_terms_conditions: true,
+
+show_footer: true,
+
+show_transport_details: true,
 
       bank_name: "",
 
@@ -425,6 +430,28 @@ const uploadFile = async (
   Show Bank Details On Invoice
 
 </label>
+        <label>
+
+  <input
+    type="checkbox"
+    checked={
+      formData.show_transport_details
+    }
+    onChange={(e) =>
+      setFormData({
+
+        ...formData,
+
+        show_transport_details:
+          e.target.checked
+
+      })
+    }
+  />
+
+  Show Vehicle No & E-Way Bill
+
+</label>
 
         <textarea
           name="invoice_footer"
@@ -436,7 +463,28 @@ const uploadFile = async (
             handleChange
           }
         />
+<label>
 
+  <input
+    type="checkbox"
+    checked={
+      formData.show_footer
+    }
+    onChange={(e) =>
+      setFormData({
+
+        ...formData,
+
+        show_footer:
+          e.target.checked
+
+      })
+    }
+  />
+
+  Show Footer On Invoice
+
+</label>
         <textarea
           name="terms_conditions"
           placeholder="Terms & Conditions"
@@ -447,7 +495,28 @@ const uploadFile = async (
             handleChange
           }
         />
+<label>
 
+  <input
+    type="checkbox"
+    checked={
+      formData.show_terms_conditions
+    }
+    onChange={(e) =>
+      setFormData({
+
+        ...formData,
+
+        show_terms_conditions:
+          e.target.checked
+
+      })
+    }
+  />
+
+  Show Terms & Conditions On Invoice
+
+</label>
         <button
           type="button"
           onClick={
