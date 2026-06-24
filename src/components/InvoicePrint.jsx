@@ -1,7 +1,7 @@
 import React from "react";
 import "../css/sales/InvoicePrint.css";
 
-function InvoicePrint({ invoice, items, settings, onClose }) {
+function InvoicePrint({ invoice, items, settings, company, onClose }) {
 
   if (!invoice) return null;
   console.log(
