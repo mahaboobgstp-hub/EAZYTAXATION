@@ -280,7 +280,7 @@ function InvoicePrint({ invoice, items, settings, onClose }) {
       </div>
 
     </div>
-    </div>  
+    
       
   );
 }
