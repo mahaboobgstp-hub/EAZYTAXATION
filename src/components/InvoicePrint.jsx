@@ -140,7 +140,7 @@ const amountInWords =
 
   <p>
   Place of Supply :
-  {invoice.place_of_supply}
+  {customer?.state}
 </p>
 
 </div>
