@@ -593,23 +593,34 @@ const editInvoice = async (
 
     setFormData({
 
-      invoice_no:
-        invoice.invoice_no,
+  company_id: invoice.company_id || "",
+  company_name: invoice.company_name || "",
+  company_state: invoice.company_state || "",
 
-      invoice_date:
-        invoice.invoice_date,
+  invoice_no: invoice.invoice_no,
+  invoice_date: invoice.invoice_date,
 
-      customer_id:
-        invoice.customer_id,
+  customer_id: invoice.customer_id,
+  customer_name: invoice.customer_name,
+  customer_state: invoice.customer_state || "",
 
-      customer_name:
-        invoice.customer_name,
+  billing_address: invoice.billing_address || "",
 
-      remarks:
-        invoice.remarks || ''
+  shipping_name: invoice.shipping_name || "",
+  shipping_gstin: invoice.shipping_gstin || "",
+  shipping_state: invoice.shipping_state || "",
+  shipping_address: invoice.shipping_address || "",
 
-    });
+  place_of_supply: invoice.place_of_supply || "",
 
+  vehicle_no: invoice.vehicle_no || "",
+  eway_bill_no: invoice.eway_bill_no || "",
+
+  gst_type: invoice.gst_type || "",
+
+  remarks: invoice.remarks || ""
+
+});
     const loadedItems =
       invoiceItems.map(item => ({
 
