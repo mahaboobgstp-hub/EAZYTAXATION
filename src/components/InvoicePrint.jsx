@@ -265,27 +265,7 @@ const amountInWords =
 
   )
 }
-        {
-  settings?.show_terms_conditions &&
-  settings?.terms_conditions && (
-
-    <div
-      className="invoice-terms"
-    >
-
-      <h3>
-        Terms & Conditions
-      </h3>
-
-      <p>
-        {settings.terms_conditions}
-      </p>
-
-    </div>
-
-  )
-}
-        {
+               {
   settings?.show_terms_conditions &&
   settings?.terms_conditions && (
 
