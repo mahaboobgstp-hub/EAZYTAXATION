@@ -452,17 +452,20 @@ igst: igst,
 
 } else {
 
+ const savedInvoiceId =
   await saveSalesInvoice(
     invoiceHeader,
     items
   );
 
-  
+alert(
+  'Sales Invoice Saved'
+);
 
-}
-
-    alert('Sales Invoice Saved');
-
+await printInvoice(
+  savedInvoiceId
+);
+     
     setFormData({
 
   company_id: '',
