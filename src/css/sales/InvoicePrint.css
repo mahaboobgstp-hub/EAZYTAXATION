@@ -217,3 +217,39 @@ button{
         display:none !important;
     }
 }
+.invoice-remarks{
+
+    margin-top:25px;
+
+    border:1px solid #ccc;
+
+    padding:12px;
+
+    border-radius:5px;
+}
+
+.invoice-terms{
+
+    margin-top:25px;
+
+    border:1px solid #ccc;
+
+    padding:12px;
+
+    border-radius:5px;
+}
+
+.invoice-footer{
+
+    margin-top:30px;
+
+    border-top:2px solid #000;
+
+    padding-top:10px;
+
+    text-align:center;
+
+    font-weight:bold;
+
+    font-size:14px;
+}
