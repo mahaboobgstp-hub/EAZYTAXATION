@@ -401,7 +401,7 @@ const amountInWords =
 
     </div>
     
-      </div>
+      
   );
 }
 
