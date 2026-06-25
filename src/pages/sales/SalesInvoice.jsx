@@ -514,7 +514,8 @@ setEditingInvoiceId(
 
 loadInvoiceNumber();
     loadInvoices();
-
+   }
+  }
   } catch (error) {
 
     alert(error.message);
