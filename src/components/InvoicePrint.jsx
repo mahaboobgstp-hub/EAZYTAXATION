@@ -170,6 +170,7 @@ const amountInWords =
   </p>
 
 </div>
+        </div>
       <table className="invoice-table">
 
         <thead>
