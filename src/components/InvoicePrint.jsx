@@ -239,7 +239,7 @@ const amountInWords =
   }}
 >
 
-  Amount in Words
+  Amount in Words:
 
   <br />
 
