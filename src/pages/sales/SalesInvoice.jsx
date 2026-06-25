@@ -1084,7 +1084,8 @@ setCustomerDetails(
   invoice={selectedInvoice}
   items={selectedItems}
   settings={invoiceSettings}
-  company={companyDetails}    
+  company={companyDetails}
+  customer={customerDetails}   
   onClose={() => {
 
     setPrintMode(false);
