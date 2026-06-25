@@ -22,3 +22,20 @@ export async function getCustomers() {
 
     return data;
 }
+export async function getCustomerById(
+    customerId
+) {
+
+    const { data, error } =
+        await supabase
+            .from("customers")
+            .select("*")
+            .eq("id", customerId)
+            .single();
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
