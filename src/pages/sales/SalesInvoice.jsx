@@ -464,12 +464,35 @@ igst: igst,
     alert('Sales Invoice Saved');
 
     setFormData({
-      invoice_no: '',
-      invoice_date: '',
-      customer_id: '',
-      customer_name: '',
-      remarks: ''
-    });
+
+  company_id: '',
+  company_name: '',
+  company_state: '',
+
+  invoice_no: '',
+  invoice_date: '',
+
+  customer_id: '',
+  customer_name: '',
+  customer_state: '',
+
+  billing_address: '',
+
+  shipping_name: '',
+  shipping_gstin: '',
+  shipping_state: '',
+  shipping_address: '',
+
+  place_of_supply: '',
+
+  vehicle_no: '',
+  eway_bill_no: '',
+
+  gst_type: '',
+
+  remarks: ''
+
+});
 
     setItems([
       {
