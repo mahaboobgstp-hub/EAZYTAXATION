@@ -516,7 +516,7 @@ loadInvoiceNumber();
     loadInvoices();
    }
   }
-  } catch (error) {
+   catch (error) {
 
     alert(error.message);
 
