@@ -29,6 +29,9 @@ import {
 import {
   getCustomerById
 } from "../../services/customerService";
+import {
+  getStates
+} from "../../services/stateService";
 
 function SalesInvoice() {
 
@@ -36,6 +39,7 @@ function SalesInvoice() {
   const [invoices, setInvoices] = useState([]);
   const [itemsMaster, setItemsMaster] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [states, setStates] = useState([]);
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [printMode, setPrintMode] = useState(false);
  const [invoiceSettings,
@@ -63,9 +67,13 @@ useState(null);
   customer_state: '',
 
   billing_address: '',
-  shipping_address: '',
-  vehicle_no: '',
-  eway_bill_no: '',  
+  shipping_name: '',
+shipping_gstin: '',
+shipping_state: '',
+shipping_address: '',
+place_of_supply: '',
+vehicle_no: '',
+eway_bill_no: '',
 
   gst_type: '',
 
@@ -91,6 +99,8 @@ useState(null);
     loadItemsMaster();
     loadInvoices();
     loadInvoiceNumber();
+    loadStates();
+    
   }, []);
   const loadInvoiceNumber = async () => {
 
@@ -136,7 +146,22 @@ useState(null);
 
   }
 };
-  
+  const loadStates = async () => {
+
+  try {
+
+    const data =
+      await getStates();
+
+    setStates(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+};
 const loadItemsMaster = async () => {
 
   try {
@@ -202,8 +227,20 @@ const loadItemsMaster = async () => {
      billing_address:
     selectedCustomer?.address || '',
 
-  shipping_address:
-    selectedCustomer?.address || ''
+  shipping_name:
+selectedCustomer?.customer_name || '',
+
+shipping_gstin:
+selectedCustomer?.gstin || '',
+
+shipping_state:
+selectedCustomer?.state || '',
+
+shipping_address:
+selectedCustomer?.address || '',
+
+place_of_supply:
+selectedCustomer?.state || '',
   });
 
   return;
@@ -745,37 +782,106 @@ setCustomerDetails(
 />
 <label>
 
-  <input
-    type="checkbox"
-    checked={sameAsBilling}
-    onChange={(e) => {
+<input
+type="checkbox"
+checked={sameAsBilling}
 
-      setSameAsBilling(
-        e.target.checked
-      );
+onChange={(e)=>{
 
-      if (
-        e.target.checked
-      ) {
+const checked =
+e.target.checked;
 
-        setFormData(prev => ({
+setSameAsBilling(checked);
 
-          ...prev,
+if(checked){
 
-          shipping_address:
-            prev.billing_address
+setFormData(prev=>({
 
-        }));
+...prev,
 
-      }
+shipping_name:
+prev.customer_name,
 
-    }}
-  />
+shipping_gstin:
+customers.find(
+c=>c.id===prev.customer_id
+)?.gstin || "",
 
-  Same As Billing Address
+shipping_state:
+prev.customer_state,
+
+shipping_address:
+prev.billing_address,
+
+place_of_supply:
+prev.customer_state
+
+}));
+
+}
+
+}}
+/>
+
+Same as Billing Details
 
 </label>
+        {
+!sameAsBilling && (
+
+<>
+
+<input
+name="shipping_name"
+placeholder="Shipping Name"
+value={formData.shipping_name}
+onChange={handleChange}
+/>
+
+<input
+name="shipping_gstin"
+placeholder="Shipping GSTIN"
+value={formData.shipping_gstin}
+onChange={handleChange}
+/>
+
+<select
+name="shipping_state"
+value={formData.shipping_state}
+onChange={handleChange}
+>
+
+<option value="">
+Select Shipping State
+</option>
+
+{states.map(state=>(
+
+<option
+key={state.id}
+value={state.state_name}
+>
+
+{state.state_name}
+
+</option>
+
+))}
+
+</select>
+
 <textarea
+name="shipping_address"
+placeholder="Shipping Address"
+value={formData.shipping_address}
+onChange={handleChange}
+/>
+
+</>
+
+)
+}
+        <textarea
   name="shipping_address"
   placeholder="Shipping Address"
   value={formData.shipping_address}
