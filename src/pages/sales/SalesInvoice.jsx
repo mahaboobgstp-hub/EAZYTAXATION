@@ -463,7 +463,10 @@ loadInvoiceNumber();
 await getCompanyById(
   invoice.company_id
 );
-
+console.log(
+  "Company Details:",
+  company
+);
 setCompanyDetails(
   company
 );
