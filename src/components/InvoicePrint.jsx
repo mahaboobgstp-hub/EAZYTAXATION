@@ -246,6 +246,79 @@ const amountInWords =
   {amountInWords}
 
 </div>
+        {
+  invoice?.remarks && (
+
+    <div
+      className="invoice-remarks"
+    >
+
+      <h3>
+        Remarks
+      </h3>
+
+      <p>
+        {invoice.remarks}
+      </p>
+
+    </div>
+
+  )
+}
+        {
+  settings?.show_terms_conditions &&
+  settings?.terms_conditions && (
+
+    <div
+      className="invoice-terms"
+    >
+
+      <h3>
+        Terms & Conditions
+      </h3>
+
+      <p>
+        {settings.terms_conditions}
+      </p>
+
+    </div>
+
+  )
+}
+        {
+  settings?.show_terms_conditions &&
+  settings?.terms_conditions && (
+
+    <div
+      className="invoice-terms"
+    >
+
+      <h3>
+        Terms & Conditions
+      </h3>
+
+      <p>
+        {settings.terms_conditions}
+      </p>
+
+    </div>
+
+  )
+}
+        {
+  settings?.show_footer &&
+  settings?.invoice_footer && (
+
+    <div
+      className="invoice-footer"
+    >
+
+      {settings.invoice_footer}
+
+    </div>
+
+  )
+}
        {
   settings?.show_bank_details && (
 
