@@ -881,12 +881,7 @@ onChange={handleChange}
 
 )
 }
-        <textarea
-  name="shipping_address"
-  placeholder="Shipping Address"
-  value={formData.shipping_address}
-  onChange={handleChange}
-/>
+        
 
 <input
   name="vehicle_no"
