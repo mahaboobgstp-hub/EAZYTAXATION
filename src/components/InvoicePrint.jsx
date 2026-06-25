@@ -4,7 +4,7 @@ import {
   numberToWords
 } from "../utils/numberToWords";
 
-function InvoicePrint({ invoice, items, settings, company, onClose }) {
+function InvoicePrint({ invoice, items, settings, company, customer, onClose }) {
 
   if (!invoice) return null;
   
@@ -116,17 +116,34 @@ const amountInWords =
 
         <div>
 
-          <h3>Bill To</h3>
+  <h3>Bill To</h3>
 
-          <p>
-            {invoice.customer_name}
-          </p>
+  <p>
+    <strong>
+      {invoice.customer_name}
+    </strong>
+  </p>
 
-          <p>
-            {invoice.billing_address}
-          </p>
+  <p>
+    {invoice.billing_address}
+  </p>
 
-        </div>
+  <p>
+    GSTIN :
+    {customer?.gstin || "-"}
+  </p>
+
+  <p>
+    State :
+    {customer?.state}
+  </p>
+
+  <p>
+    Place of Supply :
+    {customer?.state}
+  </p>
+
+</div>
 
         <div>
 
