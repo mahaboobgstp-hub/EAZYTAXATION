@@ -210,6 +210,7 @@ const loadItemsMaster = async () => {
   return;
 }
 
+    
     if (name === 'customer_id') {
 
   const selectedCustomer =
@@ -380,12 +381,15 @@ console.log(
   "Customer State:",
   formData.customer_state
 );
+
+  console.log("Company State:", formData.company_state);
+console.log("Place of Supply:", formData.place_of_supply);
 if (
 
   formData.company_state &&
-  formData.customer_state &&
+  formData.place_of_supply &&
   formData.company_state ===
-  formData.customer_state
+  formData.place_of_supply
 
 ) {
 
@@ -398,7 +402,6 @@ if (
   igst = totalGST;
 
 }
-
 const grandTotal =
   taxableValue +
   cgst +
@@ -416,12 +419,12 @@ const grandTotal =
       ...formData,
       gst_type:
 
-  formData.company_state ===
-  formData.customer_state
+formData.company_state ===
+formData.place_of_supply
 
-    ? 'INTRA_STATE'
+? 'INTRA_STATE'
 
-    : 'INTER_STATE',
+: 'INTER_STATE',
 
       taxable_value: taxableValue,
 
