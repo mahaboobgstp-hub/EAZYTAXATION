@@ -1,9 +1,17 @@
 import React from "react";
 import "../css/sales/InvoicePrint.css";
+import {
+  numberToWords
+} from "../utils/numberToWords";
 
 function InvoicePrint({ invoice, items, settings, company, onClose }) {
 
   if (!invoice) return null;
+  
+const amountInWords =
+  numberToWords(
+    Number(invoice.total_amount || 0)
+  );
   console.log(
   "Invoice Settings:",
   settings
@@ -221,6 +229,23 @@ function InvoicePrint({ invoice, items, settings, company, onClose }) {
           Grand Total :
           ₹ {invoice.total_amount}
         </h2>
+        <div
+  style={{
+    marginTop: "20px",
+    padding: "10px",
+    border: "1px solid #ccc",
+    textAlign: "left",
+    fontWeight: "bold"
+  }}
+>
+
+  Amount in Words
+
+  <br />
+
+  {amountInWords}
+
+</div>
        {
   settings?.show_bank_details && (
 
