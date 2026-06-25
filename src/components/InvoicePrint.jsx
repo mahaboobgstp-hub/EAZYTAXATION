@@ -139,24 +139,37 @@ const amountInWords =
   </p>
 
   <p>
-    Place of Supply :
-    {customer?.state}
-  </p>
+  Place of Supply :
+  {invoice.place_of_supply}
+</p>
 
 </div>
 
         <div>
 
-          <h3>Ship To</h3>
+  <h3>Ship To</h3>
 
-          <p>
-            {invoice.shipping_address}
-          </p>
+  <p>
+    <strong>
+      {invoice.shipping_name}
+    </strong>
+  </p>
 
-        </div>
+  <p>
+    {invoice.shipping_address}
+  </p>
 
-      </div>
+  <p>
+    GSTIN :
+    {invoice.shipping_gstin || "-"}
+  </p>
 
+  <p>
+    State :
+    {invoice.shipping_state}
+  </p>
+
+</div>
       <table className="invoice-table">
 
         <thead>
