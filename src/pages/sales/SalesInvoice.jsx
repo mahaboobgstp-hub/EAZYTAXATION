@@ -618,6 +618,19 @@ async (invoiceId) => {
     setInvoiceSettings(
       settings
     );
+const company =
+  await getCompanyById(
+    invoice.company_id
+  );
+
+console.log(
+  "Company Details:",
+  company
+);
+
+setCompanyDetails(
+  company
+);
 
     const invoiceItems =
       await getSalesInvoiceItems(
