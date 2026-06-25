@@ -26,6 +26,9 @@ import {
 import {
   getCompanyById
 } from "../../services/companyService";
+import {
+  getCustomerById
+} from "../../services/customerService";
 
 function SalesInvoice() {
 
@@ -41,6 +44,10 @@ useState(null);
   const [
   companyDetails,
   setCompanyDetails
+] = useState(null);
+  const [
+  customerDetails,
+  setCustomerDetails
 ] = useState(null);
   const [formData, setFormData] = useState({
 
@@ -631,7 +638,14 @@ console.log(
 setCompanyDetails(
   company
 );
+const customer =
+await getCustomerById(
+  invoice.customer_id
+);
 
+setCustomerDetails(
+  customer
+);
     const invoiceItems =
       await getSalesInvoiceItems(
         invoiceId
