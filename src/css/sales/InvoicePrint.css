@@ -22,15 +22,17 @@
 
 .invoice-print{
 
-    width:210mm;
+    width:190mm;
 
-    min-height:297mm;
+    min-height:277mm;
 
     background:#fff;
 
     color:#111;
 
-    padding:10mm;
+    padding:8mm;
+
+    margin:auto;
 
     box-sizing:border-box;
 
@@ -39,7 +41,6 @@
     font-family:"Segoe UI",Arial,sans-serif;
 
 }
-
 .invoice-actions{
 
     margin-bottom:18px;
@@ -778,9 +779,11 @@ PRINT
 
 @page{
 
-    size:A4 portrait;
+    size:A4;
 
-    margin:8mm;
+    margin:0;
+
+}
 
 }
 
@@ -832,21 +835,23 @@ PRINT
 
     .invoice-print{
 
-        width:210mm;
+    width:190mm !important;
 
-        min-height:297mm;
+    min-height:auto !important;
 
-        margin:0;
+    margin:auto !important;
 
-        padding:8mm;
+    padding:8mm !important;
 
-        box-shadow:none;
+    box-shadow:none !important;
 
-        border:none;
+    border:none !important;
 
-        overflow:hidden;
+    overflow:hidden !important;
 
-    }
+    box-sizing:border-box !important;
+
+}
 
     .invoice-actions{
 
