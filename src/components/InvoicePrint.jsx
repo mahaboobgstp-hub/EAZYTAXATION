@@ -414,43 +414,87 @@ pdf.addImage(
 
           </table>
 
-          {/* ================= SUMMARY ================= */}
+          <div className="summary-section">
 
-<div className="summary-section">
+    <div className="summary-left">
 
-  <div className="summary-left">
+        <div className="amount-heading">
 
-    <PrintAmountWords
-      amountInWords={amountInWords}
-    />
+            Amount in Words
 
-  </div>
+        </div>
 
-  <div className="summary-right">
+        <div className="amount-text">
 
-    <PrintTotals
-      rows={[
-        {
-          label: "Taxable Value",
-          value: `₹ ${invoice.taxable_value || 0}`,
-        },
-        {
-          label: "CGST",
-          value: `₹ ${invoice.cgst || 0}`,
-        },
-        {
-          label: "SGST",
-          value: `₹ ${invoice.sgst || 0}`,
-        },
-        {
-          label: "IGST",
-          value: `₹ ${invoice.igst || 0}`,
-        },
-      ]}
-      grandTotal={`₹ ${invoice.total_amount || 0}`}
-    />
+            {amountInWords}
 
-  </div>
+        </div>
+
+    </div>
+
+    <div className="summary-right">
+
+        <div className="summary-row">
+
+            <span>Taxable Value</span>
+
+            <span>:</span>
+
+            <strong>
+                ₹ {invoice.taxable_value}
+            </strong>
+
+        </div>
+
+        <div className="summary-row">
+
+            <span>CGST</span>
+
+            <span>:</span>
+
+            <strong>
+                ₹ {invoice.cgst}
+            </strong>
+
+        </div>
+
+        <div className="summary-row">
+
+            <span>SGST</span>
+
+            <span>:</span>
+
+            <strong>
+                ₹ {invoice.sgst}
+            </strong>
+
+        </div>
+
+        <div className="summary-row">
+
+            <span>IGST</span>
+
+            <span>:</span>
+
+            <strong>
+                ₹ {invoice.igst}
+            </strong>
+
+        </div>
+
+        <div className="grand-total">
+
+            <span>Grand Total</span>
+
+            <span>:</span>
+
+            <strong>
+                ₹ {invoice.total_amount}
+            </strong>
+
+        </div>
+
+    </div>
 
 </div>
           {/* ================= BOTTOM ================= */}
