@@ -22,15 +22,15 @@
 
 .invoice-print{
 
-    width:190mm;
+    width:794px;
 
-    min-height:277mm;
+    min-height:1123px;
 
     background:#fff;
 
     color:#111;
 
-    padding:8mm;
+    padding:20px;
 
     margin:auto;
 
@@ -131,9 +131,9 @@ TOP
 
     display:grid;
 
-    grid-template-columns:250px 1fr;
+    grid-template-columns:170px auto;
 
-    gap:25px;
+    gap:15px;
 
     align-items:center;
 
@@ -151,7 +151,7 @@ TOP
 
 .invoice-logo img{
 
-    max-width:180px;
+    max-width:110px;
 
     max-height:150px;
 
@@ -169,7 +169,7 @@ TOP
 
     margin:0 0 8px;
 
-    font-size:18px;
+    font-size:16px;
 
     text-transform:uppercase;
 
@@ -179,19 +179,19 @@ TOP
 
 .invoice-company p{
 
-    margin:4px 0;
+    font-size:12px;
 
-    font-size:14px;
+    line-height:1.25;
 
-    line-height:1.6;
+    margin:2px 0;
 
 }
 
 .invoice-company h4{
 
-    margin-top:10px;
+    font-size:15px;
 
-    font-size:16px;
+    margin-top:5px;
 
 }
 
@@ -215,11 +215,11 @@ INFO SECTION
 
     display:grid;
 
-    grid-template-columns:1fr 420px;
+    grid-template-columns:48% 52%;
 
-    gap:25px;
+    gap:15px;
 
-    margin-bottom:18px;
+    align-items:start;
 
 }
 
@@ -237,9 +237,13 @@ INFO SECTION
 
     display:grid;
 
-    grid-template-columns:120px 15px 1fr;
+    grid-template-columns:105px 10px auto;
 
-    font-size:16px;
+    align-items:center;
+
+    white-space:nowrap;
+
+    font-size:14px;
 
 }
 
@@ -379,7 +383,7 @@ ITEM TABLE
 
     margin-top:10px;
 
-    font-size:14px;
+    font-size:12px;
 
 }
 
@@ -389,7 +393,7 @@ ITEM TABLE
 
     border:1px solid #444;
 
-    padding:12px 8px;
+    padding:6px;
 
     text-align:center;
 
@@ -405,7 +409,7 @@ ITEM TABLE
 
     border:1px solid #444;
 
-    padding:12px 8px;
+     padding:5px;
 
     text-align:center;
 
@@ -501,7 +505,7 @@ TOTALS
 
     grid-template-columns:180px 20px 1fr;
 
-    font-size:16px;
+    font-size:13px;
 
 }
 
@@ -511,7 +515,7 @@ TOTALS
 
     grid-template-columns:180px 20px 1fr;
 
-    font-size:20px;
+    font-size:17px;
 
     font-weight:700;
 
@@ -531,7 +535,7 @@ AMOUNT WORDS
 
 .amount-box{
 
-    width:62%;
+    width:58%;
 
     margin-left:auto;
 
@@ -727,7 +731,7 @@ FOOTER
 
     text-align:center;
 
-    font-size:14px;
+    font-size:12px;
 
     font-weight:600;
 
@@ -835,13 +839,13 @@ PRINT
 
     .invoice-print{
 
-    width:190mm !important;
+    width:794px !important;
 
     min-height:auto !important;
 
-    margin:auto !important;
+    margin:0 auto !important;
 
-    padding:8mm !important;
+    padding:15px !important;
 
     box-shadow:none !important;
 
@@ -849,7 +853,7 @@ PRINT
 
     overflow:hidden !important;
 
-    box-sizing:border-box !important;
+    box-sizing:border-box
 
 }
 
@@ -927,13 +931,17 @@ RESPONSIVE PREVIEW
 
     .invoice-print{
 
-        width:100%;
+    width:794px !important;
 
-        min-height:auto;
+    min-height:auto !important;
 
-        padding:20px;
+    padding:15px !important;
 
-    }
+    margin:0 auto !important;
+
+    box-sizing:border-box;
+
+}
 
     .invoice-top-section{
 
