@@ -1,4 +1,6 @@
 import React from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import "../css/sales/InvoicePrint.css";
 import {
   numberToWords
@@ -17,44 +19,46 @@ const amountInWords =
   settings
 );
 
-  const handleDownloadPDF = () => {
-  const element = document.getElementById("invoice-content");
+  const handleDownloadPDF = async () => {
+  const input = document.getElementById("invoice-content");
 
-  if (!element) {
+  if (!input) {
     alert("Invoice content not found.");
     return;
   }
 
-  if (!window.html2pdf) {
-    alert("PDF library not loaded.");
-    return;
+  const canvas = await html2canvas(input, {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    scrollY: -window.scrollY
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  const imgWidth = pdfWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = 0;
+
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+
+  heightLeft -= pdfHeight;
+
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
   }
 
-  const fileName = `${invoice.invoice_no}.pdf`;
-
-  const options = {
-    margin: 5,
-    filename: fileName,
-    image: {
-      type: "jpeg",
-      quality: 1
-    },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      scrollY: 0
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    }
-  };
-
-  window.html2pdf()
-    .set(options)
-    .from(element)
-    .save();
+  pdf.save(`${invoice.invoice_no}.pdf`);
 };
   return (
 
@@ -62,25 +66,27 @@ const amountInWords =
 
     <div className="invoice-print">
 
-      <div className="invoice-header">
+      <div className="invoice-actions">
 
-        <button
-  onClick={onClose}
->
-  Close
-</button>
-<button
-  onClick={() =>
-    window.print()
-  }
->
-  Print Invoice
-</button>
-        <button onClick={handleDownloadPDF}>
-  Download PDF
-</button>
-        <h1>TAX INVOICE</h1>
-        <div id="invoice-content">
+  <button onClick={onClose}>
+    Close
+  </button>
+
+  <button onClick={() => window.print()}>
+    Print Invoice
+  </button>
+
+  <button onClick={handleDownloadPDF}>
+    Download PDF
+  </button>
+
+</div>
+
+<div id="invoice-content">
+
+  <div className="invoice-header">
+
+    <h1>TAX INVOICE</h1>        
 
        <div className="company-header">
 
@@ -439,12 +445,15 @@ const amountInWords =
   )
 }
        
-    </div>
+        </div>   {/* invoice-totals */}
 
-        </div>
+  </div>     {/* invoice-header */}
 
-    </div>
-      </div>
+</div>       {/* invoice-content */}
+
+</div>       {/* invoice-print */}
+
+</div>       {/* invoice-overlay */}
     
       
   );
