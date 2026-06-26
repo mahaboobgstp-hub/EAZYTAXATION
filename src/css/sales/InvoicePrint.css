@@ -30,7 +30,7 @@
 
     color:#111;
 
-    padding:20px;
+    padding:0;
 
     margin:auto;
 
@@ -863,11 +863,25 @@ PRINT
 
     }
 
-    #invoice-content{
+   #invoice-content{
 
-        page-break-inside:avoid;
+    width:754px;
 
-    }
+    min-height:1083px;
+
+    padding:20px;
+
+    margin:0 auto;
+
+    background:#fff;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+
+    page-break-inside:avoid;
+
+}
 
     .invoice-table{
 
