@@ -451,7 +451,7 @@ const amountInWords =
 
 </div>       {/* invoice-content */}
 
-</div>       {/* invoice-print */}
+</div>       
 
 </div>       {/* invoice-overlay */}
     
