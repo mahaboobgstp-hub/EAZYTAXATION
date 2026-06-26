@@ -217,7 +217,7 @@ INFO SECTION
 
     grid-template-columns:48% 52%;
 
-    gap:12px;
+    gap:15px;
 
     align-items:start;
     margin-left: 20px;
@@ -230,7 +230,7 @@ INFO SECTION
 
     flex-direction:column;
 
-    gap:14px;
+    gap:12px;
 
 }
 
@@ -303,7 +303,7 @@ BANK BOX
 
     grid-template-columns:110px 15px 1fr;
 
-    margin:10px 0;
+    margin:6px 0;
 
     font-size:15px;
 
