@@ -43,7 +43,7 @@
 }
 .invoice-actions{
 
-    
+    margin:10px 0 18px 10px;
     margin-bottom:18px;
 
     display:flex;
@@ -54,7 +54,7 @@
 
 .invoice-actions button{
 
-    padding:15px 18px;
+    padding:8px 18px;
 
     border:none;
 
