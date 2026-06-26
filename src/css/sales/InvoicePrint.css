@@ -261,6 +261,8 @@ BANK BOX
 
 .bank-card{
 
+    width:97%;
+    margin-left:auto;
     border:1.5px solid #444;
 
     border-radius:14px;
@@ -313,6 +315,7 @@ ADDRESS BOX
 
 .party-box{
 
+    width:98%;
     border:1.5px solid #444;
 
     border-radius:14px;
@@ -321,7 +324,7 @@ ADDRESS BOX
 
     grid-template-columns:1fr 1px 1fr;
 
-    margin:18px 0 30px;
+    margin:15px auto 25px;
 
     min-height:170px;
 
@@ -375,13 +378,13 @@ ITEM TABLE
 
 .invoice-table{
 
-    width:100%;
+    width:98%;
 
     border-collapse:collapse;
 
     table-layout:fixed;
 
-    margin-top:10px;
+    margin:auto;
 
     font-size:12px;
 
@@ -481,12 +484,16 @@ TOTALS
 
 .summary-section{
 
+    width:98%;
+
+    margin:auto;
+
     display:grid;
+   
 
     grid-template-columns:1fr 360px;
 
-    margin-top:20px;
-
+   
 }
 
 .summary-right{
@@ -724,6 +731,7 @@ FOOTER
 .invoice-footer-strip{
 
     margin-top:35px;
+    width:98%;
 
     border-top:2px solid #222;
 
@@ -1003,7 +1011,7 @@ RESPONSIVE PREVIEW
 
     .amount-box{
 
-        width:100%;
+        width:60%;
 
         margin-left:0;
 
