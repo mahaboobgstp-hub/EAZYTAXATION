@@ -43,6 +43,7 @@
 }
 .invoice-actions{
 
+    
     margin-bottom:18px;
 
     display:flex;
@@ -53,7 +54,7 @@
 
 .invoice-actions button{
 
-    padding:8px 18px;
+    padding:15px 18px;
 
     border:none;
 
@@ -151,9 +152,9 @@ TOP
 
 .invoice-logo img{
 
-    max-width:110px;
+    max-width:200px;
 
-    max-height:150px;
+    max-height:250px;
 
     object-fit:contain;
 
