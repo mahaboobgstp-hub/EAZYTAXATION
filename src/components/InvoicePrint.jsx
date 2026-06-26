@@ -37,6 +37,9 @@ const amountInWords =
 >
   Print Invoice
 </button>
+        <button>
+      Download PDF
+    </button>
         <h1>TAX INVOICE</h1>
 
        <div className="company-header">
