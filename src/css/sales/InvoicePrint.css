@@ -217,10 +217,10 @@ INFO SECTION
 
     grid-template-columns:48% 52%;
 
-    gap:15px;
+    gap:12px;
 
     align-items:start;
-    margin-left: 10px;
+    margin-left: 20px;
 
 }
 
