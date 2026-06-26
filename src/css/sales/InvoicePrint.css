@@ -328,7 +328,7 @@ ADDRESS BOX
 
     margin:15px auto 25px;
 
-    min-height:170px;
+    min-height:auto;
 
 }
 
@@ -336,7 +336,7 @@ ADDRESS BOX
 
 .party-right{
 
-    padding:12px 22px;
+    padding:10px 18px;
 
 }
 
@@ -364,11 +364,11 @@ ADDRESS BOX
 
 .party-right p{
 
-    margin:10px 0;
+    margin:4px 0;
 
     font-size:15px;
 
-    line-height:1.45;
+    line-height:1.25;
 
 }
 
