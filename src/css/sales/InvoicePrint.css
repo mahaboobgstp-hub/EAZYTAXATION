@@ -174,7 +174,7 @@ TOP
     text-transform:uppercase;
 
     font-weight:700;
-    padding:10px;
+   
 }
 
 .invoice-company p{
@@ -184,8 +184,7 @@ TOP
     line-height:1.25;
 
     margin:2px 0;
-    padding:10px;
-
+   
 }
 
 .invoice-company h4{
