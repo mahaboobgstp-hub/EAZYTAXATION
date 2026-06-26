@@ -21,62 +21,48 @@ function InvoicePrint({
   console.log("Invoice Settings:", settings);
 
   const handleDownloadPDF = async () => {
-    const input = document.getElementById("invoice-content");
 
-    if (!input) {
-      alert("Invoice content not found.");
-      return;
-    }
+  const input = document.getElementById("invoice-content");
 
-    const canvas = await html2canvas(input, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      scrollY: -window.scrollY,
-    });
+  if (!input) {
+    alert("Invoice content not found.");
+    return;
+  }
 
-    const imgData = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(input, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    scrollY: 0,
+    logging: false,
+  });
 
-    const pdf = new jsPDF("p", "mm", "a4");
+  const imgData = canvas.toDataURL("image/png");
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
 
-    const imgWidth = pdfWidth;
-    const imgHeight =
-      (canvas.height * imgWidth) / canvas.width;
+  const pageWidth =
+pdf.internal.pageSize.getWidth();
 
-    let heightLeft = imgHeight;
-    let position = 0;
+const pageHeight =
+pdf.internal.pageSize.getHeight();
 
-    pdf.addImage(
-      imgData,
-      "PNG",
-      0,
-      position,
-      imgWidth,
-      imgHeight
-    );
+  pdf.addImage(
+    imgData,
+    "PNG",
+    0,
+    0,
+    pageWidth,
+    pageHeight
+  );
 
-    heightLeft -= pdfHeight;
+  pdf.save(`${invoice.invoice_no}.pdf`);
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(
-        imgData,
-        "PNG",
-        0,
-        position,
-        imgWidth,
-        imgHeight
-      );
-      heightLeft -= pdfHeight;
-    }
-
-    pdf.save(`${invoice.invoice_no}.pdf`);
-  };
-
+};
   return (
     <div className="invoice-overlay">
       <div className="invoice-print">
