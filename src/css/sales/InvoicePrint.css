@@ -269,6 +269,8 @@ BANK BOX
     padding:18px;
 
     position:relative;
+    max-width: 320px;
+    margin-left: auto;
 
 }
 
