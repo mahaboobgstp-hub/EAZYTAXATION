@@ -72,6 +72,7 @@ const amountInWords =
   Download PDF
 </button>
         <h1>TAX INVOICE</h1>
+        <div id="invoice-content">
 
        <div className="company-header">
 
@@ -435,6 +436,7 @@ const amountInWords =
         </div>
 
     </div>
+      </div>
     
       
   );
