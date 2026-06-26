@@ -45,20 +45,19 @@ function InvoicePrint({
     format: "a4",
   });
 
-  const pageWidth =
-pdf.internal.pageSize.getWidth();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+const pageHeight = pdf.internal.pageSize.getHeight();
 
-const pageHeight =
-pdf.internal.pageSize.getHeight();
+const margin = 5; // mm
 
-  pdf.addImage(
-    imgData,
-    "PNG",
-    0,
-    0,
-    pageWidth,
-    pageHeight
-  );
+pdf.addImage(
+  imgData,
+  "PNG",
+  margin,
+  margin,
+  pageWidth - (margin * 2),
+  pageHeight - (margin * 2)
+);
 
   pdf.save(`${invoice.invoice_no}.pdf`);
 
