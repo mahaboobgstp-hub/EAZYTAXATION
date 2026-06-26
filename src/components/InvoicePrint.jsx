@@ -17,6 +17,37 @@ const amountInWords =
   settings
 );
 
+  const handleDownloadPDF = () => {
+  const element = document.getElementById("invoice-content");
+
+  if (!element || !window.html2pdf) {
+    alert("PDF library not loaded.");
+    return;
+  }
+
+  const fileName = `${invoice.invoice_number}.pdf`;
+
+  window.html2pdf()
+    .set({
+      margin: 5,
+      filename: fileName,
+      image: {
+        type: "jpeg",
+        quality: 1
+      },
+      html2canvas: {
+        scale: 2,
+        useCORS: true
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait"
+      }
+    })
+    .from(element)
+    .save();
+};
   return (
 
     <div className="invoice-overlay">
@@ -37,9 +68,9 @@ const amountInWords =
 >
   Print Invoice
 </button>
-        <button>
-      Download PDF
-    </button>
+        <button onClick={handleDownloadPDF}>
+  Download PDF
+</button>
         <h1>TAX INVOICE</h1>
 
        <div className="company-header">
