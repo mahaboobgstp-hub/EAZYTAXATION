@@ -261,8 +261,6 @@ BANK BOX
 
 .bank-card{
 
-    width:97%;
-    margin-left:auto;
     border:1.5px solid #444;
 
     border-radius:14px;
@@ -306,7 +304,6 @@ BANK BOX
     font-size:15px;
 
 }
-
 /*==================================
 
 ADDRESS BOX
