@@ -20,31 +20,39 @@ const amountInWords =
   const handleDownloadPDF = () => {
   const element = document.getElementById("invoice-content");
 
-  if (!element || !window.html2pdf) {
+  if (!element) {
+    alert("Invoice content not found.");
+    return;
+  }
+
+  if (!window.html2pdf) {
     alert("PDF library not loaded.");
     return;
   }
 
-  const fileName = `${invoice.invoice_number}.pdf`;
+  const fileName = `${invoice.invoice_no}.pdf`;
+
+  const options = {
+    margin: 5,
+    filename: fileName,
+    image: {
+      type: "jpeg",
+      quality: 1
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    }
+  };
 
   window.html2pdf()
-    .set({
-      margin: 5,
-      filename: fileName,
-      image: {
-        type: "jpeg",
-        quality: 1
-      },
-      html2canvas: {
-        scale: 2,
-        useCORS: true
-      },
-      jsPDF: {
-        unit: "mm",
-        format: "a4",
-        orientation: "portrait"
-      }
-    })
+    .set(options)
     .from(element)
     .save();
 };
