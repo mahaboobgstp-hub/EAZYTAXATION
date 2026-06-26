@@ -453,7 +453,7 @@ const amountInWords =
 
 </div>       
 
-</div>       {/* invoice-overlay */}
+      
     
       
   );
