@@ -48,15 +48,15 @@ function InvoicePrint({
   const pageWidth = pdf.internal.pageSize.getWidth();
 const pageHeight = pdf.internal.pageSize.getHeight();
 
-const margin = 5; // mm
+const pdfMargin = 2;
 
 pdf.addImage(
-  imgData,
-  "PNG",
-  margin,
-  margin,
-  pageWidth - (margin * 2),
-  pageHeight - (margin * 2)
+    imgData,
+    "PNG",
+    pdfMargin,
+    pdfMargin,
+    pageWidth - pdfMargin * 2,
+    pageHeight - pdfMargin * 2
 );
 
   pdf.save(`${invoice.invoice_no}.pdf`);
