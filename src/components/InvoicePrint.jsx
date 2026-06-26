@@ -414,96 +414,45 @@ pdf.addImage(
 
           </table>
 
-          {/* ================= TOTALS ================= */}
+          {/* ================= SUMMARY ================= */}
 
-          <div className="summary-section">
+<div className="summary-section">
 
-            <div className="summary-left"></div>
+  <div className="summary-left">
 
-            <div className="summary-right">
+    <PrintAmountWords
+      amountInWords={amountInWords}
+    />
 
-              <div className="summary-row">
+  </div>
 
-                <span>Taxable Value</span>
+  <div className="summary-right">
 
-                <span>:</span>
+    <PrintTotals
+      rows={[
+        {
+          label: "Taxable Value",
+          value: `₹ ${invoice.taxable_value || 0}`,
+        },
+        {
+          label: "CGST",
+          value: `₹ ${invoice.cgst || 0}`,
+        },
+        {
+          label: "SGST",
+          value: `₹ ${invoice.sgst || 0}`,
+        },
+        {
+          label: "IGST",
+          value: `₹ ${invoice.igst || 0}`,
+        },
+      ]}
+      grandTotal={`₹ ${invoice.total_amount || 0}`}
+    />
 
-                <strong>
-                  ₹ {invoice.taxable_value}
-                </strong>
+  </div>
 
-              </div>
-
-              <div className="summary-row">
-
-                <span>CGST</span>
-
-                <span>:</span>
-
-                <strong>
-                  ₹ {invoice.cgst}
-                </strong>
-
-              </div>
-
-              <div className="summary-row">
-
-                <span>SGST</span>
-
-                <span>:</span>
-
-                <strong>
-                  ₹ {invoice.sgst}
-                </strong>
-
-              </div>
-
-              <div className="summary-row">
-
-                <span>IGST</span>
-
-                <span>:</span>
-
-                <strong>
-                  ₹ {invoice.igst}
-                </strong>
-
-              </div>
-
-              <div className="grand-total">
-
-                <span>Grand Total</span>
-
-                <span>:</span>
-
-                <strong>
-                  ₹ {invoice.total_amount}
-                </strong>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* ================= AMOUNT IN WORDS ================= */}
-
-          <div className="amount-box">
-
-            <div className="amount-label">
-
-              Amount in Words
-
-            </div>
-
-            <div className="amount-value">
-
-              {amountInWords}
-
-            </div>
-
-          </div>
-
+</div>
           {/* ================= BOTTOM ================= */}
 
           <div className="invoice-bottom">
