@@ -965,6 +965,7 @@ onChange={handleChange}
             <th>Particulars</th>
             <th>Qty</th>
             <th>HSN/SAC</th>
+            <th>UOM</th>
             <th>Rate</th>
             <th>GST %</th>
             <th>Amount</th>
