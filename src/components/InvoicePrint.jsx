@@ -418,7 +418,25 @@ pdf.addImage(
 
           <div className="summary-section">
 
-            <div className="summary-left"></div>
+            <div className="summary-left">
+             <div className="amount-box">
+
+            <div className="amount-label">
+
+              Amount in Words
+
+            </div>
+
+            <div className="amount-value">
+
+              {amountInWords}
+
+            </div>
+
+          </div>
+
+
+            </div>
 
             <div className="summary-right">
 
@@ -488,23 +506,7 @@ pdf.addImage(
 
           {/* ================= AMOUNT IN WORDS ================= */}
 
-          <div className="amount-box">
-
-            <div className="amount-label">
-
-              Amount in Words
-
-            </div>
-
-            <div className="amount-value">
-
-              {amountInWords}
-
-            </div>
-
-          </div>
-
-          {/* ================= BOTTOM ================= */}
+                   {/* ================= BOTTOM ================= */}
 
           <div className="invoice-bottom">
 
