@@ -10,6 +10,7 @@ import SalesInvoice from './pages/sales/SalesInvoice';
 import Items from './pages/masters/Items';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
+import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 
 function App() {
   return (
@@ -49,6 +50,10 @@ function App() {
           <Route
   path="/invoice-settings"
   element={<InvoiceSettings />}
+/>
+          <Route
+    path="/purchases"
+    element={<PurchaseInvoice />}
 />
           </Routes>
       </Layout>
