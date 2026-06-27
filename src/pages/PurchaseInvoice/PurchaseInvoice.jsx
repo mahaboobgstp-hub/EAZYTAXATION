@@ -6,6 +6,11 @@ import VendorSection from "./components/VendorSection";
 import PurchaseItemsTable from "./components/PurchaseItemsTable";
 import PurchaseTotals from "./components/PurchaseTotals";
 import PurchaseActions from "./components/PurchaseActions";
+import {
+
+    getVendorsForDropdown
+
+} from "../../services/purchaseInvoiceService";
 
 function PurchaseInvoice() {
 
@@ -55,6 +60,22 @@ function PurchaseInvoice() {
         grandTotal: 0
 
     });
+    const [vendors, setVendors] = useState([]);
+    const loadVendors = async () => {
+
+    try {
+
+        const data = await getVendorsForDropdown();
+
+        setVendors(data || []);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
 
     return (
 
@@ -70,7 +91,7 @@ function PurchaseInvoice() {
             />
 
             <VendorSection
-
+                vendors={vendors}
                 formData={formData}
                 setFormData={setFormData}
 
