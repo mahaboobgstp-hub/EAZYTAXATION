@@ -90,6 +90,20 @@ const loadCompanies = async () => {
 
         setCompanies(data || []);
 
+        if (data && data.length > 0) {
+
+            setFormData(prev => ({
+
+                ...prev,
+
+                company_id: data[0].id,
+                company_name: data[0].company_name,
+                company_state: data[0].state
+
+            }));
+
+        }
+
     } catch (error) {
 
         console.error(error);
@@ -97,21 +111,7 @@ const loadCompanies = async () => {
     }
 
 };
-    const loadItems = async () => {
-
-    try {
-
-        const data = await getItemsForDropdown();
-
-        setItemsMaster(data || []);
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
-};
+    
     useEffect(() => {
 
     loadCompanies();
