@@ -95,33 +95,45 @@ export async function savePurchaseInvoice(
     const invoiceId =
         headerData[0].id;
 
-    const itemsToInsert =
-        invoiceItems.map(
-            (item, index) => ({
+   const itemsToInsert = invoiceItems.map((item, index) => ({
 
-                invoice_id: invoiceId,
+    invoice_id: invoiceId,
 
-                line_no: index + 1,
+    line_no: index + 1,
 
-                item_id: item.item_id,
+    item_id: item.item_id,
 
-                item_name: item.item_name,
+    item_name: item.item_name,
 
-                hsn_sac: item.hsn_sac,
+    hsn_sac: item.hsn_sac,
 
-                particulars: item.item_name,
+    uom: item.uom,
 
-                qty: Number(item.qty),
+    qty: Number(item.qty) || 0,
 
-                rate: Number(item.rate),
+    rate: Number(item.rate) || 0,
 
-                gst_rate: Number(item.gst_rate),
+    gross_amount: Number(item.gross_amount) || 0,
 
-                amount: Number(item.amount)
+    discount_percent: Number(item.discount_percent) || 0,
 
-            })
-        );
+    discount_amount: Number(item.discount_amount) || 0,
 
+    taxable_value: Number(item.taxable_value) || 0,
+
+    gst_rate: Number(item.gst_rate) || 0,
+
+    cgst_amount: Number(item.cgst_amount) || 0,
+
+    sgst_amount: Number(item.sgst_amount) || 0,
+
+    igst_amount: Number(item.igst_amount) || 0,
+
+    line_total: Number(item.line_total) || 0,
+
+    remarks: item.remarks || ""
+
+}));
     const { error: itemError } =
         await supabase
             .from("purchase_invoice_items")
