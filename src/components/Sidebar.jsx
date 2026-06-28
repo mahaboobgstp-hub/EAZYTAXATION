@@ -160,7 +160,7 @@ function Sidebar() {
 
                     {
 
-                        mastersOpen
+                       openMenu === "masters"
 
                         ?
 
