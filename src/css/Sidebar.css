@@ -1,0 +1,289 @@
+/* ==========================================
+   SIDEBAR
+========================================== */
+
+.sidebar {
+
+    width: 280px;
+
+    min-width: 280px;
+
+    height: 100vh;
+
+    overflow-y: auto;
+
+    background: #1f2937;
+
+    color: #ffffff;
+
+    display: flex;
+
+    flex-direction: column;
+
+    border-right: 1px solid #374151;
+
+}
+
+/* ==========================================
+   LOGO
+========================================== */
+
+.sidebar-logo {
+
+    padding: 22px 20px;
+
+    border-bottom: 1px solid #374151;
+
+    text-align: center;
+
+}
+
+.sidebar-logo h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    color: #ffffff;
+
+}
+
+/* ==========================================
+   COMPANY SWITCH
+========================================== */
+
+.company-switch {
+
+    padding: 15px 20px;
+
+    border-bottom: 1px solid #374151;
+
+}
+
+.company-switch label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 12px;
+
+    color: #d1d5db;
+
+    text-transform: uppercase;
+
+    letter-spacing: .5px;
+
+}
+
+.company-switch select {
+
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border-radius: 6px;
+
+    border: 1px solid #4b5563;
+
+    background: #374151;
+
+    color: white;
+
+    outline: none;
+
+    cursor: pointer;
+
+}
+
+/* ==========================================
+   MENU
+========================================== */
+
+.sidebar-menu {
+
+    flex: 1;
+
+    padding: 10px 0;
+
+}
+
+/* ==========================================
+   MAIN LINK
+========================================== */
+
+.menu-item {
+
+    display: block;
+
+    padding: 13px 20px;
+
+    color: white;
+
+    text-decoration: none;
+
+    transition: .2s;
+
+    font-size: 15px;
+
+}
+
+.menu-item:hover {
+
+    background: #374151;
+
+}
+
+/* ==========================================
+   MENU HEADER
+========================================== */
+
+.menu-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 13px 20px;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    font-weight: 600;
+
+    font-size: 15px;
+
+    transition: .2s;
+
+}
+
+.menu-header:hover {
+
+    background: #374151;
+
+}
+
+/* ==========================================
+   SUB MENU
+========================================== */
+
+.submenu {
+
+    background: #111827;
+
+    border-left: 3px solid #2563eb;
+
+}
+
+/* ==========================================
+   SUBMENU LINK
+========================================== */
+
+.submenu-item {
+
+    display: block;
+
+    padding: 11px 20px 11px 40px;
+
+    color: #d1d5db;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    transition: .2s;
+
+}
+
+.submenu-item:hover {
+
+    background: #1f2937;
+
+    color: white;
+
+}
+
+/* ==========================================
+   ACTIVE LINK
+========================================== */
+
+.submenu-item.active,
+
+.menu-item.active {
+
+    background: #2563eb;
+
+    color: white;
+
+}
+
+/* ==========================================
+   SCROLLBAR
+========================================== */
+
+.sidebar::-webkit-scrollbar {
+
+    width: 7px;
+
+}
+
+.sidebar::-webkit-scrollbar-track {
+
+    background: #1f2937;
+
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+
+    background: #4b5563;
+
+    border-radius: 50px;
+
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+
+    background: #6b7280;
+
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width:900px){
+
+.sidebar{
+
+    width:240px;
+
+    min-width:240px;
+
+}
+
+.sidebar-logo h2{
+
+    font-size:18px;
+
+}
+
+.menu-header{
+
+    font-size:14px;
+
+}
+
+.submenu-item{
+
+    font-size:13px;
+
+}
+
+}
