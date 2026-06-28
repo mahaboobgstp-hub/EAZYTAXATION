@@ -1121,22 +1121,22 @@ onChange={handleChange}
 
         <h3>
           Taxable Value :
-          ₹ {taxableValue.toFixed(2)}
+          ₹ {formatAmount(taxableValue)}
         </h3>
 
        <h3>
   CGST :
-  ₹ {cgst.toFixed(2)}
+  ₹ {formatAmount(cgst)}
 </h3>
 
 <h3>
   SGST :
-  ₹ {sgst.toFixed(2)}
+  ₹ {formatAmount(sgst)}
 </h3>
 
 <h3>
   IGST :
-  ₹ {igst.toFixed(2)}
+  ₹ {formatAmount(igst)}
 </h3>
 
         <h2>
