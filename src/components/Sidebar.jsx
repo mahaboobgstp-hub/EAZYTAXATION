@@ -638,7 +638,7 @@ function Sidebar() {
 
                 {
 
-                    accountingOpen && (
+                    openMenu==="accounting" && (
 
                         <div className="submenu">
 
@@ -761,7 +761,7 @@ function Sidebar() {
 
                 <div
                     className="menu-title"
-                    onClick={() => setGSTOpen(!gstOpen)}
+                    onClick={() => toggleMenu("gst")}
                 >
 
                     <div className="menu-left">
@@ -790,7 +790,7 @@ function Sidebar() {
 
                 {
 
-                    gstOpen && (
+                    openMenu === "gst" && (
 
                         <div className="submenu">
 
@@ -841,7 +841,7 @@ function Sidebar() {
 
                 <div
                     className="menu-title"
-                    onClick={() => setReportsOpen(!reportsOpen)}
+                   onClick={() => toggleMenu("reports")}
                 >
 
                     <div className="menu-left">
@@ -870,7 +870,7 @@ function Sidebar() {
 
                 {
 
-                    reportsOpen && (
+                    openMenu === "reports" && (
 
                         <div className="submenu">
 
@@ -935,7 +935,7 @@ function Sidebar() {
 
                 <div
                     className="menu-title"
-                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    onClick={() => toggleMenu("settings")}
                 >
 
                     <div className="menu-left">
@@ -964,7 +964,7 @@ function Sidebar() {
 
                 {
 
-                    settingsOpen && (
+                    openMenu === "settings" && (
 
                         <div className="submenu">
 
