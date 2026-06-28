@@ -7,7 +7,8 @@ import '../../css/masters/Vendors.css';
 import {
   createVendor,
   getVendors,
-  updateVendor
+  updateVendor,
+  deleteVendor
 } from '../../services/vendorService';
 
 function Vendors() {
@@ -74,6 +75,29 @@ const handleEdit = (vendor) => {
         state: vendor.state
 
     });
+
+};
+  const handleDelete = async (id) => {
+
+    const confirmDelete = window.confirm(
+        "Are you sure you want to delete this vendor?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+
+        await deleteVendor(id);
+
+        alert("Vendor deleted successfully.");
+
+        loadVendors();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
 
 };
   const handleSubmit = async (e) => {
