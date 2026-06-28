@@ -166,6 +166,7 @@ function Items() {
             <th>Name</th>
             <th>Type</th>
             <th>HSN/SAC</th>
+            <th>UOM</th>
             <th>GST %</th>
             <th>Sales Rate</th>
           </tr>
@@ -182,6 +183,7 @@ function Items() {
               <td>{item.item_name}</td>
               <td>{item.item_type}</td>
               <td>{item.hsn_sac}</td>
+              <td>{item.uom}</td>
               <td>{item.gst_rate}</td>
               <td>{item.sales_rate}</td>
 
