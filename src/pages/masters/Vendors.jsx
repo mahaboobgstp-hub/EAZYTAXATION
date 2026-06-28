@@ -253,7 +253,7 @@ const handleEdit = (vendor) => {
               <td>
 
     <button
-        type="button"
+        type="button" style="margin-right: 10px";
         onClick={() => handleEdit(vendor)}
     >
         Edit
