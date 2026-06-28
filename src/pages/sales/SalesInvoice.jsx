@@ -965,7 +965,8 @@ onChange={handleChange}
             <th>Particulars</th>
             <th>Qty</th>
             <th>HSN/SAC</th>
-            <th>UOM</th>
+            
+            
             <th>Rate</th>
             <th>GST %</th>
             <th>Amount</th>
@@ -1031,16 +1032,7 @@ onChange={handleChange}
   {item.hsn_sac}
 </td>
               
-    {itemsMaster.map(masterItem => (
-
-      <option
-        key={masterItem.id}
-        value={masterItem.id}
-      >
-        {masterItem.item_name}
-      </option>
-
-    ))}
+    
 
 
 
