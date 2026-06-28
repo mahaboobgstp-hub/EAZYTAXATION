@@ -10,7 +10,8 @@ import {
 
     getCompaniesForDropdown,
     getVendorsForDropdown,
-    getItemsForDropdown
+    getItemsForDropdown,
+    savePurchaseInvoice
 
 } from "../../services/purchaseInvoiceService";
 
@@ -120,6 +121,98 @@ const loadCompanies = async () => {
     loadItems();
 
 }, []);
+
+    const handleSave = async () => {
+
+    try {
+
+        if (!formData.vendor_id) {
+
+            alert("Please select a vendor.");
+
+            return;
+
+        }
+
+        if (items.length === 0) {
+
+            alert("Please add at least one item.");
+
+            return;
+
+        }
+
+        const invoiceHeader = {
+
+            company_id: formData.company_id,
+
+            vendor_id: formData.vendor_id,
+
+            invoice_no: formData.invoice_no,
+
+            invoice_date: formData.invoice_date,
+
+            supplier_invoice_no: formData.supplier_invoice_no,
+
+            supplier_invoice_date: formData.supplier_invoice_date,
+
+            vehicle_no: formData.vehicle_no,
+
+            eway_bill_no: formData.eway_bill_no,
+
+            billing_address: formData.billing_address,
+
+            shipping_address: formData.shipping_address,
+
+            gstin: formData.gstin,
+
+            vendor_state: formData.vendor_state,
+
+            place_of_supply: formData.place_of_supply,
+
+            remarks: formData.remarks,
+
+            taxable: summary.taxable,
+
+            cgst: summary.cgst,
+
+            sgst: summary.sgst,
+
+            igst: summary.igst,
+
+            round_off: summary.roundOff,
+
+            grand_total: summary.grandTotal,
+
+            amount_in_words: summary.amountInWords || ""
+
+        };
+
+        await savePurchaseInvoice(
+
+            invoiceHeader,
+
+            items
+
+        );
+
+        alert(
+
+            "Purchase Invoice Saved Successfully."
+
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        alert(error.message);
+
+    }
+
+};
     return (
 
         <div className="purchase-page">
@@ -172,6 +265,7 @@ const loadCompanies = async () => {
                 items={items}
 
                 summary={summary}
+                onSave={handleSave}
 
             />
 
