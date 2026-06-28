@@ -86,6 +86,7 @@ eway_bill_no: '',
     item_id: '',
     item_name: '',
     hsn_sac: '',
+    unit:'',  
     gst_rate: 18,
     qty: 1,
     rate: 0,
@@ -305,6 +306,8 @@ selectedCustomer?.state || '',
 
         hsn_sac:
           selectedItem.hsn_sac,
+        uom:
+          selectedItem.uom,
 
         gst_rate:
           selectedItem.gst_rate,
@@ -965,7 +968,7 @@ onChange={handleChange}
             <th>Particulars</th>
             <th>Qty</th>
             <th>HSN/SAC</th>
-            
+            <th>UOM</th>
             
             <th>Rate</th>
             <th>GST %</th>
@@ -1028,14 +1031,23 @@ onChange={handleChange}
                 />
 
               </td>
+<td>
+
+<UomDropdown
+    name="unit"
+    value={item.unit}
+    onChange={(e) =>
+        handleItemChange(index, "unit", e.target.value)
+    }
+/>
+
+</td>
+              
              <td>
   {item.hsn_sac}
 </td>
               
     
-
-
-
               <td>
 
                 <input
@@ -1055,17 +1067,17 @@ onChange={handleChange}
 
               <td>
 
-                <input
-                  type="number"
-                  value={item.gst_rate}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      'gst_rate',
-                      e.target.value
-                    )
-                  }
-                />
+               <GstRateDropdown
+    name="gst_rate"
+    value={item.gst_rate}
+    onChange={(e) =>
+        handleItemChange(
+            index,
+            "gst_rate",
+            e.target.value
+        )
+    }
+/>
 
               </td>
 
