@@ -33,6 +33,7 @@ import {
 import {
   getStates
 } from "../../services/stateService";
+import { formatAmount } from "../../utils/amountFormatter";
 
 function SalesInvoice() {
 
@@ -1085,7 +1086,7 @@ onChange={handleChange}
               </td>
 
               <td>
-                {item.amount}
+                {formatAmount(item.amount)}
               </td>
 
               <td>
@@ -1140,7 +1141,7 @@ onChange={handleChange}
 
         <h2>
           Grand Total :
-          ₹ {grandTotal.toFixed(2)}
+          ₹ {formatAmount(grandTotal).toFixed(2)}
         </h2>
 
       </div>
