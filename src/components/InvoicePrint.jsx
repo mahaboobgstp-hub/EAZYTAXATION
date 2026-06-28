@@ -387,7 +387,7 @@ pdf.addImage(
                   </td>
 
                   <td>
-                    {item.uom}
+                    {item.unit}
                   </td>
 
                   <td>
