@@ -1031,21 +1031,7 @@ onChange={handleChange}
              <td>
   {item.hsn_sac}
 </td>
-              <select
-    value={item.item_id}
-    onChange={(e) =>
-      handleItemChange(
-        index,
-        'item_id',
-        e.target.value
-      )
-    }
-  >
-
-    <option value="">
-      Select UOM
-    </option>
-
+              
     {itemsMaster.map(masterItem => (
 
       <option
