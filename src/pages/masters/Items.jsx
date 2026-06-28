@@ -126,12 +126,14 @@ function Items() {
         />
 
         <UomDropdown
-    value={form.unit}
+    name="unit"
+    value={formData.unit}
     onChange={handleChange}
 />
 
 <GstRateDropdown
-    value={form.gst_rate}
+    name="gst_rate"
+    value={formData.gst_rate}
     onChange={handleChange}
 />
 
