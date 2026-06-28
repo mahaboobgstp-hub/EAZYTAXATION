@@ -6,7 +6,8 @@ import '../../css/masters/Vendors.css';
 
 import {
   createVendor,
-  getVendors
+  getVendors,
+  updateVendor
 } from '../../services/vendorService';
 
 function Vendors() {
@@ -81,7 +82,22 @@ const handleEdit = (vendor) => {
 
     try {
 
-      await createVendor(formData);
+      if (editingId) {
+
+    await updateVendor(
+        editingId,
+        formData
+    );
+
+    alert("Vendor Updated Successfully");
+
+} else {
+
+    await createVendor(formData);
+
+    alert("Vendor Saved Successfully");
+
+}
 
       alert('Vendor Saved Successfully');
 
