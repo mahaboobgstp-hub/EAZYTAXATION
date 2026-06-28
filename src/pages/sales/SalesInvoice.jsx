@@ -1141,7 +1141,7 @@ onChange={handleChange}
 
         <h2>
           Grand Total :
-          ₹ {formatAmount(grandTotal).toFixed(2)}
+          ₹ {formatAmount(grandTotal)}
         </h2>
 
       </div>
