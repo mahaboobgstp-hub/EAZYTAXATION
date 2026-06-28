@@ -511,8 +511,25 @@ pdf.addImage(
                    {/* ================= BOTTOM ================= */}
 
           <div className="invoice-bottom">
+       
+          <div className="invoice-bottom-left">
 
-           
+              {invoice?.remarks && (
+
+                <div className="remarks-box">
+
+                  <div className="box-title">
+
+                    Remarks
+
+                  </div>
+
+                  <div className="box-body">
+
+                    {invoice.remarks}
+
+                  </div>
+    
                 </div>
 
               )}
@@ -583,7 +600,8 @@ pdf.addImage(
             )}
 
         </div>
-
+</div>
+      </div>
       
 
     
