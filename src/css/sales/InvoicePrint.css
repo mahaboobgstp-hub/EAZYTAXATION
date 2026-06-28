@@ -561,7 +561,7 @@ AMOUNT WORDS
 
 .amount-label{
 
-    font-weight:400;
+    font-weight:600;
 
     font-family:"Times New Roman",serif;
 
@@ -571,7 +571,7 @@ AMOUNT WORDS
 
 .amount-value{
 
-    font-weight:600;
+    font-weight:200;
 
     line-height:1.7;
 
