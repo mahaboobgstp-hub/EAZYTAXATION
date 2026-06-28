@@ -1,0 +1,468 @@
+/* ==========================================================
+   EAZYTAXATION ERP V2 SIDEBAR
+========================================================== */
+
+*{
+    box-sizing:border-box;
+}
+
+.sidebar{
+
+    width:290px;
+    min-width:290px;
+    height:100vh;
+
+    position:fixed;
+    left:0;
+    top:0;
+
+    display:flex;
+    flex-direction:column;
+
+    background:linear-gradient(
+        180deg,
+        #111827 0%,
+        #1e293b 100%
+    );
+
+    color:#ffffff;
+
+    border-right:1px solid rgba(255,255,255,.06);
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+
+    z-index:999;
+
+}
+
+/* ==========================================================
+   LOGO
+========================================================== */
+
+.sidebar-logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    padding:25px;
+
+    border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.logo-icon{
+
+    width:52px;
+
+    height:52px;
+
+    border-radius:16px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    color:#fff;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #7c3aed
+    );
+
+    box-shadow:
+
+    0 12px 25px rgba(37,99,235,.35);
+
+}
+
+.sidebar-logo h2{
+
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    letter-spacing:.4px;
+
+}
+
+.sidebar-logo span{
+
+    font-size:12px;
+
+    color:#94a3b8;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+}
+
+/* ==========================================================
+   COMPANY CARD
+========================================================== */
+
+.company-card{
+
+    margin:18px;
+
+    padding:16px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(12px);
+
+    transition:.25s;
+
+    cursor:pointer;
+
+}
+
+.company-card:hover{
+
+    transform:translateY(-2px);
+
+    background:rgba(255,255,255,.08);
+
+}
+
+.company-icon{
+
+    width:48px;
+
+    height:48px;
+
+    border-radius:14px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-size:22px;
+
+    flex-shrink:0;
+
+}
+
+.company-details{
+
+    flex:1;
+
+}
+
+.company-details small{
+
+    display:block;
+
+    color:#94a3b8;
+
+    font-size:11px;
+
+    margin-bottom:5px;
+
+}
+
+.company-details h4{
+
+    margin:0;
+
+    color:white;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+.company-arrow{
+
+    color:#94a3b8;
+
+    font-size:18px;
+
+}
+
+/* ==========================================================
+   MENU
+========================================================== */
+
+.sidebar-menu{
+
+    padding:10px;
+
+    flex:1;
+
+}
+
+/* ==========================================================
+   MAIN MENU LINK
+========================================================== */
+
+.menu-link{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:14px 16px;
+
+    margin-bottom:8px;
+
+    border-radius:14px;
+
+    color:#dbe4ee;
+
+    text-decoration:none;
+
+    font-size:15px;
+
+    font-weight:500;
+
+    transition:.25s;
+
+}
+
+.menu-link svg{
+
+    font-size:19px;
+
+}
+
+.menu-link:hover{
+
+    background:rgba(255,255,255,.08);
+
+    transform:translateX(5px);
+
+}
+
+.menu-link.active{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #4f46e5
+    );
+
+    color:white;
+
+    box-shadow:
+
+    0 12px 24px rgba(37,99,235,.35);
+
+}
+
+/* ==========================================================
+   MENU TITLE
+========================================================== */
+
+.menu-title{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:14px 16px;
+
+    margin-top:6px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.menu-title:hover{
+
+    background:rgba(255,255,255,.06);
+
+}
+
+.menu-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+}
+
+.menu-left svg{
+
+    font-size:18px;
+
+}
+
+/* ==========================================================
+   SUB MENU
+========================================================== */
+
+.submenu{
+
+    margin:8px 0 16px 16px;
+
+    padding:10px;
+
+    border-radius:16px;
+
+    background:rgba(255,255,255,.04);
+
+    border:1px solid rgba(255,255,255,.05);
+
+}
+
+/* ==========================================================
+   SUB MENU LINK
+========================================================== */
+
+.submenu-link{
+
+    display:block;
+
+    padding:12px 18px;
+
+    margin-bottom:4px;
+
+    border-radius:12px;
+
+    color:#cbd5e1;
+
+    text-decoration:none;
+
+    font-size:14px;
+
+    transition:.25s;
+
+}
+
+.submenu-link:hover{
+
+    background:#2563eb;
+
+    color:white;
+
+    transform:translateX(5px);
+
+}
+
+.submenu-link.active{
+
+    background:linear-gradient(
+
+        135deg,
+
+        #2563eb,
+
+        #4f46e5
+
+    );
+
+    color:white;
+
+}
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+.sidebar::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+.sidebar::-webkit-scrollbar-track{
+
+    background:transparent;
+
+}
+
+.sidebar::-webkit-scrollbar-thumb{
+
+    background:#334155;
+
+    border-radius:20px;
+
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover{
+
+    background:#475569;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:992px){
+
+.sidebar{
+
+    width:250px;
+
+    min-width:250px;
+
+}
+
+.sidebar-logo{
+
+    padding:18px;
+
+}
+
+.company-card{
+
+    margin:14px;
+
+}
+
+.logo-icon{
+
+    width:44px;
+
+    height:44px;
+
+}
+
+}
