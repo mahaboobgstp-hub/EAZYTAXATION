@@ -183,7 +183,7 @@ function Items() {
               <td>{item.item_name}</td>
               <td>{item.item_type}</td>
               <td>{item.hsn_sac}</td>
-              <td>{item.uom}</td>
+              <td>{item.unit}</td>
               <td>{item.gst_rate}</td>
               <td>{item.sales_rate}</td>
 
