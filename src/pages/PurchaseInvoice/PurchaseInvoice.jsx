@@ -219,6 +219,21 @@ console.log("Vendor ID:", formData.vendor_id);
     }
 
 };
+    const loadItems = async () => {
+
+    try {
+
+        const data = await getItemsForDropdown();
+
+        setItemsMaster(data || []);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
     return (
 
         <div className="purchase-page">
