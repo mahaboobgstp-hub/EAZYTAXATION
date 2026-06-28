@@ -249,7 +249,7 @@ const handleEdit = (vendor) => {
                 <td>{vendor.pan}</td>
                 <td>{vendor.mobile}</td>
                 <td>{vendor.email}</td>
-              </tr>
+              
               <td>
 
     <button
@@ -267,6 +267,8 @@ const handleEdit = (vendor) => {
     </button>
 
 </td>
+                </tr>
+              
             ))
 
           ) : (
