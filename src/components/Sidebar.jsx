@@ -13,7 +13,6 @@ import {
     FiShoppingCart,
     FiTruck,
     FiDollarSign,
-    FiBuilding,
     FiCreditCard,
     FiBookOpen,
     FiPackage,
@@ -88,7 +87,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 <div className="company-icon">
 
-                    <FiBuilding />
+                    <FiBriefcase />    
 
                 </div>
 
