@@ -264,8 +264,8 @@ selectedCustomer?.state || '',
       item_name: '',
       hsn_sac: '',
       unit:'',
-      gst_rate: 18,
-      qty: 1,
+      gst_rate: '',
+      qty: 0,
       rate: 0,
       amount: 0
     }
