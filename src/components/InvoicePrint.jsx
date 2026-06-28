@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import "../css/sales/InvoicePrint.css";
 import { numberToWords } from "../utils/numberToWords";
 import UomDropdown from "./dropdowns/UomDropdown";
+import { formatAmount } from "../utils/amountFormatter";
 
 function InvoicePrint({
   invoice,
