@@ -308,7 +308,7 @@ selectedCustomer?.state || '',
 
         hsn_sac:
           selectedItem.hsn_sac,
-        uom:
+        unit:
           selectedItem.unit,
 
         gst_rate:
