@@ -22,3 +22,13 @@ export async function getItems() {
 
     return data;
 }
+export async function deleteItem(id) {
+
+    const { error } = await supabase
+        .from("items")
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+}
