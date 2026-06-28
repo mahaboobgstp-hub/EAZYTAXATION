@@ -1168,7 +1168,7 @@ onChange={handleChange}
               <td>{invoice.invoice_no}</td>
               <td>{invoice.invoice_date}</td>
               <td>{invoice.customer_name}</td>
-              <td>{invoice.total_amount}</td>
+              <td>{formatAmount(invoice.total_amount)}</td>
 
 <td>
 
