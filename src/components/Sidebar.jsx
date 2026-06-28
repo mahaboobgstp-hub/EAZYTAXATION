@@ -536,7 +536,7 @@ function Sidebar() {
 
                 <div
                     className="menu-title"
-                    onClick={() => setBankingOpen(!bankingOpen)}
+                    onClick={()=>toggleMenu("banking")}
                 >
 
                     <div className="menu-left">
@@ -565,7 +565,7 @@ function Sidebar() {
 
                 {
 
-                    bankingOpen && (
+                    openMenu==="banking" && (
 
                         <div className="submenu">
 
