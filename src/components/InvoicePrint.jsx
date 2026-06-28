@@ -584,9 +584,9 @@ pdf.addImage(
 
         </div>
 
-      </div>
+      
 
-    </div>
+    
 
   );
 
