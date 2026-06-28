@@ -507,7 +507,7 @@ function Sidebar() {
 
                 {
 
-                    expenseOpen && (
+                    openMenu==="expense" && (
 
                         <div className="submenu">
 
