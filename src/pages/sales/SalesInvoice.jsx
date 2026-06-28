@@ -637,6 +637,7 @@ const editInvoice = async (
         item_id: item.item_id,
         item_name: item.item_name,
         hsn_sac: item.hsn_sac,
+        unit: item.unit,
         gst_rate: item.gst_rate,
         qty: item.qty,
         rate: item.rate,
