@@ -263,6 +263,7 @@ selectedCustomer?.state || '',
       item_id: '',
       item_name: '',
       hsn_sac: '',
+      unit:'',
       gst_rate: 18,
       qty: 1,
       rate: 0,
@@ -308,7 +309,7 @@ selectedCustomer?.state || '',
         hsn_sac:
           selectedItem.hsn_sac,
         uom:
-          selectedItem.uom,
+          selectedItem.unit,
 
         gst_rate:
           selectedItem.gst_rate,
@@ -506,6 +507,7 @@ await printInvoice(
         item_id: '',
         item_name: '',
         hsn_sac: '',
+        unit:'',
         gst_rate: 18,
         qty: 1,
         rate: 0,
