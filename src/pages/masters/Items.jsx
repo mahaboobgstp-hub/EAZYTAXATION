@@ -170,6 +170,7 @@ function Items() {
             <th>UOM</th>
             <th>GST %</th>
             <th>Sales Rate</th>
+            <th>Action</th>
           </tr>
 
         </thead>
@@ -187,6 +188,21 @@ function Items() {
               <td>{item.unit}</td>
               <td>{item.gst_rate}</td>
               <td>{item.sales_rate}</td>
+              <td>
+
+<button
+    onClick={() => handleEdit(item)}
+>
+    Edit
+</button>
+
+<button
+    onClick={() => handleDelete(item.id)}
+>
+    Delete
+</button>
+
+</td>
 
             </tr>
 
