@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import "../css/sales/InvoicePrint.css";
 import { numberToWords } from "../utils/numberToWords";
+import UomDropdown from "/dropdowns/UomDropdown";
 
 function InvoicePrint({
   invoice,
