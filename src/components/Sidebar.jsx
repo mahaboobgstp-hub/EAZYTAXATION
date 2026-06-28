@@ -478,7 +478,7 @@ function Sidebar() {
 
                 <div
                     className="menu-title"
-                    onClick={() => setExpenseOpen(!expenseOpen)}
+                    onClick={()=>toggleMenu("expense")}
                 >
 
                     <div className="menu-left">
