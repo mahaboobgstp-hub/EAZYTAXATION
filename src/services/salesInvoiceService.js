@@ -94,7 +94,7 @@ export async function saveSalesInvoice(
                 item_name: item.item_name,
 
                 hsn_sac: item.hsn_sac,
-
+                unit: item.unit,
                 particulars: item.item_name,
 
                 qty: Number(item.qty),
@@ -209,6 +209,7 @@ export async function updateSalesInvoice(
                 item_name: item.item_name,
 
                 hsn_sac: item.hsn_sac,
+                unit: item.unit,
 
                 particulars: item.item_name,
 
