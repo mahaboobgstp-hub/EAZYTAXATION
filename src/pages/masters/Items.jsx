@@ -32,6 +32,7 @@ function Items() {
     try {
 
       const data = await getItems();
+      console.log("Items from Supabase:", data);
 
       setItems(data || []);
 
