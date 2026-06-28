@@ -328,7 +328,7 @@ function Sidebar() {
 
                     {
 
-                        salesOpen
+                       openMenu === "sales"
 
                             ? <FiChevronDown />
 
@@ -415,7 +415,7 @@ function Sidebar() {
 
                     {
 
-                        purchaseOpen
+                       openMenu === "purchase"
 
                             ? <FiChevronDown />
 
@@ -495,7 +495,7 @@ function Sidebar() {
 
                     {
 
-                        expenseOpen
+                        openMenu === "expense"
 
                             ? <FiChevronDown />
 
@@ -553,7 +553,7 @@ function Sidebar() {
 
                     {
 
-                        bankingOpen
+                       openMenu === "banking"
 
                             ? <FiChevronDown />
 
@@ -626,7 +626,7 @@ function Sidebar() {
 
                     {
 
-                        accountingOpen
+                        openMenu === "accounting"
 
                             ? <FiChevronDown />
 
@@ -706,7 +706,7 @@ function Sidebar() {
 
                     {
 
-                        inventoryOpen
+                       openMenu === "inventory"
 
                             ? <FiChevronDown />
 
@@ -778,7 +778,7 @@ function Sidebar() {
 
                     {
 
-                        gstOpen
+                       openMenu === "gst"
 
                             ? <FiChevronDown />
 
@@ -858,7 +858,7 @@ function Sidebar() {
 
                     {
 
-                        reportsOpen
+                        openMenu === "reports"
 
                             ? <FiChevronDown />
 
@@ -952,7 +952,7 @@ function Sidebar() {
 
                     {
 
-                        settingsOpen
+                        openMenu === "settings"
 
                             ? <FiChevronDown />
 
