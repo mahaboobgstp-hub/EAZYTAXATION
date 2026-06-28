@@ -11,6 +11,7 @@ import {
 function Items() {
 
   const [items, setItems] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     item_code: '',
@@ -48,7 +49,24 @@ function Items() {
       [e.target.name]: e.target.value
     });
   };
+const handleEdit = (item) => {
 
+    setEditingId(item.id);
+
+    setFormData({
+
+        item_code: item.item_code,
+        item_name: item.item_name,
+        item_type: item.item_type,
+        hsn_sac: item.hsn_sac,
+        unit: item.unit,
+        gst_rate: item.gst_rate,
+        sales_rate: item.sales_rate,
+        purchase_rate: item.purchase_rate
+
+    });
+
+};
   const handleSubmit = async (e) => {
 
     e.preventDefault();
@@ -153,8 +171,8 @@ function Items() {
         />
 
         <button type="submit">
-          Save Item
-        </button>
+    {editingId ? "Update Item" : "Save Item"}
+</button>
 
       </form>
 
