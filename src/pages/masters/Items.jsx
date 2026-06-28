@@ -5,7 +5,8 @@ import '../../css/masters/Items.css';
 
 import {
   createItem,
-  getItems
+  getItems,
+  deleteItem
 } from '../../services/itemService';
 
 function Items() {
@@ -65,6 +66,29 @@ const handleEdit = (item) => {
         purchase_rate: item.purchase_rate
 
     });
+
+};
+  const handleDelete = async (id) => {
+
+    const confirmDelete = window.confirm(
+        "Are you sure you want to delete this item?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+
+        await deleteItem(id);
+
+        alert("Item deleted successfully.");
+
+        loadItems();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
 
 };
   const handleSubmit = async (e) => {
@@ -209,12 +233,14 @@ const handleEdit = (item) => {
               <td>
 
 <button
+    type="button"
     onClick={() => handleEdit(item)}
 >
     Edit
 </button>
 
 <button
+    type="button"
     onClick={() => handleDelete(item.id)}
 >
     Delete
