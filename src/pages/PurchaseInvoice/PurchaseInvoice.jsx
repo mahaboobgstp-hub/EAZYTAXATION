@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./PurchaseInvoice.css";
 
 import PurchaseHeader from "./components/PurchaseHeader";
@@ -8,7 +8,9 @@ import PurchaseTotals from "./components/PurchaseTotals";
 import PurchaseActions from "./components/PurchaseActions";
 import {
 
-    getVendorsForDropdown
+    getCompaniesForDropdown,
+    getVendorsForDropdown,
+    getItemsForDropdown
 
 } from "../../services/purchaseInvoiceService";
 
@@ -61,6 +63,9 @@ function PurchaseInvoice() {
 
     });
     const [vendors, setVendors] = useState([]);
+    const [companies, setCompanies] = useState([]);
+
+const [itemsMaster, setItemsMaster] = useState([]);
     const loadVendors = async () => {
 
     try {
@@ -76,7 +81,45 @@ function PurchaseInvoice() {
     }
 
 };
+const loadCompanies = async () => {
 
+    try {
+
+        const data = await getCompaniesForDropdown();
+
+        setCompanies(data || []);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
+    const loadItems = async () => {
+
+    try {
+
+        const data = await getItemsForDropdown();
+
+        setItemsMaster(data || []);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
+    useEffect(() => {
+
+    loadCompanies();
+
+    loadVendors();
+
+    loadItems();
+
+}, []);
     return (
 
         <div className="purchase-page">
@@ -84,7 +127,7 @@ function PurchaseInvoice() {
             <h2>Purchase Invoice</h2>
 
             <PurchaseHeader
-
+                companies={companies}
                 formData={formData}
                 setFormData={setFormData}
 
@@ -104,6 +147,11 @@ function PurchaseInvoice() {
                 items={items}
 
                 setItems={setItems}
+                itemsMaster={itemsMaster}
+
+    companyState={formData.company_state}
+
+    placeOfSupply={formData.place_of_supply}
 
                 summary={summary}
 
