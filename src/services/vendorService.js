@@ -37,3 +37,15 @@ export async function updateVendor(
     }
 
 }
+export async function deleteVendor(id) {
+
+    const { error } = await supabase
+        .from("vendors")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        throw error;
+    }
+
+}
