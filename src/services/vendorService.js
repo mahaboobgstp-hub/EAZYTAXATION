@@ -22,3 +22,18 @@ export async function getVendors() {
 
     return data;
 }
+export async function updateVendor(
+    id,
+    vendorData
+) {
+
+    const { error } = await supabase
+        .from("vendors")
+        .update(vendorData)
+        .eq("id", id);
+
+    if (error) {
+        throw error;
+    }
+
+}
