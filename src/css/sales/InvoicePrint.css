@@ -546,7 +546,7 @@ AMOUNT WORDS
 
     width:58%;
 
-    margin-left:auto;
+    margin-left:20px;
 
     margin-top:20px;
 
@@ -556,17 +556,12 @@ AMOUNT WORDS
 
     padding:16px 18px;
 
-    display:grid;
-
-    grid-template-columns:170px 1fr;
-
-    gap:18px;
 
 }
 
 .amount-label{
 
-    font-weight:700;
+    font-weight:400;
 
     font-family:"Times New Roman",serif;
 
@@ -580,7 +575,7 @@ AMOUNT WORDS
 
     line-height:1.7;
 
-    font-size:17px;
+    font-size:14px;
 
 }
 /*==================================
