@@ -187,7 +187,13 @@ const loadCompanies = async () => {
             amount_in_words: summary.amountInWords || ""
 
         };
+console.log("Invoice Header");
+console.table(invoiceHeader);
 
+console.log("Invoice Items");
+console.table(items);
+        console.log("Company ID:", formData.company_id);
+console.log("Vendor ID:", formData.vendor_id);
         await savePurchaseInvoice(
 
             invoiceHeader,
