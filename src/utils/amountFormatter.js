@@ -1,0 +1,10 @@
+export function formatAmount(value) {
+
+    const amount = Number(value) || 0;
+
+    return amount.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+}
