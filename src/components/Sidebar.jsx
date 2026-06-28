@@ -6,6 +6,23 @@ import "../css/Sidebar.css";
 function Sidebar() {
 
     const [mastersOpen, setMastersOpen] = useState(true);
+    const [salesOpen, setSalesOpen] = useState(false);
+
+const [purchasesOpen, setPurchasesOpen] = useState(false);
+
+const [expensesOpen, setExpensesOpen] = useState(false);
+
+const [bankingOpen, setBankingOpen] = useState(false);
+
+const [accountingOpen, setAccountingOpen] = useState(false);
+
+const [inventoryOpen, setInventoryOpen] = useState(false);
+
+const [gstOpen, setGSTOpen] = useState(false);
+
+const [reportsOpen, setReportsOpen] = useState(false);
+
+const [settingsOpen, setSettingsOpen] = useState(false);
 
     return (
 
