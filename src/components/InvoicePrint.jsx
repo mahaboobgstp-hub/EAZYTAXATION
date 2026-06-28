@@ -404,7 +404,7 @@ pdf.addImage(
                   </td>
 
                   <td>
-                    {item.amount}
+                    {formatAmount(item.amount)}
                   </td>
 
                 </tr>
@@ -448,7 +448,7 @@ pdf.addImage(
                 <span>:</span>
 
                 <strong>
-                  ₹ {invoice.taxable_value}
+                  ₹ {formatAmount(invoice.taxable_value)}
                 </strong>
 
               </div>
@@ -460,7 +460,7 @@ pdf.addImage(
                 <span>:</span>
 
                 <strong>
-                  ₹ {invoice.cgst}
+                  ₹ {formatAmount(invoice.cgst)}
                 </strong>
 
               </div>
@@ -472,7 +472,7 @@ pdf.addImage(
                 <span>:</span>
 
                 <strong>
-                  ₹ {invoice.sgst}
+                  ₹ {formatAmount(invoice.sgst)}
                 </strong>
 
               </div>
@@ -484,7 +484,7 @@ pdf.addImage(
                 <span>:</span>
 
                 <strong>
-                  ₹ {invoice.igst}
+                  ₹ {formatAmount(invoice.igst)}
                 </strong>
 
               </div>
@@ -496,7 +496,7 @@ pdf.addImage(
                 <span>:</span>
 
                 <strong>
-                  ₹ {invoice.total_amount}
+                  ₹ {formatAmount(invoice.total_amount)}
                 </strong>
 
               </div>
