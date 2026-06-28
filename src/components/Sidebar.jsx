@@ -85,7 +85,144 @@ const [settingsOpen, setSettingsOpen] = useState(false);
                     🏠 Dashboard
 
                 </Link>
+
                                 {/* =======================
+                    MASTERS
+                ======================= */}
+
+                <div
+                    className="menu-header"
+                    onClick={() =>
+                        setMastersOpen(
+                            !mastersOpen
+                        )
+                    }
+                >
+
+                    <span>
+
+                        Masters
+
+                    </span>
+
+                    <span>
+
+                        {
+
+                            mastersOpen
+
+                                ? "▼"
+
+                                : "▶"
+
+                        }
+
+                    </span>
+
+                </div>
+
+                {
+
+                    mastersOpen && (
+
+                        <div className="submenu">
+
+                            <Link
+                                to="/"
+                                className="submenu-item"
+                            >
+
+                                Company
+
+                            </Link>
+
+                            <Link
+                                to="/customers"
+                                className="submenu-item"
+                            >
+
+                                Customers
+
+                            </Link>
+
+                            <Link
+                                to="/vendors"
+                                className="submenu-item"
+                            >
+
+                                Vendors
+
+                            </Link>
+
+                            <Link
+                                to="/items"
+                                className="submenu-item"
+                            >
+
+                                Items
+
+                            </Link>
+
+                            <Link
+                                to="/expense-categories"
+                                className="submenu-item"
+                            >
+
+                                Expense Categories
+
+                            </Link>
+
+                            <Link
+                                to="/asset-categories"
+                                className="submenu-item"
+                            >
+
+                                Asset Categories
+
+                            </Link>
+
+                            <Link
+                                to="/banks"
+                                className="submenu-item"
+                            >
+
+                                Banks
+
+                            </Link>
+
+                            <Link
+                                to="/payment-terms"
+                                className="submenu-item"
+                            >
+
+                                Payment Terms
+
+                            </Link>
+
+                            <Link
+                                to="/uom"
+                                className="submenu-item"
+                            >
+
+                                Units (UOM)
+
+                            </Link>
+
+                            <Link
+                                to="/gst-rates"
+                                className="submenu-item"
+                            >
+
+                                GST Rates
+
+                            </Link>
+
+                        </div>
+
+                    )
+
+                }
+                 {/* =======================
                     SALES
                 ======================= */}
 
@@ -892,142 +1029,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
                     )
 
                 }
-                {/* =======================
-                    MASTERS
-                ======================= */}
 
-                <div
-                    className="menu-header"
-                    onClick={() =>
-                        setMastersOpen(
-                            !mastersOpen
-                        )
-                    }
-                >
-
-                    <span>
-
-                        Masters
-
-                    </span>
-
-                    <span>
-
-                        {
-
-                            mastersOpen
-
-                                ? "▼"
-
-                                : "▶"
-
-                        }
-
-                    </span>
-
-                </div>
-
-                {
-
-                    mastersOpen && (
-
-                        <div className="submenu">
-
-                            <Link
-                                to="/"
-                                className="submenu-item"
-                            >
-
-                                Company
-
-                            </Link>
-
-                            <Link
-                                to="/customers"
-                                className="submenu-item"
-                            >
-
-                                Customers
-
-                            </Link>
-
-                            <Link
-                                to="/vendors"
-                                className="submenu-item"
-                            >
-
-                                Vendors
-
-                            </Link>
-
-                            <Link
-                                to="/items"
-                                className="submenu-item"
-                            >
-
-                                Items
-
-                            </Link>
-
-                            <Link
-                                to="/expense-categories"
-                                className="submenu-item"
-                            >
-
-                                Expense Categories
-
-                            </Link>
-
-                            <Link
-                                to="/asset-categories"
-                                className="submenu-item"
-                            >
-
-                                Asset Categories
-
-                            </Link>
-
-                            <Link
-                                to="/banks"
-                                className="submenu-item"
-                            >
-
-                                Banks
-
-                            </Link>
-
-                            <Link
-                                to="/payment-terms"
-                                className="submenu-item"
-                            >
-
-                                Payment Terms
-
-                            </Link>
-
-                            <Link
-                                to="/uom"
-                                className="submenu-item"
-                            >
-
-                                Units (UOM)
-
-                            </Link>
-
-                            <Link
-                                to="/gst-rates"
-                                className="submenu-item"
-                            >
-
-                                GST Rates
-
-                            </Link>
-
-                        </div>
-
-                    )
-
-                }
 
             </div>
 
