@@ -946,12 +946,7 @@ onChange={handleChange}
   onChange={handleChange}
 />
 
-        <textarea
-          name="remarks"
-          placeholder="Remarks"
-          value={formData.remarks}
-          onChange={handleChange}
-        />
+       
 
        <button type="submit">
 
