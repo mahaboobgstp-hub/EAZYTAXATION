@@ -13,6 +13,7 @@ function Vendors() {
 
   const [vendors, setVendors] = useState([]);
   const [states, setStates] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     vendor_name: '',
@@ -58,7 +59,22 @@ const loadStates = async () => {
       [e.target.name]: e.target.value
     });
   };
+const handleEdit = (vendor) => {
 
+    setEditingId(vendor.id);
+
+    setFormData({
+
+        vendor_name: vendor.vendor_name,
+        gstin: vendor.gstin,
+        phone: vendor.phone,
+        email: vendor.email,
+        address: vendor.address,
+        state: vendor.state
+
+    });
+
+};
   const handleSubmit = async (e) => {
 
     e.preventDefault();
@@ -163,8 +179,8 @@ const loadStates = async () => {
         />
 
         <button type="submit">
-          Save Vendor
-        </button>
+    {editingId ? "Update Vendor" : "Save Vendor"}
+</button>
 
       </form>
 
@@ -177,6 +193,7 @@ const loadStates = async () => {
             <th>PAN</th>
             <th>Mobile</th>
             <th>Email</th>
+            <th>Action</th>
           </tr>
         </thead>
 
@@ -193,7 +210,23 @@ const loadStates = async () => {
                 <td>{vendor.mobile}</td>
                 <td>{vendor.email}</td>
               </tr>
+              <td>
 
+    <button
+        type="button"
+        onClick={() => handleEdit(vendor)}
+    >
+        Edit
+    </button>
+
+    <button
+        type="button"
+        onClick={() => handleDelete(vendor.id)}
+    >
+        Delete
+    </button>
+
+</td>
             ))
 
           ) : (
