@@ -28,22 +28,22 @@ import "../css/Sidebar.css";
 
 function Sidebar() {
 
-    const [mastersOpen, setMastersOpen] = useState(true);
-  const [salesOpen, setSalesOpen] = useState(false);
+    const [openMenu, setOpenMenu] = useState("sales");
+    const toggleMenu = (menuName) => {
 
-const [purchaseOpen, setPurchaseOpen] = useState(false);
+    if(openMenu===menuName){
 
-const [expenseOpen, setExpenseOpen] = useState(false);
-  const [bankingOpen, setBankingOpen] = useState(false);
+        setOpenMenu("");
 
-const [accountingOpen, setAccountingOpen] = useState(false);
+    }
 
-const [inventoryOpen, setInventoryOpen] = useState(false);
-  const [gstOpen, setGSTOpen] = useState(false);
+    else{
 
-const [reportsOpen, setReportsOpen] = useState(false);
+        setOpenMenu(menuName);
 
-const [settingsOpen, setSettingsOpen] = useState(false);
+    }
+
+};
 
     return (
 
@@ -143,16 +143,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                     className="menu-title"
 
-                    onClick={()=>
-
-                        setMastersOpen(
-
-                            !mastersOpen
-
-                        )
-
-                    }
-
+                    onClick={()=>toggleMenu("masters")}
                 >
 
                     <div className="menu-left">
@@ -185,7 +176,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 {
 
-                    mastersOpen && (
+                    openMenu==="masters" && (
 
                         <div className="submenu">
 
@@ -320,7 +311,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 <div
                     className="menu-title"
-                    onClick={() => setSalesOpen(!salesOpen)}
+                    onClick={()=>toggleMenu("sales")}
                 >
 
                     <div className="menu-left">
@@ -349,7 +340,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 {
 
-                    salesOpen && (
+                    openMenu==="sales" && (
 
                         <div className="submenu">
 
@@ -407,7 +398,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 <div
                     className="menu-title"
-                    onClick={() => setPurchaseOpen(!purchaseOpen)}
+                    onClick={()=>toggleMenu("purchase")}
                 >
 
                     <div className="menu-left">
@@ -436,7 +427,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 {
 
-                    purchaseOpen && (
+                    openMenu==="purchase" && (
 
                         <div className="submenu">
 
@@ -618,7 +609,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 <div
                     className="menu-title"
-                    onClick={() => setAccountingOpen(!accountingOpen)}
+                    onClick={()=>toggleMenu("accounting")}
                 >
 
                     <div className="menu-left">
@@ -698,7 +689,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 <div
                     className="menu-title"
-                    onClick={() => setInventoryOpen(!inventoryOpen)}
+                    onClick={()=>toggleMenu("inventory")}
                 >
 
                     <div className="menu-left">
@@ -727,7 +718,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
 
                 {
 
-                    inventoryOpen && (
+                    openMenu==="inventory" && (
 
                         <div className="submenu">
 
