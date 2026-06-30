@@ -11,6 +11,7 @@ import Items from './pages/masters/Items';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
+import SalesRegister from "./pages/sales/SalesRegister";
 
 function App() {
   return (
@@ -56,6 +57,13 @@ function App() {
     element={<PurchaseInvoice />}
 />
           </Routes>
+        <Route
+
+    path="/sales-register"
+
+    element={<SalesRegister />}
+
+/>
       </Layout>
 
     </BrowserRouter>
