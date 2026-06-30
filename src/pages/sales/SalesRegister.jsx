@@ -754,10 +754,10 @@ setCustomerDetails(
   }
 };
   
-  return(
+  return (
 
 
-
+<div className="sales-register">
 
 <h3>Previous Invoices</h3>
 
@@ -879,6 +879,6 @@ setCustomerDetails(
     </div>
   );
 }
-
+     
 export default SalesRegister;
 
