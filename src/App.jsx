@@ -56,14 +56,15 @@ function App() {
     path="/purchases"
     element={<PurchaseInvoice />}
 />
-          </Routes>
-        <Route
+          <Route
 
     path="/sales-register"
 
     element={<SalesRegister />}
 
 />
+          </Routes>
+        
       </Layout>
 
     </BrowserRouter>
