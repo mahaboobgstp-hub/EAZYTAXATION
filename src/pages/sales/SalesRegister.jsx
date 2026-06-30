@@ -35,7 +35,7 @@ import {
 } from "../../services/stateService";
 import { formatAmount } from "../../utils/amountFormatter";
 
-function SalesInvoice() {
+function SalesRegister() {
 
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -880,5 +880,5 @@ setCustomerDetails(
   );
 }
 
-export default SalesInvoice;
+export default SalesRegister;
 
