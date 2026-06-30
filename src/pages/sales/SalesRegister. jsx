@@ -1,4 +1,760 @@
+import React, { useEffect, useState } from 'react';
+import UomDropdown from "../../components/dropdowns/UomDropdown";
+import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
+import '../../css/sales/SalesInvoice.css';
+import SalesInvoiceView
+from '../../components/SalesInvoiceView';
+import InvoicePrint
+from '../../components/InvoicePrint';
+import {
+  getInvoiceSettingsByCompany
+}
+from
+'../../services/invoiceSettingsService';
 
+import {
+  getCompaniesForDropdown,
+  getCustomersForDropdown,
+  getItemsForDropdown,
+  saveSalesInvoice,
+  getSalesInvoices,
+  getSalesInvoiceById,
+  getSalesInvoiceItems,
+  generateInvoiceNumber,
+  updateSalesInvoice,
+  deleteSalesInvoice
+} from '../../services/salesInvoiceService';
+import {
+  getCompanyById
+} from "../../services/companyService";
+import {
+  getCustomerById
+} from "../../services/customerService";
+import {
+  getStates
+} from "../../services/stateService";
+import { formatAmount } from "../../utils/amountFormatter";
+
+function SalesInvoice() {
+
+  const [customers, setCustomers] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [itemsMaster, setItemsMaster] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [states, setStates] = useState([]);
+  const [sameAsBilling, setSameAsBilling] = useState(true);
+  const [printMode, setPrintMode] = useState(false);
+ const [invoiceSettings,
+setInvoiceSettings] =
+useState(null);
+  const [
+  companyDetails,
+  setCompanyDetails
+] = useState(null);
+  const [
+  customerDetails,
+  setCustomerDetails
+] = useState(null);
+  const [formData, setFormData] = useState({
+
+  company_id: '',
+  company_name: '',
+  company_state: '',
+
+  invoice_no: '',
+  invoice_date: '',
+
+  customer_id: '',
+  customer_name: '',
+  customer_state: '',
+
+  billing_address: '',
+  shipping_name: '',
+shipping_gstin: '',
+shipping_state: '',
+shipping_address: '',
+place_of_supply: '',
+vehicle_no: '',
+eway_bill_no: '',
+
+  gst_type: '',
+
+  remarks: ''
+
+});
+
+  const [items, setItems] = useState([
+  {
+    item_id: '',
+    item_name: '',
+    hsn_sac: '',
+    unit:'',  
+    gst_rate: 18,
+    qty: 1,
+    rate: 0,
+    amount: 0
+  }
+]);
+
+  useEffect(() => {
+    loadCompanies();
+    loadCustomers();
+    loadItemsMaster();
+    loadInvoices();
+    loadInvoiceNumber();
+    loadStates();
+    
+  }, []);
+  const loadInvoiceNumber = async () => {
+
+  try {
+
+    const invoiceNumber =
+      await generateInvoiceNumber();
+
+    setFormData(prev => ({
+      ...prev,
+      invoice_no: invoiceNumber
+    }));
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+
+  const loadCustomers = async () => {
+
+    try {
+      const data = await getCustomersForDropdown();
+      setCustomers(data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+ const loadCompanies = async () => {
+
+  try {
+
+    const data =
+      await getCompaniesForDropdown();
+
+    setCompanies(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+  const loadStates = async () => {
+
+  try {
+
+    const data =
+      await getStates();
+
+    setStates(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+};
+const loadItemsMaster = async () => {
+
+  try {
+
+    const data =
+      await getItemsForDropdown();
+
+    setItemsMaster(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+  const loadInvoices = async () => {
+
+    try {
+      const data = await getSalesInvoices();
+      setInvoices(data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleChange = (e) => {
+
+    const { name, value } = e.target;
+
+    if (name === 'company_id') {
+
+  const selectedCompany =
+    companies.find(
+      company => company.id === value
+    );
+
+  setFormData({
+    ...formData,
+    company_id: value,
+    company_name:
+      selectedCompany?.company_name || '',
+    company_state:
+      selectedCompany?.state || ''
+  });
+
+  return;
+}
+
+    
+    if (name === 'customer_id') {
+
+  const selectedCustomer =
+    customers.find(
+      customer => customer.id === value
+    );
+
+  setFormData({
+    ...formData,
+    customer_id: value,
+    customer_name:
+      selectedCustomer?.customer_name || '',
+    customer_state:
+      selectedCustomer?.state || '',
+     billing_address:
+    selectedCustomer?.address || '',
+
+  shipping_name:
+selectedCustomer?.customer_name || '',
+
+shipping_gstin:
+selectedCustomer?.gstin || '',
+
+shipping_state:
+selectedCustomer?.state || '',
+
+shipping_address:
+selectedCustomer?.address || '',
+
+place_of_supply:
+selectedCustomer?.state || '',
+  });
+
+  return;
+}
+
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const addRow = () => {
+
+  setItems([
+    ...items,
+    {
+      item_id: '',
+      item_name: '',
+      hsn_sac: '',
+      unit:'',
+      gst_rate: '',
+      qty: 0,
+      rate: 0,
+      amount: 0
+    }
+  ]);
+};
+  const removeRow = (index) => {
+
+    const updated = [...items];
+
+    updated.splice(index, 1);
+
+    setItems(updated);
+  };
+
+  const handleItemChange = (
+  index,
+  field,
+  value
+) => {
+
+  const updated = [...items];
+
+  if (field === 'item_id') {
+
+    const selectedItem =
+      itemsMaster.find(
+        item => item.id === value
+      );
+
+    if (selectedItem) {
+
+      updated[index] = {
+
+        ...updated[index],
+
+        item_id: selectedItem.id,
+
+        item_name:
+          selectedItem.item_name,
+
+        hsn_sac:
+          selectedItem.hsn_sac,
+        unit:
+          selectedItem.unit,
+
+        gst_rate:
+          selectedItem.gst_rate,
+
+        rate:
+          selectedItem.sales_rate,
+
+        qty: 1,
+
+        amount:
+          Number(
+            selectedItem.sales_rate
+          )
+      };
+    }
+
+  } else {
+
+    updated[index][field] = value;
+
+    const qty =
+      Number(updated[index].qty) || 0;
+
+    const rate =
+      Number(updated[index].rate) || 0;
+
+    updated[index].amount =
+      qty * rate;
+  }
+
+  setItems(updated);
+};
+const [selectedInvoice,
+setSelectedInvoice] =
+useState(null);
+
+const [selectedItems,
+setSelectedItems] =
+useState([]);
+ 
+
+  const [editingInvoiceId,
+setEditingInvoiceId] =
+useState(null);
+  
+  const taxableValue = items.reduce(
+    (sum, item) =>
+      sum + Number(item.amount || 0),
+    0
+  );
+
+  const totalGST = items.reduce(
+    (sum, item) =>
+      sum +
+      (
+        Number(item.amount || 0) *
+        Number(item.gst_rate || 0)
+      ) / 100,
+    0
+  );
+
+ let cgst = 0;
+
+let sgst = 0;
+
+let igst = 0;
+  
+console.log(
+  "Company State:",
+  formData.company_state
+);
+
+console.log(
+  "Customer State:",
+  formData.customer_state
+);
+
+  console.log("Company State:", formData.company_state);
+console.log("Place of Supply:", formData.place_of_supply);
+if (
+
+  formData.company_state &&
+  formData.place_of_supply &&
+  formData.company_state ===
+  formData.place_of_supply
+
+) {
+
+  cgst = totalGST / 2;
+
+  sgst = totalGST / 2;
+
+} else {
+
+  igst = totalGST;
+
+}
+const grandTotal =
+  taxableValue +
+  cgst +
+  sgst +
+  igst;
+
+  const handleSubmit = async (e) => {
+
+  e.preventDefault();
+
+  try {
+
+    const invoiceHeader = {
+
+      ...formData,
+      gst_type:
+
+formData.company_state ===
+formData.place_of_supply
+
+? 'INTRA_STATE'
+
+: 'INTER_STATE',
+
+      taxable_value: taxableValue,
+
+     cgst: cgst,
+
+sgst: sgst,
+
+igst: igst,
+
+      total_amount: grandTotal
+
+    };
+
+   if (editingInvoiceId) {
+
+  await updateSalesInvoice(
+    editingInvoiceId,
+    invoiceHeader,
+    items
+  );
+
+  alert(
+    'Invoice Updated'
+  );
+
+} else {
+
+ const savedInvoiceId =
+  await saveSalesInvoice(
+    invoiceHeader,
+    items
+  );
+
+alert(
+  'Sales Invoice Saved'
+);
+
+await printInvoice(
+  savedInvoiceId
+);
+     
+    setFormData({
+
+  company_id: '',
+  company_name: '',
+  company_state: '',
+
+  invoice_no: '',
+  invoice_date: '',
+
+  customer_id: '',
+  customer_name: '',
+  customer_state: '',
+
+  billing_address: '',
+
+  shipping_name: '',
+  shipping_gstin: '',
+  shipping_state: '',
+  shipping_address: '',
+
+  place_of_supply: '',
+
+  vehicle_no: '',
+  eway_bill_no: '',
+
+  gst_type: '',
+
+  remarks: ''
+
+});
+
+    setItems([
+      {
+        item_id: '',
+        item_name: '',
+        hsn_sac: '',
+        unit:'',
+        gst_rate: 18,
+        qty: 1,
+        rate: 0,
+        amount: 0
+      }
+    ]);
+setEditingInvoiceId(
+  null
+);
+
+loadInvoiceNumber();
+    loadInvoices();
+   }
+  }
+   catch (error) {
+
+    alert(error.message);
+
+  }
+};
+
+  const viewInvoice = async (
+  invoiceId
+) => {
+
+  try {
+
+    const invoice =
+      await getSalesInvoiceById(
+        invoiceId
+      );
+    const company =
+await getCompanyById(
+  invoice.company_id
+);
+console.log(
+  "Company Details:",
+  company
+);
+setCompanyDetails(
+  company
+);
+const settings =
+await getInvoiceSettingsByCompany(
+  invoice.company_id
+);
+console.log(
+  "Settings Loaded:",
+  settings
+);
+setInvoiceSettings(
+  settings
+);
+    const items =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setSelectedInvoice(
+      invoice
+    );
+
+    setSelectedItems(
+      items
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+
+const editInvoice = async (
+  invoiceId
+) => {
+
+  try {
+
+    const invoice =
+      await getSalesInvoiceById(
+        invoiceId
+      );
+
+    const invoiceItems =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setEditingInvoiceId(
+      invoiceId
+    );
+
+    setFormData({
+
+  company_id: invoice.company_id || "",
+  company_name: invoice.company_name || "",
+  company_state: invoice.company_state || "",
+
+  invoice_no: invoice.invoice_no,
+  invoice_date: invoice.invoice_date,
+
+  customer_id: invoice.customer_id,
+  customer_name: invoice.customer_name,
+  customer_state: invoice.customer_state || "",
+
+  billing_address: invoice.billing_address || "",
+
+  shipping_name: invoice.shipping_name || "",
+  shipping_gstin: invoice.shipping_gstin || "",
+  shipping_state: invoice.shipping_state || "",
+  shipping_address: invoice.shipping_address || "",
+
+  place_of_supply: invoice.place_of_supply || "",
+
+  vehicle_no: invoice.vehicle_no || "",
+  eway_bill_no: invoice.eway_bill_no || "",
+
+  gst_type: invoice.gst_type || "",
+
+  remarks: invoice.remarks || ""
+
+});
+    const loadedItems =
+      invoiceItems.map(item => ({
+
+        item_id: item.item_id,
+        item_name: item.item_name,
+        hsn_sac: item.hsn_sac,
+        unit: item.unit,
+        gst_rate: item.gst_rate,
+        qty: item.qty,
+        rate: item.rate,
+        amount: item.amount
+
+      }));
+
+    setItems(
+      loadedItems
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+
+const handleDeleteInvoice =
+async (invoiceId) => {
+
+  const confirmed =
+    window.confirm(
+      'Delete this invoice?'
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+
+    await deleteSalesInvoice(
+      invoiceId
+    );
+
+    alert(
+      'Invoice Deleted'
+    );
+
+    loadInvoices();
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
+};
+  const printInvoice = async (
+  invoiceId
+) => {
+
+  try {
+
+    const invoice =
+      await getSalesInvoiceById(
+        invoiceId
+      );
+
+    const settings =
+      await getInvoiceSettingsByCompany(
+        invoice.company_id
+      );
+
+    console.log(
+      "Print Settings:",
+      settings
+    );
+
+    setInvoiceSettings(
+      settings
+    );
+const company =
+  await getCompanyById(
+    invoice.company_id
+  );
+
+console.log(
+  "Company Details:",
+  company
+);
+
+setCompanyDetails(
+  company
+);
+const customer =
+await getCustomerById(
+  invoice.customer_id
+);
+
+setCustomerDetails(
+  customer
+);
+    const invoiceItems =
+      await getSalesInvoiceItems(
+        invoiceId
+      );
+
+    setSelectedInvoice(
+      invoice
+    );
+
+    setSelectedItems(
+      invoiceItems
+    );
+
+    setPrintMode(true);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
+  
+  return(
 
 
 
