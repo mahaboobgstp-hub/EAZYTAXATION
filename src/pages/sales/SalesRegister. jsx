@@ -1,1 +1,113 @@
+<h3>Previous Invoices</h3>
+
+      <table className="sales-grid">
+
+        <thead>
+          <tr>
+            <th>Invoice No</th>
+            <th>Date</th>
+            <th>Customer</th>
+           <th>Total Amount</th>
+           <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {invoices.map(invoice => (
+
+            <tr key={invoice.id}>
+              <td>{invoice.invoice_no}</td>
+              <td>{invoice.invoice_date}</td>
+              <td>{invoice.customer_name}</td>
+              <td>{formatAmount(invoice.total_amount)}</td>
+
+<td>
+
+  <button
+    type="button"
+    onClick={() =>
+      viewInvoice(
+        invoice.id
+      )
+    }
+  >
+    View
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      editInvoice(
+        invoice.id
+      )
+    }
+  >
+    Edit
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      handleDeleteInvoice(
+        invoice.id
+      )
+    }
+  >
+    Delete
+  </button>
+ <button
+  type="button"
+  onClick={() =>
+    printInvoice(
+      invoice.id
+    )
+  }
+>
+  Print
+</button>
+
+</td>
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
+{
+  selectedInvoice &&
+  !printMode && (
+
+    <SalesInvoiceView
+
+      invoice={selectedInvoice}
+
+      items={selectedItems}
+
+      onClose={() =>
+        setSelectedInvoice(null)
+      }
+
+    />
+
+  )
+}
+      {
+  printMode &&
+  selectedInvoice && (
+
+    <InvoicePrint
+  invoice={selectedInvoice}
+  items={selectedItems}
+  settings={invoiceSettings}
+  company={companyDetails}
+  customer={customerDetails}   
+  onClose={() => {
+
+    setPrintMode(false);
+
+    setSelectedInvoice(null);
+
+    setSelectedItems([]);
 
