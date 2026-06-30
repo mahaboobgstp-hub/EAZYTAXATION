@@ -1,3 +1,8 @@
+
+
+
+
+
 <h3>Previous Invoices</h3>
 
       <table className="sales-grid">
@@ -110,4 +115,14 @@
     setSelectedInvoice(null);
 
     setSelectedItems([]);
+  }}
+/>
+
+  )
+}
+    </div>
+  );
+}
+
+export default SalesInvoice;
 
