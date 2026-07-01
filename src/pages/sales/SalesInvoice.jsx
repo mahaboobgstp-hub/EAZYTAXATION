@@ -787,11 +787,13 @@ setCustomerDetails(
 
 </select>
         <input
-          type="text"
+  type="text"
   name="invoice_no"
   value={formData.invoice_no}
-  onChange={handleInputChange}
+  onChange={handleChange}
+  required
 />
+        
 
         <input
           type="date"
