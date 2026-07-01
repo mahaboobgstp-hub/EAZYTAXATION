@@ -787,9 +787,10 @@ setCustomerDetails(
 
 </select>
         <input
+          type="text"
   name="invoice_no"
   value={formData.invoice_no}
-  readOnly
+  onChange={handleInputChange}
 />
 
         <input
