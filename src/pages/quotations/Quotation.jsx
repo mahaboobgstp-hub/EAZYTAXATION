@@ -757,7 +757,7 @@ setCustomerDetails(
   return (
     <div className="sales-page">
 
-      <h2>Sales Invoice</h2>
+      <h2>Quotation</h2>
 
       <form
         className="sales-form"
