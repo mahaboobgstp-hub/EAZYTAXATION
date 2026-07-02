@@ -7,6 +7,7 @@ import Vendors from './pages/masters/Vendors';
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
+import Quotation from "./pages/quotations/Quotation";
 import Items from './pages/masters/Items';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
@@ -43,6 +44,10 @@ function App() {
           <Route
   path="/sales"
   element={<SalesInvoice />}
+/>
+          <Route
+  path="/quotation"
+  element={<Quotation />}
 />
 <Route
   path="/items"
