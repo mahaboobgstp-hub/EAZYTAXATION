@@ -70,7 +70,7 @@ export async function saveQuotation(
         data: headerData,
         error: headerError
     } = await supabase
-        .from("sales_invoices")
+        .from("quotations")
         .insert([invoiceHeader])
         .select();
 
@@ -188,7 +188,7 @@ export async function updateSalesInvoice(
 
     const { error: deleteError } =
         await supabase
-            .from("sales_invoice_items")
+            .from("quotation_items")
             .delete()
             .eq("invoice_id", invoiceId);
 
