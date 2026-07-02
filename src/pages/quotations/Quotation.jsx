@@ -178,7 +178,7 @@ const loadItemsMaster = async () => {
   const loadInvoices = async () => {
 
     try {
-      const data = await getSalesInvoices();
+      const data = await getQuotation();
       setInvoices(data || []);
     } catch (error) {
       console.error(error);
@@ -441,7 +441,7 @@ igst: igst,
 
    if (editingInvoiceId) {
 
-  await updateSalesInvoice(
+  await updateQuotation(
     editingInvoiceId,
     invoiceHeader,
     items
@@ -454,7 +454,7 @@ igst: igst,
 } else {
 
  const savedInvoiceId =
-  await saveSalesInvoice(
+  await saveQuotation(
     invoiceHeader,
     items
   );
@@ -532,7 +532,7 @@ loadInvoiceNumber();
   try {
 
     const invoice =
-      await getSalesInvoiceById(
+      await getQuotationById(
         invoiceId
       );
     const company =
@@ -558,7 +558,7 @@ setInvoiceSettings(
   settings
 );
     const items =
-      await getSalesInvoiceItems(
+      await getQuotationItems(
         invoiceId
       );
 
@@ -584,12 +584,12 @@ const editInvoice = async (
   try {
 
     const invoice =
-      await getSalesInvoiceById(
+      await getQuotationById(
         invoiceId
       );
 
     const invoiceItems =
-      await getSalesInvoiceItems(
+      await getQuotationItems(
         invoiceId
       );
 
@@ -666,7 +666,7 @@ async (invoiceId) => {
 
   try {
 
-    await deleteSalesInvoice(
+    await deleteQuotation(
       invoiceId
     );
 
@@ -689,7 +689,7 @@ async (invoiceId) => {
   try {
 
     const invoice =
-      await getSalesInvoiceById(
+      await getQuotationById(
         invoiceId
       );
 
@@ -728,7 +728,7 @@ setCustomerDetails(
   customer
 );
     const invoiceItems =
-      await getSalesInvoiceItems(
+      await getQuotationItems(
         invoiceId
       );
 
