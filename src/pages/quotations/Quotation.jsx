@@ -13,17 +13,12 @@ from
 '../../services/invoiceSettingsService';
 
 import {
-  getCompaniesForDropdown,
-  getCustomersForDropdown,
-  getItemsForDropdown,
-  saveSalesInvoice,
-  getSalesInvoices,
-  getSalesInvoiceById,
-  getSalesInvoiceItems,
-  generateInvoiceNumber,
-  updateSalesInvoice,
-  deleteSalesInvoice
-} from '../../services/salesInvoiceService';
+  createQuotation,
+  getQuotations,
+  updateQuotation,
+  deleteQuotation,
+  getNextQuotationNumber
+} from "../../services/quotationService";
 import {
   getCompanyById
 } from "../../services/companyService";
