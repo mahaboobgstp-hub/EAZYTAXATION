@@ -167,7 +167,7 @@ export async function getQuotationItems(
 
     return data;
 }
-export async function updateSalesInvoice(
+export async function updateQuotation(
     invoiceId,
     invoiceHeader,
     invoiceItems
@@ -237,7 +237,7 @@ export async function updateSalesInvoice(
     return true;
 }
 
-export async function deleteSalesInvoice(
+export async function deleteQuotation(
     invoiceId
 ) {
 
