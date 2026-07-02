@@ -61,7 +61,7 @@ export async function generateInvoiceNumber() {
     return invoiceNumber;
 }
 
-export async function saveSalesInvoice(
+export async function saveQuotation(
     invoiceHeader,
     invoiceItems
 ) {
@@ -122,7 +122,7 @@ export async function saveSalesInvoice(
     return invoiceId;
 }
 
-export async function getSalesInvoices() {
+export async function getQuotations() {
 
     const { data, error } = await supabase
         .from("sales_invoices")
@@ -136,7 +136,7 @@ export async function getSalesInvoices() {
 
     return data;
 }
-export async function getSalesInvoiceById(
+export async function getQuotationById(
     invoiceId
 ) {
 
@@ -152,7 +152,7 @@ export async function getSalesInvoiceById(
     return data;
 }
 
-export async function getSalesInvoiceItems(
+export async function getQuotationItems(
     invoiceId
 ) {
 
