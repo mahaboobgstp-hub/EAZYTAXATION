@@ -460,7 +460,7 @@ igst: igst,
   );
 
 alert(
-  'Sales Invoice Saved'
+  'quotation Saved'
 );
 
 await printInvoice(
