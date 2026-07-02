@@ -178,7 +178,7 @@ const loadItemsMaster = async () => {
   const loadInvoices = async () => {
 
     try {
-      const data = await getQuotation();
+      const data = await getQuotations();
       setInvoices(data || []);
     } catch (error) {
       console.error(error);
