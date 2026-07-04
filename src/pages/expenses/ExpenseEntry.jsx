@@ -23,7 +23,7 @@ import {
   generateInvoiceNumber,
   updateSalesInvoice,
   deleteSalesInvoice
-} from '../../services/salesInvoiceService';
+} from '../../services/expenseService';
 import {
   getCompanyById
 } from "../../services/companyService";
