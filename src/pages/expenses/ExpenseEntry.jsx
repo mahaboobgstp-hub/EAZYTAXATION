@@ -17,7 +17,7 @@ import {
   getCustomersForDropdown,
   getItemsForDropdown,
   saveSalesInvoice,
-  getSalesInvoices,
+  
   getSalesInvoiceById,
   getSalesInvoiceItems,
   generateInvoiceNumber,
