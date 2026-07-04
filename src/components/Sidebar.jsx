@@ -359,7 +359,7 @@ function Sidebar() {
                             </NavLink>
 
                             <NavLink
-                                to="/quotations"
+                                to="/quotation"
                                 className="submenu-link"
                             >
                                 Quotations
