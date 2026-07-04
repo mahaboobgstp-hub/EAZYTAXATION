@@ -17,13 +17,13 @@ import {
   getCustomersForDropdown,
   getItemsForDropdown,
   saveSalesInvoice,
-  
-  getSalesInvoiceById,
-  getSalesInvoiceItems,
+  saveExpense,
+  getExpenses,
+  updateExpense,
+  deleteExpense,
+    getSalesInvoiceItems,
   generateInvoiceNumber,
-  updateSalesInvoice,
-  deleteSalesInvoice
-} from '../../services/expenseService';
+  } from '../../services/expenseService';
 import {
   getCompanyById
 } from "../../services/companyService";
