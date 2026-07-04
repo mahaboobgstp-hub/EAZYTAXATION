@@ -16,7 +16,7 @@ import {
   getCompaniesForDropdown,
   getCustomersForDropdown,
   getItemsForDropdown,
-  saveSalesInvoice,
+  
   saveExpense,
   getExpenses,
   updateExpense,
