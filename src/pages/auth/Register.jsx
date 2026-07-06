@@ -1,20 +1,25 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "../../css/auth/Register.css";
+import { registerUser } from "../../services/authService";
 
 function Register() {
 
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
 
-    full_name: "",
+const [formData, setFormData] = useState({
 
-    email: "",
+  full_name: "",
 
-    password: "",
+  business_name: "",
 
-    confirm_password: ""
+  email: "",
 
-  });
+  password: "",
+
+  confirm_password: ""
+
+});
 
   const handleChange = (e) => {
 
@@ -30,24 +35,40 @@ function Register() {
 
   const handleSubmit = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    if (
-      formData.password !==
-      formData.confirm_password
-    ) {
+  if (
+    formData.password !==
+    formData.confirm_password
+  ) {
 
-      alert("Passwords do not match.");
+    alert("Passwords do not match.");
 
-      return;
+    return;
 
-    }
+  }
+
+  try {
+
+    setLoading(true);
+
+    await registerUser(formData);
 
     alert(
-      "Registration service will be connected in next step."
+      "Registration successful! Please check your email to verify your account."
     );
 
-  };
+  } catch (error) {
+
+    alert(error.message);
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+};
 
   return (
 
@@ -166,13 +187,18 @@ function Register() {
           </div>
 
           <button
-            type="submit"
-            className="register-button"
-          >
+  type="submit"
+  className="register-button"
+  disabled={loading}
+>
 
-            Create Account
+  {
+    loading
+      ? "Creating Account..."
+      : "Start Free Trial"
+  }
 
-          </button>
+</button>
 
           <div className="divider">
 
