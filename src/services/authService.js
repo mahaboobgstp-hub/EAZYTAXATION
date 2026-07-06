@@ -240,7 +240,7 @@ export async function signInWithGoogle() {
             options: {
 
                 redirectTo:
-                    window.location.origin + "/companies"
+                    window.location.origin + "/app/companies"
 
             }
 
