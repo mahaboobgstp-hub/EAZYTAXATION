@@ -432,7 +432,7 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/purchases"
+                                to="/app/purchases"
                                 className="submenu-link"
                             >
                                 Add Purchase Invoice
