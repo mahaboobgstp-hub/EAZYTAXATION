@@ -1,46 +1,15 @@
 import { supabase } from "../supabase/supabaseClient";
 
-export async function getCustomersForDropdown() {
+/* ===========================================
+   GENERATE EXPENSE VOUCHER NUMBER
+=========================================== */
+
+export async function generateExpenseNumber() {
 
     const { data, error } = await supabase
-        .from("customers")
-        .select("id, customer_name, state, address")
-        .order("customer_name, state");
-
-    if (error) throw error;
-
-    return data;
-}
-export async function getCompaniesForDropdown() {
-
-    const { data, error } =
-        await supabase
-            .from("companies")
-            .select("id, company_name, state")
-            .order("company_name");
-
-    if (error) throw error;
-
-    return data;
-}
-export async function getItemsForDropdown() {
-
-    const { data, error } = await supabase
-        .from("items")
+        .from("document_sequences")
         .select("*")
-        .order("item_name");
-
-    if (error) throw error;
-
-    return data;
-}
-
-export async function generateInvoiceNumber() {
-
-    const { data, error } = await supabase
-        .from("invoice_sequences")
-        .select("*")
-        .eq("document_type", "SALES")
+        .eq("document_type", "EXPENSE")
         .single();
 
     if (error) throw error;
@@ -48,212 +17,138 @@ export async function generateInvoiceNumber() {
     const nextNumber =
         Number(data.last_number) + 1;
 
-    await supabase
-        .from("invoice_sequences")
-        .update({
-            last_number: nextNumber
-        })
-        .eq("id", data.id);
+    const prefix =
+        data.prefix || "EXP";
 
-    const invoiceNumber =
-        `ET-${new Date().getFullYear()}-${String(nextNumber).padStart(5, '0')}`;
+    const voucherNumber =
+        `${prefix}-${new Date().getFullYear()}-${String(nextNumber).padStart(5, "0")}`;
 
-    return invoiceNumber;
+    return voucherNumber;
+
 }
 
-export async function saveExpense(
-    invoiceHeader,
-    invoiceItems
-) {
+/* ===========================================
+   SAVE EXPENSE
+=========================================== */
 
-    const {
-        data: headerData,
-        error: headerError
-    } = await supabase
-        .from("sales_invoices")
-        .insert([invoiceHeader])
+export async function saveExpense(expense) {
+
+    const { data, error } = await supabase
+        .from("expenses")
+        .insert([expense])
         .select();
 
-    if (headerError) {
-        throw headerError;
-    }
+    if (error) throw error;
 
-    const invoiceId =
-        headerData[0].id;
+    /* Increase sequence only AFTER successful save */
 
-    const itemsToInsert =
-        invoiceItems.map(
-            (item, index) => ({
+    const { data: sequence } = await supabase
+        .from("document_sequences")
+        .select("*")
+        .eq("document_type", "EXPENSE")
+        .single();
 
-                invoice_id: invoiceId,
+    await supabase
+        .from("document_sequences")
+        .update({
 
-                line_no: index + 1,
+            last_number:
+                Number(sequence.last_number) + 1
 
-                item_id: item.item_id,
+        })
+        .eq("id", sequence.id);
 
-                item_name: item.item_name,
+    return data;
 
-                hsn_sac: item.hsn_sac,
-                unit: item.unit,
-                particulars: item.item_name,
-
-                qty: Number(item.qty),
-
-                rate: Number(item.rate),
-
-                gst_rate:
-                    Number(item.gst_rate),
-
-                amount:
-                    Number(item.amount)
-
-            })
-        );
-
-    const { error: itemError } =
-        await supabase
-            .from("expenses")
-            .insert(itemsToInsert);
-
-    if (itemError) {
-        throw itemError;
-    }
-
-    return invoiceId;
 }
+
+/* ===========================================
+   GET ALL EXPENSES
+=========================================== */
 
 export async function getExpenses() {
 
     const { data, error } = await supabase
-        .from("sales_invoices")
-        .select("*")
-        .eq("is_deleted", false)
-        .order("invoice_date", {
+        .from("expenses")
+        .select(`
+            *,
+            companies(company_name),
+            vendors(vendor_name),
+            expense_categories(category_name)
+        `)
+        .order("expense_date", {
+
             ascending: false
+
         });
 
     if (error) throw error;
 
     return data;
-}
-export async function getExpenseById(
-    invoiceId
-) {
 
-    const { data, error } =
-        await supabase
-            .from("sales_invoices")
-            .select("*")
-            .eq("id", invoiceId)
-            .single();
+}
+
+/* ===========================================
+   GET SINGLE EXPENSE
+=========================================== */
+
+export async function getExpenseById(id) {
+
+    const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("id", id)
+        .single();
 
     if (error) throw error;
 
     return data;
+
 }
 
-export async function getSalesInvoiceItems(
-    invoiceId
-) {
+/* ===========================================
+   UPDATE EXPENSE
+=========================================== */
 
-    const { data, error } =
-        await supabase
-            .from("sales_invoice_items")
-            .select("*")
-            .eq("invoice_id", invoiceId)
-            .order("line_no");
-
-    if (error) throw error;
-
-    return data;
-}
 export async function updateExpense(
-    invoiceId,
-    invoiceHeader,
-    invoiceItems
+
+    id,
+
+    expense
+
 ) {
 
-    const { error: headerError } =
-        await supabase
-            .from("sales_invoices")
-            .update({
-                ...invoiceHeader,
-                updated_at: new Date()
-            })
-            .eq("id", invoiceId);
+    const { error } = await supabase
+        .from("expenses")
+        .update({
 
-    if (headerError) {
-        throw headerError;
-    }
+            ...expense,
 
-    const { error: deleteError } =
-        await supabase
-            .from("sales_invoice_items")
-            .delete()
-            .eq("invoice_id", invoiceId);
+            updated_at:
+                new Date()
 
-    if (deleteError) {
-        throw deleteError;
-    }
+        })
+        .eq("id", id);
 
-    const itemsToInsert =
-        invoiceItems.map(
-            (item, index) => ({
-
-                invoice_id: invoiceId,
-
-                line_no: index + 1,
-
-                item_id: item.item_id,
-
-                item_name: item.item_name,
-
-                hsn_sac: item.hsn_sac,
-                unit: item.unit,
-
-                particulars: item.item_name,
-
-                qty: Number(item.qty),
-
-                rate: Number(item.rate),
-
-                gst_rate: Number(item.gst_rate),
-
-                amount: Number(item.amount),
-
-                updated_at: new Date()
-            })
-        );
-
-    const { error: itemError } =
-        await supabase
-            .from("sales_invoice_items")
-            .insert(itemsToInsert);
-
-    if (itemError) {
-        throw itemError;
-    }
+    if (error) throw error;
 
     return true;
+
 }
 
-export async function deleteExpense(
-    invoiceId
-) {
+/* ===========================================
+   DELETE EXPENSE
+=========================================== */
 
-    const { error } =
-        await supabase
-            .from("expenses")
-            .update({
-                is_deleted: true,
-                updated_at: new Date()
-            })
-            .eq("id", invoiceId);
+export async function deleteExpense(id) {
 
-    if (error) {
-        throw error;
-    }
+    const { error } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
 
     return true;
-}
 
+}
