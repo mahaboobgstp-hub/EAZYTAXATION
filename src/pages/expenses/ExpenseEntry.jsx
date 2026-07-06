@@ -15,11 +15,17 @@ import {
 } from "../../services/expenseCategoryService";
 
 import {
+
+  generateExpenseNumber,
+
   saveExpense,
+
   getExpenses,
+
   updateExpense,
-  deleteExpense,
-  generateExpenseNumber
+
+  deleteExpense
+
 } from "../../services/expenseService";
 
 function ExpenseEntry() {
@@ -35,50 +41,54 @@ function ExpenseEntry() {
   const [editingExpenseId, setEditingExpenseId] =
     useState(null);
 
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] =
+    useState(false);
 
-    expense_no: "",
+  const [formData, setFormData] =
+    useState({
 
-    expense_date:
-      new Date()
-        .toISOString()
-        .split("T")[0],
+      expense_no: "",
 
-    company_id: "",
+      expense_date:
+        new Date()
+          .toISOString()
+          .split("T")[0],
 
-    category_id: "",
+      company_id: "",
 
-    vendor_id: "",
+      category_id: "",
 
-    supplier_invoice_no: "",
+      vendor_id: "",
 
-    supplier_invoice_date: "",
+      supplier_invoice_no: "",
 
-    payment_mode: "Cash",
+      supplier_invoice_date: "",
 
-    reference_no: "",
+      payment_mode: "Cash",
 
-    taxable_amount: 0,
+      reference_no: "",
 
-    gst_percent: 18,
+      taxable_amount: "",
 
-    cgst: 0,
+      gst_percent: 18,
 
-    sgst: 0,
+      cgst: 0,
 
-    igst: 0,
+      sgst: 0,
 
-    total_amount: 0,
+      igst: 0,
 
-    remarks: "",
+      total_amount: 0,
 
-    attachment_url: "",
+      remarks: "",
 
-    is_gst_applicable: true,
+      attachment_url: "",
 
-    status: "Draft"
+      is_gst_applicable: true,
 
-  });
+      status: "Draft"
+
+    });
 
   useEffect(() => {
 
@@ -86,7 +96,7 @@ function ExpenseEntry() {
 
     loadVendors();
 
-    loadExpenseCategories();
+    loadCategories();
 
     loadExpenses();
 
@@ -96,37 +106,77 @@ function ExpenseEntry() {
 
   async function loadCompanies() {
 
-    const data =
-      await getCompaniesForDropdown();
+    try {
 
-    setCompanies(data);
+      const data =
+        await getCompaniesForDropdown();
+
+      setCompanies(data || []);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
 
   }
 
   async function loadVendors() {
 
-    const data =
-      await getVendorsForDropdown();
+    try {
 
-    setVendors(data);
+      const data =
+        await getVendorsForDropdown();
+
+      setVendors(data || []);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
 
   }
 
-  async function loadExpenseCategories() {
+  async function loadCategories() {
 
-    const data =
-      await getExpenseCategories();
+    try {
 
-    setCategories(data);
+      const data =
+        await getExpenseCategories();
+
+      setCategories(data || []);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
 
   }
 
   async function loadExpenses() {
 
-    const data =
-      await getExpenses();
+    try {
 
-    setExpenses(data);
+      const data =
+        await getExpenses();
+
+      setExpenses(data || []);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
 
   }
 
@@ -134,16 +184,26 @@ function ExpenseEntry() {
 
     if (editingExpenseId) return;
 
-    const expenseNo =
-      await generateExpenseNumber();
+    try {
 
-    setFormData(prev => ({
+      const number =
+        await generateExpenseNumber();
 
-      ...prev,
+      setFormData(prev => ({
 
-      expense_no: expenseNo
+        ...prev,
 
-    }));
+        expense_no: number
+
+      }));
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
 
   }
     function handleChange(e) {
@@ -210,19 +270,13 @@ function ExpenseEntry() {
     const gstAmount =
       (taxable * gstRate) / 100;
 
-    const cgst =
-      gstAmount / 2;
-
-    const sgst =
-      gstAmount / 2;
-
     setFormData(prev => ({
 
       ...prev,
 
-      cgst,
+      cgst: gstAmount / 2,
 
-      sgst,
+      sgst: gstAmount / 2,
 
       igst: 0,
 
@@ -236,8 +290,6 @@ function ExpenseEntry() {
   function resetForm() {
 
     setEditingExpenseId(null);
-
-    loadExpenseNumber();
 
     setFormData({
 
@@ -262,7 +314,7 @@ function ExpenseEntry() {
 
       reference_no: "",
 
-      taxable_amount: 0,
+      taxable_amount: "",
 
       gst_percent: 18,
 
@@ -284,5 +336,674 @@ function ExpenseEntry() {
 
     });
 
+    loadExpenseNumber();
+
   }
-  
+
+  async function handleSubmit(e) {
+
+    e.preventDefault();
+
+    try {
+
+      setLoading(true);
+
+      if (editingExpenseId) {
+
+        await updateExpense(
+
+          editingExpenseId,
+
+          formData
+
+        );
+
+        alert(
+          "Expense updated successfully."
+        );
+
+      }
+
+      else {
+
+        await saveExpense(
+          formData
+        );
+
+        alert(
+          "Expense saved successfully."
+        );
+
+      }
+
+      resetForm();
+
+      loadExpenses();
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      alert(error.message);
+
+    }
+
+    finally {
+
+      setLoading(false);
+
+    }
+
+  }
+
+  async function handleEdit(expense) {
+
+    setEditingExpenseId(
+      expense.id
+    );
+
+    setFormData({
+
+      ...expense
+
+    });
+
+  }
+
+  async function handleDelete(id) {
+
+    const confirmDelete =
+      window.confirm(
+        "Delete this expense?"
+      );
+
+    if (!confirmDelete) {
+
+      return;
+
+    }
+
+    try {
+
+      await deleteExpense(id);
+
+      alert(
+        "Expense deleted successfully."
+      );
+
+      loadExpenses();
+
+      resetForm();
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      alert(error.message);
+
+    }
+
+  }
+    return (
+
+    <div className="expense-page">
+
+      <h2>
+
+        Expense Voucher Entry
+
+      </h2>
+
+      <form
+        className="expense-form"
+        onSubmit={handleSubmit}
+      >
+
+        <div className="expense-grid">
+
+          {/* Company */}
+
+          <div className="form-group">
+
+            <label>
+
+              Company
+
+            </label>
+
+            <select
+              name="company_id"
+              value={formData.company_id}
+              onChange={handleChange}
+              required
+            >
+
+              <option value="">
+
+                Select Company
+
+              </option>
+
+              {companies.map(company => (
+
+                <option
+                  key={company.id}
+                  value={company.id}
+                >
+
+                  {company.company_name}
+
+                </option>
+
+              ))}
+
+            </select>
+
+          </div>
+
+          {/* Voucher Number */}
+
+          <div className="form-group">
+
+            <label>
+
+              Voucher No.
+
+            </label>
+
+            <input
+              type="text"
+              name="expense_no"
+              value={formData.expense_no}
+              onChange={handleChange}
+              required
+            />
+
+          </div>
+
+          {/* Expense Date */}
+
+          <div className="form-group">
+
+            <label>
+
+              Expense Date
+
+            </label>
+
+            <input
+              type="date"
+              name="expense_date"
+              value={formData.expense_date}
+              onChange={handleChange}
+              required
+            />
+
+          </div>
+
+          {/* Expense Category */}
+
+          <div className="form-group">
+
+            <label>
+
+              Expense Category
+
+            </label>
+
+            <select
+              name="category_id"
+              value={formData.category_id}
+              onChange={handleChange}
+              required
+            >
+
+              <option value="">
+
+                Select Category
+
+              </option>
+
+              {categories.map(category => (
+
+                <option
+                  key={category.id}
+                  value={category.id}
+                >
+
+                  {category.category_name}
+
+                </option>
+
+              ))}
+
+            </select>
+
+          </div>
+
+          {/* Vendor */}
+
+          <div className="form-group">
+
+            <label>
+
+              Vendor (Optional)
+
+            </label>
+
+            <select
+              name="vendor_id"
+              value={formData.vendor_id}
+              onChange={handleChange}
+            >
+
+              <option value="">
+
+                Select Vendor
+
+              </option>
+
+              {vendors.map(vendor => (
+
+                <option
+                  key={vendor.id}
+                  value={vendor.id}
+                >
+
+                  {vendor.vendor_name}
+
+                </option>
+
+              ))}
+
+            </select>
+
+          </div>
+
+          {/* Supplier Invoice No */}
+
+          <div className="form-group">
+
+            <label>
+
+              Supplier Invoice No.
+
+            </label>
+
+            <input
+              type="text"
+              name="supplier_invoice_no"
+              value={formData.supplier_invoice_no}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          {/* Supplier Invoice Date */}
+
+          <div className="form-group">
+
+            <label>
+
+              Supplier Invoice Date
+
+            </label>
+
+            <input
+              type="date"
+              name="supplier_invoice_date"
+              value={formData.supplier_invoice_date}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          {/* Payment Mode */}
+
+          <div className="form-group">
+
+            <label>
+
+              Payment Mode
+
+            </label>
+
+            <select
+              name="payment_mode"
+              value={formData.payment_mode}
+              onChange={handleChange}
+            >
+
+              <option>Cash</option>
+
+              <option>Bank</option>
+
+              <option>UPI</option>
+
+              <option>Cheque</option>
+
+              <option>Credit Card</option>
+
+            </select>
+
+          </div>
+
+          {/* Reference Number */}
+
+          <div className="form-group">
+
+            <label>
+
+              Reference No.
+
+            </label>
+
+            <input
+              type="text"
+              name="reference_no"
+              value={formData.reference_no}
+              onChange={handleChange}
+            />
+
+          </div>
+
+        </div>
+
+        <hr />
+
+        <h3>
+
+          Amount Details
+
+        </h3>
+                <div className="expense-grid">
+
+          <div className="form-group">
+
+            <label>
+
+              Taxable Amount
+
+            </label>
+
+            <input
+              type="number"
+              name="taxable_amount"
+              value={formData.taxable_amount}
+              onChange={handleChange}
+              step="0.01"
+            />
+
+          </div>
+
+          <div className="form-group">
+
+            <label>
+
+              GST %
+
+            </label>
+
+            <input
+              type="number"
+              name="gst_percent"
+              value={formData.gst_percent}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          <div className="form-group checkbox-group">
+
+            <label>
+
+              GST Applicable
+
+            </label>
+
+            <input
+              type="checkbox"
+              name="is_gst_applicable"
+              checked={formData.is_gst_applicable}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          <div className="form-group">
+
+            <label>
+
+              CGST
+
+            </label>
+
+            <input
+              type="number"
+              value={formData.cgst}
+              readOnly
+            />
+
+          </div>
+
+          <div className="form-group">
+
+            <label>
+
+              SGST
+
+            </label>
+
+            <input
+              type="number"
+              value={formData.sgst}
+              readOnly
+            />
+
+          </div>
+
+          <div className="form-group">
+
+            <label>
+
+              IGST
+
+            </label>
+
+            <input
+              type="number"
+              value={formData.igst}
+              readOnly
+            />
+
+          </div>
+
+          <div className="form-group">
+
+            <label>
+
+              Total Amount
+
+            </label>
+
+            <input
+              type="number"
+              value={formData.total_amount}
+              readOnly
+            />
+
+          </div>
+
+          <div className="form-group full-width">
+
+            <label>
+
+              Remarks
+
+            </label>
+
+            <textarea
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleChange}
+              rows="4"
+            />
+
+          </div>
+
+        </div>
+
+        <div className="button-row">
+
+          <button
+            type="submit"
+            className="save-btn"
+            disabled={loading}
+          >
+
+            {
+
+              editingExpenseId
+
+                ? "Update Expense"
+
+                : "Save Expense"
+
+            }
+
+          </button>
+
+          <button
+            type="button"
+            className="clear-btn"
+            onClick={resetForm}
+          >
+
+            Clear
+
+          </button>
+
+        </div>
+
+        <hr />
+
+        <h3>
+
+          Expense Register
+
+        </h3>
+
+        <table className="expense-table">
+
+          <thead>
+
+            <tr>
+
+              <th>Voucher No</th>
+
+              <th>Date</th>
+
+              <th>Category</th>
+
+              <th>Vendor</th>
+
+              <th>Total</th>
+
+              <th>Status</th>
+
+              <th>Action</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {expenses.map(expense => (
+
+              <tr key={expense.id}>
+
+                <td>
+
+                  {expense.expense_no}
+
+                </td>
+
+                <td>
+
+                  {expense.expense_date}
+
+                </td>
+
+                <td>
+
+                  {expense.category_name}
+
+                </td>
+
+                <td>
+
+                  {expense.vendor_name}
+
+                </td>
+
+                <td>
+
+                  ₹ {expense.total_amount}
+
+                </td>
+
+                <td>
+
+                  {expense.status}
+
+                </td>
+
+                <td>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleEdit(expense)
+                    }
+                  >
+
+                    Edit
+
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDelete(expense.id)
+                    }
+                  >
+
+                    Delete
+
+                  </button>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </form>
+
+    </div>
+      
+
+  );
+
+}
+
+export default ExpenseEntry;
