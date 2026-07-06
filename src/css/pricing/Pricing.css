@@ -1,0 +1,457 @@
+/* ===========================================
+   PRICING PAGE
+=========================================== */
+
+.pricing-page{
+
+    background:#f7f9fc;
+
+    min-height:100vh;
+
+    color:#1f2937;
+
+}
+
+/* ===========================================
+   HERO
+=========================================== */
+
+.pricing-hero{
+
+    max-width:900px;
+
+    margin:auto;
+
+    text-align:center;
+
+    padding:80px 20px 50px;
+
+}
+
+.pricing-badge{
+
+    display:inline-block;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    padding:8px 18px;
+
+    border-radius:50px;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    margin-bottom:25px;
+
+}
+
+.pricing-hero h1{
+
+    font-size:52px;
+
+    margin-bottom:20px;
+
+    line-height:1.2;
+
+}
+
+.pricing-hero p{
+
+    font-size:20px;
+
+    color:#6b7280;
+
+    line-height:1.7;
+
+}
+
+/* ===========================================
+   PRICING GRID
+=========================================== */
+
+.pricing-grid{
+
+    max-width:1400px;
+
+    margin:60px auto;
+
+    padding:0 30px;
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:35px;
+
+}
+
+/* ===========================================
+   CARD
+=========================================== */
+
+.pricing-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:40px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+
+    transition:.3s;
+
+    position:relative;
+
+}
+
+.pricing-card:hover{
+
+    transform:translateY(-10px);
+
+    box-shadow:0 20px 45px rgba(0,0,0,.12);
+
+}
+
+.featured{
+
+    border:2px solid #2563eb;
+
+    transform:scale(1.05);
+
+}
+
+.featured:hover{
+
+    transform:scale(1.08);
+
+}
+
+/* ===========================================
+   POPULAR TAG
+=========================================== */
+
+.popular-tag{
+
+    position:absolute;
+
+    top:-18px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+
+/* ===========================================
+   PRICE
+=========================================== */
+
+.price{
+
+    font-size:48px;
+
+    font-weight:700;
+
+    margin:30px 0;
+
+    color:#2563eb;
+
+}
+
+.price span{
+
+    font-size:18px;
+
+    color:#6b7280;
+
+}
+
+/* ===========================================
+   FEATURES
+=========================================== */
+
+.pricing-card ul{
+
+    list-style:none;
+
+    margin:30px 0;
+
+}
+
+.pricing-card li{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:18px;
+
+    color:#374151;
+
+    font-size:16px;
+
+}
+
+.pricing-card svg{
+
+    color:#16a34a;
+
+    flex-shrink:0;
+
+}
+
+/* ===========================================
+   BUTTON
+=========================================== */
+
+.plan-button{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:100%;
+
+    padding:14px;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.plan-button:hover{
+
+    background:#1d4ed8;
+
+}
+
+/* ===========================================
+   BENEFITS
+=========================================== */
+
+.pricing-benefits{
+
+    max-width:1200px;
+
+    margin:100px auto;
+
+    text-align:center;
+
+    padding:0 30px;
+
+}
+
+.pricing-benefits h2{
+
+    font-size:40px;
+
+    margin-bottom:50px;
+
+}
+
+.benefits-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:25px;
+
+}
+
+.benefits-grid div{
+
+    background:white;
+
+    padding:22px;
+
+    border-radius:12px;
+
+    border:1px solid #e5e7eb;
+
+    font-weight:600;
+
+}
+
+/* ===========================================
+   CONTACT CTA
+=========================================== */
+
+.pricing-contact{
+
+    background:#2563eb;
+
+    color:white;
+
+    text-align:center;
+
+    padding:90px 30px;
+
+}
+
+.pricing-contact h2{
+
+    font-size:44px;
+
+    margin-bottom:20px;
+
+}
+
+.pricing-contact p{
+
+    font-size:20px;
+
+    margin-bottom:35px;
+
+}
+
+.contact-buttons{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:20px;
+
+}
+
+.contact-buttons .plan-button{
+
+    width:auto;
+
+    padding:14px 30px;
+
+}
+
+.whatsapp-button{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    padding:14px 30px;
+
+    border-radius:10px;
+
+    background:#22c55e;
+
+    color:white;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.whatsapp-button:hover{
+
+    background:#16a34a;
+
+}
+
+/* ===========================================
+   RESPONSIVE
+=========================================== */
+
+@media(max-width:1100px){
+
+.pricing-grid{
+
+grid-template-columns:1fr;
+
+}
+
+.featured{
+
+transform:none;
+
+}
+
+.featured:hover{
+
+transform:translateY(-10px);
+
+}
+
+.benefits-grid{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+}
+
+@media(max-width:700px){
+
+.pricing-hero h1{
+
+font-size:36px;
+
+}
+
+.pricing-hero p{
+
+font-size:18px;
+
+}
+
+.benefits-grid{
+
+grid-template-columns:1fr;
+
+}
+
+.contact-buttons{
+
+flex-direction:column;
+
+}
+
+.price{
+
+font-size:40px;
+
+}
+
+}
