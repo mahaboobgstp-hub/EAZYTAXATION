@@ -119,7 +119,7 @@ function Sidebar() {
 
                 <NavLink
 
-                    to="/dashboard"
+                    to="/app/dashboard"
 
                     className="menu-link"
 
@@ -194,7 +194,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/customers"
+                                to="/app/customers"
 
                                 className="submenu-link"
 
@@ -206,7 +206,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/vendors"
+                                to="/app/vendors"
 
                                 className="submenu-link"
 
@@ -218,7 +218,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/items"
+                                to="/app/items"
 
                                 className="submenu-link"
 
@@ -230,7 +230,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/expense-categories"
+                                to="/app/expense-categories"
 
                                 className="submenu-link"
 
@@ -242,7 +242,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/asset-categories"
+                                to="/app/asset-categories"
 
                                 className="submenu-link"
 
@@ -345,42 +345,42 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/sales"
+                                to="/app/sales"
                                 className="submenu-link"
                             >
                                 Add Sales Invoice
                             </NavLink>
 
                             <NavLink
-                                to="/sales-register"
+                                to="/app/sales-register"
                                 className="submenu-link"
                             >
                                 Sales Register
                             </NavLink>
 
                             <NavLink
-                                to="/quotation"
+                                to="/app/quotation"
                                 className="submenu-link"
                             >
                                 Quotations
                             </NavLink>
 
                             <NavLink
-                                to="/sales-orders"
+                                to="/app/sales-orders"
                                 className="submenu-link"
                             >
                                 Sales Orders
                             </NavLink>
 
                             <NavLink
-                                to="/delivery-challans"
+                                to="/app/delivery-challans"
                                 className="submenu-link"
                             >
                                 Delivery Challans
                             </NavLink>
 
                             <NavLink
-                                to="/credit-notes"
+                                to="/app/credit-notes"
                                 className="submenu-link"
                             >
                                 Credit Notes
@@ -439,28 +439,28 @@ function Sidebar() {
                             </NavLink>
 
                             <NavLink
-                                to="/purchase-register"
+                                to="/app/purchase-register"
                                 className="submenu-link"
                             >
                                 Purchase Register
                             </NavLink>
 
                             <NavLink
-                                to="/purchase-orders"
+                                to="/app/purchase-orders"
                                 className="submenu-link"
                             >
                                 Purchase Orders
                             </NavLink>
 
                             <NavLink
-                                to="/purchase-returns"
+                                to="/app/purchase-returns"
                                 className="submenu-link"
                             >
                                 Purchase Returns
                             </NavLink>
 
                             <NavLink
-                                to="/debit-notes"
+                                to="/app/debit-notes"
                                 className="submenu-link"
                             >
                                 Debit Notes
@@ -512,14 +512,14 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/expenses"
+                                to="/app/expenses"
                                 className="submenu-link"
                             >
                                 Add Expense
                             </NavLink>
 
                             <NavLink
-                                to="/expense-register"
+                                to="/app/expense-register"
                                 className="submenu-link"
                             >
                                 Expense Register
@@ -577,21 +577,21 @@ function Sidebar() {
                             </NavLink>
 
                             <NavLink
-                                to="/payments"
+                                to="/app/payments"
                                 className="submenu-link"
                             >
                                 Payments
                             </NavLink>
 
                             <NavLink
-                                to="/contra"
+                                to="/app/contra"
                                 className="submenu-link"
                             >
                                 Contra
                             </NavLink>
 
                             <NavLink
-                                to="/bank-reconciliation"
+                                to="/app/bank-reconciliation"
                                 className="submenu-link"
                             >
                                 Bank Reconciliation
@@ -650,28 +650,28 @@ function Sidebar() {
                             </NavLink>
 
                             <NavLink
-                                to="/ledger"
+                                to="/app/ledger"
                                 className="submenu-link"
                             >
                                 Ledger
                             </NavLink>
 
                             <NavLink
-                                to="/trial-balance"
+                                to="/app/trial-balance"
                                 className="submenu-link"
                             >
                                 Trial Balance
                             </NavLink>
 
                             <NavLink
-                                to="/profit-loss"
+                                to="/app/profit-loss"
                                 className="submenu-link"
                             >
                                 Profit & Loss
                             </NavLink>
 
                             <NavLink
-                                to="/balance-sheet"
+                                to="/app/balance-sheet"
                                 className="submenu-link"
                             >
                                 Balance Sheet
@@ -723,28 +723,28 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/stock-register"
+                                to="/app/stock-register"
                                 className="submenu-link"
                             >
                                 Stock Register
                             </NavLink>
 
                             <NavLink
-                                to="/stock-adjustment"
+                                to="/app/stock-adjustment"
                                 className="submenu-link"
                             >
                                 Stock Adjustment
                             </NavLink>
 
                             <NavLink
-                                to="/stock-transfer"
+                                to="/app/stock-transfer"
                                 className="submenu-link"
                             >
                                 Stock Transfer
                             </NavLink>
 
                             <NavLink
-                                to="/physical-stock"
+                                to="/app/physical-stock"
                                 className="submenu-link"
                             >
                                 Physical Stock
@@ -795,35 +795,35 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/gstr1"
+                                to="/app/gstr1"
                                 className="submenu-link"
                             >
                                 GSTR-1
                             </NavLink>
 
                             <NavLink
-                                to="/gstr3b"
+                                to="/app/gstr3b"
                                 className="submenu-link"
                             >
                                 GSTR-3B
                             </NavLink>
 
                             <NavLink
-                                to="/gstr2b"
+                                to="/app/gstr2b"
                                 className="submenu-link"
                             >
                                 GSTR-2B
                             </NavLink>
 
                             <NavLink
-                                to="/eway-bills"
+                                to="/app/eway-bills"
                                 className="submenu-link"
                             >
                                 E-Way Bills
                             </NavLink>
 
                             <NavLink
-                                to="/einvoice"
+                                to="/app/einvoice"
                                 className="submenu-link"
                             >
                                 E-Invoice
@@ -875,7 +875,7 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/sales-reports"
+                                to="/app/sales-reports"
                                 className="submenu-link"
                             >
                                 Sales Reports
@@ -889,35 +889,35 @@ function Sidebar() {
                             </NavLink>
 
                             <NavLink
-                                to="/expense-reports"
+                                to="/app/expense-reports"
                                 className="submenu-link"
                             >
                                 Expense Reports
                             </NavLink>
 
                             <NavLink
-                                to="/customer-ledger"
+                                to="/app/customer-ledger"
                                 className="submenu-link"
                             >
                                 Customer Ledger
                             </NavLink>
 
                             <NavLink
-                                to="/vendor-ledger"
+                                to="/app/vendor-ledger"
                                 className="submenu-link"
                             >
                                 Vendor Ledger
                             </NavLink>
 
                             <NavLink
-                                to="/item-ledger"
+                                to="/app/item-ledger"
                                 className="submenu-link"
                             >
                                 Item Ledger
                             </NavLink>
 
                             <NavLink
-                                to="/gst-reports"
+                                to="/app/gst-reports"
                                 className="submenu-link"
                             >
                                 GST Reports
@@ -969,35 +969,35 @@ function Sidebar() {
                         <div className="submenu">
 
                             <NavLink
-                                to="/invoice-settings"
+                                to="/app/invoice-settings"
                                 className="submenu-link"
                             >
                                 Invoice Settings
                             </NavLink>
 
                             <NavLink
-                                to="/company-settings"
+                                to="/app/company-settings"
                                 className="submenu-link"
                             >
                                 Company Settings
                             </NavLink>
 
                             <NavLink
-                                to="/users"
+                                to="/app/users"
                                 className="submenu-link"
                             >
                                 Users
                             </NavLink>
 
                             <NavLink
-                                to="/roles"
+                                to="/app/roles"
                                 className="submenu-link"
                             >
                                 Roles & Permissions
                             </NavLink>
 
                             <NavLink
-                                to="/backup"
+                                to="/app/backup"
                                 className="submenu-link"
                             >
                                 Backup & Restore
