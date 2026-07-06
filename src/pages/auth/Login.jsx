@@ -49,7 +49,7 @@ function Login() {
 
       alert("Login Successful");
 
-      navigate("/companies");
+      navigate("/app/companies");
 
     }
 
