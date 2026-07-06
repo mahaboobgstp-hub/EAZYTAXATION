@@ -1,0 +1,217 @@
+/* ===========================================
+   PRIVACY POLICY PAGE
+=========================================== */
+
+.privacy-page{
+
+    background:#f8fafc;
+
+    min-height:100vh;
+
+    color:#1f2937;
+
+}
+
+/* ===========================================
+   HERO
+=========================================== */
+
+.privacy-hero{
+
+    max-width:900px;
+
+    margin:auto;
+
+    text-align:center;
+
+    padding:90px 20px 70px;
+
+}
+
+.privacy-badge{
+
+    display:inline-block;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    padding:8px 20px;
+
+    border-radius:40px;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    margin-bottom:25px;
+
+}
+
+.privacy-hero h1{
+
+    font-size:54px;
+
+    margin-bottom:20px;
+
+    color:#111827;
+
+    line-height:1.2;
+
+}
+
+.privacy-hero p{
+
+    font-size:20px;
+
+    color:#6b7280;
+
+    line-height:1.8;
+
+    max-width:800px;
+
+    margin:auto;
+
+}
+
+/* ===========================================
+   CONTENT
+=========================================== */
+
+.privacy-content{
+
+    max-width:1000px;
+
+    margin:0 auto;
+
+    padding:0 20px 80px;
+
+}
+
+.policy-section{
+
+    background:#ffffff;
+
+    padding:35px;
+
+    margin-bottom:25px;
+
+    border-radius:16px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.05);
+
+    transition:.3s;
+
+}
+
+.policy-section:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 15px 35px rgba(37,99,235,.10);
+
+}
+
+.policy-section h2{
+
+    color:#2563eb;
+
+    font-size:26px;
+
+    margin-bottom:18px;
+
+}
+
+.policy-section p{
+
+    color:#4b5563;
+
+    font-size:17px;
+
+    line-height:1.9;
+
+}
+
+/* ===========================================
+   FOOTER
+=========================================== */
+
+.privacy-footer{
+
+    background:#111827;
+
+    text-align:center;
+
+    padding:40px 20px;
+
+}
+
+.privacy-footer a{
+
+    display:inline-block;
+
+    padding:14px 28px;
+
+    background:#2563eb;
+
+    color:#ffffff;
+
+    border-radius:10px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.privacy-footer a:hover{
+
+    background:#1d4ed8;
+
+}
+
+/* ===========================================
+   RESPONSIVE
+=========================================== */
+
+@media(max-width:768px){
+
+.privacy-hero{
+
+padding:70px 20px 50px;
+
+}
+
+.privacy-hero h1{
+
+font-size:38px;
+
+}
+
+.privacy-hero p{
+
+font-size:17px;
+
+}
+
+.policy-section{
+
+padding:25px;
+
+}
+
+.policy-section h2{
+
+font-size:22px;
+
+}
+
+.policy-section p{
+
+font-size:16px;
+
+}
+
+}
