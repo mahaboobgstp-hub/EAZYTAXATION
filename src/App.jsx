@@ -4,6 +4,7 @@ import Features from "./pages/features/Features";
 import Pricing from "./pages/pricing/Pricing";
 import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
+import PrivacyPolicy from "./pages/privacy/PrivacyPolicy";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -56,6 +57,10 @@ function App() {
 <Route
     path="/contact"
     element={<Contact />}
+/>
+        <Route
+    path="/privacy-policy"
+    element={<PrivacyPolicy />}
 />
 
         <Route
