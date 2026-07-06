@@ -1,0 +1,531 @@
+/* ===========================================
+   ABOUT PAGE
+=========================================== */
+
+.about-page{
+
+    background:#f8fafc;
+
+    min-height:100vh;
+
+    color:#1f2937;
+
+}
+
+/* ===========================================
+   HERO
+=========================================== */
+
+.about-hero{
+
+    max-width:900px;
+
+    margin:auto;
+
+    text-align:center;
+
+    padding:90px 20px 70px;
+
+}
+
+.about-badge{
+
+    display:inline-block;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    padding:8px 20px;
+
+    border-radius:40px;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    margin-bottom:25px;
+
+}
+
+.about-hero h1{
+
+    font-size:54px;
+
+    line-height:1.2;
+
+    margin-bottom:25px;
+
+    color:#111827;
+
+}
+
+.about-hero p{
+
+    font-size:20px;
+
+    line-height:1.8;
+
+    color:#6b7280;
+
+}
+
+/* ===========================================
+   STORY SECTION
+=========================================== */
+
+.story-section{
+
+    background:white;
+
+    padding:80px 20px;
+
+}
+
+.story-content{
+
+    max-width:900px;
+
+    margin:auto;
+
+}
+
+.story-content h2{
+
+    text-align:center;
+
+    font-size:42px;
+
+    margin-bottom:35px;
+
+}
+
+.story-content p{
+
+    font-size:18px;
+
+    line-height:1.9;
+
+    color:#6b7280;
+
+    margin-bottom:25px;
+
+}
+
+/* ===========================================
+   MISSION
+=========================================== */
+
+.mission-section{
+
+    max-width:1200px;
+
+    margin:90px auto;
+
+    padding:0 30px;
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:35px;
+
+}
+
+.mission-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:40px;
+
+    text-align:center;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.05);
+
+    transition:.3s;
+
+}
+
+.mission-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 20px 40px rgba(37,99,235,.12);
+
+}
+
+.mission-icon{
+
+    width:70px;
+
+    height:70px;
+
+    margin:auto;
+
+    margin-bottom:25px;
+
+    background:#2563eb;
+
+    color:white;
+
+    border-radius:16px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:18px;
+
+}
+
+.mission-card h3{
+
+    margin-bottom:18px;
+
+    font-size:26px;
+
+}
+
+.mission-card p{
+
+    color:#6b7280;
+
+    line-height:1.8;
+
+}
+
+/* ===========================================
+   WHY CHOOSE US
+=========================================== */
+
+.why-about-section{
+
+    background:white;
+
+    padding:90px 30px;
+
+}
+
+.section-heading{
+
+    max-width:900px;
+
+    margin:auto;
+
+    text-align:center;
+
+    margin-bottom:60px;
+
+}
+
+.section-heading h2{
+
+    font-size:44px;
+
+    margin-bottom:20px;
+
+}
+
+.section-heading p{
+
+    color:#6b7280;
+
+    font-size:18px;
+
+    line-height:1.8;
+
+}
+
+.why-grid{
+
+    max-width:1300px;
+
+    margin:auto;
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:30px;
+
+}
+
+.why-card{
+
+    background:#f8fafc;
+
+    padding:35px;
+
+    border-radius:18px;
+
+    border:1px solid #e5e7eb;
+
+    transition:.3s;
+
+}
+
+.why-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+
+}
+
+.why-icon{
+
+    color:#2563eb;
+
+    font-size:42px;
+
+    margin-bottom:20px;
+
+}
+
+.why-card h3{
+
+    margin-bottom:15px;
+
+}
+
+.why-card p{
+
+    color:#6b7280;
+
+    line-height:1.8;
+
+}
+
+/* ===========================================
+   CTA
+=========================================== */
+
+.about-cta{
+
+    background:#2563eb;
+
+    color:white;
+
+    text-align:center;
+
+    padding:90px 20px;
+
+}
+
+.about-cta h2{
+
+    font-size:46px;
+
+    margin-bottom:20px;
+
+}
+
+.about-cta p{
+
+    font-size:20px;
+
+    max-width:750px;
+
+    margin:auto;
+
+    margin-bottom:35px;
+
+    line-height:1.8;
+
+}
+
+.about-buttons{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:20px;
+
+}
+
+.primary-btn{
+
+    background:white;
+
+    color:#2563eb;
+
+    padding:15px 32px;
+
+    border-radius:10px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+.primary-btn:hover{
+
+    background:#eff6ff;
+
+}
+
+.secondary-btn{
+
+    border:2px solid white;
+
+    color:white;
+
+    padding:15px 32px;
+
+    border-radius:10px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+.secondary-btn:hover{
+
+    background:white;
+
+    color:#2563eb;
+
+}
+
+/* ===========================================
+   FOOTER
+=========================================== */
+
+.about-footer{
+
+    background:#111827;
+
+    color:white;
+
+    text-align:center;
+
+    padding:50px 20px;
+
+}
+
+.footer-links{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:35px;
+
+    margin-bottom:25px;
+
+    flex-wrap:wrap;
+
+}
+
+.footer-links a{
+
+    color:#d1d5db;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.footer-links a:hover{
+
+    color:white;
+
+}
+
+.about-footer p{
+
+    color:#9ca3af;
+
+}
+
+/* ===========================================
+   RESPONSIVE
+=========================================== */
+
+@media(max-width:1000px){
+
+.mission-section{
+
+grid-template-columns:1fr;
+
+}
+
+.why-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.about-hero{
+
+padding:70px 20px 50px;
+
+}
+
+.about-hero h1{
+
+font-size:36px;
+
+}
+
+.about-hero p{
+
+font-size:17px;
+
+}
+
+.story-content h2{
+
+font-size:32px;
+
+}
+
+.story-content p{
+
+font-size:16px;
+
+}
+
+.section-heading h2{
+
+font-size:34px;
+
+}
+
+.about-cta h2{
+
+font-size:34px;
+
+}
+
+.about-buttons{
+
+flex-direction:column;
+
+align-items:center;
+
+}
+
+.footer-links{
+
+flex-direction:column;
+
+gap:18px;
+
+}
+
+}
