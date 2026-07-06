@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "../../css/auth/Register.css";
-import { registerUser } from "../../services/authService";
+import {
+
+    registerUser,
+
+    signInWithGoogle
+
+} from "../../services/authService";
 
 function Register() {
 
@@ -69,6 +75,29 @@ const [formData, setFormData] = useState({
   }
 
 };
+  async function handleGoogleLogin() {
+
+    try {
+
+        setLoading(true);
+
+        await signInWithGoogle();
+
+    }
+
+    catch (error) {
+
+        alert(error.message);
+
+    }
+
+    finally {
+
+        setLoading(false);
+
+    }
+
+}
 
   return (
 
@@ -210,14 +239,19 @@ const [formData, setFormData] = useState({
 
           </div>
 
-          <button
-            type="button"
-            className="google-button"
-          >
+         <button
 
-            Continue with Google
+    type="button"
 
-          </button>
+    className="google-button"
+
+    onClick={handleGoogleLogin}
+
+>
+
+    Continue with Google
+
+</button>
 
           <div className="login-link">
 
