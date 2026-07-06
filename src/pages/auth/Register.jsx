@@ -76,16 +76,18 @@ const [formData, setFormData] = useState({
 
 };
   async function handleGoogleLogin() {
-
+console.log("Google button clicked");
     try {
 
         setLoading(true);
 
         await signInWithGoogle();
+         console.log("OAuth request sent");
 
     }
 
     catch (error) {
+        console.error(error);
 
         alert(error.message);
 
