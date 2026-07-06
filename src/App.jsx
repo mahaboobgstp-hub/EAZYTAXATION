@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Landing from "./pages/landing/Landing";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import Layout from './components/Layout';
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
@@ -24,9 +27,9 @@ function App() {
         <Routes>
 
           <Route
-            path="/"
-            element={<Companies />}
-          />
+    path="/companies"
+    element={<Companies />}
+/>
 
         
         <Route path="/customers" element={<Customers />} />
