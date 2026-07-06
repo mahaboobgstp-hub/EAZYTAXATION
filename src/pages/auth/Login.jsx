@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/auth/Login.css";
 import { loginUser } from "../../services/authService";
+import {
+
+    loginUser,
+
+    signInWithGoogle
+
+} from "../../services/authService";
 
 function Login() {
 
@@ -66,7 +73,21 @@ function Login() {
     }
 
   }
+async function handleGoogleLogin() {
 
+    try {
+
+        await signInWithGoogle();
+
+    }
+
+    catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
   return (
 
     <div className="login-page">
@@ -79,6 +100,32 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
 
+         <button
+    className="google-login-btn"
+    onClick={handleGoogleLogin}
+>
+
+    <img
+
+        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+
+        alt="Google"
+
+    />
+
+    Continue with Google
+
+</button>
+
+<div className="login-divider">
+
+    <span>
+
+        OR
+
+    </span>
+
+</div>
           <input
 
             type="email"
