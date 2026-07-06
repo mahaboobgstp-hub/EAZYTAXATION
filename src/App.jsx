@@ -1,5 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Landing from "./pages/landing/Landing";
+import Features from "./pages/features/Features";
+import Pricing from "./pages/pricing/Pricing";
+import About from "./pages/about/About";
+import Contact from "./pages/contact/Contact";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -34,6 +38,25 @@ function App() {
           path="/"
           element={<Landing />}
         />
+        <Route
+    path="/features"
+    element={<Features />}
+/>
+
+<Route
+    path="/pricing"
+    element={<Pricing />}
+/>
+
+<Route
+    path="/about"
+    element={<About />}
+/>
+
+<Route
+    path="/contact"
+    element={<Contact />}
+/>
 
         <Route
           path="/login"
