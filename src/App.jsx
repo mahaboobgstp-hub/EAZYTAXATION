@@ -88,7 +88,7 @@ function App() {
         >
 
           <Route
-            path="/companies"
+            path="/app/companies"
             element={<Companies />}
           />
 
