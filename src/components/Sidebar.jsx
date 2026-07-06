@@ -182,7 +182,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/"
+                                to="/companies"
 
                                 className="submenu-link"
 
