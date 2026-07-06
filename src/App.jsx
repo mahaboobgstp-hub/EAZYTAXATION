@@ -19,117 +19,114 @@ import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import SalesRegister from "./pages/sales/SalesRegister";
 
 function App() {
- return (
 
-  <BrowserRouter>
+  return (
 
-    <Routes>
+    <BrowserRouter>
 
-      {/* PUBLIC ROUTES */}
+      <Routes>
 
-      <Route
-        path="/"
-        element={<Landing />}
-      />
+        {/* ===========================
+            PUBLIC ROUTES
+        =========================== */}
 
-      <Route
-        path="/login"
-        element={<Login />}
-      />
+        <Route
+          path="/"
+          element={<Landing />}
+        />
 
-      <Route
-        path="/register"
-        element={<Register />}
-      />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-      <Route
-        path="/forgot-password"
-        element={<ForgotPassword />}
-      />
+        <Route
+          path="/register"
+          element={<Register />}
+        />
 
-      {/* ERP ROUTES */}
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
 
-      <Route
-        path="/*"
-        element={
+        {/* ===========================
+            ERP ROUTES
+        =========================== */}
 
-          <Layout>
+        <Route
+          path="/app"
+          element={<Layout />}
+        >
 
-            <Routes>
+          <Route
+            path="companies"
+            element={<Companies />}
+          />
 
-              <Route
-                path="companies"
-                element={<Companies />}
-              />
+          <Route
+            path="customers"
+            element={<Customers />}
+          />
 
-              <Route
-                path="customers"
-                element={<Customers />}
-              />
+          <Route
+            path="vendors"
+            element={<Vendors />}
+          />
 
-              <Route
-                path="vendors"
-                element={<Vendors />}
-              />
+          <Route
+            path="expense-categories"
+            element={<ExpenseCategories />}
+          />
 
-              <Route
-                path="expense-categories"
-                element={<ExpenseCategories />}
-              />
+          <Route
+            path="asset-categories"
+            element={<AssetCategories />}
+          />
 
-              <Route
-                path="asset-categories"
-                element={<AssetCategories />}
-              />
+          <Route
+            path="sales"
+            element={<SalesInvoice />}
+          />
 
-              <Route
-                path="sales"
-                element={<SalesInvoice />}
-              />
+          <Route
+            path="quotation"
+            element={<Quotation />}
+          />
 
-              <Route
-                path="quotation"
-                element={<Quotation />}
-              />
+          <Route
+            path="purchases"
+            element={<PurchaseInvoice />}
+          />
 
-              <Route
-                path="purchases"
-                element={<PurchaseInvoice />}
-              />
+          <Route
+            path="expenses"
+            element={<ExpenseEntry />}
+          />
 
-              <Route
-                path="expenses"
-                element={<ExpenseEntry />}
-              />
+          <Route
+            path="sales-register"
+            element={<SalesRegister />}
+          />
 
-              <Route
-                path="sales-register"
-                element={<SalesRegister />}
-              />
+          <Route
+            path="invoice-settings"
+            element={<InvoiceSettings />}
+          />
 
-              <Route
-                path="invoice-settings"
-                element={<InvoiceSettings />}
-              />
+          <Route
+            path="items"
+            element={<Items />}
+          />
 
-              <Route
-                path="items"
-                element={<Items />}
-              />
+        </Route>
 
-            </Routes>
+      </Routes>
 
-          </Layout>
+    </BrowserRouter>
 
-        }
+  );
 
-      />
-
-    </Routes>
-
-  </BrowserRouter>
-
-);
 }
 
 export default App;
