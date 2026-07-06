@@ -48,6 +48,11 @@ function Landing() {
                         Features
 
                     </Link>
+                    <Link to="/pricing">
+
+        Pricing
+
+    </Link>
 
                     <Link to="/about">
 
