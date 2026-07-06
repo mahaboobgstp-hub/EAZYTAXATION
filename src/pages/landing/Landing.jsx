@@ -399,6 +399,11 @@ function Landing() {
                             Features
 
                         </Link>
+                        <Link to="/pricing">
+
+    Pricing
+
+</Link>
 
                         <Link to="/about">
 
@@ -418,11 +423,7 @@ function Landing() {
 
                         </Link>
 
-                        <Link to="/terms">
-
-                            Terms & Conditions
-
-                        </Link>
+                        
 
                     </div>
 
