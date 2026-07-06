@@ -49,3 +49,14 @@ export async function deleteVendor(id) {
     }
 
 }
+export async function getVendorsForDropdown() {
+
+    const { data, error } = await supabase
+        .from("vendors")
+        .select("id, vendor_name")
+        .order("vendor_name");
+
+    if (error) throw error;
+
+    return data;
+}
