@@ -1,0 +1,106 @@
+.uom-page {
+    padding: 30px;
+}
+
+.uom-header {
+    margin-bottom: 25px;
+}
+
+.uom-header h2 {
+    margin: 0 0 6px 0;
+}
+
+.uom-header p {
+    margin: 0;
+    color: #666;
+}
+
+.uom-form {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.uom-form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.uom-form-row input[type="text"],
+.uom-form-row input[type="number"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.uom-active-checkbox {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.uom-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.uom-form-actions button,
+.uom-table button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.uom-cancel-button {
+    background: #ddd;
+}
+
+.uom-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.uom-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+.uom-table th,
+.uom-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.uom-table th {
+    font-weight: 600;
+}
+
+.uom-table button {
+    margin-right: 6px;
+}
+
+.uom-empty {
+    text-align: center !important;
+    padding: 30px !important;
+}
+
+@media (max-width: 768px) {
+
+    .uom-page {
+        padding: 15px;
+    }
+
+    .uom-form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+}
