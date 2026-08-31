@@ -278,7 +278,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/uom"
+                                to="/app/uom"
 
                                 className="submenu-link"
 
