@@ -18,7 +18,7 @@ import SalesInvoice from './pages/sales/SalesInvoice';
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
 import Quotation from "./pages/quotations/Quotation";
 import Items from './pages/masters/Items';
-
+import Uom from './pages/masters/Uom';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
@@ -149,6 +149,10 @@ function App() {
             path="items"
             element={<Items />}
           />
+          <Route
+    path="uom"
+    element={<Uom />}
+/>
 
         </Route>
 
