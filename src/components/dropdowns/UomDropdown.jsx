@@ -8,6 +8,7 @@ const UOMS = [
   "PAIR",
   "SET",
   "DOZEN",
+  "DUTIES",
   "BUNDLE",
   "ROLL",
   "BAG",
