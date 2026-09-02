@@ -6,73 +6,79 @@ import React, {
 import "../../css/settings/InvoiceSettings.css";
 
 import {
-  getCompanies
-} from "../../services/companyService";
-
-import {
   getInvoiceSettings,
   saveInvoiceSettings
 } from "../../services/invoiceSettingsService";
+
+import { useCompany }
+from "../../context/CompanyContext";
+
 import { supabase }
 from "../../supabase/supabaseClient";
 
+
+const defaultFormData = {
+  company_id: "",
+
+  logo_url: "",
+
+  signature_url: "",
+
+  show_logo: true,
+
+  show_signature: true,
+
+  show_bank_details: true,
+
+  show_terms_conditions: true,
+
+  show_footer: true,
+
+  show_transport_details: true,
+
+  bank_name: "",
+
+  account_number: "",
+
+  ifsc_code: "",
+
+  upi_id: "",
+
+  invoice_footer: "",
+
+  terms_conditions: ""
+};
+
+
 function InvoiceSettings() {
 
-  const [companies, setCompanies] =
-    useState([]);
+  const {
+    currentCompany,
+    currentCompanyId,
+    loading: companyLoading
+  } = useCompany();
+
 
   const [formData, setFormData] =
-    useState({
+    useState(defaultFormData);
 
-      company_id: "",
-
-      logo_url: "",
-
-      signature_url: "",
-      show_logo: true,
-      show_signature: true,
-      show_bank_details: true,
-      show_terms_conditions: true,
-
-show_footer: true,
-
-show_transport_details: true,
-
-      bank_name: "",
-
-      account_number: "",
-
-      ifsc_code: "",
-
-      upi_id: "",
-
-      invoice_footer: "",
-
-      terms_conditions: ""
-
-    });
 
   useEffect(() => {
 
-    loadCompanies();
+    if (!currentCompanyId) {
 
-  }, []);
+      setFormData(defaultFormData);
 
-  const loadCompanies = async () => {
-
-    try {
-
-      const data =
-        await getCompanies();
-
-      setCompanies(data || []);
-
-    } catch (error) {
-
-      console.error(error);
+      return;
 
     }
-  };
+
+    loadSettings(
+      currentCompanyId
+    );
+
+  }, [currentCompanyId]);
+
 
   const handleChange = (e) => {
 
@@ -84,79 +90,93 @@ show_transport_details: true,
         e.target.value
 
     });
+
   };
-const uploadFile = async (
-  file,
-  bucketName,
-  fieldName
-) => {
 
-  try {
 
-    if (!file) return;
+  const uploadFile = async (
+    file,
+    bucketName,
+    fieldName
+  ) => {
 
-    console.log(
-      "Uploading File:",
-      file
-    );
+    try {
 
-    const fileName =
-      `${Date.now()}-${file.name}`;
+      if (!file) return;
 
-    const {
-      data: uploadData,
-      error
-    } = await supabase.storage
-      .from(bucketName)
-      .upload(
-        fileName,
-        file,
-        {
-          upsert: true
-        }
+
+      console.log(
+        "Uploading File:",
+        file
       );
 
-    console.log(
-      "Upload Result:",
-      uploadData
-    );
 
-    console.log(
-      "Upload Error:",
-      error
-    );
+      const fileName =
+        `${Date.now()}-${file.name}`;
 
-    if (error) {
-      throw error;
+
+      const {
+        data: uploadData,
+        error
+      } = await supabase.storage
+        .from(bucketName)
+        .upload(
+          fileName,
+          file,
+          {
+            upsert: true
+          }
+        );
+
+
+      console.log(
+        "Upload Result:",
+        uploadData
+      );
+
+
+      console.log(
+        "Upload Error:",
+        error
+      );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      const {
+        data
+      } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(
+          fileName
+        );
+
+
+      setFormData(prev => ({
+
+        ...prev,
+
+        [fieldName]:
+          data.publicUrl
+
+      }));
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        error.message
+      );
+
     }
 
-    const {
-      data
-    } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(
-        fileName
-      );
+  };
 
-    setFormData(prev => ({
 
-      ...prev,
-
-      [fieldName]:
-        data.publicUrl
-
-    }));
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      error.message
-    );
-
-  }
-};
   const loadSettings =
     async (companyId) => {
 
@@ -167,9 +187,30 @@ const uploadFile = async (
             companyId
           );
 
+
         if (data) {
 
-          setFormData(data);
+          setFormData({
+
+            ...defaultFormData,
+
+            ...data,
+
+            company_id:
+              companyId
+
+          });
+
+        } else {
+
+          setFormData({
+
+            ...defaultFormData,
+
+            company_id:
+              companyId
+
+          });
 
         }
 
@@ -178,36 +219,40 @@ const uploadFile = async (
         console.error(error);
 
       }
+
     };
 
-  const handleCompanyChange =
-    async (e) => {
-
-      const companyId =
-        e.target.value;
-
-      setFormData({
-
-        ...formData,
-
-        company_id:
-          companyId
-
-      });
-
-      await loadSettings(
-        companyId
-      );
-    };
 
   const handleSave =
     async () => {
 
       try {
 
+        if (!currentCompanyId) {
+
+          alert(
+            "Please select a Current Company from the Sidebar."
+          );
+
+          return;
+
+        }
+
+
+        const settingsToSave = {
+
+          ...formData,
+
+          company_id:
+            currentCompanyId
+
+        };
+
+
         await saveInvoiceSettings(
-          formData
+          settingsToSave
         );
+
 
         alert(
           "Settings Saved Successfully"
@@ -220,7 +265,9 @@ const uploadFile = async (
         );
 
       }
+
     };
+
 
   return (
 
@@ -230,141 +277,161 @@ const uploadFile = async (
         Invoice Settings
       </h2>
 
+
+      {!companyLoading &&
+        !currentCompanyId && (
+
+        <div
+          style={{
+            padding: "12px",
+            marginBottom: "15px",
+            background: "#fff3cd",
+            border: "1px solid #ffeeba",
+            borderRadius: "4px"
+          }}
+        >
+          Please select a Current Company
+          from the Sidebar.
+        </div>
+
+      )}
+
+
       <div
         className="invoice-settings-form"
       >
 
-        <select
-          value={
-            formData.company_id
-          }
-          onChange={
-            handleCompanyChange
-          }
+        <div
+          style={{
+            marginBottom: "15px",
+            fontWeight: "600"
+          }}
         >
+          Company:{" "}
 
-          <option value="">
-            Select Company
-          </option>
+          {companyLoading
+            ? "Loading..."
+            : currentCompany?.company_name ||
+              "Select Company from Sidebar"
+          }
 
-          {companies.map(
-            company => (
+        </div>
 
-            <option
-              key={company.id}
-              value={company.id}
-            >
-              {company.company_name}
-            </option>
-
-          ))}
-
-        </select>
 
         <label>
           Company Logo
         </label>
 
+
         <input
-  type="file"
-  accept="image/*"
-  onChange={(e) =>
+          type="file"
+          accept="image/*"
+          onChange={(e) =>
+            uploadFile(
+              e.target.files[0],
+              "company-logos",
+              "logo_url"
+            )
+          }
+        />
 
-    uploadFile(
-      e.target.files[0],
-      "company-logos",
-      "logo_url"
-    )
 
-  }
-/>
         {
-  formData.logo_url && (
+          formData.logo_url && (
 
-    <img
-      src={
-        formData.logo_url
-      }
-      alt="Logo"
-      width="150"
-    />
+            <img
+              src={
+                formData.logo_url
+              }
+              alt="Logo"
+              width="150"
+            />
 
-  )
-}
-<label>
+          )
+        }
 
-  <input
-    type="checkbox"
-    checked={
-      formData.show_logo
-    }
-    onChange={(e) =>
-      setFormData({
 
-        ...formData,
+        <label>
 
-        show_logo:
-          e.target.checked
+          <input
+            type="checkbox"
+            checked={
+              formData.show_logo
+            }
+            onChange={(e) =>
+              setFormData({
 
-      })
-    }
-  />
+                ...formData,
 
-  Show Logo On Invoice
+                show_logo:
+                  e.target.checked
 
-</label>
+              })
+            }
+          />
+
+          Show Logo On Invoice
+
+        </label>
+
+
         <label>
           Signature
         </label>
 
-       <input
-  type="file"
-  accept="image/*"
-  onChange={(e) =>
 
-    uploadFile(
-      e.target.files[0],
-      "company-signatures",
-      "signature_url"
-    )
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) =>
+            uploadFile(
+              e.target.files[0],
+              "company-signatures",
+              "signature_url"
+            )
+          }
+        />
 
-  }
-/>
-{
-  formData.signature_url && (
 
-    <img
-      src={
-        formData.signature_url
-      }
-      alt="Signature"
-      width="200"
-    />
+        {
+          formData.signature_url && (
 
-  )
-}
+            <img
+              src={
+                formData.signature_url
+              }
+              alt="Signature"
+              width="200"
+            />
+
+          )
+        }
+
+
         <label>
 
-  <input
-    type="checkbox"
-    checked={
-      formData.show_signature
-    }
-    onChange={(e) =>
-      setFormData({
+          <input
+            type="checkbox"
+            checked={
+              formData.show_signature
+            }
+            onChange={(e) =>
+              setFormData({
 
-        ...formData,
+                ...formData,
 
-        show_signature:
-          e.target.checked
+                show_signature:
+                  e.target.checked
 
-      })
-    }
-  />
+              })
+            }
+          />
 
-  Show Signature On Invoice
+          Show Signature On Invoice
 
-</label>
+        </label>
+
+
         <input
           name="bank_name"
           placeholder="Bank Name"
@@ -375,6 +442,7 @@ const uploadFile = async (
             handleChange
           }
         />
+
 
         <input
           name="account_number"
@@ -387,6 +455,7 @@ const uploadFile = async (
           }
         />
 
+
         <input
           name="ifsc_code"
           placeholder="IFSC Code"
@@ -398,6 +467,7 @@ const uploadFile = async (
           }
         />
 
+
         <input
           name="upi_id"
           placeholder="UPI ID"
@@ -408,50 +478,55 @@ const uploadFile = async (
             handleChange
           }
         />
+
+
         <label>
 
-  <input
-    type="checkbox"
-    checked={
-      formData.show_bank_details
-    }
-    onChange={(e) =>
-      setFormData({
+          <input
+            type="checkbox"
+            checked={
+              formData.show_bank_details
+            }
+            onChange={(e) =>
+              setFormData({
 
-        ...formData,
+                ...formData,
 
-        show_bank_details:
-          e.target.checked
+                show_bank_details:
+                  e.target.checked
 
-      })
-    }
-  />
+              })
+            }
+          />
 
-  Show Bank Details On Invoice
+          Show Bank Details On Invoice
 
-</label>
+        </label>
+
+
         <label>
 
-  <input
-    type="checkbox"
-    checked={
-      formData.show_transport_details
-    }
-    onChange={(e) =>
-      setFormData({
+          <input
+            type="checkbox"
+            checked={
+              formData.show_transport_details
+            }
+            onChange={(e) =>
+              setFormData({
 
-        ...formData,
+                ...formData,
 
-        show_transport_details:
-          e.target.checked
+                show_transport_details:
+                  e.target.checked
 
-      })
-    }
-  />
+              })
+            }
+          />
 
-  Show Vehicle No & E-Way Bill
+          Show Vehicle No & E-Way Bill
 
-</label>
+        </label>
+
 
         <textarea
           name="invoice_footer"
@@ -463,28 +538,32 @@ const uploadFile = async (
             handleChange
           }
         />
-<label>
 
-  <input
-    type="checkbox"
-    checked={
-      formData.show_footer
-    }
-    onChange={(e) =>
-      setFormData({
 
-        ...formData,
+        <label>
 
-        show_footer:
-          e.target.checked
+          <input
+            type="checkbox"
+            checked={
+              formData.show_footer
+            }
+            onChange={(e) =>
+              setFormData({
 
-      })
-    }
-  />
+                ...formData,
 
-  Show Footer On Invoice
+                show_footer:
+                  e.target.checked
 
-</label>
+              })
+            }
+          />
+
+          Show Footer On Invoice
+
+        </label>
+
+
         <textarea
           name="terms_conditions"
           placeholder="Terms & Conditions"
@@ -495,42 +574,52 @@ const uploadFile = async (
             handleChange
           }
         />
-<label>
 
-  <input
-    type="checkbox"
-    checked={
-      formData.show_terms_conditions
-    }
-    onChange={(e) =>
-      setFormData({
 
-        ...formData,
+        <label>
 
-        show_terms_conditions:
-          e.target.checked
+          <input
+            type="checkbox"
+            checked={
+              formData.show_terms_conditions
+            }
+            onChange={(e) =>
+              setFormData({
 
-      })
-    }
-  />
+                ...formData,
 
-  Show Terms & Conditions On Invoice
+                show_terms_conditions:
+                  e.target.checked
 
-</label>
+              })
+            }
+          />
+
+          Show Terms & Conditions On Invoice
+
+        </label>
+
+
         <button
           type="button"
           onClick={
             handleSave
           }
+          disabled={
+            !currentCompanyId
+          }
         >
           Save Settings
         </button>
+
 
       </div>
 
     </div>
 
   );
+
 }
+
 
 export default InvoiceSettings;
