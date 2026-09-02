@@ -477,116 +477,131 @@ const grandTotal =
 
   try {
 
+    // Make sure a Current Company is selected
+    if (!currentCompanyId) {
+      alert('Please select a Current Company from the Sidebar.');
+      return;
+    }
+
     const invoiceHeader = {
 
       ...formData,
+
+      // Always use the company selected in CompanyContext
+      company_id: currentCompanyId,
+      company_name: currentCompany?.company_name || '',
+      company_state: currentCompany?.state || '',
+
       gst_type:
-
-formData.company_state ===
-formData.place_of_supply
-
-? 'INTRA_STATE'
-
-: 'INTER_STATE',
+        currentCompany?.state === formData.place_of_supply
+          ? 'INTRA_STATE'
+          : 'INTER_STATE',
 
       taxable_value: taxableValue,
 
-     cgst: cgst,
+      cgst: cgst,
 
-sgst: sgst,
+      sgst: sgst,
 
-igst: igst,
+      igst: igst,
 
       total_amount: grandTotal
 
     };
 
-   if (editingInvoiceId) {
 
-  await updateSalesInvoice(
-    editingInvoiceId,
-    invoiceHeader,
-    items
-  );
+    if (editingInvoiceId) {
 
-  alert(
-    'Invoice Updated'
-  );
+      await updateSalesInvoice(
+        editingInvoiceId,
+        invoiceHeader,
+        items
+      );
 
-} else {
+      alert(
+        'Invoice Updated'
+      );
 
- const savedInvoiceId =
-  await saveSalesInvoice(
-    invoiceHeader,
-    items
-  );
+    } else {
 
-alert(
-  'Sales Invoice Saved'
-);
+      const savedInvoiceId =
+        await saveSalesInvoice(
+          invoiceHeader,
+          items
+        );
 
-await printInvoice(
-  savedInvoiceId
-);
-     
-    setFormData({
+      alert(
+        'Sales Invoice Saved'
+      );
 
-  company_id: '',
-  company_name: '',
-  company_state: '',
+      await printInvoice(
+        savedInvoiceId
+      );
 
-  invoice_no: '',
-  invoice_date: '',
 
-  customer_id: '',
-  customer_name: '',
-  customer_state: '',
+      setFormData({
 
-  billing_address: '',
+        company_id: '',
+        company_name: '',
+        company_state: '',
 
-  shipping_name: '',
-  shipping_gstin: '',
-  shipping_state: '',
-  shipping_address: '',
+        invoice_no: '',
+        invoice_date: '',
 
-  place_of_supply: '',
+        customer_id: '',
+        customer_name: '',
+        customer_state: '',
 
-  vehicle_no: '',
-  eway_bill_no: '',
+        billing_address: '',
 
-  gst_type: '',
+        shipping_name: '',
+        shipping_gstin: '',
+        shipping_state: '',
+        shipping_address: '',
 
-  remarks: ''
+        place_of_supply: '',
 
-});
+        vehicle_no: '',
+        eway_bill_no: '',
 
-    setItems([
-      {
-        item_id: '',
-        item_name: '',
-        hsn_sac: '',
-        unit:'',
-        gst_rate: 18,
-        qty: 1,
-        rate: 0,
-        amount: 0
-      }
-    ]);
-setEditingInvoiceId(
-  null
-);
+        gst_type: '',
 
-loadInvoiceNumber();
-    loadInvoices();
-   }
-  }
-   catch (error) {
+        remarks: ''
+
+      });
+
+
+      setItems([
+        {
+          item_id: '',
+          item_name: '',
+          hsn_sac: '',
+          unit: '',
+          gst_rate: 18,
+          qty: 1,
+          rate: 0,
+          amount: 0
+        }
+      ]);
+
+
+      setEditingInvoiceId(
+        null
+      );
+
+      loadInvoiceNumber();
+
+      loadInvoices();
+
+    }
+
+  } catch (error) {
 
     alert(error.message);
 
   }
-};
 
+};
   const viewInvoice = async (
   invoiceId
 ) => {
@@ -820,29 +835,19 @@ setCustomerDetails(
         className="sales-form"
         onSubmit={handleSubmit}
       >
-      <select
-  name="company_id"
-  value={formData.company_id}
-  onChange={handleChange}
-  required
->
+     <div className="form-group">
+  <label>Company</label>
 
-  <option value="">
-    Select Company
-  </option>
-
-  {companies.map(company => (
-
-    <option
-      key={company.id}
-      value={company.id}
-    >
-      {company.company_name}
-    </option>
-
-  ))}
-
-</select>
+  <input
+    type="text"
+    value={
+      companyLoading
+        ? "Loading..."
+        : currentCompany?.company_name || "Select Company from Sidebar"
+    }
+    readOnly
+  />
+</div>
         <input
   type="text"
   name="invoice_no"
