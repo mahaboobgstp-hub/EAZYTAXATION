@@ -38,6 +38,7 @@ import { formatAmount } from "../../utils/amountFormatter";
 function SalesInvoice() {
   const {
   currentCompany,
+  currentCompanyId,  
   loading: companyLoading
 } = useCompany();
 
