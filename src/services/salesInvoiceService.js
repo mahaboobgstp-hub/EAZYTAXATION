@@ -1,15 +1,14 @@
 import { supabase } from "../supabase/supabaseClient";
 
-export async function getCustomersForDropdown() {
+export async function getCustomersForDropdown(companyId) {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("id, customer_name, state, address")
+    .eq("company_id", companyId)
+    .order("customer_name, state");
 
-    const { data, error } = await supabase
-        .from("customers")
-        .select("id, customer_name, state, address")
-        .order("customer_name, state");
-
-    if (error) throw error;
-
-    return data;
+  if (error) throw error;
+  return data;
 }
 export async function getCompaniesForDropdown() {
 
@@ -23,16 +22,15 @@ export async function getCompaniesForDropdown() {
 
     return data;
 }
-export async function getItemsForDropdown() {
+export async function getItemsForDropdown(companyId) {
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("item_name");
 
-    const { data, error } = await supabase
-        .from("items")
-        .select("*")
-        .order("item_name");
-
-    if (error) throw error;
-
-    return data;
+  if (error) throw error;
+  return data;
 }
 
 export async function generateInvoiceNumber() {
@@ -122,19 +120,16 @@ export async function saveSalesInvoice(
     return invoiceId;
 }
 
-export async function getSalesInvoices() {
+export async function getSalesInvoices(companyId) {
+  const { data, error } = await supabase
+    .from("sales_invoices")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("is_deleted", false)
+    .order("invoice_date", { ascending: false });
 
-    const { data, error } = await supabase
-        .from("sales_invoices")
-        .select("*")
-        .eq("is_deleted", false)
-        .order("invoice_date", {
-            ascending: false
-        });
-
-    if (error) throw error;
-
-    return data;
+  if (error) throw error;
+  return data;
 }
 export async function getSalesInvoiceById(
     invoiceId
