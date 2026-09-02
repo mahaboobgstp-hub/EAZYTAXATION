@@ -1,26 +1,40 @@
 import { supabase } from "../supabase/supabaseClient";
 
-export async function createItem(data) {
+export async function createItem(data, companyId) {
 
-    const { error } = await supabase
-        .from("items")
-        .insert([data]);
+  if (!companyId) {
+    throw new Error("Please select a Current Company.");
+  }
 
-    if (error) throw error;
+  const itemData = {
+    ...data,
+    company_id: companyId
+  };
 
-    return true;
+  const { error } = await supabase
+    .from("items")
+    .insert([itemData]);
+
+  if (error) throw error;
+
+  return true;
 }
 
-export async function getItems() {
+export async function getItems(companyId) {
 
-    const { data, error } = await supabase
-        .from("items")
-        .select("*")
-        .order("item_name");
+  if (!companyId) {
+    return [];
+  }
 
-    if (error) throw error;
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("item_name");
 
-    return data;
+  if (error) throw error;
+
+  return data;
 }
 export async function deleteItem(id) {
 
