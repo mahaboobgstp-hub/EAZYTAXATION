@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useCompany } from '../../context/CompanyContext';
 import { getStates }
 from '../../services/stateService';
 
@@ -10,7 +11,9 @@ import {
 } from '../../services/customerService';
 
 function Customers() {
-
+  const {
+    currentCompanyId
+  } = useCompany();
   const [customers, setCustomers] = useState([]);
   const [states, setStates] = useState([]);
 
@@ -25,18 +28,43 @@ function Customers() {
   });
 
   useEffect(() => {
-    loadStates()
-    loadCustomers();
-  }, []);
 
-  const loadCustomers = async () => {
-    try {
-      const data = await getCustomers();
-      setCustomers(data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  loadStates();
+
+}, []);
+  useEffect(() => {
+
+  if (!currentCompanyId) {
+    setCustomers([]);
+    return;
+  }
+
+  loadCustomers();
+
+}, [currentCompanyId]);
+
+ const loadCustomers = async () => {
+
+  if (!currentCompanyId) {
+    setCustomers([]);
+    return;
+  }
+
+  try {
+
+    const data =
+      await getCustomers(
+        currentCompanyId
+      );
+
+    setCustomers(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
 const loadStates = async () => {
 
   try {
@@ -61,31 +89,40 @@ const loadStates = async () => {
 
   const handleSubmit = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
+  try {
 
-      await createCustomer(formData);
-
-      alert('Customer Saved Successfully');
-
-      setFormData({
-        customer_name: '',
-        gstin: '',
-        pan: '',
-        mobile: '',
-        email: '',
-        address: '',
-        state: ''
-      });
-
-      loadCustomers();
-
-    } catch (error) {
-      alert(error.message);
+    if (!currentCompanyId) {
+      alert('Please select a Current Company.');
+      return;
     }
-  };
 
+    await createCustomer(
+      formData,
+      currentCompanyId
+    );
+
+    alert('Customer Saved Successfully');
+
+    setFormData({
+      customer_name: '',
+      gstin: '',
+      pan: '',
+      mobile: '',
+      email: '',
+      address: '',
+      state: ''
+    });
+
+    loadCustomers();
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
+};
   return (
     <div className="customers-page">
 
