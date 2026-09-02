@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
 import '../../css/masters/Items.css';
@@ -10,6 +11,9 @@ import {
 } from '../../services/itemService';
 
 function Items() {
+ const {
+    currentCompanyId
+  } = useCompany();
 
   const [items, setItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -25,23 +29,41 @@ function Items() {
     purchase_rate: ''
   });
 
-  useEffect(() => {
-    loadItems();
-  }, []);
+ useEffect(() => {
 
-  const loadItems = async () => {
+  if (!currentCompanyId) {
+    setItems([]);
+    return;
+  }
 
-    try {
+  loadItems();
 
-      const data = await getItems();
-      console.log("Items from Supabase:", data);
+}, [currentCompanyId]);
 
-      setItems(data || []);
+ const loadItems = async () => {
 
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  if (!currentCompanyId) {
+    setItems([]);
+    return;
+  }
+
+  try {
+
+    const data = await getItems(currentCompanyId);
+
+    console.log(
+      "Items from Supabase:",
+      data
+    );
+
+    setItems(data || []);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
 
   const handleChange = (e) => {
 
@@ -96,8 +118,11 @@ const handleEdit = (item) => {
     e.preventDefault();
 
     try {
-
-      await createItem(formData);
+if (!currentCompanyId) {
+      alert('Please select a Current Company.');
+      return;
+    }
+      await createItem(formData, currentCompanyId);
 
       alert('Item Saved Successfully');
 
