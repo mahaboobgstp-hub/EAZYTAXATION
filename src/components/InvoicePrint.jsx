@@ -176,22 +176,27 @@ pdf.addImage(
                 </strong>
               </div>
 
-              <div className="info-row">
-                <span>Vehicle No.</span>
-                <span>:</span>
-                <strong>
-                  {invoice.vehicle_no}
-                </strong>
-              </div>
+              {settings?.show_transport_details && (
 
-              <div className="info-row">
-                <span>E-Way Bill No.</span>
-                <span>:</span>
-                <strong>
-                  {invoice.eway_bill_no}
-                </strong>
-              </div>
+  <>
+    <div className="info-row">
+      <span>Vehicle No.</span>
+      <span>:</span>
+      <strong>
+        {invoice.vehicle_no}
+      </strong>
+    </div>
 
+    <div className="info-row">
+      <span>E-Way Bill No.</span>
+      <span>:</span>
+      <strong>
+        {invoice.eway_bill_no}
+      </strong>
+    </div>
+  </>
+
+)}
             </div>
 
             {/* RIGHT */}
