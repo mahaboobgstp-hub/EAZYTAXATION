@@ -466,3 +466,36 @@
 }
 
 }
+/* =========================================
+   CURRENT COMPANY SELECTOR
+========================================= */
+
+.company-select {
+    width: 100%;
+    max-width: 145px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 2px 24px 2px 0;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.company-select:focus {
+    outline: none;
+}
+
+.company-select option {
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.company-select:disabled {
+    opacity: 0.8;
+    cursor: default;
+}
