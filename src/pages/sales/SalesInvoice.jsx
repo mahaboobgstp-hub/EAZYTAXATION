@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
 import '../../css/sales/SalesInvoice.css';
@@ -36,6 +37,10 @@ import {
 import { formatAmount } from "../../utils/amountFormatter";
 
 function SalesInvoice() {
+  const {
+  currentCompany,
+  loading: companyLoading
+} = useCompany();
 
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
