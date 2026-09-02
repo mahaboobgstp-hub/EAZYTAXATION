@@ -102,41 +102,25 @@ function Sidebar() {
             Current Company
         </small>
 
-        <select
-            value={currentCompany?.id || ""}
-            onChange={(e) => changeCompany(e.target.value)}
-            disabled={loading || companies.length === 0}
+       <select
+    className="company-select"
+    value={currentCompany?.id || ""}
+    onChange={(e) => changeCompany(e.target.value)}
+    disabled={loading || companies.length === 0}
+>
+    <option value="">
+        {loading ? "Loading..." : "Select Company"}
+    </option>
+
+    {!loading && companies.map((company) => (
+        <option
+            key={company.id}
+            value={company.id}
         >
-
-            {loading ? (
-
-                <option value="">
-                    Loading...
-                </option>
-
-            ) : companies.length === 0 ? (
-
-                <option value="">
-                    No Company
-                </option>
-
-            ) : (
-
-                companies.map((company) => (
-
-                    <option
-                        key={company.id}
-                        value={company.id}
-                    >
-                        {company.company_name.trim()}
-                    </option>
-
-                ))
-
-            )}
-
-        </select>
-
+            {company.company_name.trim()}
+        </option>
+    ))}
+</select>
     </div>
 
 </div>
