@@ -39,7 +39,8 @@ export function CompanyProvider({ children }) {
 
             setCompanies(data || []);
 
-            const savedCompanyId = localStorage.getItem("currentCompanyId");
+            const savedCompanyId =
+                localStorage.getItem("currentCompanyId");
 
             const savedCompany = (data || []).find(
                 company => company.id === savedCompanyId
@@ -47,12 +48,7 @@ export function CompanyProvider({ children }) {
 
             if (savedCompany) {
                 setCurrentCompany(savedCompany);
-            } if (savedCompany) {
-    setCurrentCompany(savedCompany);
-} else {
-    setCurrentCompany(null);
-    localStorage.removeItem("currentCompanyId");
-} else {
+            } else {
                 setCurrentCompany(null);
                 localStorage.removeItem("currentCompanyId");
             }
@@ -74,7 +70,11 @@ export function CompanyProvider({ children }) {
         if (!selectedCompany) return;
 
         setCurrentCompany(selectedCompany);
-        localStorage.setItem("currentCompanyId", selectedCompany.id);
+
+        localStorage.setItem(
+            "currentCompanyId",
+            selectedCompany.id
+        );
     };
 
     return (
