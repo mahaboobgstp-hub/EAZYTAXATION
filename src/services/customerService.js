@@ -1,26 +1,40 @@
 import { supabase } from "../supabase/supabaseClient";
 
-export async function createCustomer(data) {
+export async function createCustomer(data, companyId) {
 
-    const { error } = await supabase
-        .from("customers")
-        .insert([data]);
+  if (!companyId) {
+    throw new Error("Please select a Current Company.");
+  }
 
-    if (error) throw error;
+  const customerData = {
+    ...data,
+    company_id: companyId
+  };
 
-    return true;
+  const { error } = await supabase
+    .from("customers")
+    .insert([customerData]);
+
+  if (error) throw error;
+
+  return true;
 }
 
-export async function getCustomers() {
+export async function getCustomers(companyId) {
 
-    const { data, error } = await supabase
-        .from("customers")
-        .select("*")
-        .order("customer_name");
+  if (!companyId) {
+    return [];
+  }
 
-    if (error) throw error;
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("customer_name");
 
-    return data;
+  if (error) throw error;
+
+  return data;
 }
 export async function getCustomerById(
     customerId
