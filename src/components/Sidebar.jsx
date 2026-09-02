@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useCompany } from "../context/CompanyContext";
 
 import {
 
@@ -27,6 +28,12 @@ import {
 import "../css/Sidebar.css";
 
 function Sidebar() {
+    const {
+    companies,
+    currentCompany,
+    changeCompany,
+    loading
+} = useCompany();
 
     const [openMenu, setOpenMenu] = useState("sales");
     const toggleMenu = (menuName) => {
@@ -85,32 +92,54 @@ function Sidebar() {
 
             <div className="company-card">
 
-                <div className="company-icon">
+    <div className="company-icon">
+        <FiBriefcase />
+    </div>
 
-                    <FiBriefcase />    
+    <div className="company-details">
 
-                </div>
+        <small>
+            Current Company
+        </small>
 
-                <div className="company-details">
+        <select
+            value={currentCompany?.id || ""}
+            onChange={(e) => changeCompany(e.target.value)}
+            disabled={loading || companies.length === 0}
+        >
 
-                    <small>
+            {loading ? (
 
-                        Current Company
+                <option value="">
+                    Loading...
+                </option>
 
-                    </small>
+            ) : companies.length === 0 ? (
 
-                    <h4>
+                <option value="">
+                    No Company
+                </option>
 
-                        EAZYTAXATION Pvt Ltd
+            ) : (
 
-                    </h4>
+                companies.map((company) => (
 
-                </div>
+                    <option
+                        key={company.id}
+                        value={company.id}
+                    >
+                        {company.company_name.trim()}
+                    </option>
 
-                <FiChevronDown className="company-arrow"/>
+                ))
 
-            </div>
+            )}
 
+        </select>
+
+    </div>
+
+</div>
             {/* =======================================
                 MENU
             ======================================= */}
