@@ -47,10 +47,12 @@ export function CompanyProvider({ children }) {
 
             if (savedCompany) {
                 setCurrentCompany(savedCompany);
-            } else if (data && data.length > 0) {
-                setCurrentCompany(data[0]);
-                localStorage.setItem("currentCompanyId", data[0].id);
-            } else {
+            } if (savedCompany) {
+    setCurrentCompany(savedCompany);
+} else {
+    setCurrentCompany(null);
+    localStorage.removeItem("currentCompanyId");
+} else {
                 setCurrentCompany(null);
                 localStorage.removeItem("currentCompanyId");
             }
