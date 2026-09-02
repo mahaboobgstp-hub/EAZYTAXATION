@@ -14,7 +14,6 @@ from
 '../../services/invoiceSettingsService';
 
 import {
-  getCompaniesForDropdown,
   getCustomersForDropdown,
   getItemsForDropdown,
   saveSalesInvoice,
@@ -45,7 +44,7 @@ function SalesInvoice() {
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [itemsMaster, setItemsMaster] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  //const [companies, setCompanies] = useState([]);
   const [states, setStates] = useState([]);
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [printMode, setPrintMode] = useState(false);
@@ -102,14 +101,37 @@ eway_bill_no: '',
 ]);
 
   useEffect(() => {
-    loadCompanies();
-    loadCustomers();
-    loadItemsMaster();
-    loadInvoices();
-    loadInvoiceNumber();
-    loadStates();
-    
-  }, []);
+  loadStates();
+}, []);
+
+  useEffect(() => {
+  if (!currentCompanyId) {
+    setCustomers([]);
+    setItemsMaster([]);
+    setInvoices([]);
+
+    setFormData(prev => ({
+      ...prev,
+      company_id: '',
+      company_name: '',
+      company_state: ''
+    }));
+
+    return;
+  }
+
+  setFormData(prev => ({
+    ...prev,
+    company_id: currentCompanyId,
+    company_name: currentCompany?.company_name || '',
+    company_state: currentCompany?.state || ''
+  }));
+
+  loadCustomers();
+  loadItemsMaster();
+  loadInvoices();
+  loadInvoiceNumber();
+}, [currentCompanyId]);
   const loadInvoiceNumber = async () => {
 
   try {
@@ -129,7 +151,7 @@ eway_bill_no: '',
   }
 };
 
-  const loadCustomers = async () => {
+ /* const loadCustomers = async () => {
 
     try {
       const data = await getCustomersForDropdown();
@@ -137,9 +159,19 @@ eway_bill_no: '',
     } catch (error) {
       console.error(error);
     }
-  };
+  };*/
+  const loadCustomers = async () => {
+  if (!currentCompanyId) return;
 
- const loadCompanies = async () => {
+  try {
+    const data = await getCustomersForDropdown(currentCompanyId);
+    setCustomers(data || []);
+  } catch (error) {
+    console.error("Error loading customers:", error);
+  }
+};
+
+ /*const loadCompanies = async () => {
 
   try {
 
@@ -153,7 +185,7 @@ eway_bill_no: '',
     console.error(error);
 
   }
-};
+};*/
   const loadStates = async () => {
 
   try {
@@ -170,7 +202,7 @@ eway_bill_no: '',
   }
 
 };
-const loadItemsMaster = async () => {
+/*const loadItemsMaster = async () => {
 
   try {
 
@@ -184,8 +216,18 @@ const loadItemsMaster = async () => {
     console.error(error);
 
   }
+};*/
+  const loadItemsMaster = async () => {
+  if (!currentCompanyId) return;
+
+  try {
+    const data = await getItemsForDropdown(currentCompanyId);
+    setItemsMaster(data || []);
+  } catch (error) {
+    console.error("Error loading items:", error);
+  }
 };
-  const loadInvoices = async () => {
+ /* const loadInvoices = async () => {
 
     try {
       const data = await getSalesInvoices();
@@ -193,7 +235,17 @@ const loadItemsMaster = async () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  };*/
+  const loadInvoices = async () => {
+  if (!currentCompanyId) return;
+
+  try {
+    const data = await getSalesInvoices(currentCompanyId);
+    setInvoices(data || []);
+  } catch (error) {
+    console.error("Error loading invoices:", error);
+  }
+};
 
   const handleChange = (e) => {
 
