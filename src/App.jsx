@@ -9,6 +9,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Layout from './components/Layout';
+import { CompanyProvider } from "./context/CompanyContext";
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
 import Vendors from './pages/masters/Vendors';
@@ -30,6 +31,7 @@ function App() {
 
     <BrowserRouter>
 
+      <CompanyProvider>
       <Routes>
 
         {/* ===========================
@@ -158,6 +160,7 @@ function App() {
 
       </Routes>
 
+        </CompanyProvider>
     </BrowserRouter>
 
   );
