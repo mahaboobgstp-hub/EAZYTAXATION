@@ -13,6 +13,8 @@ import { CompanyProvider } from "./context/CompanyContext";
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
 import Vendors from './pages/masters/Vendors';
+import EmployeeMaster from "./pages/hr/EmployeeMaster";
+import AttendanceEntry from "./pages/hr/AttendanceEntry";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -161,6 +163,15 @@ function App() {
 />
 
         </Route>
+        <Route
+    path="employees"
+    element={<EmployeeMaster />}
+/>
+
+<Route
+    path="attendance"
+    element={<AttendanceEntry />}
+/>
 
       </Routes>
 
