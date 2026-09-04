@@ -543,6 +543,59 @@ function Sidebar() {
                     )
 
                 }
+
+                {/* ===================================
+    HR
+=================================== */}
+
+<div
+    className="menu-title"
+    onClick={() => toggleMenu("hr")}
+>
+
+    <div className="menu-left">
+
+        <FiBriefcase />
+
+        <span>
+            HR
+        </span>
+
+    </div>
+
+    {
+        openMenu === "hr"
+            ? <FiChevronDown />
+            : <FiChevronRight />
+    }
+
+</div>
+
+{
+
+    openMenu === "hr" && (
+
+        <div className="submenu">
+
+            <NavLink
+                to="/app/employees"
+                className="submenu-link"
+            >
+                Employee Master
+            </NavLink>
+
+            <NavLink
+                to="/app/attendance"
+                className="submenu-link"
+            >
+                Attendance Entry
+            </NavLink>
+
+        </div>
+
+    )
+
+}
                               {/* ===================================
                     BANKING
                 =================================== */}
