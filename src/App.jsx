@@ -16,6 +16,7 @@ import Vendors from './pages/masters/Vendors';
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
+import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
 import Quotation from "./pages/quotations/Quotation";
 import Items from './pages/masters/Items';
@@ -121,7 +122,10 @@ function App() {
             path="sales"
             element={<SalesInvoice />}
           />
-
+<Route
+  path="delivery-challan"
+  element={<DeliveryChallan />}
+/>
           <Route
             path="quotation"
             element={<Quotation />}
