@@ -43,10 +43,12 @@ const defaultFormData = {
   ifsc_code: "",
 
   upi_id: "",
+  delivery_document_title: "DELIVERY CHALLAN",
 
   invoice_footer: "",
 
   terms_conditions: ""
+  
 };
 
 
