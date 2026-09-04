@@ -596,6 +596,12 @@ function Sidebar() {
 >
     Department Master
 </NavLink>
+            <NavLink
+    to="/app/designations"
+    className="submenu-link"
+>
+    Designation Master
+</NavLink>
 
         </div>
 
