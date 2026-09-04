@@ -21,7 +21,7 @@ export async function getAttendanceByEmployee(
     const { data, error } = await supabase
         .from("attendance")
         .select("*")
-        .eq("id", employeeId)
+        .eq("employee_id", employeeId)
         .eq("company_id", companyId)
         .eq("attendance_date", attendanceDate)
         .maybeSingle();
@@ -30,7 +30,6 @@ export async function getAttendanceByEmployee(
 
     return data;
 }
-
 export async function saveAttendance(data, companyId) {
 
     const {
