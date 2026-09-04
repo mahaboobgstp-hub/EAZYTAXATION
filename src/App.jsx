@@ -16,6 +16,7 @@ import Vendors from './pages/masters/Vendors';
 import EmployeeMaster from "./pages/hr/EmployeeMaster";
 import AttendanceEntry from "./pages/hr/AttendanceEntry";
 import DepartmentMaster from "./pages/hr/DepartmentMaster";
+import DesignationMaster from "./pages/hr/DesignationMaster";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -174,6 +175,10 @@ function App() {
 <Route
     path="departments"
     element={<DepartmentMaster />}
+/>
+          <Route
+    path="designations"
+    element={<DesignationMaster />}
 />
 
         </Route>
