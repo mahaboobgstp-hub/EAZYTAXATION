@@ -344,3 +344,54 @@ export async function deleteEmployeeCustomField(
 
     return true;
 }
+// =====================================================
+// HR MASTER DROPDOWNS
+// =====================================================
+
+export async function getDepartments(companyId) {
+    if (!companyId) return [];
+
+    const { data, error } = await supabase
+        .from("departments")
+        .select("id, department_code, department_name")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("department_name");
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function getDesignations(companyId) {
+    if (!companyId) return [];
+
+    const { data, error } = await supabase
+        .from("designations")
+        .select("id, designation_code, designation_name")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("display_order")
+        .order("designation_name");
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function getShifts(companyId) {
+    if (!companyId) return [];
+
+    const { data, error } = await supabase
+        .from("shift_master")
+        .select("id, shift_code, shift_name, shift_start, shift_end")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("shift_name");
+
+    if (error) throw error;
+
+    return data || [];
+}
