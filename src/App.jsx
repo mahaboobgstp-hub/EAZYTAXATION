@@ -5,7 +5,7 @@ import Pricing from "./pages/pricing/Pricing";
 import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
 import PrivacyPolicy from "./pages/privacy/PrivacyPolicy";
-import Login from "./pages/auth/Login";
+import Login from "./pages/auth/Login";  
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Layout from './components/Layout';
@@ -15,6 +15,7 @@ import Customers from './pages/masters/Customers';
 import Vendors from './pages/masters/Vendors';
 import EmployeeMaster from "./pages/hr/EmployeeMaster";
 import AttendanceEntry from "./pages/hr/AttendanceEntry";
+import DepartmentMaster from "./pages/hr/DepartmentMaster";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -170,7 +171,10 @@ function App() {
     path="attendance"
     element={<AttendanceEntry />}
 />
-
+<Route
+    path="departments"
+    element={<DepartmentMaster />}
+/>
 
         </Route>
         
