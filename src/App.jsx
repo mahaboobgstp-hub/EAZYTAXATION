@@ -123,7 +123,7 @@ function App() {
             element={<SalesInvoice />}
           />
 <Route
-  path="delivery-challan"
+  path="delivery-challans"
   element={<DeliveryChallan />}
 />
           <Route
