@@ -590,6 +590,12 @@ function Sidebar() {
             >
                 Attendance Entry
             </NavLink>
+            <NavLink
+    to="/app/departments"
+    className="submenu-link"
+>
+    Department Master
+</NavLink>
 
         </div>
 
