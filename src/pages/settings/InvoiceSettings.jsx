@@ -192,17 +192,20 @@ function InvoiceSettings() {
 
         if (data) {
 
-          setFormData({
+         setFormData({
 
-            ...defaultFormData,
+    ...defaultFormData,
 
-            ...data,
+    ...data,
 
-            company_id:
-              companyId
+    company_id:
+        companyId,
 
-          });
+    delivery_document_title:
+        data?.delivery_document_title ||
+        "DELIVERY CHALLAN"
 
+});
         } else {
 
           setFormData({
@@ -529,7 +532,47 @@ function InvoiceSettings() {
 
         </label>
 
+<label>
+    Delivery Document Title
+</label>
 
+<select
+    name="delivery_document_title"
+    value={
+        formData.delivery_document_title ||
+        "DELIVERY CHALLAN"
+    }
+    onChange={handleChange}
+>
+    <option value="DELIVERY CHALLAN">
+        DELIVERY CHALLAN
+    </option>
+
+    <option value="DELIVERY NOTE">
+        DELIVERY NOTE
+    </option>
+
+    <option value="SUPPLY BILL">
+        SUPPLY BILL
+    </option>
+
+    <option value="BILL">
+        BILL
+    </option>
+
+    <option value="BILL OF SUPPLY">
+        BILL OF SUPPLY
+    </option>
+
+    <option value="SUPPLY CHALLAN">
+        SUPPLY CHALLAN
+    </option>
+
+    <option value="DELIVERY RECEIPT">
+        DELIVERY RECEIPT
+    </option>
+</select>
+        
         <textarea
           name="invoice_footer"
           placeholder="Invoice Footer"
