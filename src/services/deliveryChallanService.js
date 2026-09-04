@@ -123,10 +123,36 @@ export async function saveDeliveryChallan(
     }
 
     const headerData = {
-        ...challanData,
-        company_id: companyId
-    };
+    company_id: companyId,
 
+    challan_no: challanData.challan_no,
+    challan_date: challanData.challan_date,
+
+    customer_id: challanData.customer_id,
+    customer_name: challanData.customer_name,
+
+    billing_address: challanData.billing_address,
+
+    shipping_name: challanData.shipping_name,
+    shipping_gstin: challanData.shipping_gstin,
+    shipping_state: challanData.shipping_state,
+    shipping_address: challanData.shipping_address,
+
+    place_of_supply: challanData.place_of_supply,
+
+    vehicle_no: challanData.vehicle_no,
+    eway_bill_no: challanData.eway_bill_no,
+
+    remarks: challanData.remarks,
+
+    taxable_value: Number(challanData.taxable_value) || 0,
+    cgst: Number(challanData.cgst) || 0,
+    sgst: Number(challanData.sgst) || 0,
+    igst: Number(challanData.igst) || 0,
+    total_amount: Number(challanData.total_amount) || 0,
+
+    status: challanData.status || "Draft"
+};
 
     // -----------------------------------------------------
     // SAVE HEADER
@@ -214,14 +240,51 @@ export async function updateDeliveryChallan(
     // UPDATE HEADER
     // -----------------------------------------------------
 
-    const { data: challan, error: challanError } =
-        await supabase
-            .from("delivery_challans")
-            .update({
-                ...challanData,
-                company_id: companyId
-            })
-            .eq("id", challanId)
+   const { data: challan, error: challanError } =
+    await supabase
+        .from("delivery_challans")
+        .update({
+            company_id: companyId,
+
+            challan_no: challanData.challan_no,
+            challan_date: challanData.challan_date,
+
+            customer_id: challanData.customer_id,
+            customer_name: challanData.customer_name,
+
+            billing_address: challanData.billing_address,
+
+            shipping_name: challanData.shipping_name,
+            shipping_gstin: challanData.shipping_gstin,
+            shipping_state: challanData.shipping_state,
+            shipping_address: challanData.shipping_address,
+
+            place_of_supply: challanData.place_of_supply,
+
+            vehicle_no: challanData.vehicle_no,
+            eway_bill_no: challanData.eway_bill_no,
+
+            remarks: challanData.remarks,
+
+            taxable_value:
+                Number(challanData.taxable_value) || 0,
+
+            cgst:
+                Number(challanData.cgst) || 0,
+
+            sgst:
+                Number(challanData.sgst) || 0,
+
+            igst:
+                Number(challanData.igst) || 0,
+
+            total_amount:
+                Number(challanData.total_amount) || 0,
+
+            status:
+                challanData.status || "Draft"
+        }) 
+       .eq("id", challanId)
             .eq("company_id", companyId)
             .eq("is_deleted", false)
             .select()
