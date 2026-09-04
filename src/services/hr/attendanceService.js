@@ -58,6 +58,11 @@ export async function saveAttendance(data, companyId) {
 
                     overtime_hours:
                         data.overtime_hours ?? 0,
+                    overtime_start_time:
+    data.overtime_start_time || null,
+
+overtime_end_time:
+    data.overtime_end_time || null,
 
                     late_minutes:
                         data.late_minutes ?? 0,
