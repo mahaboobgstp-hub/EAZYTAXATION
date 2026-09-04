@@ -20,8 +20,8 @@ function ShiftMaster() {
         shift_start: "",
         shift_end: "",
         break_minutes: 60,
-        grace_in: 10,
-        grace_out: 10,
+       grace_in_minutes: 10,
+grace_out_minutes: 10,
         minimum_working_hours: 8,
         half_day_hours: 4,
         overtime_after_hours: 8,
@@ -67,8 +67,8 @@ function ShiftMaster() {
             shift_start: "",
             shift_end: "",
             break_minutes: 60,
-            grace_in: 10,
-            grace_out: 10,
+           grace_in_minutes: 10,
+grace_out_minutes: 10,
             minimum_working_hours: 8,
             half_day_hours: 4,
             overtime_after_hours: 8,
@@ -147,8 +147,8 @@ function ShiftMaster() {
             shift_start: shift.shift_start || "",
             shift_end: shift.shift_end || "",
             break_minutes: shift.break_minutes ?? 60,
-            grace_in: shift.grace_in ?? 10,
-            grace_out: shift.grace_out ?? 10,
+            grace_in_minutes: shift.grace_in_minutes ?? 10,
+grace_out_minutes: shift.grace_out_minutes ?? 10,
             minimum_working_hours:
                 shift.minimum_working_hours ?? 8,
             half_day_hours:
@@ -156,7 +156,11 @@ function ShiftMaster() {
             overtime_after_hours:
                 shift.overtime_after_hours ?? 8,
             is_night_shift: shift.is_night_shift || false,
-            weekly_off_day: shift.weekly_off_day || "",
+            weekly_off_day:
+    shift.weekly_off_day !== null &&
+    shift.weekly_off_day !== undefined
+        ? String(shift.weekly_off_day)
+        : "",
             color_code: shift.color_code || "",
             description: shift.description || ""
         });
@@ -266,20 +270,20 @@ function ShiftMaster() {
                         />
 
                         <input
-                            type="number"
-                            name="grace_in"
-                            placeholder="Grace In (Minutes)"
-                            value={formData.grace_in}
-                            onChange={handleChange}
-                        />
+    type="number"
+    name="grace_in_minutes"
+    placeholder="Grace In (Minutes)"
+    value={formData.grace_in_minutes}
+    onChange={handleChange}
+/>
 
                         <input
-                            type="number"
-                            name="grace_out"
-                            placeholder="Grace Out (Minutes)"
-                            value={formData.grace_out}
-                            onChange={handleChange}
-                        />
+    type="number"
+    name="grace_out_minutes"
+    placeholder="Grace Out (Minutes)"
+    value={formData.grace_out_minutes}
+    onChange={handleChange}
+/>
 
                         <input
                             type="number"
@@ -309,22 +313,22 @@ function ShiftMaster() {
                         />
 
                         <select
-                            name="weekly_off_day"
-                            value={formData.weekly_off_day}
-                            onChange={handleChange}
-                        >
-                            <option value="">
-                                Weekly Off Day
-                            </option>
-                            <option value="Sunday">Sunday</option>
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                        </select>
+    name="weekly_off_day"
+    value={formData.weekly_off_day}
+    onChange={handleChange}
+>
+    <option value="">
+        Weekly Off Day
+    </option>
 
+    <option value="0">Sunday</option>
+    <option value="1">Monday</option>
+    <option value="2">Tuesday</option>
+    <option value="3">Wednesday</option>
+    <option value="4">Thursday</option>
+    <option value="5">Friday</option>
+    <option value="6">Saturday</option>
+</select>
                         <input
                             name="color_code"
                             placeholder="Color Code"
