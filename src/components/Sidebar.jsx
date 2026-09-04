@@ -602,6 +602,12 @@ function Sidebar() {
 >
     Designation Master
 </NavLink>
+            <NavLink
+    to="/app/shifts"
+    className="submenu-link"
+>
+    Shift Master
+</NavLink>
 
         </div>
 
