@@ -32,11 +32,7 @@ export async function getAttendanceByEmployee(
 }
 export async function saveAttendance(data, companyId) {
 
-    const {
-        data: userData
-    } = await supabase.auth.getUser();
-
-    const markedBy = userData?.user?.id || null;
+    
 
     const { data: result, error } = await supabase
         .from("attendance")
@@ -80,7 +76,7 @@ export async function saveAttendance(data, companyId) {
                     remarks:
                         data.remarks || null,
 
-                    marked_by: markedBy
+                    marked_by: null
                 }
             ],
             {
