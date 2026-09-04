@@ -35,7 +35,7 @@ function Sidebar() {
     loading
 } = useCompany();
 
-    const [openMenu, setOpenMenu] = useState("sales");
+    const [openMenu, setOpenMenu] = useState("");
     const toggleMenu = (menuName) => {
 
     if(openMenu===menuName){
