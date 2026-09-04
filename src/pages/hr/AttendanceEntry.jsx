@@ -32,6 +32,8 @@ function AttendanceEntry() {
     check_in_time: "",
     check_out_time: "",
     working_hours: "",
+    overtime_start_time: "",
+    overtime_end_time: "",    
     overtime_hours: "",
     remarks: ""
 });
@@ -101,7 +103,7 @@ function AttendanceEntry() {
         }
     }
 
-    function handleChange(e) {
+   function handleChange(e) {
 
     const { name, value } = e.target;
 
@@ -132,13 +134,33 @@ function AttendanceEntry() {
                 workingHours !== null
                     ? workingHours
                     : "";
+        }
 
+        if (
+            name === "overtime_start_time" ||
+            name === "overtime_end_time"
+        ) {
+
+            const overtimeHours =
+                calculateOvertimeHours(
+                    name === "overtime_start_time"
+                        ? value
+                        : prev.overtime_start_time,
+
+                    name === "overtime_end_time"
+                        ? value
+                        : prev.overtime_end_time
+                );
+
+            updated.overtime_hours =
+                overtimeHours > 0
+                    ? overtimeHours
+                    : "";
         }
 
         return updated;
     });
 }
-
     function resetForm() {
 
         setFormData({
@@ -147,6 +169,8 @@ function AttendanceEntry() {
     check_in_time: "",
     check_out_time: "",
     working_hours: "",
+    overtime_start_time: "",
+    overtime_end_time: "",        
     overtime_hours: "",
     remarks: ""
 });
@@ -202,6 +226,33 @@ function calculateOvertimeHours(
 
     return Number(
         (workingHours - overtimeAfterHours).toFixed(2)
+    );
+}
+    function calculateOvertimeDuration(
+    overtimeStart,
+    overtimeEnd
+) {
+    if (!overtimeStart || !overtimeEnd) {
+        return 0;
+    }
+
+    const start = new Date(
+        `1970-01-01T${overtimeStart}`
+    );
+
+    const end = new Date(
+        `1970-01-01T${overtimeEnd}`
+    );
+
+    let difference =
+        (end - start) / 3600000;
+
+    if (difference < 0) {
+        difference += 24;
+    }
+
+    return Number(
+        difference.toFixed(2)
     );
 }
     async function handleSubmit(e) {
@@ -292,7 +343,15 @@ const overtimeHours =
 
                 overtime_hours:
     overtimeHours,
+overtime_start_time:
+    formData.overtime_start_time
+        ? `${attendanceDate}T${formData.overtime_start_time}`
+        : null,
 
+overtime_end_time:
+    formData.overtime_end_time
+        ? `${attendanceDate}T${formData.overtime_end_time}`
+        : null,
 is_overtime:
     overtimeHours > 0,
 
@@ -589,6 +648,27 @@ is_overtime:
     value={formData.working_hours}
     readOnly
 />
+                        <label>
+    Overtime From
+
+    <input
+        type="time"
+        name="overtime_start_time"
+        value={formData.overtime_start_time}
+        onChange={handleChange}
+    />
+</label>
+
+<label>
+    Overtime To
+
+    <input
+        type="time"
+        name="overtime_end_time"
+        value={formData.overtime_end_time}
+        onChange={handleChange}
+    />
+</label>
                         <input
     type="number"
     step="0.01"
