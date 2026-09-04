@@ -5,7 +5,10 @@ import {
     getEmployees,
     createEmployee,
     updateEmployee,
-    deactivateEmployee
+    deactivateEmployee,
+    getDepartments,
+getDesignations,
+getShifts
 } from "../../services/hr/employeeService";
 
 
@@ -94,6 +97,9 @@ const [shifts, setShifts] = useState([]);
         }
 
         loadEmployees(currentCompanyId);
+        loadDepartments(currentCompanyId);
+loadDesignations(currentCompanyId);
+loadShifts(currentCompanyId);
 
     }, [currentCompanyId]);
 
@@ -122,7 +128,37 @@ const [shifts, setShifts] = useState([]);
         }
 
     };
+const loadDepartments = async (companyId) => {
+    try {
+        const data = await getDepartments(companyId);
+        setDepartments(data || []);
+    } catch (error) {
+        console.error(error);
+        alert(error.message);
+    }
+};
 
+
+const loadDesignations = async (companyId) => {
+    try {
+        const data = await getDesignations(companyId);
+        setDesignations(data || []);
+    } catch (error) {
+        console.error(error);
+        alert(error.message);
+    }
+};
+
+
+const loadShifts = async (companyId) => {
+    try {
+        const data = await getShifts(companyId);
+        setShifts(data || []);
+    } catch (error) {
+        console.error(error);
+        alert(error.message);
+    }
+};
 
     const handleChange = (e) => {
 
@@ -213,6 +249,92 @@ const [shifts, setShifts] = useState([]);
 
                 employee_status:
                     formData.employee_status,
+                date_of_birth:
+    formData.date_of_birth || null,
+
+marital_status:
+    formData.marital_status || null,
+
+alternate_mobile:
+    formData.alternate_mobile.trim() || null,
+
+email:
+    formData.email.trim() || null,
+
+address_line1:
+    formData.address_line1.trim() || null,
+
+address_line2:
+    formData.address_line2.trim() || null,
+
+city:
+    formData.city.trim() || null,
+
+district:
+    formData.district.trim() || null,
+
+state:
+    formData.state.trim() || null,
+
+country:
+    formData.country.trim() || "India",
+
+pincode:
+    formData.pincode.trim() || null,
+
+department_id:
+    formData.department_id || null,
+
+designation_id:
+    formData.designation_id || null,
+
+reporting_manager_id:
+    formData.reporting_manager_id || null,
+
+default_shift_id:
+    formData.default_shift_id || null,
+
+date_of_leaving:
+    formData.date_of_leaving || null,
+
+aadhaar_number:
+    formData.aadhaar_number.trim() || null,
+
+pan_number:
+    formData.pan_number.trim() || null,
+
+passport_number:
+    formData.passport_number.trim() || null,
+
+driving_license_number:
+    formData.driving_license_number.trim() || null,
+
+uan_number:
+    formData.uan_number.trim() || null,
+
+pf_number:
+    formData.pf_number.trim() || null,
+
+esi_number:
+    formData.esi_number.trim() || null,
+
+bank_name:
+    formData.bank_name.trim() || null,
+
+bank_account_number:
+    formData.bank_account_number.trim() || null,
+
+ifsc_code:
+    formData.ifsc_code.trim() || null,
+
+emergency_contact_name:
+    formData.emergency_contact_name.trim() || null,
+
+emergency_contact_mobile:
+    formData.emergency_contact_mobile.trim() || null,
+
+blood_group:
+    formData.blood_group || null,
 
                 remarks:
                     formData.remarks.trim() || null
@@ -476,7 +598,44 @@ const [shifts, setShifts] = useState([]);
                     value={formData.mobile}
                     onChange={handleChange}
                 />
+<h3 style={{ gridColumn: "1 / -1" }}>
+    Personal Details
+</h3>
 
+<input
+    type="date"
+    name="date_of_birth"
+    value={formData.date_of_birth}
+    onChange={handleChange}
+    placeholder="Date of Birth"
+/>
+
+<select
+    name="marital_status"
+    value={formData.marital_status}
+    onChange={handleChange}
+>
+    <option value="">Select Marital Status</option>
+    <option value="Single">Single</option>
+    <option value="Married">Married</option>
+    <option value="Divorced">Divorced</option>
+    <option value="Widowed">Widowed</option>
+</select>
+
+<input
+    name="alternate_mobile"
+    placeholder="Alternate Mobile"
+    value={formData.alternate_mobile}
+    onChange={handleChange}
+/>
+
+<input
+    type="email"
+    name="email"
+    placeholder="Email"
+    value={formData.email}
+    onChange={handleChange}
+/>
 
                 <label>
 
@@ -568,7 +727,231 @@ const [shifts, setShifts] = useState([]);
                     </option>
 
                 </select>
+<h3 style={{ gridColumn: "1 / -1" }}>
+    Employment Details
+</h3>
 
+<select
+    name="department_id"
+    value={formData.department_id}
+    onChange={handleChange}
+>
+    <option value="">
+        Select Department
+    </option>
+
+    {departments.map(department => (
+        <option
+            key={department.id}
+            value={department.id}
+        >
+            {department.department_name}
+        </option>
+    ))}
+</select>
+
+<select
+    name="designation_id"
+    value={formData.designation_id}
+    onChange={handleChange}
+>
+    <option value="">
+        Select Designation
+    </option>
+
+    {designations.map(designation => (
+        <option
+            key={designation.id}
+            value={designation.id}
+        >
+            {designation.designation_name}
+        </option>
+    ))}
+</select>
+
+<select
+    name="default_shift_id"
+    value={formData.default_shift_id}
+    onChange={handleChange}
+>
+    <option value="">
+        Select Default Shift
+    </option>
+
+    {shifts.map(shift => (
+        <option
+            key={shift.id}
+            value={shift.id}
+        >
+            {shift.shift_name}
+        </option>
+    ))}
+</select>
+
+<input
+    type="date"
+    name="date_of_leaving"
+    value={formData.date_of_leaving}
+    onChange={handleChange}
+/>
+                <h3 style={{ gridColumn: "1 / -1" }}>
+    Address
+</h3>
+
+<input
+    name="address_line1"
+    placeholder="Address Line 1"
+    value={formData.address_line1}
+    onChange={handleChange}
+/>
+
+<input
+    name="address_line2"
+    placeholder="Address Line 2"
+    value={formData.address_line2}
+    onChange={handleChange}
+/>
+
+<input
+    name="city"
+    placeholder="City"
+    value={formData.city}
+    onChange={handleChange}
+/>
+
+<input
+    name="district"
+    placeholder="District"
+    value={formData.district}
+    onChange={handleChange}
+/>
+
+<input
+    name="state"
+    placeholder="State"
+    value={formData.state}
+    onChange={handleChange}
+/>
+
+<input
+    name="pincode"
+    placeholder="Pincode"
+    value={formData.pincode}
+    onChange={handleChange}
+/>
+
+                <h3 style={{ gridColumn: "1 / -1" }}>
+    Emergency Contact
+</h3>
+
+<input
+    name="emergency_contact_name"
+    placeholder="Emergency Contact Name"
+    value={formData.emergency_contact_name}
+    onChange={handleChange}
+/>
+
+<input
+    name="emergency_contact_mobile"
+    placeholder="Emergency Contact Mobile"
+    value={formData.emergency_contact_mobile}
+    onChange={handleChange}
+/>
+
+<select
+    name="blood_group"
+    value={formData.blood_group}
+    onChange={handleChange}
+>
+    <option value="">
+        Select Blood Group
+    </option>
+
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+</select>
+                <h3 style={{ gridColumn: "1 / -1" }}>
+    Identity & Statutory Details
+</h3>
+
+<input
+    name="aadhaar_number"
+    placeholder="Aadhaar Number"
+    value={formData.aadhaar_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="pan_number"
+    placeholder="PAN Number"
+    value={formData.pan_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="passport_number"
+    placeholder="Passport Number"
+    value={formData.passport_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="driving_license_number"
+    placeholder="Driving Licence Number"
+    value={formData.driving_license_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="uan_number"
+    placeholder="UAN Number"
+    value={formData.uan_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="pf_number"
+    placeholder="PF Number"
+    value={formData.pf_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="esi_number"
+    placeholder="ESI Number"
+    value={formData.esi_number}
+    onChange={handleChange}
+/>
+                <h3 style={{ gridColumn: "1 / -1" }}>
+    Bank Details
+</h3>
+
+<input
+    name="bank_name"
+    placeholder="Bank Name"
+    value={formData.bank_name}
+    onChange={handleChange}
+/>
+
+<input
+    name="bank_account_number"
+    placeholder="Bank Account Number"
+    value={formData.bank_account_number}
+    onChange={handleChange}
+/>
+
+<input
+    name="ifsc_code"
+    placeholder="IFSC Code"
+    value={formData.ifsc_code}
+    onChange={handleChange}
+/>
 
                 <textarea
                     name="remarks"
