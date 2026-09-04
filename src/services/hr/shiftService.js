@@ -88,3 +88,16 @@ export async function deactivateShift(id, companyId) {
 
     return result;
 }
+export async function getShiftById(shiftId, companyId) {
+    const { data, error } = await supabase
+        .from("shift_master")
+        .select("*")
+        .eq("id", shiftId)
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+    if (error) throw error;
+
+    return data;
+}
