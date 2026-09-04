@@ -1,4 +1,16 @@
 import React, { useEffect, useState } from "react";
+import DeliveryChallanPrint from "./DeliveryChallanPrint";
+import {
+    getCompanyById
+} from "../../services/companyService";
+
+import {
+    getCustomerById
+} from "../../services/customerService";
+
+import {
+    getInvoiceSettingsByCompany
+} from "../../services/invoiceSettingsService";
 import { useCompany } from "../../context/CompanyContext";
 import { getStates } from "../../services/stateService";
 import "../../css/sales/DeliveryChallan.css";
@@ -37,6 +49,12 @@ function DeliveryChallan() {
     const [itemsMaster, setItemsMaster] = useState([]);
     const [states, setStates] = useState([]);
     const [challans, setChallans] = useState([]);
+    const [selectedChallan, setSelectedChallan] = useState(null);
+const [selectedChallanItems, setSelectedChallanItems] = useState([]);
+const [companyDetails, setCompanyDetails] = useState(null);
+const [customerDetails, setCustomerDetails] = useState(null);
+const [challanSettings, setChallanSettings] = useState(null);
+const [printMode, setPrintMode] = useState(false);
 
     const [editingChallanId, setEditingChallanId] = useState(null);
 
@@ -613,7 +631,63 @@ function DeliveryChallan() {
 
     };
 
+const viewChallan = async (challanId) => {
 
+    try {
+
+        if (!currentCompanyId) {
+            alert("Please select a Current Company.");
+            return;
+        }
+
+        const challan =
+            await getDeliveryChallanById(
+                challanId,
+                currentCompanyId
+            );
+
+        const challanItems =
+            await getDeliveryChallanItems(
+                challanId,
+                currentCompanyId
+            );
+
+        const company =
+            await getCompanyById(
+                challan.company_id
+            );
+
+        const settings =
+            await getInvoiceSettingsByCompany(
+                challan.company_id
+            );
+
+        let customer = null;
+
+        if (challan.customer_id) {
+
+            customer =
+                await getCustomerById(
+                    challan.customer_id
+                );
+
+        }
+
+        setSelectedChallan(challan);
+        setSelectedChallanItems(challanItems);
+        setCompanyDetails(company);
+        setCustomerDetails(customer);
+        setChallanSettings(settings);
+        setPrintMode(true);
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(error.message);
+
+    }
+};
     // =====================================================
     // VIEW / EDIT
     // =====================================================
@@ -1663,34 +1737,41 @@ function DeliveryChallan() {
 
                                             <td>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleEdit(
-                                                            challan.id
-                                                        )
-                                                    }
-                                                >
-                                                    Edit
-                                                </button>
+                                               
+
+    <button
+        type="button"
+        onClick={() =>
+            viewChallan(challan.id)
+        }
+        className="delivery-challan-list-action"
+    >
+        View
+    </button>
 
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            challan.id
-                                                        )
-                                                    }
-                                                    style={{
-                                                        marginLeft:
-                                                            "5px"
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
+    <button
+        type="button"
+        onClick={() =>
+            handleEdit(challan.id)
+        }
+        className="delivery-challan-list-action"
+    >
+        Edit
+    </button>
 
-                                            </td>
+
+    <button
+        type="button"
+        onClick={() =>
+            handleDelete(challan.id)
+        }
+        className="delivery-challan-list-action"
+    >
+        Delete
+    </button>
+
+</td>
 
                                         </tr>
 
@@ -1706,7 +1787,22 @@ function DeliveryChallan() {
                 </div>
 
             )}
+{printMode && selectedChallan && (
 
+    <DeliveryChallanPrint
+        challan={selectedChallan}
+        items={selectedChallanItems}
+        settings={challanSettings}
+        company={companyDetails}
+        customer={customerDetails}
+        onClose={() => {
+            setPrintMode(false);
+            setSelectedChallan(null);
+            setSelectedChallanItems([]);
+        }}
+    />
+
+)}
         </div>
 
     );
