@@ -161,9 +161,7 @@ function App() {
     path="uom"
     element={<Uom />}
 />
-
-        </Route>
-        <Route
+          <Route
     path="employees"
     element={<EmployeeMaster />}
 />
@@ -173,6 +171,9 @@ function App() {
     element={<AttendanceEntry />}
 />
 
+
+        </Route>
+        
       </Routes>
 
         </CompanyProvider>
