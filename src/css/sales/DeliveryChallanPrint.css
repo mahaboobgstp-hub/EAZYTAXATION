@@ -1,0 +1,282 @@
+.dc-print-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.dc-print-container {
+    max-width: 1000px;
+    margin: auto;
+    background: #ffffff;
+    padding: 20px;
+}
+
+.dc-print-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: flex-end;
+}
+
+.dc-print-actions button {
+    padding: 9px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.dc-title-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dc-title-row h1 {
+    margin: 0;
+    font-size: 22px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.dc-title-line {
+    height: 1px;
+    background: #334155;
+    flex: 1;
+}
+
+.dc-company-section {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+.dc-logo {
+    width: 120px;
+    min-width: 120px;
+    text-align: center;
+}
+
+.dc-logo img {
+    max-width: 110px;
+    max-height: 80px;
+}
+
+.dc-company-details {
+    flex: 1;
+    text-align: center;
+}
+
+.dc-company-details h2 {
+    margin: 0 0 5px;
+    font-size: 21px;
+}
+
+.dc-company-details p {
+    margin: 3px 0;
+    font-size: 13px;
+}
+
+.dc-company-details h4 {
+    margin: 6px 0 0;
+}
+
+.dc-divider {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #cbd5e1;
+}
+
+.dc-info-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.dc-info-left {
+    min-width: 45%;
+}
+
+.dc-info-row {
+    display: grid;
+    grid-template-columns: 130px 15px 1fr;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.dc-bank-card {
+    min-width: 280px;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+}
+
+.dc-bank-title {
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.dc-bank-row {
+    display: grid;
+    grid-template-columns: 100px 15px 1fr;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.dc-party-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid #cbd5e1;
+    margin-bottom: 15px;
+}
+
+.dc-party-left,
+.dc-party-right {
+    padding: 12px;
+}
+
+.dc-party-left {
+    border-right: 1px solid #cbd5e1;
+}
+
+.dc-party-box h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.dc-party-box p {
+    margin: 4px 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.dc-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.dc-items-table th {
+    background: #f1f5f9;
+    font-size: 12px;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    text-align: center;
+}
+
+.dc-items-table td {
+    font-size: 12px;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+}
+
+.dc-summary {
+    width: 330px;
+    margin-left: auto;
+}
+
+.dc-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 13px;
+}
+
+.dc-grand-total {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #334155;
+    margin-top: 6px;
+    padding-top: 9px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.dc-amount-words {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    font-size: 12px;
+}
+
+.dc-amount-words span {
+    margin-left: 8px;
+}
+
+.dc-bottom {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    min-height: 100px;
+}
+
+.dc-bottom-left {
+    width: 60%;
+}
+
+.dc-box {
+    border: 1px solid #cbd5e1;
+    margin-bottom: 10px;
+}
+
+.dc-box-title {
+    font-weight: 700;
+    padding: 6px 8px;
+    background: #f1f5f9;
+    font-size: 12px;
+}
+
+.dc-box-body {
+    padding: 8px;
+    font-size: 12px;
+    white-space: pre-wrap;
+}
+
+.dc-signature {
+    width: 30%;
+    text-align: center;
+    align-self: flex-end;
+    font-size: 12px;
+}
+
+.dc-signature img {
+    max-width: 150px;
+    max-height: 70px;
+    display: block;
+    margin: 0 auto 8px;
+}
+
+.dc-footer {
+    margin-top: 20px;
+    padding: 8px;
+    border-top: 1px solid #cbd5e1;
+    text-align: center;
+    font-size: 11px;
+}
+
+@media print {
+
+    .dc-print-overlay {
+        position: static;
+        background: none;
+        padding: 0;
+    }
+
+    .dc-print-container {
+        max-width: none;
+        padding: 0;
+    }
+
+    .dc-print-actions {
+        display: none;
+    }
+
+    body {
+        background: #ffffff;
+    }
+}
