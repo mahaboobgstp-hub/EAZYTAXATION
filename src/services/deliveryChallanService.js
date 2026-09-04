@@ -65,10 +65,7 @@ export async function getDeliveryChallanItems(
         return [];
     }
 
-    /*
-     * First verify that the challan belongs to the
-     * currently selected company.
-     */
+    // Verify that the challan belongs to the current company
 
     const { data: challan, error: challanError } =
         await supabase
@@ -82,7 +79,9 @@ export async function getDeliveryChallanItems(
     if (challanError) throw challanError;
 
     if (!challan) {
-        throw new Error("Delivery Challan does not belong to this company.");
+        throw new Error(
+            "Delivery Challan does not belong to this company."
+        );
     }
 
     const { data, error } = await supabase
@@ -122,7 +121,6 @@ export async function saveDeliveryChallan(
     if (!items || items.length === 0) {
         throw new Error("Please add at least one item.");
     }
-
 
     const headerData = {
         ...challanData,
@@ -176,7 +174,7 @@ export async function saveDeliveryChallan(
 
         if (itemsError) {
 
-            // Roll back header if items fail
+            // Remove header if item insertion fails
 
             await supabase
                 .from("delivery_challans")
@@ -277,7 +275,6 @@ export async function updateDeliveryChallan(
 
         if (itemsError) throw itemsError;
     }
-
 
     return challan;
 }
