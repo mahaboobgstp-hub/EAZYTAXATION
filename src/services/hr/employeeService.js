@@ -127,3 +127,220 @@ export async function deactivateEmployee(employeeId, companyId) {
 
     return true;
 }
+
+// =====================================================
+// EMPLOYEE QUALIFICATIONS
+// =====================================================
+
+export async function getEmployeeQualifications(
+    employeeId,
+    companyId
+) {
+    if (!employeeId || !companyId) return [];
+
+    const { data, error } = await supabase
+        .from("employee_qualifications")
+        .select("*")
+        .eq("employee_id", employeeId)
+        .eq("company_id", companyId)
+        .order("passing_year", {
+            ascending: false
+        });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function saveEmployeeQualifications(
+    employeeId,
+    qualifications,
+    companyId
+) {
+    if (!employeeId || !companyId) {
+        throw new Error(
+            "Employee or Company is missing."
+        );
+    }
+
+    if (!qualifications) return true;
+
+
+    const rows = qualifications
+        .filter(item =>
+            item.qualification &&
+            item.qualification.trim()
+        )
+        .map(item => ({
+            id: item.id || undefined,
+            company_id: companyId,
+            employee_id: employeeId,
+            qualification:
+                item.qualification.trim(),
+            institution:
+                item.institution?.trim() || null,
+            specialization:
+                item.specialization?.trim() || null,
+            passing_year:
+                item.passing_year
+                    ? Number(item.passing_year)
+                    : null,
+            remarks:
+                item.remarks?.trim() || null
+        }));
+
+
+    const { data, error } = await supabase
+        .from("employee_qualifications")
+        .upsert(rows)
+        .select();
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function deleteEmployeeQualification(
+    qualificationId,
+    employeeId,
+    companyId
+) {
+    if (
+        !qualificationId ||
+        !employeeId ||
+        !companyId
+    ) {
+        throw new Error(
+            "Qualification or Company is missing."
+        );
+    }
+
+    const { error } = await supabase
+        .from("employee_qualifications")
+        .delete()
+        .eq("id", qualificationId)
+        .eq("employee_id", employeeId)
+        .eq("company_id", companyId);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// =====================================================
+// EMPLOYEE DOCUMENTS / CERTIFICATIONS
+// =====================================================
+
+export async function getEmployeeDocuments(
+    employeeId,
+    companyId
+) {
+    if (!employeeId || !companyId) return [];
+
+    const { data, error } = await supabase
+        .from("employee_documents")
+        .select("*")
+        .eq("employee_id", employeeId)
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("document_name");
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+// =====================================================
+// EMPLOYEE CUSTOM FIELDS
+// =====================================================
+
+export async function getEmployeeCustomFields(
+    employeeId,
+    companyId
+) {
+    if (!employeeId || !companyId) return [];
+
+    const { data, error } = await supabase
+        .from("employee_custom_fields")
+        .select("*")
+        .eq("employee_id", employeeId)
+        .eq("company_id", companyId)
+        .order("created_at");
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function saveEmployeeCustomFields(
+    employeeId,
+    fields,
+    companyId
+) {
+    if (!employeeId || !companyId) {
+        throw new Error(
+            "Employee or Company is missing."
+        );
+    }
+
+    if (!fields) return true;
+
+
+    const rows = fields
+        .filter(field =>
+            field.field_name &&
+            field.field_name.trim()
+        )
+        .map(field => ({
+            id: field.id || undefined,
+            company_id: companyId,
+            employee_id: employeeId,
+            field_name:
+                field.field_name.trim(),
+            field_value:
+                field.field_value?.trim() || null
+        }));
+
+
+    const { data, error } = await supabase
+        .from("employee_custom_fields")
+        .upsert(rows)
+        .select();
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function deleteEmployeeCustomField(
+    fieldId,
+    employeeId,
+    companyId
+) {
+    if (
+        !fieldId ||
+        !employeeId ||
+        !companyId
+    ) {
+        throw new Error(
+            "Custom field or Company is missing."
+        );
+    }
+
+    const { error } = await supabase
+        .from("employee_custom_fields")
+        .delete()
+        .eq("id", fieldId)
+        .eq("employee_id", employeeId)
+        .eq("company_id", companyId);
+
+    if (error) throw error;
+
+    return true;
+}
