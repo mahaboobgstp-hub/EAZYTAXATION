@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useCompany } from "../../context/CompanyContext";
 import { getStates } from "../../services/stateService";
+import "../../css/sales/DeliveryChallan.css";
 
 import {
     getCustomersForDropdown,
