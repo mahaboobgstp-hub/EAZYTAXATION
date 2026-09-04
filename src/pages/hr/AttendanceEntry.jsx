@@ -4,6 +4,9 @@ import { useCompany } from "../../context/CompanyContext";
 import {
     getActiveEmployees
 } from "../../services/hr/employeeService";
+import {
+    getShiftById
+} from "../../services/hr/shiftService";
 
 import {
     getAttendance,
@@ -24,12 +27,14 @@ function AttendanceEntry() {
         );
 
     const [formData, setFormData] = useState({
-        employee_id: "",
-        attendance_status: "Present",
-        check_in_time: "",
-        check_out_time: "",
-        remarks: ""
-    });
+    employee_id: "",
+    attendance_status: "Present",
+    check_in_time: "",
+    check_out_time: "",
+    working_hours: "",
+    overtime_hours: "",
+    remarks: ""
+});
 
     const [editingId, setEditingId] = useState(null);
 
@@ -98,23 +103,53 @@ function AttendanceEntry() {
 
     function handleChange(e) {
 
-        const { name, value } = e.target;
+    const { name, value } = e.target;
 
-        setFormData(prev => ({
+    setFormData(prev => {
+
+        const updated = {
             ...prev,
             [name]: value
-        }));
-    }
+        };
+
+        if (
+            name === "check_in_time" ||
+            name === "check_out_time"
+        ) {
+
+            const workingHours =
+                calculateWorkingHours(
+                    name === "check_in_time"
+                        ? value
+                        : prev.check_in_time,
+
+                    name === "check_out_time"
+                        ? value
+                        : prev.check_out_time
+                );
+
+            updated.working_hours =
+                workingHours !== null
+                    ? workingHours
+                    : "";
+
+        }
+
+        return updated;
+    });
+}
 
     function resetForm() {
 
         setFormData({
-            employee_id: "",
-            attendance_status: "Present",
-            check_in_time: "",
-            check_out_time: "",
-            remarks: ""
-        });
+    employee_id: "",
+    attendance_status: "Present",
+    check_in_time: "",
+    check_out_time: "",
+    working_hours: "",
+    overtime_hours: "",
+    remarks: ""
+});
 
         setEditingId(null);
     }
@@ -149,7 +184,26 @@ function AttendanceEntry() {
             difference.toFixed(2)
         );
     }
+function calculateOvertimeHours(
+    workingHours,
+    overtimeAfterHours
+) {
+    if (
+        workingHours === null ||
+        workingHours === undefined ||
+        !overtimeAfterHours
+    ) {
+        return 0;
+    }
 
+    if (workingHours <= overtimeAfterHours) {
+        return 0;
+    }
+
+    return Number(
+        (workingHours - overtimeAfterHours).toFixed(2)
+    );
+}
     async function handleSubmit(e) {
 
         e.preventDefault();
@@ -189,13 +243,25 @@ function AttendanceEntry() {
                         employee.id ===
                         formData.employee_id
                 );
+            let selectedShift = null;
+
+if (selectedEmployee?.default_shift_id) {
+    selectedShift = await getShiftById(
+        selectedEmployee.default_shift_id,
+        currentCompany.id
+    );
+}
 
             const workingHours =
                 calculateWorkingHours(
                     formData.check_in_time,
                     formData.check_out_time
                 );
-
+const overtimeHours =
+    calculateOvertimeHours(
+        workingHours,
+        selectedShift?.overtime_after_hours
+    );
             const attendanceData = {
 
                 employee_id:
@@ -225,13 +291,10 @@ function AttendanceEntry() {
                     workingHours,
 
                 overtime_hours:
-                    workingHours !== null &&
-                    workingHours > 8
-                        ? Number(
-                            (workingHours - 8)
-                                .toFixed(2)
-                        )
-                        : 0,
+    overtimeHours,
+
+is_overtime:
+    overtimeHours > 0,
 
                 remarks:
                     formData.remarks
@@ -518,7 +581,22 @@ function AttendanceEntry() {
                             />
 
                         </label>
-
+<input
+    type="number"
+    step="0.01"
+    name="working_hours"
+    placeholder="Working Hours"
+    value={formData.working_hours}
+    readOnly
+/>
+                        <input
+    type="number"
+    step="0.01"
+    name="overtime_hours"
+    placeholder="Overtime Hours"
+    value={formData.overtime_hours}
+    readOnly
+/>
 
                         <input
                             name="remarks"
