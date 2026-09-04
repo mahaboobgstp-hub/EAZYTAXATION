@@ -19,7 +19,44 @@ const defaultFormData = {
     salary_type: "Monthly",
     basic_salary: "",
     employee_status: "Active",
-    remarks: ""
+    remarks: "",
+    date_of_birth: "",
+marital_status: "",
+alternate_mobile: "",
+email: "",
+
+address_line1: "",
+address_line2: "",
+city: "",
+district: "",
+state: "",
+country: "India",
+pincode: "",
+
+department_id: "",
+designation_id: "",
+reporting_manager_id: "",
+default_shift_id: "",
+
+date_of_leaving: "",
+
+aadhaar_number: "",
+pan_number: "",
+passport_number: "",
+driving_license_number: "",
+
+uan_number: "",
+pf_number: "",
+esi_number: "",
+
+bank_name: "",
+bank_account_number: "",
+ifsc_code: "",
+
+emergency_contact_name: "",
+emergency_contact_mobile: "",
+
+blood_group: ""
 };
 
 
@@ -33,6 +70,9 @@ function EmployeeMaster() {
 
 
     const [employees, setEmployees] = useState([]);
+    const [departments, setDepartments] = useState([]);
+const [designations, setDesignations] = useState([]);
+const [shifts, setShifts] = useState([]);
 
     const [formData, setFormData] =
         useState(defaultFormData);
