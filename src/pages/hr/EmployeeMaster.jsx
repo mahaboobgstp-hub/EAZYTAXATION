@@ -958,7 +958,40 @@ blood_group:
     value={formData.ifsc_code}
     onChange={handleChange}
 />
-                <div>
+                
+
+                <textarea
+                    name="remarks"
+                    placeholder="Remarks"
+                    value={formData.remarks}
+                    onChange={handleChange}
+                    style={{
+                        gridColumn: "1 / -1"
+                    }}
+                />
+
+<div>
+    <label>Location</label>
+
+    <select
+        name="location_id"
+        value={formData.location_id}
+        onChange={handleChange}
+    >
+        <option value="">
+            Select Location
+        </option>
+
+        {locations.map((location) => (
+            <option
+                key={location.id}
+                value={location.id}
+            >
+                {location.location_code} - {location.location_name}
+            </option>
+        ))}
+    </select>
+</div><div>
     <label>Location</label>
 
     <select
@@ -980,18 +1013,6 @@ blood_group:
         ))}
     </select>
 </div>
-
-                <textarea
-                    name="remarks"
-                    placeholder="Remarks"
-                    value={formData.remarks}
-                    onChange={handleChange}
-                    style={{
-                        gridColumn: "1 / -1"
-                    }}
-                />
-
-
                 <div
                     style={{
                         gridColumn: "1 / -1"
