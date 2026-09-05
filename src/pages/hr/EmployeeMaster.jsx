@@ -170,7 +170,32 @@ const loadShifts = async (companyId) => {
         alert(error.message);
     }
 };
+const loadLocations = async (companyId) => {
 
+    try {
+
+        const data =
+            await getLocations(companyId);
+
+        setLocations(data || []);
+
+    } catch (error) {
+
+        console.error(
+            "Error loading locations:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to load locations."
+        );
+
+        setLocations([]);
+
+    }
+
+};
     const handleChange = (e) => {
 
         const {
