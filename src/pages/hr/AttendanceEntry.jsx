@@ -14,7 +14,6 @@ import {
 
 import {
     getAttendance,
-    getLocations,
     getEmployeeDeployments,
     bulkSaveAttendance
 } from "../../services/hr/attendanceService";
