@@ -395,3 +395,17 @@ export async function getShifts(companyId) {
 
     return data || [];
 }
+export async function getLocations(companyId) {
+    const { data, error } = await supabase
+        .from("locations")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("location_name", {
+            ascending: true
+        });
+
+    if (error) throw error;
+
+    return data || [];
+}
