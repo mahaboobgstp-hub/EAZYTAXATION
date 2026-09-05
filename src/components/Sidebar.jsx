@@ -616,6 +616,7 @@ function Sidebar() {
 </NavLink>
             <NavLink
     to="/app/locations"
+    className="submenu-link"            
 >
     Location Master
 </NavLink>
