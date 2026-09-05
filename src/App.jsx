@@ -15,6 +15,7 @@ import Customers from './pages/masters/Customers';
 import Vendors from './pages/masters/Vendors';
 import EmployeeMaster from "./pages/hr/EmployeeMaster";
 import AttendanceEntry from "./pages/hr/AttendanceEntry";
+import AttendanceSettings from "./pages/hr/AttendanceSettings";
 import DepartmentMaster from "./pages/hr/DepartmentMaster";
 import DesignationMaster from "./pages/hr/DesignationMaster";
 import ShiftMaster from "./pages/hr/ShiftMaster";
@@ -145,7 +146,10 @@ function App() {
             path="expenses"
             element={<ExpenseEntry />}
           />
-
+<Route
+    path="/app/attendance-settings"
+    element={<AttendanceSettings />}
+/>
           <Route
             path="sales-register"
             element={<SalesRegister />}
