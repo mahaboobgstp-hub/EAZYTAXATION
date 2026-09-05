@@ -428,53 +428,33 @@ blood_group:
 
     const handleEdit = (employee) => {
 
-        setEditingId(employee.id);
+    setEditingId(employee.id);
 
-        setFormData({
-
-            employee_code:
-                employee.employee_code || "",
-
-            employee_name:
-                employee.employee_name || "",
-
-            gender:
-                employee.gender || "",
-
-            mobile:
-                employee.mobile || "",
-
-            date_of_joining:
-                employee.date_of_joining || "",
-
-            employment_type:
-                employee.employment_type ||
-                "Permanent",
-
-            salary_type:
-                employee.salary_type ||
-                "Monthly",
-
-            basic_salary:
-                employee.basic_salary ?? "",
-
-            employee_status:
-                employee.employee_status ||
-                "Active",
-            location_id: employee.location_id || "",
-
-            remarks:
-                employee.remarks || ""
-
-        });
-
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-
+    const editFormData = {
+        ...defaultFormData
     };
 
+    Object.keys(defaultFormData).forEach((key) => {
+
+        if (
+            employee[key] !== null &&
+            employee[key] !== undefined
+        ) {
+
+            editFormData[key] = employee[key];
+
+        }
+
+    });
+
+    setFormData(editFormData);
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+};
 
     const handleCancelEdit = () => {
 
