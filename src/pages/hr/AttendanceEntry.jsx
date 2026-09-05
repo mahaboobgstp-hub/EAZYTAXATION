@@ -194,7 +194,7 @@ function AttendanceEntry() {
     function resetForm() {
 
         setFormData({
-    {
+    
     employee_id: "",
 
     attendance_mode: "TIMINGS",
