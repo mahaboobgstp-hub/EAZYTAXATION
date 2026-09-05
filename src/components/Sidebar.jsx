@@ -614,6 +614,11 @@ function Sidebar() {
 >
     Shift Master
 </NavLink>
+            <NavLink
+    to="/app/locations"
+>
+    Location Master
+</NavLink>
 
         </div>
 
