@@ -136,3 +136,120 @@ export async function deleteAttendance(
 
     return data;
 }
+export async function getWorkLocations(companyId) {
+    const { data, error } = await supabase
+        .from("work_locations")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("location_name", { ascending: true });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function getEmployeeDeployments(companyId) {
+    const { data, error } = await supabase
+        .from("employee_deployments")
+        .select(`
+            id,
+            employee_id,
+            client_id,
+            work_location_id,
+            shift_id,
+            effective_from,
+            effective_to,
+            deployment_status,
+            is_active
+        `)
+        .eq("company_id", companyId)
+        .eq("is_active", true);
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+export async function bulkSaveAttendance(records, companyId) {
+
+    const rows = records.map(record => ({
+        company_id: companyId,
+
+        employee_id: record.employee_id,
+        attendance_date: record.attendance_date,
+
+        deployment_id:
+            record.deployment_id || null,
+
+        client_id:
+            record.client_id || null,
+
+        work_location_id:
+            record.work_location_id || null,
+
+        shift_id:
+            record.shift_id || null,
+
+        attendance_mode:
+            record.attendance_mode,
+
+        attendance_status:
+            record.attendance_status,
+
+        attendance_day_value:
+            record.attendance_day_value ?? 0,
+
+        overtime_shift_count:
+            record.overtime_shift_count ?? 0,
+
+        check_in_time:
+            record.check_in_time || null,
+
+        check_out_time:
+            record.check_out_time || null,
+
+        working_hours:
+            record.working_hours ?? null,
+
+        overtime_hours:
+            record.overtime_hours ?? 0,
+
+        overtime_start_time:
+            record.overtime_start_time || null,
+
+        overtime_end_time:
+            record.overtime_end_time || null,
+
+        is_overtime:
+            record.is_overtime ?? false,
+
+        is_manual_entry: true,
+
+        remarks:
+            record.remarks || null,
+
+        marked_by: null,
+
+        updated_at:
+            new Date().toISOString()
+    }));
+
+
+    const { data, error } = await supabase
+        .from("attendance")
+        .upsert(
+            rows,
+            {
+                onConflict:
+                    "company_id,employee_id,attendance_date"
+            }
+        )
+        .select();
+
+    if (error) throw error;
+
+    return data || [];
+}
