@@ -19,6 +19,7 @@ import AttendanceSettings from "./pages/hr/AttendanceSettings";
 import DepartmentMaster from "./pages/hr/DepartmentMaster";
 import DesignationMaster from "./pages/hr/DesignationMaster";
 import ShiftMaster from "./pages/hr/ShiftMaster";
+import LocationMaster from "./pages/hr/LocationMaster";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -188,6 +189,10 @@ function App() {
 <Route
     path="shifts"
     element={<ShiftMaster />}
+/>
+          <Route
+    path="locations"
+    element={<LocationMaster />}
 />
         </Route>
         
