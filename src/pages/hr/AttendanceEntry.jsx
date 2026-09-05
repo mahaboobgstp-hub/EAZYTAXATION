@@ -28,16 +28,27 @@ function AttendanceEntry() {
 
     const [formData, setFormData] = useState({
     employee_id: "",
+
+    attendance_mode: "TIMINGS",
+
     attendance_status: "Present",
+
+    attendance_day_value: 1,
+
+    overtime_shift_count: 0,
+
     check_in_time: "",
     check_out_time: "",
+
     working_hours: "",
+
     overtime_start_time: "",
-    overtime_end_time: "",    
+    overtime_end_time: "",
+
     overtime_hours: "",
+
     remarks: ""
 });
-
     const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
@@ -113,6 +124,25 @@ function AttendanceEntry() {
             ...prev,
             [name]: value
         };
+        if (name === "attendance_mode") {
+
+    if (value === "DAY_SHIFT") {
+
+        updated.check_in_time = "";
+        updated.check_out_time = "";
+        updated.working_hours = "";
+
+        updated.overtime_start_time = "";
+        updated.overtime_end_time = "";
+        updated.overtime_hours = "";
+
+    } else {
+
+        updated.attendance_day_value = 1;
+        updated.overtime_shift_count = 0;
+
+    }
+}
 
         if (
             name === "check_in_time" ||
@@ -164,14 +194,27 @@ function AttendanceEntry() {
     function resetForm() {
 
         setFormData({
+    {
     employee_id: "",
+
+    attendance_mode: "TIMINGS",
+
     attendance_status: "Present",
+
+    attendance_day_value: 1,
+
+    overtime_shift_count: 0,
+
     check_in_time: "",
     check_out_time: "",
+
     working_hours: "",
+
     overtime_start_time: "",
-    overtime_end_time: "",        
+    overtime_end_time: "",
+
     overtime_hours: "",
+
     remarks: ""
 });
 
@@ -303,16 +346,28 @@ if (selectedEmployee?.default_shift_id) {
     );
 }
 
-            const workingHours =
-                calculateWorkingHours(
-                    formData.check_in_time,
-                    formData.check_out_time
-                );
-const overtimeHours =
-    calculateOvertimeHours(
-        workingHours,
-        selectedShift?.overtime_after_hours
-    );
+            let workingHours = null;
+
+let overtimeHours = 0;
+
+
+if (
+    formData.attendance_mode ===
+    "TIMINGS"
+) {
+
+    workingHours =
+        calculateWorkingHours(
+            formData.check_in_time,
+            formData.check_out_time
+        );
+
+    overtimeHours =
+        calculateOvertimeHours(
+            workingHours,
+            selectedShift?.overtime_after_hours
+        );
+}  
             const attendanceData = {
 
                 employee_id:
@@ -320,6 +375,18 @@ const overtimeHours =
 
                 attendance_date:
                     attendanceDate,
+                attendance_mode:
+    formData.attendance_mode,
+
+attendance_day_value:
+    Number(
+        formData.attendance_day_value
+    ),
+
+overtime_shift_count:
+    Number(
+        formData.overtime_shift_count
+    ),
 
                 shift_id:
                     selectedEmployee?.default_shift_id ||
@@ -329,32 +396,45 @@ const overtimeHours =
                     formData.attendance_status,
 
                 check_in_time:
-                    formData.check_in_time
-                        ? `${attendanceDate}T${formData.check_in_time}`
-                        : null,
+    formData.attendance_mode === "TIMINGS" &&
+    formData.check_in_time
+        ? `${attendanceDate}T${formData.check_in_time}`
+        : null,
 
-                check_out_time:
-                    formData.check_out_time
-                        ? `${attendanceDate}T${formData.check_out_time}`
-                        : null,
+check_out_time:
+    formData.attendance_mode === "TIMINGS" &&
+    formData.check_out_time
+        ? `${attendanceDate}T${formData.check_out_time}`
+        : null,
 
-                working_hours:
-                    workingHours,
+working_hours:
+    formData.attendance_mode === "TIMINGS"
+        ? workingHours
+        : null,
 
-                overtime_hours:
-    overtimeHours,
+overtime_hours:
+    formData.attendance_mode === "TIMINGS"
+        ? overtimeHours
+        : 0,
+
 overtime_start_time:
+    formData.attendance_mode === "TIMINGS" &&
     formData.overtime_start_time
         ? `${attendanceDate}T${formData.overtime_start_time}`
         : null,
 
 overtime_end_time:
+    formData.attendance_mode === "TIMINGS" &&
     formData.overtime_end_time
         ? `${attendanceDate}T${formData.overtime_end_time}`
         : null,
-is_overtime:
-    overtimeHours > 0,
 
+is_overtime:
+    formData.attendance_mode === "TIMINGS"
+        ? overtimeHours > 0
+        : Number(
+            formData.overtime_shift_count
+        ) > 0,
                 remarks:
                     formData.remarks
             };
@@ -394,28 +474,53 @@ is_overtime:
 
         setFormData({
 
-            employee_id:
-                record.employee_id || "",
+    employee_id:
+        record.employee_id || "",
 
-            attendance_status:
-                record.attendance_status ||
-                "Present",
+    attendance_mode:
+        record.attendance_mode ||
+        "TIMINGS",
 
-            check_in_time:
-                record.check_in_time
-                    ? record.check_in_time
-                        .substring(11, 16)
-                    : "",
+    attendance_status:
+        record.attendance_status ||
+        "Present",
 
-            check_out_time:
-                record.check_out_time
-                    ? record.check_out_time
-                        .substring(11, 16)
-                    : "",
+    attendance_day_value:
+        record.attendance_day_value ?? 1,
 
-            remarks:
-                record.remarks || ""
-        });
+    overtime_shift_count:
+        record.overtime_shift_count ?? 0,
+
+    check_in_time:
+        record.check_in_time
+            ? record.check_in_time.substring(11, 16)
+            : "",
+
+    check_out_time:
+        record.check_out_time
+            ? record.check_out_time.substring(11, 16)
+            : "",
+
+    working_hours:
+        record.working_hours ?? "",
+
+    overtime_start_time:
+        record.overtime_start_time
+            ? record.overtime_start_time.substring(11, 16)
+            : "",
+
+    overtime_end_time:
+        record.overtime_end_time
+            ? record.overtime_end_time.substring(11, 16)
+            : "",
+
+    overtime_hours:
+        record.overtime_hours ?? "",
+
+    remarks:
+        record.remarks || ""
+
+});
     }
 
     async function handleDelete(id) {
@@ -534,6 +639,19 @@ is_overtime:
                             marginBottom: "30px"
                         }}
                     >
+                        <select
+    name="attendance_mode"
+    value={formData.attendance_mode}
+    onChange={handleChange}
+>
+    <option value="TIMINGS">
+        Timings Mode
+    </option>
+
+    <option value="DAY_SHIFT">
+        Day / Shift Mode
+    </option>
+</select>
 
                         <select
                             name="employee_id"
@@ -607,7 +725,8 @@ is_overtime:
 
                         </select>
 
-
+{formData.attendance_mode === "TIMINGS" && (
+    <>
                         <label>
                             Check In
 
@@ -677,7 +796,47 @@ is_overtime:
     value={formData.overtime_hours}
     readOnly
 />
+    </>
+)}
+                        {formData.attendance_mode === "DAY_SHIFT" && (
+    <>
+        <label>
+            Attendance Value
 
+            <select
+                name="attendance_day_value"
+                value={formData.attendance_day_value}
+                onChange={handleChange}
+            >
+                <option value="1">
+                    Full Day
+                </option>
+
+                <option value="0.5">
+                    Half Day
+                </option>
+
+                <option value="0">
+                    No Attendance Day
+                </option>
+            </select>
+        </label>
+
+
+        <label>
+            Overtime Shifts
+
+            <input
+                type="number"
+                min="0"
+                step="0.5"
+                name="overtime_shift_count"
+                value={formData.overtime_shift_count}
+                onChange={handleChange}
+            />
+        </label>
+    </>
+)}
                         <input
                             name="remarks"
                             placeholder="Remarks"
