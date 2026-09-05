@@ -396,6 +396,9 @@ export async function getShifts(companyId) {
     return data || [];
 }
 export async function getLocations(companyId) {
+
+    if (!companyId) return [];
+
     const { data, error } = await supabase
         .from("locations")
         .select("*")
@@ -408,4 +411,5 @@ export async function getLocations(companyId) {
     if (error) throw error;
 
     return data || [];
+
 }
