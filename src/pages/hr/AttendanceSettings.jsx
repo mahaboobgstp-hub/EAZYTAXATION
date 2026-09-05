@@ -10,10 +10,10 @@ import {
 
 function AttendanceSettings() {
 
-    const { selectedCompany } = useCompany();
+    const { currentCompany } = useCompany();
 
 
-    const companyId = selectedCompany?.id;
+    const companyId = currentCompany?.id;
 
 
     const [loading, setLoading] = useState(true);
@@ -242,7 +242,7 @@ function AttendanceSettings() {
 
                 <strong>
 
-                    {selectedCompany?.company_name}
+                    {currentCompany?.company_name}
 
                 </strong>
 
