@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 
+import { useCompany } from "../../context/CompanyContext";
+
 import {
     getAttendanceSettings,
     saveAttendanceSettings
 } from "../../services/hr/attendanceSettingsService";
 
 
-function AttendanceSettings({ companyId }) {
+function AttendanceSettings() {
+
+    const { selectedCompany } = useCompany();
+
+
+    const companyId = selectedCompany?.id;
+
 
     const [loading, setLoading] = useState(true);
+
     const [saving, setSaving] = useState(false);
+
 
     const [formData, setFormData] = useState({
         attendance_mode: "DAY",
@@ -22,8 +32,12 @@ function AttendanceSettings({ companyId }) {
     useEffect(() => {
 
         if (!companyId) {
+
+            setLoading(false);
+
             return;
         }
+
 
         loadSettings();
 
@@ -36,24 +50,35 @@ function AttendanceSettings({ companyId }) {
 
             setLoading(true);
 
+
             const data =
-                await getAttendanceSettings(companyId);
+                await getAttendanceSettings(
+                    companyId
+                );
+
 
             if (data) {
 
                 setFormData({
+
                     attendance_mode:
-                        data.attendance_mode || "DAY",
+                        data.attendance_mode ||
+                        "DAY",
 
                     overtime_enabled:
-                        data.overtime_enabled ?? true,
+                        data.overtime_enabled ??
+                        true,
 
                     allow_manual_attendance:
-                        data.allow_manual_attendance ?? true,
+                        data.allow_manual_attendance ??
+                        true,
 
                     default_attendance_status:
-                        data.default_attendance_status || "Present"
+                        data.default_attendance_status ||
+                        "Present"
+
                 });
+
             }
 
         } catch (error) {
@@ -70,6 +95,7 @@ function AttendanceSettings({ companyId }) {
             setLoading(false);
 
         }
+
     }
 
 
@@ -84,13 +110,19 @@ function AttendanceSettings({ companyId }) {
 
 
         setFormData((previous) => ({
+
             ...previous,
 
             [name]:
+
                 type === "checkbox"
+
                     ? checked
+
                     : value
+
         }));
+
     }
 
 
@@ -98,14 +130,31 @@ function AttendanceSettings({ companyId }) {
 
         event.preventDefault();
 
+
+        if (!companyId) {
+
+            alert(
+                "Please select a company first"
+            );
+
+            return;
+
+        }
+
+
         try {
 
             setSaving(true);
 
+
             await saveAttendanceSettings(
+
                 companyId,
+
                 formData
+
             );
+
 
             alert(
                 "Attendance settings saved successfully"
@@ -115,9 +164,13 @@ function AttendanceSettings({ companyId }) {
 
             console.error(error);
 
+
             alert(
+
                 error.message ||
+
                 "Failed to save attendance settings"
+
             );
 
         } finally {
@@ -125,16 +178,45 @@ function AttendanceSettings({ companyId }) {
             setSaving(false);
 
         }
+
+    }
+
+
+    if (!companyId) {
+
+        return (
+
+            <div
+                style={{
+                    padding: "30px"
+                }}
+            >
+
+                Please select a company.
+
+            </div>
+
+        );
+
     }
 
 
     if (loading) {
 
         return (
-            <div style={{ padding: "30px" }}>
+
+            <div
+                style={{
+                    padding: "30px"
+                }}
+            >
+
                 Loading attendance settings...
+
             </div>
+
         );
+
     }
 
 
@@ -151,19 +233,40 @@ function AttendanceSettings({ companyId }) {
                 Attendance Settings
             </h1>
 
+
             <p>
-                Configure attendance rules for this company.
+
+                Configure attendance rules for:
+
+                {" "}
+
+                <strong>
+
+                    {selectedCompany?.company_name}
+
+                </strong>
+
             </p>
 
 
             <form
+
                 onSubmit={handleSave}
+
                 style={{
+
                     marginTop: "25px",
+
                     padding: "25px",
-                    border: "1px solid #ddd",
-                    borderRadius: "8px"
+
+                    border:
+                        "1px solid #ddd",
+
+                    borderRadius:
+                        "8px"
+
                 }}
+
             >
 
 
@@ -176,30 +279,51 @@ function AttendanceSettings({ companyId }) {
                 >
 
                     <label>
+
                         Attendance Entry Mode
+
                     </label>
+
 
                     <br />
 
+
                     <select
+
                         name="attendance_mode"
+
                         value={
                             formData.attendance_mode
                         }
+
                         onChange={handleChange}
+
                         style={{
-                            width: "100%",
-                            padding: "10px",
-                            marginTop: "8px"
+
+                            width:
+                                "100%",
+
+                            padding:
+                                "10px",
+
+                            marginTop:
+                                "8px"
+
                         }}
+
                     >
 
                         <option value="DAY">
+
                             Day Based Attendance
+
                         </option>
 
+
                         <option value="TIMING">
+
                             Timing Based Attendance
+
                         </option>
 
                     </select>
@@ -216,22 +340,38 @@ function AttendanceSettings({ companyId }) {
                 >
 
                     <label>
+
                         Default Attendance Status
+
                     </label>
+
 
                     <br />
 
+
                     <select
+
                         name="default_attendance_status"
+
                         value={
                             formData.default_attendance_status
                         }
+
                         onChange={handleChange}
+
                         style={{
-                            width: "100%",
-                            padding: "10px",
-                            marginTop: "8px"
+
+                            width:
+                                "100%",
+
+                            padding:
+                                "10px",
+
+                            marginTop:
+                                "8px"
+
                         }}
+
                     >
 
                         <option value="Present">
@@ -270,15 +410,23 @@ function AttendanceSettings({ companyId }) {
                     <label>
 
                         <input
+
                             type="checkbox"
+
                             name="overtime_enabled"
+
                             checked={
                                 formData.overtime_enabled
                             }
-                            onChange={handleChange}
+
+                            onChange={
+                                handleChange
+                            }
+
                         />
 
                         {" "}
+
                         Enable Overtime
 
                     </label>
@@ -286,7 +434,7 @@ function AttendanceSettings({ companyId }) {
                 </div>
 
 
-                {/* MANUAL ATTENDANCE */}
+                {/* MANUAL ENTRY */}
 
                 <div
                     style={{
@@ -297,15 +445,23 @@ function AttendanceSettings({ companyId }) {
                     <label>
 
                         <input
+
                             type="checkbox"
+
                             name="allow_manual_attendance"
+
                             checked={
                                 formData.allow_manual_attendance
                             }
-                            onChange={handleChange}
+
+                            onChange={
+                                handleChange
+                            }
+
                         />
 
                         {" "}
+
                         Allow Manual Attendance Entry
 
                     </label>
@@ -314,22 +470,21 @@ function AttendanceSettings({ companyId }) {
 
 
                 <button
+
                     type="submit"
+
                     disabled={saving}
-                    style={{
-                        padding:
-                            "10px 25px",
-                        cursor:
-                            saving
-                                ? "not-allowed"
-                                : "pointer"
-                    }}
+
                 >
 
                     {
+
                         saving
+
                             ? "Saving..."
+
                             : "Save Settings"
+
                     }
 
                 </button>
@@ -337,7 +492,9 @@ function AttendanceSettings({ companyId }) {
             </form>
 
         </div>
+
     );
+
 }
 
 
