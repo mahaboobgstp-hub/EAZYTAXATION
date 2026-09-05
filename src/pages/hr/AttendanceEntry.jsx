@@ -56,7 +56,8 @@ function AttendanceEntry() {
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-
+const [locationFilter, setLocationFilter] =
+    useState("");
 
     useEffect(() => {
 
@@ -179,7 +180,32 @@ function AttendanceEntry() {
             );
         }
     }
+async function loadLocations(companyId) {
 
+    try {
+
+        const data =
+            await getLocations(companyId);
+
+        setLocations(data || []);
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load locations:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to load locations."
+        );
+
+        setLocations([]);
+
+    }
+
+}
 
     function getActiveDeployment(employeeId) {
 
