@@ -22,7 +22,9 @@ import {
 import {
     getAttendanceSettings
 } from "../../services/hr/attendanceSettingsService";
-
+import {
+    getLocations
+} from "../../services/hr/locationService";
 
 function AttendanceEntry() {
 
