@@ -14,7 +14,7 @@ import {
 
 import {
     getAttendance,
-    getWorkLocations,
+    getLocations,
     getEmployeeDeployments,
     bulkSaveAttendance
 } from "../../services/hr/attendanceService";
@@ -118,7 +118,7 @@ const [locationFilter, setLocationFilter] =
 
                 getDesignations(companyId),
 
-                getWorkLocations(companyId),
+                getLocations(companyId),
 
                 getEmployeeDeployments(companyId),
 
