@@ -25,7 +25,14 @@ const initialFormData = {
 
 export default function LocationMaster() {
 
-    const { selectedCompany } = useCompany();
+    const companyContext = useCompany();
+
+    const selectedCompany =
+        companyContext?.selectedCompany ||
+        companyContext?.currentCompany ||
+        companyContext?.company ||
+        null;
+
 
     const [locations, setLocations] = useState([]);
 
@@ -58,21 +65,27 @@ export default function LocationMaster() {
 
         }
 
-    }, [selectedCompany]);
+    }, [selectedCompany?.id]);
 
 
     async function loadLocations() {
 
+        if (!selectedCompany?.id) {
+            return;
+        }
+
         try {
 
             setLoading(true);
+
+            setError("");
 
             const data =
                 await getLocations(
                     selectedCompany.id
                 );
 
-            setLocations(data);
+            setLocations(data || []);
 
         } catch (error) {
 
@@ -341,7 +354,7 @@ export default function LocationMaster() {
 
             <div
                 style={{
-                    padding: "40px"
+                    padding: "30px"
                 }}
             >
 
@@ -433,29 +446,18 @@ export default function LocationMaster() {
                     }}
                 >
 
-
                     <div>
 
                         <label>
                             Location Code *
                         </label>
 
-
                         <input
                             type="text"
-
                             name="location_code"
-
-                            value={
-                                formData.location_code
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.location_code}
+                            onChange={handleChange}
                             placeholder="Location Code"
-
                             required
                         />
 
@@ -468,32 +470,21 @@ export default function LocationMaster() {
                             Location Name *
                         </label>
 
-
                         <input
                             type="text"
-
                             name="location_name"
-
-                            value={
-                                formData.location_name
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.location_name}
+                            onChange={handleChange}
                             placeholder="Location Name"
-
                             required
                         />
 
                     </div>
 
-
                 </div>
 
 
-                {/* ROW 2 */}
+                {/* ADDRESS */}
 
                 <div
                     style={{
@@ -505,64 +496,38 @@ export default function LocationMaster() {
                         Address
                     </label>
 
-
                     <textarea
-
                         name="address"
-
-                        value={
-                            formData.address
-                        }
-
-                        onChange={
-                            handleChange
-                        }
-
+                        value={formData.address}
+                        onChange={handleChange}
                         placeholder="Complete Address"
-
                         rows="3"
-
                     />
 
                 </div>
 
 
-                {/* ROW 3 */}
+                {/* CITY / STATE / PINCODE */}
 
                 <div
                     style={{
                         display: "grid",
-
                         gridTemplateColumns:
                             "repeat(3, minmax(0, 1fr))",
-
                         gap: "15px",
-
                         marginBottom: "15px"
                     }}
                 >
 
-
                     <div>
 
-                        <label>
-                            City
-                        </label>
-
+                        <label>City</label>
 
                         <input
                             type="text"
-
                             name="city"
-
-                            value={
-                                formData.city
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.city}
+                            onChange={handleChange}
                         />
 
                     </div>
@@ -570,24 +535,13 @@ export default function LocationMaster() {
 
                     <div>
 
-                        <label>
-                            State
-                        </label>
-
+                        <label>State</label>
 
                         <input
                             type="text"
-
                             name="state"
-
-                            value={
-                                formData.state
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.state}
+                            onChange={handleChange}
                         />
 
                     </div>
@@ -595,47 +549,31 @@ export default function LocationMaster() {
 
                     <div>
 
-                        <label>
-                            Pincode
-                        </label>
-
+                        <label>Pincode</label>
 
                         <input
                             type="text"
-
                             name="pincode"
-
-                            value={
-                                formData.pincode
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.pincode}
+                            onChange={handleChange}
                         />
 
                     </div>
-
 
                 </div>
 
 
-                {/* ROW 4 */}
+                {/* CONTACT DETAILS */}
 
                 <div
                     style={{
                         display: "grid",
-
                         gridTemplateColumns:
                             "repeat(2, minmax(0, 1fr))",
-
                         gap: "15px",
-
                         marginBottom: "15px"
                     }}
                 >
-
 
                     <div>
 
@@ -643,20 +581,13 @@ export default function LocationMaster() {
                             Contact Person
                         </label>
 
-
                         <input
                             type="text"
-
                             name="contact_person"
-
                             value={
                                 formData.contact_person
                             }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            onChange={handleChange}
                         />
 
                     </div>
@@ -668,24 +599,14 @@ export default function LocationMaster() {
                             Mobile
                         </label>
 
-
                         <input
                             type="text"
-
                             name="mobile"
-
-                            value={
-                                formData.mobile
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.mobile}
+                            onChange={handleChange}
                         />
 
                     </div>
-
 
                 </div>
 
@@ -702,17 +623,11 @@ export default function LocationMaster() {
 
                         <input
                             type="checkbox"
-
                             name="is_active"
-
                             checked={
                                 formData.is_active
                             }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            onChange={handleChange}
                         />
 
                         {" "}
@@ -736,7 +651,6 @@ export default function LocationMaster() {
 
                     <button
                         type="submit"
-
                         disabled={loading}
                     >
 
@@ -751,11 +665,9 @@ export default function LocationMaster() {
 
                         <button
                             type="button"
-
                             onClick={
                                 handleCancelEdit
                             }
-
                         >
 
                             Cancel
@@ -765,7 +677,6 @@ export default function LocationMaster() {
                     )}
 
                 </div>
-
 
             </form>
 
@@ -803,37 +714,25 @@ export default function LocationMaster() {
 
                             <tr>
 
-                                <th>
-                                    Code
-                                </th>
+                                <th>Code</th>
 
                                 <th>
                                     Location Name
                                 </th>
 
-                                <th>
-                                    City
-                                </th>
+                                <th>City</th>
 
-                                <th>
-                                    State
-                                </th>
+                                <th>State</th>
 
                                 <th>
                                     Contact Person
                                 </th>
 
-                                <th>
-                                    Mobile
-                                </th>
+                                <th>Mobile</th>
 
-                                <th>
-                                    Status
-                                </th>
+                                <th>Status</th>
 
-                                <th>
-                                    Action
-                                </th>
+                                <th>Action</th>
 
                             </tr>
 
@@ -879,45 +778,35 @@ export default function LocationMaster() {
                                                 }
                                             </td>
 
-
                                             <td>
                                                 {
                                                     location.location_name
                                                 }
                                             </td>
 
-
                                             <td>
                                                 {
-                                                    location.city ||
-                                                    "-"
+                                                    location.city || "-"
                                                 }
                                             </td>
 
-
                                             <td>
                                                 {
-                                                    location.state ||
-                                                    "-"
+                                                    location.state || "-"
                                                 }
                                             </td>
 
-
                                             <td>
                                                 {
-                                                    location.contact_person ||
-                                                    "-"
+                                                    location.contact_person || "-"
                                                 }
                                             </td>
 
-
                                             <td>
                                                 {
-                                                    location.mobile ||
-                                                    "-"
+                                                    location.mobile || "-"
                                                 }
                                             </td>
-
 
                                             <td>
 
@@ -927,16 +816,12 @@ export default function LocationMaster() {
 
                                             </td>
 
-
                                             <td>
 
                                                 <button
                                                     type="button"
-
                                                     onClick={() =>
-                                                        handleEdit(
-                                                            location
-                                                        )
+                                                        handleEdit(location)
                                                     }
                                                 >
 
@@ -944,17 +829,12 @@ export default function LocationMaster() {
 
                                                 </button>
 
-
                                                 {" "}
-
 
                                                 <button
                                                     type="button"
-
                                                     onClick={() =>
-                                                        handleDelete(
-                                                            location
-                                                        )
+                                                        handleDelete(location)
                                                     }
                                                 >
 
@@ -963,7 +843,6 @@ export default function LocationMaster() {
                                                 </button>
 
                                             </td>
-
 
                                         </tr>
 
@@ -979,7 +858,6 @@ export default function LocationMaster() {
                 </div>
 
             )}
-
 
         </div>
 
