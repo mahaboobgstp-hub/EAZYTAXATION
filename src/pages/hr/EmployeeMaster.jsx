@@ -103,7 +103,7 @@ function EmployeeMaster() {
         loadDepartments(currentCompanyId);
 loadDesignations(currentCompanyId);
 loadShifts(currentCompanyId);
-        loadLocations(currentCompanyId);
+       
 
     }, [currentCompanyId]);
 
