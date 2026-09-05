@@ -1,461 +1,778 @@
-import React, { useEffect, useState } from "react";
+import React, {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
+
 import { useCompany } from "../../context/CompanyContext";
 
 import {
-    getActiveEmployees
+    getActiveEmployees,
+    getDepartments,
+    getDesignations
 } from "../../services/hr/employeeService";
-import {
-    getShiftById
-} from "../../services/hr/shiftService";
 
 import {
     getAttendance,
-    saveAttendance,
-    deleteAttendance
+    getWorkLocations,
+    getEmployeeDeployments,
+    bulkSaveAttendance
 } from "../../services/hr/attendanceService";
+
+import {
+    getAttendanceSettings
+} from "../../services/hr/attendanceSettingsService";
+
 
 function AttendanceEntry() {
 
     const { currentCompany } = useCompany();
 
     const [employees, setEmployees] = useState([]);
-    const [attendance, setAttendance] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [designations, setDesignations] = useState([]);
+    const [locations, setLocations] = useState([]);
+    const [deployments, setDeployments] = useState([]);
+    const [existingAttendance, setExistingAttendance] =
+        useState([]);
+
+    const [attendanceSettings, setAttendanceSettings] =
+        useState(null);
 
     const [attendanceDate, setAttendanceDate] =
         useState(
             new Date().toISOString().split("T")[0]
         );
 
-    const [formData, setFormData] = useState({
-    employee_id: "",
+    const [filters, setFilters] = useState({
+        location_id: "",
+        department_id: "",
+        designation_id: ""
+    });
 
-    attendance_mode: "TIMINGS",
+    const [rows, setRows] = useState({});
 
-    attendance_status: "Present",
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    attendance_day_value: 1,
-
-    overtime_shift_count: 0,
-
-    check_in_time: "",
-    check_out_time: "",
-
-    working_hours: "",
-
-    overtime_start_time: "",
-    overtime_end_time: "",
-
-    overtime_hours: "",
-
-    remarks: ""
-});
-    const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
 
-        if (currentCompany?.id) {
-
-            loadEmployees(currentCompany.id);
-
-            loadAttendance(
-                currentCompany.id,
-                attendanceDate
-            );
-
-        } else {
+        if (!currentCompany?.id) {
 
             setEmployees([]);
-            setAttendance([]);
+            setDepartments([]);
+            setDesignations([]);
+            setLocations([]);
+            setDeployments([]);
+            setExistingAttendance([]);
+            setRows({});
+            setAttendanceSettings(null);
+
+            return;
         }
 
-    }, [currentCompany, attendanceDate]);
+        loadCompanyData();
 
-    async function loadEmployees(companyId) {
+    }, [currentCompany]);
+
+
+    useEffect(() => {
+
+        if (!currentCompany?.id) {
+            return;
+        }
+
+        loadAttendanceForDate();
+
+    }, [
+        currentCompany,
+        attendanceDate
+    ]);
+
+
+    async function loadCompanyData() {
 
         try {
 
-            const data =
-                await getActiveEmployees(companyId);
+            setLoading(true);
 
-            setEmployees(data);
+            const companyId =
+                currentCompany.id;
+
+            const [
+                employeeData,
+                departmentData,
+                designationData,
+                locationData,
+                deploymentData,
+                settingsData
+            ] = await Promise.all([
+
+                getActiveEmployees(companyId),
+
+                getDepartments(companyId),
+
+                getDesignations(companyId),
+
+                getWorkLocations(companyId),
+
+                getEmployeeDeployments(companyId),
+
+                getAttendanceSettings(companyId)
+
+            ]);
+
+            setEmployees(employeeData || []);
+            setDepartments(departmentData || []);
+            setDesignations(designationData || []);
+            setLocations(locationData || []);
+            setDeployments(deploymentData || []);
+
+            setAttendanceSettings(
+                settingsData || {
+                    attendance_mode: "DAY",
+                    overtime_enabled: true,
+                    default_attendance_status: "Present"
+                }
+            );
 
         } catch (error) {
 
             console.error(error);
 
             alert(
-                "Unable to load employees."
+                error.message ||
+                "Unable to load attendance data."
             );
+
+        } finally {
+
+            setLoading(false);
         }
     }
 
-    async function loadAttendance(
-        companyId,
-        date
-    ) {
+
+    async function loadAttendanceForDate() {
 
         try {
 
             const data =
                 await getAttendance(
-                    companyId,
-                    date
+                    currentCompany.id,
+                    attendanceDate
                 );
 
-            setAttendance(data);
+            setExistingAttendance(
+                data || []
+            );
 
         } catch (error) {
 
             console.error(error);
 
             alert(
+                error.message ||
                 "Unable to load attendance."
             );
         }
     }
 
-   function handleChange(e) {
 
-    const { name, value } = e.target;
+    function getActiveDeployment(employeeId) {
 
-    setFormData(prev => {
+        return deployments.find(
+            deployment => {
 
-        const updated = {
-            ...prev,
+                if (
+                    deployment.employee_id !==
+                    employeeId
+                ) {
+                    return false;
+                }
+
+                if (
+                    deployment.deployment_status &&
+                    deployment.deployment_status !==
+                    "Active"
+                ) {
+                    return false;
+                }
+
+                if (
+                    deployment.effective_from &&
+                    deployment.effective_from >
+                    attendanceDate
+                ) {
+                    return false;
+                }
+
+                if (
+                    deployment.effective_to &&
+                    deployment.effective_to <
+                    attendanceDate
+                ) {
+                    return false;
+                }
+
+                return true;
+            }
+        ) || null;
+    }
+
+
+    const filteredEmployees = useMemo(() => {
+
+        return employees.filter(employee => {
+
+            if (
+                filters.department_id &&
+                employee.department_id !==
+                filters.department_id
+            ) {
+                return false;
+            }
+
+            if (
+                filters.designation_id &&
+                employee.designation_id !==
+                filters.designation_id
+            ) {
+                return false;
+            }
+
+            if (filters.location_id) {
+
+                const deployment =
+                    deployments.find(
+                        item =>
+                            item.employee_id ===
+                                employee.id &&
+                            item.work_location_id ===
+                                filters.location_id &&
+                            (
+                                !item.effective_from ||
+                                item.effective_from <=
+                                    attendanceDate
+                            ) &&
+                            (
+                                !item.effective_to ||
+                                item.effective_to >=
+                                    attendanceDate
+                            ) &&
+                            item.is_active === true
+                    );
+
+                if (!deployment) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+    }, [
+        employees,
+        deployments,
+        filters,
+        attendanceDate
+    ]);
+
+
+    useEffect(() => {
+
+        if (!attendanceSettings) {
+            return;
+        }
+
+        const defaultStatus =
+            attendanceSettings
+                .default_attendance_status ||
+            "Present";
+
+        const newRows = {};
+
+        employees.forEach(employee => {
+
+            const existing =
+                existingAttendance.find(
+                    record =>
+                        record.employee_id ===
+                        employee.id
+                );
+
+            if (existing) {
+
+                newRows[employee.id] = {
+
+                    attendance_status:
+                        existing.attendance_status ||
+                        defaultStatus,
+
+                    overtime:
+                        existing.is_overtime ||
+                        Number(
+                            existing.overtime_shift_count
+                        ) > 0
+                            ? "Yes"
+                            : "No",
+
+                    check_in_time:
+                        existing.check_in_time
+                            ? existing.check_in_time.substring(
+                                11,
+                                16
+                            )
+                            : "",
+
+                    check_out_time:
+                        existing.check_out_time
+                            ? existing.check_out_time.substring(
+                                11,
+                                16
+                            )
+                            : "",
+
+                    overtime_start_time:
+                        existing.overtime_start_time
+                            ? existing.overtime_start_time.substring(
+                                11,
+                                16
+                            )
+                            : "",
+
+                    overtime_end_time:
+                        existing.overtime_end_time
+                            ? existing.overtime_end_time.substring(
+                                11,
+                                16
+                            )
+                            : "",
+
+                    remarks:
+                        existing.remarks || ""
+                };
+
+            } else {
+
+                newRows[employee.id] = {
+
+                    attendance_status:
+                        defaultStatus,
+
+                    overtime: "No",
+
+                    check_in_time: "",
+                    check_out_time: "",
+
+                    overtime_start_time: "",
+                    overtime_end_time: "",
+
+                    remarks: ""
+                };
+            }
+        });
+
+        setRows(newRows);
+
+    }, [
+        employees,
+        existingAttendance,
+        attendanceSettings
+    ]);
+
+
+    function handleFilterChange(e) {
+
+        const {
+            name,
+            value
+        } = e.target;
+
+        setFilters(previous => ({
+            ...previous,
             [name]: value
-        };
-        if (name === "attendance_mode") {
-
-    if (value === "DAY_SHIFT") {
-
-        updated.check_in_time = "";
-        updated.check_out_time = "";
-        updated.working_hours = "";
-
-        updated.overtime_start_time = "";
-        updated.overtime_end_time = "";
-        updated.overtime_hours = "";
-
-    } else {
-
-        updated.attendance_day_value = 1;
-        updated.overtime_shift_count = 0;
-
-    }
-}
-
-        if (
-            name === "check_in_time" ||
-            name === "check_out_time"
-        ) {
-
-            const workingHours =
-                calculateWorkingHours(
-                    name === "check_in_time"
-                        ? value
-                        : prev.check_in_time,
-
-                    name === "check_out_time"
-                        ? value
-                        : prev.check_out_time
-                );
-
-            updated.working_hours =
-                workingHours !== null
-                    ? workingHours
-                    : "";
-        }
-
-        if (
-            name === "overtime_start_time" ||
-            name === "overtime_end_time"
-        ) {
-
-            const overtimeHours =
-                calculateOvertimeHours(
-                    name === "overtime_start_time"
-                        ? value
-                        : prev.overtime_start_time,
-
-                    name === "overtime_end_time"
-                        ? value
-                        : prev.overtime_end_time
-                );
-
-            updated.overtime_hours =
-                overtimeHours > 0
-                    ? overtimeHours
-                    : "";
-        }
-
-        return updated;
-    });
-}
-    function resetForm() {
-
-        setFormData({
-    
-    employee_id: "",
-
-    attendance_mode: "TIMINGS",
-
-    attendance_status: "Present",
-
-    attendance_day_value: 1,
-
-    overtime_shift_count: 0,
-
-    check_in_time: "",
-    check_out_time: "",
-
-    working_hours: "",
-
-    overtime_start_time: "",
-    overtime_end_time: "",
-
-    overtime_hours: "",
-
-    remarks: ""
-});
-
-        setEditingId(null);
+        }));
     }
 
-    function calculateWorkingHours(
-        checkIn,
-        checkOut
+
+    function updateRow(
+        employeeId,
+        field,
+        value
     ) {
 
-        if (!checkIn || !checkOut) {
+        setRows(previous => ({
+
+            ...previous,
+
+            [employeeId]: {
+
+                ...previous[employeeId],
+
+                [field]: value
+            }
+
+        }));
+    }
+
+
+    function getDepartmentName(id) {
+
+        const department =
+            departments.find(
+                item => item.id === id
+            );
+
+        return department
+            ? department.department_name
+            : "-";
+    }
+
+
+    function getDesignationName(id) {
+
+        const designation =
+            designations.find(
+                item => item.id === id
+            );
+
+        return designation
+            ? designation.designation_name
+            : "-";
+    }
+
+
+    function getLocationName(employeeId) {
+
+        const deployment =
+            getActiveDeployment(
+                employeeId
+            );
+
+        if (!deployment?.work_location_id) {
+            return "-";
+        }
+
+        const location =
+            locations.find(
+                item =>
+                    item.id ===
+                    deployment.work_location_id
+            );
+
+        return location
+            ? location.location_name
+            : "-";
+    }
+
+
+    function getAttendanceDayValue(status) {
+
+        switch (status) {
+
+            case "Present":
+                return 1;
+
+            case "Half Day":
+                return 0.5;
+
+            case "Absent":
+            case "Weekly Off":
+            case "Holiday":
+                return 0;
+
+            default:
+                return 0;
+        }
+    }
+
+
+    function calculateDuration(
+        startTime,
+        endTime
+    ) {
+
+        if (
+            !startTime ||
+            !endTime
+        ) {
             return null;
         }
 
         const start =
             new Date(
-                `1970-01-01T${checkIn}`
+                `1970-01-01T${startTime}`
             );
 
         const end =
             new Date(
-                `1970-01-01T${checkOut}`
+                `1970-01-01T${endTime}`
             );
 
-        let difference =
-            (end - start) / 3600000;
+        let hours =
+            (end - start) /
+            3600000;
 
-        if (difference < 0) {
-            difference += 24;
+        if (hours < 0) {
+            hours += 24;
         }
 
         return Number(
-            difference.toFixed(2)
+            hours.toFixed(2)
         );
     }
-function calculateOvertimeHours(
-    workingHours,
-    overtimeAfterHours
-) {
-    if (
-        workingHours === null ||
-        workingHours === undefined ||
-        !overtimeAfterHours
-    ) {
-        return 0;
-    }
 
-    if (workingHours <= overtimeAfterHours) {
-        return 0;
-    }
 
-    return Number(
-        (workingHours - overtimeAfterHours).toFixed(2)
-    );
-}
-    function calculateOvertimeDuration(
-    overtimeStart,
-    overtimeEnd
-) {
-    if (!overtimeStart || !overtimeEnd) {
-        return 0;
-    }
-
-    const start = new Date(
-        `1970-01-01T${overtimeStart}`
-    );
-
-    const end = new Date(
-        `1970-01-01T${overtimeEnd}`
-    );
-
-    let difference =
-        (end - start) / 3600000;
-
-    if (difference < 0) {
-        difference += 24;
-    }
-
-    return Number(
-        difference.toFixed(2)
-    );
-}
-    async function handleSubmit(e) {
-
-        e.preventDefault();
+    async function handleSaveAll() {
 
         if (!currentCompany?.id) {
 
             alert(
-                "Please select a company first."
+                "Please select a company."
             );
 
             return;
         }
 
-        if (!formData.employee_id) {
+        if (
+            filteredEmployees.length === 0
+        ) {
 
             alert(
-                "Please select an employee."
+                "No employees available to save."
             );
 
             return;
         }
 
-        if (!formData.attendance_status) {
+        if (
+            attendanceSettings
+                ?.allow_manual_attendance ===
+            false
+        ) {
 
             alert(
-                "Please select attendance status."
+                "Manual attendance entry is disabled in Attendance Settings."
             );
 
             return;
         }
+
 
         try {
 
-            const selectedEmployee =
-                employees.find(
-                    employee =>
-                        employee.id ===
-                        formData.employee_id
+            setSaving(true);
+
+            const mode =
+                attendanceSettings
+                    ?.attendance_mode ||
+                "DAY";
+
+
+            const records =
+                filteredEmployees.map(
+                    employee => {
+
+                        const row =
+                            rows[employee.id];
+
+                        const deployment =
+                            getActiveDeployment(
+                                employee.id
+                            );
+
+
+                        if (mode === "DAY") {
+
+                            const overtimeYes =
+                                attendanceSettings
+                                    ?.overtime_enabled &&
+                                row?.overtime ===
+                                    "Yes";
+
+                            return {
+
+                                employee_id:
+                                    employee.id,
+
+                                attendance_date:
+                                    attendanceDate,
+
+                                attendance_mode:
+                                    "DAY",
+
+                                attendance_status:
+                                    row?.attendance_status ||
+                                    "Present",
+
+                                attendance_day_value:
+                                    getAttendanceDayValue(
+                                        row?.attendance_status
+                                    ),
+
+                                overtime_shift_count:
+                                    overtimeYes
+                                        ? 1
+                                        : 0,
+
+                                is_overtime:
+                                    overtimeYes,
+
+                                deployment_id:
+                                    deployment?.id ||
+                                    null,
+
+                                client_id:
+                                    deployment?.client_id ||
+                                    null,
+
+                                work_location_id:
+                                    deployment?.work_location_id ||
+                                    null,
+
+                                shift_id:
+                                    deployment?.shift_id ||
+                                    employee.default_shift_id ||
+                                    null,
+
+                                check_in_time:
+                                    null,
+
+                                check_out_time:
+                                    null,
+
+                                working_hours:
+                                    null,
+
+                                overtime_hours:
+                                    0,
+
+                                overtime_start_time:
+                                    null,
+
+                                overtime_end_time:
+                                    null,
+
+                                remarks:
+                                    row?.remarks ||
+                                    null
+                            };
+                        }
+
+
+                        const workingHours =
+                            calculateDuration(
+                                row?.check_in_time,
+                                row?.check_out_time
+                            );
+
+                        const overtimeHours =
+                            calculateDuration(
+                                row?.overtime_start_time,
+                                row?.overtime_end_time
+                            ) || 0;
+
+
+                        return {
+
+                            employee_id:
+                                employee.id,
+
+                            attendance_date:
+                                attendanceDate,
+
+                            attendance_mode:
+                                "TIMING",
+
+                            attendance_status:
+                                row?.attendance_status ||
+                                "Present",
+
+                            attendance_day_value:
+                                getAttendanceDayValue(
+                                    row?.attendance_status
+                                ),
+
+                            overtime_shift_count:
+                                0,
+
+                            deployment_id:
+                                deployment?.id ||
+                                null,
+
+                            client_id:
+                                deployment?.client_id ||
+                                null,
+
+                            work_location_id:
+                                deployment?.work_location_id ||
+                                null,
+
+                            shift_id:
+                                deployment?.shift_id ||
+                                employee.default_shift_id ||
+                                null,
+
+                            check_in_time:
+                                row?.check_in_time
+                                    ? `${attendanceDate}T${row.check_in_time}`
+                                    : null,
+
+                            check_out_time:
+                                row?.check_out_time
+                                    ? `${attendanceDate}T${row.check_out_time}`
+                                    : null,
+
+                            working_hours:
+                                workingHours,
+
+                            overtime_start_time:
+                                attendanceSettings
+                                    ?.overtime_enabled &&
+                                row?.overtime_start_time
+                                    ? `${attendanceDate}T${row.overtime_start_time}`
+                                    : null,
+
+                            overtime_end_time:
+                                attendanceSettings
+                                    ?.overtime_enabled &&
+                                row?.overtime_end_time
+                                    ? `${attendanceDate}T${row.overtime_end_time}`
+                                    : null,
+
+                            overtime_hours:
+                                attendanceSettings
+                                    ?.overtime_enabled
+                                    ? overtimeHours
+                                    : 0,
+
+                            is_overtime:
+                                attendanceSettings
+                                    ?.overtime_enabled &&
+                                overtimeHours > 0,
+
+                            remarks:
+                                row?.remarks ||
+                                null
+                        };
+                    }
                 );
-            let selectedShift = null;
-
-if (selectedEmployee?.default_shift_id) {
-    selectedShift = await getShiftById(
-        selectedEmployee.default_shift_id,
-        currentCompany.id
-    );
-}
-
-            let workingHours = null;
-
-let overtimeHours = 0;
 
 
-if (
-    formData.attendance_mode ===
-    "TIMINGS"
-) {
-
-    workingHours =
-        calculateWorkingHours(
-            formData.check_in_time,
-            formData.check_out_time
-        );
-
-    overtimeHours =
-        calculateOvertimeHours(
-            workingHours,
-            selectedShift?.overtime_after_hours
-        );
-}  
-            const attendanceData = {
-
-                employee_id:
-                    formData.employee_id,
-
-                attendance_date:
-                    attendanceDate,
-                attendance_mode:
-    formData.attendance_mode,
-
-attendance_day_value:
-    Number(
-        formData.attendance_day_value
-    ),
-
-overtime_shift_count:
-    Number(
-        formData.overtime_shift_count
-    ),
-
-                shift_id:
-                    selectedEmployee?.default_shift_id ||
-                    null,
-
-                attendance_status:
-                    formData.attendance_status,
-
-                check_in_time:
-    formData.attendance_mode === "TIMINGS" &&
-    formData.check_in_time
-        ? `${attendanceDate}T${formData.check_in_time}`
-        : null,
-
-check_out_time:
-    formData.attendance_mode === "TIMINGS" &&
-    formData.check_out_time
-        ? `${attendanceDate}T${formData.check_out_time}`
-        : null,
-
-working_hours:
-    formData.attendance_mode === "TIMINGS"
-        ? workingHours
-        : null,
-
-overtime_hours:
-    formData.attendance_mode === "TIMINGS"
-        ? overtimeHours
-        : 0,
-
-overtime_start_time:
-    formData.attendance_mode === "TIMINGS" &&
-    formData.overtime_start_time
-        ? `${attendanceDate}T${formData.overtime_start_time}`
-        : null,
-
-overtime_end_time:
-    formData.attendance_mode === "TIMINGS" &&
-    formData.overtime_end_time
-        ? `${attendanceDate}T${formData.overtime_end_time}`
-        : null,
-
-is_overtime:
-    formData.attendance_mode === "TIMINGS"
-        ? overtimeHours > 0
-        : Number(
-            formData.overtime_shift_count
-        ) > 0,
-                remarks:
-                    formData.remarks
-            };
-
-            await saveAttendance(
-                attendanceData,
+            await bulkSaveAttendance(
+                records,
                 currentCompany.id
             );
 
+
             alert(
-                editingId
-                    ? "Attendance updated successfully."
-                    : "Attendance saved successfully."
+                `${records.length} attendance records saved successfully.`
             );
 
-            resetForm();
 
-            await loadAttendance(
-                currentCompany.id,
-                attendanceDate
-            );
+            await loadAttendanceForDate();
+
 
         } catch (error) {
 
@@ -465,608 +782,727 @@ is_overtime:
                 error.message ||
                 "Unable to save attendance."
             );
+
+        } finally {
+
+            setSaving(false);
         }
     }
 
-    function handleEdit(record) {
 
-        setEditingId(record.id);
+    if (!currentCompany?.id) {
 
-        setFormData({
-
-    employee_id:
-        record.employee_id || "",
-
-    attendance_mode:
-        record.attendance_mode ||
-        "TIMINGS",
-
-    attendance_status:
-        record.attendance_status ||
-        "Present",
-
-    attendance_day_value:
-        record.attendance_day_value ?? 1,
-
-    overtime_shift_count:
-        record.overtime_shift_count ?? 0,
-
-    check_in_time:
-        record.check_in_time
-            ? record.check_in_time.substring(11, 16)
-            : "",
-
-    check_out_time:
-        record.check_out_time
-            ? record.check_out_time.substring(11, 16)
-            : "",
-
-    working_hours:
-        record.working_hours ?? "",
-
-    overtime_start_time:
-        record.overtime_start_time
-            ? record.overtime_start_time.substring(11, 16)
-            : "",
-
-    overtime_end_time:
-        record.overtime_end_time
-            ? record.overtime_end_time.substring(11, 16)
-            : "",
-
-    overtime_hours:
-        record.overtime_hours ?? "",
-
-    remarks:
-        record.remarks || ""
-
-});
+        return (
+            <div style={{ padding: "25px" }}>
+                Please select a company.
+            </div>
+        );
     }
 
-    async function handleDelete(id) {
 
-        if (
-            !window.confirm(
-                "Delete this attendance entry?"
-            )
-        ) {
-            return;
-        }
+    if (loading) {
 
-        try {
-
-            await deleteAttendance(
-                id,
-                currentCompany.id
-            );
-
-            await loadAttendance(
-                currentCompany.id,
-                attendanceDate
-            );
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(
-                error.message ||
-                "Unable to delete attendance."
-            );
-        }
+        return (
+            <div style={{ padding: "25px" }}>
+                Loading attendance...
+            </div>
+        );
     }
 
-    function getEmployeeName(employeeId) {
 
-        const employee =
-            employees.find(
-                item =>
-                    item.id === employeeId
-            );
+    const mode =
+        attendanceSettings
+            ?.attendance_mode ||
+        "DAY";
 
-        if (!employee) {
-            return employeeId;
-        }
-
-        return `${employee.employee_code} - ${employee.employee_name}`;
-    }
 
     return (
-        <div style={{ padding: "25px" }}>
 
-            <h2>Attendance Entry</h2>
+        <div
+            style={{
+                padding: "25px"
+            }}
+        >
+
+            <h2>
+                Attendance Entry
+            </h2>
 
             <p>
                 Company:{" "}
                 <strong>
-                    {currentCompany?.company_name ||
-                        "Select Company"}
+                    {
+                        currentCompany
+                            .company_name
+                    }
                 </strong>
             </p>
 
-            {!currentCompany?.id ? (
 
-                <div
-                    style={{
-                        padding: "15px",
-                        background: "#fff3cd",
-                        border:
-                            "1px solid #ffeeba",
-                        borderRadius: "6px"
-                    }}
-                >
-                    Please select a company from
-                    the Sidebar.
+            <p>
+                Attendance Mode:{" "}
+                <strong>
+                    {
+                        mode === "DAY"
+                            ? "Day Based"
+                            : "Timing Based"
+                    }
+                </strong>
+            </p>
+
+
+            {/* FILTERS */}
+
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                        "repeat(4, 1fr)",
+                    gap: "12px",
+                    marginTop: "20px",
+                    marginBottom: "25px"
+                }}
+            >
+
+                <div>
+
+                    <label>
+                        Attendance Date
+                    </label>
+
+                    <input
+                        type="date"
+                        value={
+                            attendanceDate
+                        }
+                        onChange={e =>
+                            setAttendanceDate(
+                                e.target.value
+                            )
+                        }
+                        style={{
+                            width: "100%"
+                        }}
+                    />
+
                 </div>
 
-            ) : (
 
-                <>
+                <div>
 
-                    <div
+                    <label>
+                        Location
+                    </label>
+
+                    <select
+                        name="location_id"
+                        value={
+                            filters.location_id
+                        }
+                        onChange={
+                            handleFilterChange
+                        }
                         style={{
-                            marginTop: "20px",
-                            marginBottom: "20px"
+                            width: "100%"
                         }}
                     >
 
-                        <label>
-                            Attendance Date
-                        </label>
+                        <option value="">
+                            All Locations
+                        </option>
 
-                        <br />
+                        {locations.map(
+                            location => (
 
-                        <input
-                            type="date"
-                            value={attendanceDate}
-                            onChange={e =>
-                                setAttendanceDate(
-                                    e.target.value
-                                )
-                            }
-                        />
-
-                    </div>
-
-
-                    <form
-                        onSubmit={handleSubmit}
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                                "1fr 1fr",
-                            gap: "15px",
-                            marginBottom: "30px"
-                        }}
-                    >
-                        <select
-    name="attendance_mode"
-    value={formData.attendance_mode}
-    onChange={handleChange}
->
-    <option value="TIMINGS">
-        Timings Mode
-    </option>
-
-    <option value="DAY_SHIFT">
-        Day / Shift Mode
-    </option>
-</select>
-
-                        <select
-                            name="employee_id"
-                            value={
-                                formData.employee_id
-                            }
-                            onChange={handleChange}
-                        >
-
-                            <option value="">
-                                Select Employee
-                            </option>
-
-                            {employees.map(
-                                employee => (
-
-                                    <option
-                                        key={
-                                            employee.id
-                                        }
-                                        value={
-                                            employee.id
-                                        }
-                                    >
-                                        {
-                                            employee.employee_code
-                                        }
-                                        {" - "}
-                                        {
-                                            employee.employee_name
-                                        }
-                                    </option>
-
-                                )
-                            )}
-
-                        </select>
-
-
-                        <select
-                            name="attendance_status"
-                            value={
-                                formData.attendance_status
-                            }
-                            onChange={handleChange}
-                        >
-
-                            <option value="Present">
-                                Present
-                            </option>
-
-                            <option value="Absent">
-                                Absent
-                            </option>
-
-                            <option value="Half Day">
-                                Half Day
-                            </option>
-
-                            <option value="Leave">
-                                Leave
-                            </option>
-
-                            <option value="Weekly Off">
-                                Weekly Off
-                            </option>
-
-                            <option value="Holiday">
-                                Holiday
-                            </option>
-
-                        </select>
-
-{formData.attendance_mode === "TIMINGS" && (
-    <>
-                        <label>
-                            Check In
-
-                            <input
-                                type="time"
-                                name="check_in_time"
-                                value={
-                                    formData.check_in_time
-                                }
-                                onChange={
-                                    handleChange
-                                }
-                            />
-
-                        </label>
-
-
-                        <label>
-                            Check Out
-
-                            <input
-                                type="time"
-                                name="check_out_time"
-                                value={
-                                    formData.check_out_time
-                                }
-                                onChange={
-                                    handleChange
-                                }
-                            />
-
-                        </label>
-<input
-    type="number"
-    step="0.01"
-    name="working_hours"
-    placeholder="Working Hours"
-    value={formData.working_hours}
-    readOnly
-/>
-                        <label>
-    Overtime From
-
-    <input
-        type="time"
-        name="overtime_start_time"
-        value={formData.overtime_start_time}
-        onChange={handleChange}
-    />
-</label>
-
-<label>
-    Overtime To
-
-    <input
-        type="time"
-        name="overtime_end_time"
-        value={formData.overtime_end_time}
-        onChange={handleChange}
-    />
-</label>
-                        <input
-    type="number"
-    step="0.01"
-    name="overtime_hours"
-    placeholder="Overtime Hours"
-    value={formData.overtime_hours}
-    readOnly
-/>
-    </>
-)}
-                        {formData.attendance_mode === "DAY_SHIFT" && (
-    <>
-        <label>
-            Attendance Value
-
-            <select
-                name="attendance_day_value"
-                value={formData.attendance_day_value}
-                onChange={handleChange}
-            >
-                <option value="1">
-                    Full Day
-                </option>
-
-                <option value="0.5">
-                    Half Day
-                </option>
-
-                <option value="0">
-                    No Attendance Day
-                </option>
-            </select>
-        </label>
-
-
-        <label>
-            Overtime Shifts
-
-            <input
-                type="number"
-                min="0"
-                step="0.5"
-                name="overtime_shift_count"
-                value={formData.overtime_shift_count}
-                onChange={handleChange}
-            />
-        </label>
-    </>
-)}
-                        <input
-                            name="remarks"
-                            placeholder="Remarks"
-                            value={
-                                formData.remarks
-                            }
-                            onChange={
-                                handleChange
-                            }
-                        />
-
-
-                        <div>
-
-                            <button type="submit">
-
-                                {editingId
-                                    ? "Update Attendance"
-                                    : "Save Attendance"}
-
-                            </button>
-
-                            {editingId && (
-
-                                <button
-                                    type="button"
-                                    onClick={
-                                        resetForm
+                                <option
+                                    key={
+                                        location.id
                                     }
-                                    style={{
-                                        marginLeft:
-                                            "10px"
-                                    }}
+                                    value={
+                                        location.id
+                                    }
                                 >
-                                    Cancel
-                                </button>
+                                    {
+                                        location.location_name
+                                    }
+                                </option>
 
-                            )}
+                            )
+                        )}
 
-                        </div>
+                    </select>
 
-                    </form>
-
-
-                    <h3>
-                        Attendance for{" "}
-                        {attendanceDate}
-                    </h3>
+                </div>
 
 
-                    <table
+                <div>
+
+                    <label>
+                        Department
+                    </label>
+
+                    <select
+                        name="department_id"
+                        value={
+                            filters.department_id
+                        }
+                        onChange={
+                            handleFilterChange
+                        }
                         style={{
-                            width: "100%",
-                            borderCollapse:
-                                "collapse"
+                            width: "100%"
                         }}
                     >
 
-                        <thead>
+                        <option value="">
+                            All Departments
+                        </option>
 
-                            <tr>
+                        {departments.map(
+                            department => (
 
-                                <th>
-                                    Employee
-                                </th>
+                                <option
+                                    key={
+                                        department.id
+                                    }
+                                    value={
+                                        department.id
+                                    }
+                                >
+                                    {
+                                        department.department_name
+                                    }
+                                </option>
 
-                                <th>
-                                    Status
-                                </th>
+                            )
+                        )}
 
-                                <th>
-                                    Check In
-                                </th>
+                    </select>
 
-                                <th>
-                                    Check Out
-                                </th>
+                </div>
 
-                                <th>
-                                    Working Hours
-                                </th>
+
+                <div>
+
+                    <label>
+                        Designation
+                    </label>
+
+                    <select
+                        name="designation_id"
+                        value={
+                            filters.designation_id
+                        }
+                        onChange={
+                            handleFilterChange
+                        }
+                        style={{
+                            width: "100%"
+                        }}
+                    >
+
+                        <option value="">
+                            All Designations
+                        </option>
+
+                        {designations.map(
+                            designation => (
+
+                                <option
+                                    key={
+                                        designation.id
+                                    }
+                                    value={
+                                        designation.id
+                                    }
+                                >
+                                    {
+                                        designation.designation_name
+                                    }
+                                </option>
+
+                            )
+                        )}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div
+                style={{
+                    marginBottom: "12px"
+                }}
+            >
+
+                Employees shown:{" "}
+
+                <strong>
+                    {
+                        filteredEmployees.length
+                    }
+                </strong>
+
+            </div>
+
+
+            <div
+                style={{
+                    overflowX: "auto"
+                }}
+            >
+
+                <table
+                    style={{
+                        width: "100%",
+                        borderCollapse:
+                            "collapse"
+                    }}
+                >
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Emp ID
+                            </th>
+
+                            <th>
+                                Employee Name
+                            </th>
+
+                            <th>
+                                Location
+                            </th>
+
+                            <th>
+                                Department
+                            </th>
+
+                            <th>
+                                Designation
+                            </th>
+
+                            <th>
+                                Attendance
+                            </th>
+
+
+                            {mode === "DAY" &&
+                                attendanceSettings
+                                    ?.overtime_enabled && (
 
                                 <th>
                                     Overtime
                                 </th>
 
-                                <th>
-                                    Remarks
-                                </th>
-
-                                <th>
-                                    Action
-                                </th>
-
-                            </tr>
-
-                        </thead>
+                            )}
 
 
-                        <tbody>
+                            {mode === "TIMING" && (
+                                <>
+                                    <th>
+                                        Check In
+                                    </th>
 
-                            {attendance.length === 0 ? (
+                                    <th>
+                                        Check Out
+                                    </th>
+
+                                    <th>
+                                        Working Hours
+                                    </th>
+
+                                    {attendanceSettings
+                                        ?.overtime_enabled && (
+                                        <>
+                                            <th>
+                                                OT From
+                                            </th>
+
+                                            <th>
+                                                OT To
+                                            </th>
+
+                                            <th>
+                                                OT Hours
+                                            </th>
+                                        </>
+                                    )}
+                                </>
+                            )}
+
+
+                            <th>
+                                Remarks
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {
+                            filteredEmployees.length ===
+                            0
+                                ? (
 
                                 <tr>
 
                                     <td
-                                        colSpan="8"
+                                        colSpan="12"
                                         style={{
                                             textAlign:
                                                 "center",
                                             padding:
-                                                "20px"
+                                                "25px"
                                         }}
                                     >
-                                        No attendance
-                                        entries for
-                                        this date.
+                                        No employees found.
                                     </td>
 
                                 </tr>
 
                             ) : (
 
-                                attendance.map(
-                                    record => (
+                                filteredEmployees.map(
+                                    employee => {
 
-                                        <tr
-                                            key={
-                                                record.id
-                                            }
-                                        >
+                                        const row =
+                                            rows[
+                                                employee.id
+                                            ] || {};
 
-                                            <td>
-                                                {
-                                                    getEmployeeName(
-                                                        record.employee_id
-                                                    )
+                                        const workingHours =
+                                            calculateDuration(
+                                                row.check_in_time,
+                                                row.check_out_time
+                                            );
+
+                                        const overtimeHours =
+                                            calculateDuration(
+                                                row.overtime_start_time,
+                                                row.overtime_end_time
+                                            );
+
+
+                                        return (
+
+                                            <tr
+                                                key={
+                                                    employee.id
                                                 }
-                                            </td>
+                                            >
 
-                                            <td>
-                                                {
-                                                    record.attendance_status
-                                                }
-                                            </td>
+                                                <td>
+                                                    {
+                                                        employee.employee_code
+                                                    }
+                                                </td>
 
-                                            <td>
-                                                {record.check_in_time
-                                                    ? record.check_in_time.substring(
-                                                        11,
-                                                        16
-                                                    )
-                                                    : "-"}
-                                            </td>
 
-                                            <td>
-                                                {record.check_out_time
-                                                    ? record.check_out_time.substring(
-                                                        11,
-                                                        16
-                                                    )
-                                                    : "-"}
-                                            </td>
+                                                <td>
+                                                    {
+                                                        employee.employee_name
+                                                    }
+                                                </td>
 
-                                            <td>
-                                                {
-                                                    record.working_hours ??
-                                                    "-"
-                                                }
-                                            </td>
 
-                                            <td>
-                                                {
-                                                    record.overtime_hours ??
-                                                    0
-                                                }
-                                            </td>
-
-                                            <td>
-                                                {
-                                                    record.remarks ||
-                                                    "-"
-                                                }
-                                            </td>
-
-                                            <td>
-
-                                                <button
-                                                    onClick={() =>
-                                                        handleEdit(
-                                                            record
+                                                <td>
+                                                    {
+                                                        getLocationName(
+                                                            employee.id
                                                         )
                                                     }
-                                                >
-                                                    Edit
-                                                </button>
+                                                </td>
 
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            record.id
+
+                                                <td>
+                                                    {
+                                                        getDepartmentName(
+                                                            employee.department_id
                                                         )
                                                     }
-                                                    style={{
-                                                        marginLeft:
-                                                            "8px"
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
+                                                </td>
 
-                                            </td>
 
-                                        </tr>
+                                                <td>
+                                                    {
+                                                        getDesignationName(
+                                                            employee.designation_id
+                                                        )
+                                                    }
+                                                </td>
 
-                                    )
+
+                                                <td>
+
+                                                    <select
+                                                        value={
+                                                            row.attendance_status ||
+                                                            "Present"
+                                                        }
+                                                        onChange={
+                                                            e =>
+                                                                updateRow(
+                                                                    employee.id,
+                                                                    "attendance_status",
+                                                                    e.target.value
+                                                                )
+                                                        }
+                                                    >
+
+                                                        <option value="Present">
+                                                            Present
+                                                        </option>
+
+                                                        <option value="Absent">
+                                                            Absent
+                                                        </option>
+
+                                                        <option value="Half Day">
+                                                            Half Day
+                                                        </option>
+
+                                                        <option value="Weekly Off">
+                                                            Weekly Off
+                                                        </option>
+
+                                                        <option value="Holiday">
+                                                            Holiday
+                                                        </option>
+
+                                                    </select>
+
+                                                </td>
+
+
+                                                {mode === "DAY" &&
+                                                    attendanceSettings
+                                                        ?.overtime_enabled && (
+
+                                                    <td>
+
+                                                        <select
+                                                            value={
+                                                                row.overtime ||
+                                                                "No"
+                                                            }
+                                                            onChange={
+                                                                e =>
+                                                                    updateRow(
+                                                                        employee.id,
+                                                                        "overtime",
+                                                                        e.target.value
+                                                                    )
+                                                            }
+                                                        >
+
+                                                            <option value="No">
+                                                                No
+                                                            </option>
+
+                                                            <option value="Yes">
+                                                                Yes
+                                                            </option>
+
+                                                        </select>
+
+                                                    </td>
+
+                                                )}
+
+
+                                                {mode === "TIMING" && (
+                                                    <>
+
+                                                        <td>
+
+                                                            <input
+                                                                type="time"
+                                                                value={
+                                                                    row.check_in_time ||
+                                                                    ""
+                                                                }
+                                                                onChange={
+                                                                    e =>
+                                                                        updateRow(
+                                                                            employee.id,
+                                                                            "check_in_time",
+                                                                            e.target.value
+                                                                        )
+                                                                }
+                                                            />
+
+                                                        </td>
+
+
+                                                        <td>
+
+                                                            <input
+                                                                type="time"
+                                                                value={
+                                                                    row.check_out_time ||
+                                                                    ""
+                                                                }
+                                                                onChange={
+                                                                    e =>
+                                                                        updateRow(
+                                                                            employee.id,
+                                                                            "check_out_time",
+                                                                            e.target.value
+                                                                        )
+                                                                }
+                                                            />
+
+                                                        </td>
+
+
+                                                        <td>
+
+                                                            {
+                                                                workingHours ??
+                                                                "-"
+                                                            }
+
+                                                        </td>
+
+
+                                                        {attendanceSettings
+                                                            ?.overtime_enabled && (
+                                                            <>
+
+                                                                <td>
+
+                                                                    <input
+                                                                        type="time"
+                                                                        value={
+                                                                            row.overtime_start_time ||
+                                                                            ""
+                                                                        }
+                                                                        onChange={
+                                                                            e =>
+                                                                                updateRow(
+                                                                                    employee.id,
+                                                                                    "overtime_start_time",
+                                                                                    e.target.value
+                                                                                )
+                                                                        }
+                                                                    />
+
+                                                                </td>
+
+
+                                                                <td>
+
+                                                                    <input
+                                                                        type="time"
+                                                                        value={
+                                                                            row.overtime_end_time ||
+                                                                            ""
+                                                                        }
+                                                                        onChange={
+                                                                            e =>
+                                                                                updateRow(
+                                                                                    employee.id,
+                                                                                    "overtime_end_time",
+                                                                                    e.target.value
+                                                                                )
+                                                                        }
+                                                                    />
+
+                                                                </td>
+
+
+                                                                <td>
+
+                                                                    {
+                                                                        overtimeHours ??
+                                                                        "-"
+                                                                    }
+
+                                                                </td>
+
+                                                            </>
+                                                        )}
+
+                                                    </>
+                                                )}
+
+
+                                                <td>
+
+                                                    <input
+                                                        type="text"
+                                                        value={
+                                                            row.remarks ||
+                                                            ""
+                                                        }
+                                                        onChange={
+                                                            e =>
+                                                                updateRow(
+                                                                    employee.id,
+                                                                    "remarks",
+                                                                    e.target.value
+                                                                )
+                                                        }
+                                                        placeholder="Remarks"
+                                                    />
+
+                                                </td>
+
+                                            </tr>
+
+                                        );
+                                    }
                                 )
 
-                            )}
+                            )
+                        }
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
+                </table>
 
-                </>
+            </div>
 
-            )}
+
+            <div
+                style={{
+                    marginTop: "25px"
+                }}
+            >
+
+                <button
+                    type="button"
+                    onClick={
+                        handleSaveAll
+                    }
+                    disabled={
+                        saving ||
+                        filteredEmployees.length ===
+                            0
+                    }
+                >
+
+                    {
+                        saving
+                            ? "Saving..."
+                            : `Save Attendance (${filteredEmployees.length})`
+                    }
+
+                </button>
+
+            </div>
 
         </div>
     );
 }
+
 
 export default AttendanceEntry;
