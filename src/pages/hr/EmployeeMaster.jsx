@@ -7,8 +7,9 @@ import {
     updateEmployee,
     deactivateEmployee,
     getDepartments,
-getDesignations,
-getShifts
+    getDesignations,
+    getLocations,
+    getShifts
 } from "../../services/hr/employeeService";
 
 
@@ -40,6 +41,7 @@ department_id: "",
 designation_id: "",
 reporting_manager_id: "",
 default_shift_id: "",
+    location_id: "",
 
 date_of_leaving: "",
 
@@ -74,8 +76,9 @@ function EmployeeMaster() {
 
     const [employees, setEmployees] = useState([]);
     const [departments, setDepartments] = useState([]);
-const [designations, setDesignations] = useState([]);
-const [shifts, setShifts] = useState([]);
+    const [designations, setDesignations] = useState([]);
+    const [shifts, setShifts] = useState([]);
+    const [locations, setLocations] = useState([]);
 
     const [formData, setFormData] =
         useState(defaultFormData);
@@ -294,6 +297,8 @@ reporting_manager_id:
 default_shift_id:
     formData.default_shift_id || null,
 
+ location_id: formData.location_id || null,                
+
 date_of_leaving:
     formData.date_of_leaving || null,
 
@@ -423,6 +428,7 @@ blood_group:
             employee_status:
                 employee.employee_status ||
                 "Active",
+            location_id: employee.location_id || "",
 
             remarks:
                 employee.remarks || ""
@@ -952,6 +958,28 @@ blood_group:
     value={formData.ifsc_code}
     onChange={handleChange}
 />
+                <div>
+    <label>Location</label>
+
+    <select
+        name="location_id"
+        value={formData.location_id}
+        onChange={handleChange}
+    >
+        <option value="">
+            Select Location
+        </option>
+
+        {locations.map((location) => (
+            <option
+                key={location.id}
+                value={location.id}
+            >
+                {location.location_code} - {location.location_name}
+            </option>
+        ))}
+    </select>
+</div>
 
                 <textarea
                     name="remarks"
