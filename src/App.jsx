@@ -147,7 +147,7 @@ function App() {
             element={<ExpenseEntry />}
           />
 <Route
-    path="/app/attendance-settings"
+    path="attendance-settings"
     element={<AttendanceSettings />}
 />
           <Route
