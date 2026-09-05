@@ -991,27 +991,6 @@ blood_group:
             </option>
         ))}
     </select>
-</div><div>
-    <label>Location</label>
-
-    <select
-        name="location_id"
-        value={formData.location_id}
-        onChange={handleChange}
-    >
-        <option value="">
-            Select Location
-        </option>
-
-        {locations.map((location) => (
-            <option
-                key={location.id}
-                value={location.id}
-            >
-                {location.location_code} - {location.location_name}
-            </option>
-        ))}
-    </select>
 </div>
                 <div
                     style={{
