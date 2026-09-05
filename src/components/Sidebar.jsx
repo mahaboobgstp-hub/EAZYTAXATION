@@ -591,6 +591,12 @@ function Sidebar() {
                 Attendance Entry
             </NavLink>
             <NavLink
+    to="/app/attendance-settings"
+    className="submenu-link"
+>
+    Attendance Settings
+</NavLink>
+            <NavLink
     to="/app/departments"
     className="submenu-link"
 >
