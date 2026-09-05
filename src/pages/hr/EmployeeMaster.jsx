@@ -92,20 +92,27 @@ function EmployeeMaster() {
 
     useEffect(() => {
 
-        if (!currentCompanyId) {
-            setEmployees([]);
-            setFormData(defaultFormData);
-            setEditingId(null);
-            return;
-        }
+    if (!currentCompanyId) {
 
-        loadEmployees(currentCompanyId);
-        loadDepartments(currentCompanyId);
-loadDesignations(currentCompanyId);
-loadShifts(currentCompanyId);
-       
+        setEmployees([]);
+        setDepartments([]);
+        setDesignations([]);
+        setShifts([]);
+        setLocations([]);
 
-    }, [currentCompanyId]);
+        setFormData(defaultFormData);
+        setEditingId(null);
+
+        return;
+    }
+
+    loadEmployees(currentCompanyId);
+    loadDepartments(currentCompanyId);
+    loadDesignations(currentCompanyId);
+    loadShifts(currentCompanyId);
+    loadLocations(currentCompanyId);
+
+}, [currentCompanyId]);
 
 
     const loadEmployees = async (companyId) => {
