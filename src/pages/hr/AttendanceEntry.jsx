@@ -55,8 +55,6 @@ function AttendanceEntry() {
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-const [locationFilter, setLocationFilter] =
-    useState("");
 
     useEffect(() => {
 
@@ -250,61 +248,46 @@ async function loadLocations(companyId) {
 
     const filteredEmployees = useMemo(() => {
 
-        return employees.filter(employee => {
+    return employees.filter(employee => {
 
-            if (
-                filters.department_id &&
-                employee.department_id !==
+        // LOCATION FILTER
+        if (
+            filters.location_id &&
+            employee.location_id !==
+                filters.location_id
+        ) {
+            return false;
+        }
+
+
+        // DEPARTMENT FILTER
+        if (
+            filters.department_id &&
+            employee.department_id !==
                 filters.department_id
-            ) {
-                return false;
-            }
+        ) {
+            return false;
+        }
 
-            if (
-                filters.designation_id &&
-                employee.designation_id !==
+
+        // DESIGNATION FILTER
+        if (
+            filters.designation_id &&
+            employee.designation_id !==
                 filters.designation_id
-            ) {
-                return false;
-            }
+        ) {
+            return false;
+        }
 
-            if (filters.location_id) {
 
-                const deployment =
-                    deployments.find(
-                        item =>
-                            item.employee_id ===
-                                employee.id &&
-                            item.work_location_id ===
-                                filters.location_id &&
-                            (
-                                !item.effective_from ||
-                                item.effective_from <=
-                                    attendanceDate
-                            ) &&
-                            (
-                                !item.effective_to ||
-                                item.effective_to >=
-                                    attendanceDate
-                            ) &&
-                            item.is_active === true
-                    );
+        return true;
 
-                if (!deployment) {
-                    return false;
-                }
-            }
+    });
 
-            return true;
-        });
-
-    }, [
-        employees,
-        deployments,
-        filters,
-        attendanceDate
-    ]);
-
+}, [
+    employees,
+    filters
+]);
 
     useEffect(() => {
 
@@ -1241,12 +1224,12 @@ async function loadLocations(companyId) {
 
 
                                                 <td>
-                                                    {
-                                                        getLocationName(
-                                                            employee.id
-                                                        )
-                                                    }
-                                                </td>
+    {
+        getLocationName(
+            employee.location_id
+        )
+    }
+</td>
 
 
                                                 <td>
