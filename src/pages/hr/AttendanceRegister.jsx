@@ -200,7 +200,7 @@ function AttendanceRegister() {
                     ),
 
                 supabase
-                    .from("locations")
+                    .from("work_locations")
                     .select(`
                         id,
                         company_id,
