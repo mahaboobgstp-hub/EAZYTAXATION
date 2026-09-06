@@ -201,27 +201,20 @@ function AttendanceRegister() {
                 ]);
 
 
-            if (
-                employeeResult.error
-            ) {
-                throw
-                    employeeResult.error;
-            }
+           if (employeeResult.error) {
+    throw employeeResult.error;
+}
 
 
-            if (
-                departmentResult.error
-            ) {
-                throw
-                    departmentResult.error;
-            }
+            if (departmentResult.error) {
+    throw departmentResult.error;
+}
 
 
             if (
                 designationResult.error
             ) {
-                throw
-                    designationResult.error;
+                throw designationResult.error;
             }
 
 
