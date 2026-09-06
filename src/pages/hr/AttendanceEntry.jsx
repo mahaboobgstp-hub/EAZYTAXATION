@@ -1537,9 +1537,9 @@ function isRowEditable(employeeId) {
     Cancel
 </button>
     )}
-
+ </>
 </td>
-                                </>
+                               
                             )}
 <th>
     Actions
