@@ -1517,6 +1517,8 @@ function isRowEditable(employeeId) {
 
                                 filteredEmployees.map(
                                     employee => {
+                                        const isRowEditing =
+    editingEmployeeId === employee.id;
 
                                         const row =
                                             rows[
@@ -1796,6 +1798,53 @@ function isRowEditable(employeeId) {
                                                                     }
 
                                                                 </td>
+                                                                <td>
+
+    {!isRowEditing ? (
+
+        <button
+            type="button"
+            onClick={() =>
+                setEditingEmployeeId(
+                    employee.id
+                )
+            }
+        >
+            Edit
+        </button>
+
+    ) : (
+
+        <>
+            <button
+                type="button"
+                onClick={() =>
+                    handleUpdateEmployeeAttendance(
+                        employee
+                    )
+                }
+                disabled={saving}
+            >
+                {saving
+                    ? "Updating..."
+                    : "Update"
+                }
+            </button>
+
+            <button
+                type="button"
+                onClick={() =>
+                    setEditingEmployeeId(null)
+                }
+                disabled={saving}
+            >
+                Cancel
+            </button>
+        </>
+
+    )}
+
+</td>
 
                                                             </>
                                                         )}
