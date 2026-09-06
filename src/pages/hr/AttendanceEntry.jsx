@@ -1081,7 +1081,70 @@ setIsEditMode(false);
         attendanceSettings
             ?.attendance_mode ||
         "DAY";
+async function handleUpdateEmployeeAttendance(
+    employee
+) {
 
+    try {
+
+        setSaving(true);
+
+        const employeeRow =
+            rows[employee.id];
+
+        if (!employeeRow) {
+
+            throw new Error(
+                "Attendance data not found for this employee."
+            );
+
+        }
+
+        const attendanceData = [
+            {
+                employee_id: employee.id,
+
+                attendance_date:
+                    attendanceDate,
+
+                attendance_status:
+                    employeeRow.attendance_status,
+
+                overtime:
+                    employeeRow.overtime,
+
+                company_id:
+                    currentCompany.id
+            }
+        ];
+
+        await bulkSaveAttendance(
+            attendanceData
+        );
+
+        setEditingEmployeeId(null);
+
+        await loadAttendanceForDate();
+
+        alert(
+            "Employee attendance updated successfully."
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            error.message ||
+            "Unable to update employee attendance."
+        );
+
+    } finally {
+
+        setSaving(false);
+
+    }
+}
 function isRowEditable(employeeId) {
 
     // Before first submission,
@@ -1460,20 +1523,19 @@ function isRowEditable(employeeId) {
                 }
             </button>
 
-            <button
-                type="button"
-                onClick={
-                    handleCancelRowEdit
-                }
-                disabled={saving}
-                style={{
-                    marginLeft: "8px"
-                }}
-            >
-                Cancel
-            </button>
-        </>
+           <button
+    type="button"
+    onClick={async () => {
 
+        setEditingEmployeeId(null);
+
+        await loadAttendanceForDate();
+
+    }}
+    disabled={saving}
+>
+    Cancel
+</button>
     )}
 
 </td>
