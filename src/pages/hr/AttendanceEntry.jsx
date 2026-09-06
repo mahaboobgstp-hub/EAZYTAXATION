@@ -39,6 +39,8 @@ function AttendanceEntry() {
 
     const [attendanceSettings, setAttendanceSettings] =
         useState(null);
+    const [canEditAttendance, setCanEditAttendance] =
+    useState(true);
 
     const [attendanceDate, setAttendanceDate] =
         useState(
