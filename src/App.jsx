@@ -20,6 +20,8 @@ import DepartmentMaster from "./pages/hr/DepartmentMaster";
 import DesignationMaster from "./pages/hr/DesignationMaster";
 import ShiftMaster from "./pages/hr/ShiftMaster";
 import LocationMaster from "./pages/hr/LocationMaster";
+import AttendanceRegister
+from "./pages/hr/AttendanceRegister";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -177,6 +179,10 @@ function App() {
 <Route
     path="attendance"
     element={<AttendanceEntry />}
+/>
+          <Route
+    path="attendance-register"
+    element={<AttendanceRegister />}
 />
 <Route
     path="departments"
