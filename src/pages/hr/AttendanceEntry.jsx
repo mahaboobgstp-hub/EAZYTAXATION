@@ -95,7 +95,234 @@ const [editingEmployeeId, setEditingEmployeeId] =
         currentCompany,
         attendanceDate
     ]);
+async function handleUpdateEmployee(employee) {
 
+    if (!currentCompany?.id) {
+        return;
+    }
+
+    try {
+
+        setSaving(true);
+
+        const row =
+            rows[employee.id] || {};
+
+        const mode =
+            attendanceSettings
+                ?.attendance_mode ||
+            "DAY";
+
+        const deployment =
+            getActiveDeployment(
+                employee.id
+            );
+
+        let record;
+
+
+        if (mode === "DAY") {
+
+            const overtimeYes =
+                attendanceSettings
+                    ?.overtime_enabled &&
+                row.overtime === "Yes";
+
+            record = {
+
+                employee_id:
+                    employee.id,
+
+                attendance_date:
+                    attendanceDate,
+
+                attendance_mode:
+                    "DAY",
+
+                attendance_status:
+                    row.attendance_status ||
+                    "Present",
+
+                attendance_day_value:
+                    getAttendanceDayValue(
+                        row.attendance_status
+                    ),
+
+                overtime_shift_count:
+                    overtimeYes
+                        ? 1
+                        : 0,
+
+                is_overtime:
+                    overtimeYes,
+
+                deployment_id:
+                    deployment?.id ||
+                    null,
+
+                client_id:
+                    deployment?.client_id ||
+                    null,
+
+                work_location_id:
+                    employee.location_id ||
+                    null,
+
+                shift_id:
+                    employee.default_shift_id ||
+                    null,
+
+                check_in_time:
+                    null,
+
+                check_out_time:
+                    null,
+
+                working_hours:
+                    null,
+
+                overtime_hours:
+                    0,
+
+                overtime_start_time:
+                    null,
+
+                overtime_end_time:
+                    null,
+
+                remarks:
+                    null
+            };
+
+        } else {
+
+            const workingHours =
+                calculateDuration(
+                    row.check_in_time,
+                    row.check_out_time
+                );
+
+            const overtimeHours =
+                calculateDuration(
+                    row.overtime_start_time,
+                    row.overtime_end_time
+                ) || 0;
+
+
+            record = {
+
+                employee_id:
+                    employee.id,
+
+                attendance_date:
+                    attendanceDate,
+
+                attendance_mode:
+                    "TIMING",
+
+                attendance_status:
+                    row.attendance_status ||
+                    "Present",
+
+                attendance_day_value:
+                    getAttendanceDayValue(
+                        row.attendance_status
+                    ),
+
+                overtime_shift_count:
+                    0,
+
+                deployment_id:
+                    deployment?.id ||
+                    null,
+
+                client_id:
+                    deployment?.client_id ||
+                    null,
+
+                work_location_id:
+                    employee.location_id ||
+                    null,
+
+                shift_id:
+                    employee.default_shift_id ||
+                    null,
+
+                check_in_time:
+                    row.check_in_time
+                        ? `${attendanceDate}T${row.check_in_time}`
+                        : null,
+
+                check_out_time:
+                    row.check_out_time
+                        ? `${attendanceDate}T${row.check_out_time}`
+                        : null,
+
+                working_hours:
+                    workingHours,
+
+                overtime_start_time:
+                    attendanceSettings
+                        ?.overtime_enabled &&
+                    row.overtime_start_time
+                        ? `${attendanceDate}T${row.overtime_start_time}`
+                        : null,
+
+                overtime_end_time:
+                    attendanceSettings
+                        ?.overtime_enabled &&
+                    row.overtime_end_time
+                        ? `${attendanceDate}T${row.overtime_end_time}`
+                        : null,
+
+                overtime_hours:
+                    attendanceSettings
+                        ?.overtime_enabled
+                        ? overtimeHours
+                        : 0,
+
+                is_overtime:
+                    attendanceSettings
+                        ?.overtime_enabled &&
+                    overtimeHours > 0,
+
+                remarks:
+                    null
+            };
+        }
+
+
+        await bulkSaveAttendance(
+            [record],
+            currentCompany.id
+        );
+
+
+        alert(
+            "Attendance updated successfully."
+        );
+
+
+        setEditingEmployeeId(
+            null
+        );
+
+        await loadAttendanceForDate();
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            error.message ||
+            "Unable to update attendance."
+        );
+
+    } finally {
+
+        setSaving(false);
+    }
+}
 
     async function loadCompanyData() {
 
@@ -1184,9 +1411,75 @@ function isRowEditable(employeeId) {
                                             </th>
                                         </>
                                     )}
+                                    <td>
+
+    {!isAttendanceLocked && (
+
+        <span>
+            New
+        </span>
+
+    )}
+
+
+    {isAttendanceLocked &&
+        editingEmployeeId !== employee.id && (
+
+        <button
+            type="button"
+            onClick={() =>
+                handleEditRow(
+                    employee.id
+                )
+            }
+        >
+            Edit
+        </button>
+
+    )}
+
+
+    {isAttendanceLocked &&
+        editingEmployeeId === employee.id && (
+
+        <>
+            <button
+                type="button"
+                onClick={() =>
+                    handleUpdateEmployee(
+                        employee
+                    )
+                }
+                disabled={saving}
+            >
+                {saving
+                    ? "Updating..."
+                    : "Update"
+                }
+            </button>
+
+            <button
+                type="button"
+                onClick={
+                    handleCancelRowEdit
+                }
+                disabled={saving}
+                style={{
+                    marginLeft: "8px"
+                }}
+            >
+                Cancel
+            </button>
+        </>
+
+    )}
+
+</td>
                                 </>
                             )}
-
+<th>
+    Actions
+</th>
 
                            
 
@@ -1298,8 +1591,10 @@ function isRowEditable(employeeId) {
         "Present"
     }
     disabled={
-        !canEditAttendance
-    }
+    !isRowEditable(
+        employee.id
+    )
+}
     onChange={
         e =>
             updateRow(
@@ -1346,8 +1641,10 @@ function isRowEditable(employeeId) {
         "No"
     }
     disabled={
-        !canEditAttendance
-    }                                                            onChange={
+    !isRowEditable(
+        employee.id
+    )
+}                                                          onChange={
                                                                 e =>
                                                                     updateRow(
                                                                         employee.id,
@@ -1380,43 +1677,48 @@ function isRowEditable(employeeId) {
                                                             <input
     type="time"
     disabled={
-        !canEditAttendance
+        !isRowEditable(
+            employee.id
+        )
     }
     value={
         row.check_in_time ||
         ""
-    }                                                                onChange={
-                                                                    e =>
-                                                                        updateRow(
-                                                                            employee.id,
-                                                                            "check_in_time",
-                                                                            e.target.value
-                                                                        )
-                                                                }
-                                                            />
-
+    }
+    onChange={
+        e =>
+            updateRow(
+                employee.id,
+                "check_in_time",
+                e.target.value
+            )
+    }
+/>
                                                         </td>
 
 
                                                         <td>
 
                                                             <input
-                                                                type="time"
-                                                                disabled={!canEditAttendance}
-                                                                value={
-                                                                    row.check_out_time ||
-                                                                    ""
-                                                                }
-                                                                onChange={
-                                                                    e =>
-                                                                        updateRow(
-                                                                            employee.id,
-                                                                            "check_out_time",
-                                                                            e.target.value
-                                                                        )
-                                                                }
-                                                            />
-
+    type="time"
+    disabled={
+        !isRowEditable(
+            employee.id
+        )
+    }
+    value={
+        row.check_out_time ||
+        ""
+    }
+    onChange={
+        e =>
+            updateRow(
+                employee.id,
+                "check_out_time",
+                e.target.value
+            )
+    }
+/>
                                                         </td>
 
 
@@ -1437,44 +1739,50 @@ function isRowEditable(employeeId) {
                                                                 <td>
 
                                                                     <input
-                                                                        type="time"
-                                                                        disabled={!canEditAttendance}
-                                                                        value={
-                                                                            row.overtime_start_time ||
-                                                                            ""
-                                                                        }
-                                                                        onChange={
-                                                                            e =>
-                                                                                updateRow(
-                                                                                    employee.id,
-                                                                                    "overtime_start_time",
-                                                                                    e.target.value
-                                                                                )
-                                                                        }
-                                                                    />
-
+    type="time"
+    disabled={
+        !isRowEditable(
+            employee.id
+        )
+    }
+    value={
+        row.overtime_start_time ||
+        ""
+    }
+    onChange={
+        e =>
+            updateRow(
+                employee.id,
+                "overtime_start_time",
+                e.target.value
+            )
+    }
+/>
                                                                 </td>
 
 
                                                                 <td>
 
-                                                                    <input
-                                                                        type="time"
-                                                                        disabled={!canEditAttendance}
-                                                                        value={
-                                                                            row.overtime_end_time ||
-                                                                            ""
-                                                                        }
-                                                                        onChange={
-                                                                            e =>
-                                                                                updateRow(
-                                                                                    employee.id,
-                                                                                    "overtime_end_time",
-                                                                                    e.target.value
-                                                                                )
-                                                                        }
-                                                                    />
-
+                                                                    <i<input
+    type="time"
+    disabled={
+        !isRowEditable(
+            employee.id
+        )
+    }
+    value={
+        row.overtime_end_time ||
+        ""
+    }
+    onChange={
+        e =>
+            updateRow(
+                employee.id,
+                "overtime_end_time",
+                e.target.value
+            )
+    }
+/>
                                                                 </td>
 
 
@@ -1510,7 +1818,7 @@ function isRowEditable(employeeId) {
             </div>
 
 
-           <div
+          <div
     style={{
         marginTop: "25px",
         display: "flex",
@@ -1519,30 +1827,7 @@ function isRowEditable(employeeId) {
     }}
 >
 
-    {isAttendanceLocked &&
-        !isEditMode && (
-
-        <>
-
-            <span>
-                🔒 Attendance already submitted for this date.
-            </span>
-
-            <button
-                type="button"
-                onClick={() =>
-                    setIsEditMode(true)
-                }
-            >
-                Edit Attendance
-            </button>
-
-        </>
-
-    )}
-
-
-    {canEditAttendance && (
+    {!isAttendanceLocked && (
 
         <button
             type="button"
@@ -1554,16 +1839,22 @@ function isRowEditable(employeeId) {
                 filteredEmployees.length === 0
             }
         >
-
             {
                 saving
                     ? "Saving..."
-                    : isEditMode
-                        ? `Update Attendance (${filteredEmployees.length})`
-                        : `Save Attendance (${filteredEmployees.length})`
+                    : `Save Attendance (${filteredEmployees.length})`
             }
-
         </button>
+
+    )}
+
+
+    {isAttendanceLocked && (
+
+        <span>
+            🔒 Attendance already submitted for this date.
+            Use the Edit button for an individual employee to make corrections.
+        </span>
 
     )}
 
