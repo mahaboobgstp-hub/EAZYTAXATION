@@ -1381,6 +1381,7 @@ setIsEditMode(false);
 
                                                             <input
                                                                 type="time"
+                                                                disabled={!canEditAttendance}
                                                                 value={
                                                                     row.check_out_time ||
                                                                     ""
@@ -1416,6 +1417,7 @@ setIsEditMode(false);
 
                                                                     <input
                                                                         type="time"
+                                                                        disabled={!canEditAttendance}
                                                                         value={
                                                                             row.overtime_start_time ||
                                                                             ""
@@ -1437,6 +1439,7 @@ setIsEditMode(false);
 
                                                                     <input
                                                                         type="time"
+                                                                        disabled={!canEditAttendance}
                                                                         value={
                                                                             row.overtime_end_time ||
                                                                             ""
@@ -1474,6 +1477,7 @@ setIsEditMode(false);
 
                                                     <input
                                                         type="text"
+                                                        disabled={!canEditAttendance}
                                                         value={
                                                             row.remarks ||
                                                             ""
