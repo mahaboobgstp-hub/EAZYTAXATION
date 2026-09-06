@@ -167,8 +167,8 @@ async function handleUpdateEmployee(employee) {
                     null,
 
                 work_location_id:
-                    employee.location_id ||
-                    null,
+    deployment?.work_location_id ||
+    null,
 
                 shift_id:
                     employee.default_shift_id ||
@@ -243,8 +243,8 @@ async function handleUpdateEmployee(employee) {
                     null,
 
                 work_location_id:
-                    employee.location_id ||
-                    null,
+    deployment?.work_location_id ||
+    null,
 
                 shift_id:
                     employee.default_shift_id ||
