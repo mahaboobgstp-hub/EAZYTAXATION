@@ -34,6 +34,8 @@ function AttendanceRegister() {
 
     const [employees, setEmployees] =
         useState([]);
+    const [deployments, setDeployments] =
+    useState([]);
 
 
     const [attendance, setAttendance] =
@@ -66,35 +68,6 @@ function AttendanceRegister() {
 
         });
 
-const loadLocations = async () => {
-
-    if (!companyId) {
-        setLocations([]);
-        return;
-    }
-
-    try {
-
-        const locationData =
-            await getWorkLocations(
-                companyId
-            );
-
-        setLocations(
-            locationData || []
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Error loading locations:",
-            error
-        );
-
-        setLocations([]);
-
-    }
-};
     /* ==========================================
         DEFAULT MONTH
     ========================================== */
@@ -150,11 +123,7 @@ const loadLocations = async () => {
 
     }, []);
 
-useEffect(() => {
 
-    loadLocations();
-
-}, [companyId]);
     /* ==========================================
         LOAD MASTER DATA
     ========================================== */
@@ -177,116 +146,165 @@ useEffect(() => {
 
     async function loadMasters() {
 
-        try {
+    try {
 
-            const [
-                employeeResult,
-                departmentResult,
-                designationResult,
-                locationResult
-            ] =
-                await Promise.all([
+       const [
+    employeeResult,
+    departmentResult,
+    designationResult,
+    locationResult,
+    deploymentResult
+] =
+            await Promise.all([
 
-                    supabase
-                        .from("employees")
-                        .select("*")
-                        .eq(
-                            "company_id",
-                            currentCompany.id
-                        )
-                        .order(
-                            "employee_name",
-                            {
-                                ascending: true
-                            }
-                        ),
-
-                    supabase
-                        .from("departments")
-                        .select("*")
-                        .eq(
-                            "company_id",
-                            currentCompany.id
-                        )
-                        .order(
-                            "department_name",
-                            {
-                                ascending: true
-                            }
-                        ),
-
-                    supabase
-                        .from("designations")
-                        .select("*")
-                        .eq(
-                            "company_id",
-                            currentCompany.id
-                        )
-                        .order(
-                            "designation_name",
-                            {
-                                ascending: true
-                            }
-                        ),
-
-                    getWorkLocations(
+                supabase
+                    .from("employees")
+                    .select("*")
+                    .eq(
+                        "company_id",
                         currentCompany.id
                     )
+                    .order(
+                        "employee_name",
+                        {
+                            ascending: true
+                        }
+                    ),
 
-                ]);
+                supabase
+                    .from("departments")
+                    .select("*")
+                    .eq(
+                        "company_id",
+                        currentCompany.id
+                    )
+                    .order(
+                        "department_name",
+                        {
+                            ascending: true
+                        }
+                    ),
+
+                supabase
+                    .from("designations")
+                    .select("*")
+                    .eq(
+                        "company_id",
+                        currentCompany.id
+                    )
+                    .order(
+                        "designation_name",
+                        {
+                            ascending: true
+                        }
+                    ),
+
+                supabase
+                    .from("work_locations")
+                    .select(`
+                        id,
+                        company_id,
+                        location_code,
+                        location_name,
+                        is_active
+                    `)
+                    .eq(
+                        "company_id",
+                        currentCompany.id
+                    )
+                    .eq(
+                        "is_active",
+                        true
+                    )
+                    .order(
+                        "location_name",
+                        {
+                            ascending: true
+                        }
+                    ),
+                supabase
+    .from("employee_deployments")
+    .select(`
+        id,
+        employee_id,
+        work_location_id,
+        effective_from,
+        effective_to,
+        is_active
+    `)
+    .eq(
+        "company_id",
+        currentCompany.id
+    )
+    .eq(
+        "is_active",
+        true
+    )
+
+            ]);
 
 
-           if (employeeResult.error) {
-    throw employeeResult.error;
-}
-
-
-            if (departmentResult.error) {
-    throw departmentResult.error;
-}
-
-
-            if (
-                designationResult.error
-            ) {
-                throw designationResult.error;
-            }
-
-
-            setEmployees(
-                employeeResult.data || []
-            );
-
-
-            setDepartments(
-                departmentResult.data || []
-            );
-
-
-            setDesignations(
-                designationResult.data || []
-            );
-
-
-            setLocations(
-                locationResult || []
-            );
-
+        if (employeeResult.error) {
+            throw employeeResult.error;
         }
 
-        catch (error) {
 
-            console.error(error);
-
-            alert(
-                error.message ||
-                "Unable to load register masters."
-            );
-
+        if (departmentResult.error) {
+            throw departmentResult.error;
         }
+
+
+        if (designationResult.error) {
+            throw designationResult.error;
+        }
+
+
+        if (locationResult.error) {
+            throw locationResult.error;
+        }
+if (deploymentResult.error) {
+    throw deploymentResult.error;
+}
+
+        setEmployees(
+            employeeResult.data || []
+        );
+
+
+        setDepartments(
+            departmentResult.data || []
+        );
+
+
+        setDesignations(
+            designationResult.data || []
+        );
+
+
+        setLocations(
+            locationResult.data || []
+        );
+
+setDeployments(
+    deploymentResult.data || []
+);
+    }
+        
+    catch (error) {
+
+        console.error(
+            "Error loading register masters:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to load register masters."
+        );
 
     }
 
+}
 
     /* ==========================================
         LOAD REGISTER
@@ -501,30 +519,28 @@ useEffect(() => {
                         actual attendance location.
                     */
 
-                    if (
-                        filters.location_id
-                    ) {
+                   if (
+    filters.location_id
+) {
 
-                        const employeeAttendance =
-                            attendance.some(
-                                record =>
+    const deployment =
+        deployments.find(
+            item =>
+                item.employee_id ===
+                    employee.id &&
 
-                                    record.employee_id ===
-                                    employee.id &&
+                item.work_location_id ===
+                    filters.location_id &&
 
-                                    record.work_location_id ===
-                                    filters.location_id
-                            );
+                item.is_active === true
+        );
 
 
-                        if (
-                            !employeeAttendance
-                        ) {
-                            return false;
-                        }
+    if (!deployment) {
+        return false;
+    }
 
-                    }
-
+}
 
                     return true;
 
@@ -532,9 +548,9 @@ useEffect(() => {
             );
 
         }, [
-            employees,
-            attendance,
-            filters
+           employees,
+    deployments,
+    filters
         ]);
 
 
