@@ -529,7 +529,7 @@ setDeployments(
                 item.employee_id ===
                     employee.id &&
 
-                item.work_location_id ===
+                item.location_id ===
                     filters.location_id &&
 
                 item.is_active === true
