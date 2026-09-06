@@ -15,6 +15,7 @@ import {
 import {
     useCompany
 } from "../../context/CompanyContext";
+import "../../css/hr/AttendanceRegister.css";
 
 
 function AttendanceRegister() {
