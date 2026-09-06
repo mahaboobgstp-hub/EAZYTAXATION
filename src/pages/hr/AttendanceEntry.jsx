@@ -39,8 +39,7 @@ function AttendanceEntry() {
 
     const [attendanceSettings, setAttendanceSettings] =
         useState(null);
-    const [canEditAttendance, setCanEditAttendance] =
-    useState(true);
+    
 
     const [attendanceDate, setAttendanceDate] =
         useState(
@@ -59,9 +58,9 @@ function AttendanceEntry() {
     const [saving, setSaving] = useState(false);
     const [isAttendanceLocked, setIsAttendanceLocked] =
     useState(false);
+const [editingEmployeeId, setEditingEmployeeId] =
+    useState(null);
 
-const [isEditMode, setIsEditMode] =
-    useState(false);
 
     useEffect(() => {
 
@@ -177,19 +176,11 @@ const [isEditMode, setIsEditMode] =
             attendanceData
         );
 
-        // If attendance already exists for this date,
-        // lock the entry screen.
-        if (attendanceData.length > 0) {
+        setIsAttendanceLocked(
+            attendanceData.length > 0
+        );
 
-            setIsAttendanceLocked(true);
-            setIsEditMode(false);
-
-        } else {
-
-            setIsAttendanceLocked(false);
-            setIsEditMode(false);
-
-        }
+        setEditingEmployeeId(null);
 
     } catch (error) {
 
@@ -449,7 +440,23 @@ async function loadLocations(companyId) {
 
         }));
     }
+function handleEditRow(employeeId) {
 
+    setEditingEmployeeId(
+        employeeId
+    );
+}
+
+
+function handleCancelRowEdit() {
+
+    setEditingEmployeeId(
+        null
+    );
+
+    // Reload original saved data
+    loadAttendanceForDate();
+}
 
     function getDepartmentName(id) {
 
@@ -846,7 +853,21 @@ setIsEditMode(false);
             ?.attendance_mode ||
         "DAY";
 
+function isRowEditable(employeeId) {
 
+    // Before first submission,
+    // all employees can be edited.
+    if (!isAttendanceLocked) {
+        return true;
+    }
+
+    // After submission,
+    // only selected employee can be edited.
+    return (
+        editingEmployeeId ===
+        employeeId
+    );
+}
     return (
 
         <div
@@ -1167,9 +1188,7 @@ setIsEditMode(false);
                             )}
 
 
-                            <th>
-                                Remarks
-                            </th>
+                           
 
                         </tr>
 
@@ -1475,29 +1494,7 @@ setIsEditMode(false);
                                                 )}
 
 
-                                                <td>
-
-                                                    <input
-                                                        type="text"
-                                                        disabled={!canEditAttendance}
-                                                        value={
-                                                            row.remarks ||
-                                                            ""
-                                                        }
-                                                        onChange={
-                                                            e =>
-                                                                updateRow(
-                                                                    employee.id,
-                                                                    "remarks",
-                                                                    e.target.value
-                                                                )
-                                                        }
-                                                        placeholder="Remarks"
-                                                    />
-
-                                                </td>
-
-                                            </tr>
+                                                                                            </tr>
 
                                         );
                                     }
