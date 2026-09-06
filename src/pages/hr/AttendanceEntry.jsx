@@ -60,6 +60,8 @@ function AttendanceEntry() {
     useState(false);
 const [editingEmployeeId, setEditingEmployeeId] =
     useState(null);
+    const [isEditMode, setIsEditMode] =
+    useState(false);
 
 
     useEffect(() => {
