@@ -1850,6 +1850,74 @@ function isRowEditable(employeeId) {
 
                                                     </>
                                                 )}
+                                                <td>
+
+    {!isAttendanceLocked && (
+
+        <span>
+            New
+        </span>
+
+    )}
+
+
+    {isAttendanceLocked &&
+        editingEmployeeId !== employee.id && (
+
+        <button
+            type="button"
+            onClick={() =>
+                handleEditRow(
+                    employee.id
+                )
+            }
+        >
+            Edit
+        </button>
+
+    )}
+
+
+    {isAttendanceLocked &&
+        editingEmployeeId === employee.id && (
+
+        <>
+            <button
+                type="button"
+                onClick={() =>
+                    handleUpdateEmployee(
+                        employee
+                    )
+                }
+                disabled={saving}
+            >
+                {saving
+                    ? "Updating..."
+                    : "Update"
+                }
+            </button>
+
+
+            <button
+                type="button"
+                onClick={async () => {
+
+                    setEditingEmployeeId(
+                        null
+                    );
+
+                    await loadAttendanceForDate();
+
+                }}
+                disabled={saving}
+            >
+                Cancel
+            </button>
+        </>
+
+    )}
+
+</td>
 
 
                                                                                             </tr>
