@@ -253,3 +253,32 @@ export async function bulkSaveAttendance(records, companyId) {
 
     return data || [];
 }
+export async function getAttendanceRegister(
+    companyId,
+    fromDate,
+    toDate
+) {
+
+    const { data, error } = await supabase
+        .from("attendance")
+        .select("*")
+        .eq("company_id", companyId)
+        .gte(
+            "attendance_date",
+            fromDate
+        )
+        .lte(
+            "attendance_date",
+            toDate
+        )
+        .order(
+            "attendance_date",
+            {
+                ascending: true
+            }
+        );
+
+    if (error) throw error;
+
+    return data || [];
+}
