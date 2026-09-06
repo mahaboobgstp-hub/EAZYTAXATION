@@ -1763,7 +1763,7 @@ function isRowEditable(employeeId) {
 
                                                                 <td>
 
-                                                                    <i<input
+                                                                    <input
     type="time"
     disabled={
         !isRowEditable(
