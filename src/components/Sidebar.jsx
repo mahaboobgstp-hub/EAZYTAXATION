@@ -590,6 +590,14 @@ function Sidebar() {
             >
                 Attendance Entry
             </NavLink>
+
+<NavLink
+    to="/app/attendance-register"
+    className="submenu-link"
+>
+    Attendance Register
+</NavLink>
+            
             <NavLink
     to="/app/attendance-settings"
     className="submenu-link"
