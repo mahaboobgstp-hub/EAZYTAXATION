@@ -10,7 +10,7 @@ from "../../supabase/supabaseClient";
 import {
     getAttendanceRegister,
     getWorkLocations
-} from "../../services/attendanceService";
+} from "../../services/hr/attendanceService";
 
 import {
     useCompany
