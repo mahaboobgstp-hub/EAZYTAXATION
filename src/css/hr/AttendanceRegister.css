@@ -1,1 +1,29 @@
+.attendance-present {
+    background: #dcfce7;
+    color: #166534;
+}
 
+.attendance-absent {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.attendance-holiday {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.attendance-leave {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.attendance-halfday {
+    background: #fce7f3;
+    color: #9d174d;
+}
+
+.attendance-empty {
+    background: #ffffff;
+    color: #999999;
+}
