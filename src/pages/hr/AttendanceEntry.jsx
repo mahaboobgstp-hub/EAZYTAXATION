@@ -55,6 +55,11 @@ function AttendanceEntry() {
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [isAttendanceLocked, setIsAttendanceLocked] =
+    useState(false);
+
+const [isEditMode, setIsEditMode] =
+    useState(false);
 
     useEffect(() => {
 
@@ -155,28 +160,45 @@ function AttendanceEntry() {
 
     async function loadAttendanceForDate() {
 
-        try {
+    try {
 
-            const data =
-                await getAttendance(
-                    currentCompany.id,
-                    attendanceDate
-                );
-
-            setExistingAttendance(
-                data || []
+        const data =
+            await getAttendance(
+                currentCompany.id,
+                attendanceDate
             );
 
-        } catch (error) {
+        const attendanceData =
+            data || [];
 
-            console.error(error);
+        setExistingAttendance(
+            attendanceData
+        );
 
-            alert(
-                error.message ||
-                "Unable to load attendance."
-            );
+        // If attendance already exists for this date,
+        // lock the entry screen.
+        if (attendanceData.length > 0) {
+
+            setIsAttendanceLocked(true);
+            setIsEditMode(false);
+
+        } else {
+
+            setIsAttendanceLocked(false);
+            setIsEditMode(false);
+
         }
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            error.message ||
+            "Unable to load attendance."
+        );
     }
+}
 async function loadLocations(companyId) {
 
     try {
@@ -571,6 +593,9 @@ async function loadLocations(companyId) {
                 attendanceSettings
                     ?.attendance_mode ||
                 "DAY";
+            const canEditAttendance =
+    !isAttendanceLocked ||
+    isEditMode;
 
 
             const records =
@@ -767,7 +792,8 @@ async function loadLocations(companyId) {
                 records,
                 currentCompany.id
             );
-
+setIsAttendanceLocked(true);
+setIsEditMode(false);
 
             alert(
                 `${records.length} attendance records saved successfully.`
@@ -1245,21 +1271,23 @@ async function loadLocations(companyId) {
 
                                                 <td>
 
-                                                    <select
-                                                        value={
-                                                            row.attendance_status ||
-                                                            "Present"
-                                                        }
-                                                        onChange={
-                                                            e =>
-                                                                updateRow(
-                                                                    employee.id,
-                                                                    "attendance_status",
-                                                                    e.target.value
-                                                                )
-                                                        }
-                                                    >
-
+                                                   <select
+    value={
+        row.attendance_status ||
+        "Present"
+    }
+    disabled={
+        !canEditAttendance
+    }
+    onChange={
+        e =>
+            updateRow(
+                employee.id,
+                "attendance_status",
+                e.target.value
+            )
+    }
+>
                                                         <option value="Present">
                                                             Present
                                                         </option>
@@ -1292,11 +1320,13 @@ async function loadLocations(companyId) {
                                                     <td>
 
                                                         <select
-                                                            value={
-                                                                row.overtime ||
-                                                                "No"
-                                                            }
-                                                            onChange={
+    value={
+        row.overtime ||
+        "No"
+    }
+    disabled={
+        !canEditAttendance
+    }                                                            onChange={
                                                                 e =>
                                                                     updateRow(
                                                                         employee.id,
@@ -1327,12 +1357,14 @@ async function loadLocations(companyId) {
                                                         <td>
 
                                                             <input
-                                                                type="time"
-                                                                value={
-                                                                    row.check_in_time ||
-                                                                    ""
-                                                                }
-                                                                onChange={
+    type="time"
+    disabled={
+        !canEditAttendance
+    }
+    value={
+        row.check_in_time ||
+        ""
+    }                                                                onChange={
                                                                     e =>
                                                                         updateRow(
                                                                             employee.id,
@@ -1475,33 +1507,64 @@ async function loadLocations(companyId) {
             </div>
 
 
-            <div
-                style={{
-                    marginTop: "25px"
-                }}
+           <div
+    style={{
+        marginTop: "25px",
+        display: "flex",
+        gap: "12px",
+        alignItems: "center"
+    }}
+>
+
+    {isAttendanceLocked &&
+        !isEditMode && (
+
+        <>
+
+            <span>
+                🔒 Attendance already submitted for this date.
+            </span>
+
+            <button
+                type="button"
+                onClick={() =>
+                    setIsEditMode(true)
+                }
             >
+                Edit Attendance
+            </button>
 
-                <button
-                    type="button"
-                    onClick={
-                        handleSaveAll
-                    }
-                    disabled={
-                        saving ||
-                        filteredEmployees.length ===
-                            0
-                    }
-                >
+        </>
 
-                    {
-                        saving
-                            ? "Saving..."
-                            : `Save Attendance (${filteredEmployees.length})`
-                    }
+    )}
 
-                </button>
 
-            </div>
+    {canEditAttendance && (
+
+        <button
+            type="button"
+            onClick={
+                handleSaveAll
+            }
+            disabled={
+                saving ||
+                filteredEmployees.length === 0
+            }
+        >
+
+            {
+                saving
+                    ? "Saving..."
+                    : isEditMode
+                        ? `Update Attendance (${filteredEmployees.length})`
+                        : `Save Attendance (${filteredEmployees.length})`
+            }
+
+        </button>
+
+    )}
+
+</div>
 
         </div>
     );
