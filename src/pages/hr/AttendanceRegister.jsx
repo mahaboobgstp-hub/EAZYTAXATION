@@ -23,6 +23,9 @@ function AttendanceRegister() {
     const {
         currentCompany
     } = useCompany();
+    
+    const companyId =
+    currentCompany?.id;
 
 
     const [loading, setLoading] =
@@ -63,7 +66,35 @@ function AttendanceRegister() {
 
         });
 
+const loadLocations = async () => {
 
+    if (!companyId) {
+        setLocations([]);
+        return;
+    }
+
+    try {
+
+        const locationData =
+            await getWorkLocations(
+                companyId
+            );
+
+        setLocations(
+            locationData || []
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error loading locations:",
+            error
+        );
+
+        setLocations([]);
+
+    }
+};
     /* ==========================================
         DEFAULT MONTH
     ========================================== */
@@ -119,7 +150,11 @@ function AttendanceRegister() {
 
     }, []);
 
+useEffect(() => {
 
+    loadLocations();
+
+}, [companyId]);
     /* ==========================================
         LOAD MASTER DATA
     ========================================== */
