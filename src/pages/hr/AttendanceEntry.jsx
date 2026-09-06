@@ -453,29 +453,22 @@ async function loadLocations(companyId) {
     }
 
 
-    function getLocationName(employeeId) {
+    function getLocationName(locationId) {
 
-        const deployment =
-            getActiveDeployment(
-                employeeId
-            );
-
-        if (!deployment?.work_location_id) {
-            return "-";
-        }
-
-        const location =
-            locations.find(
-                item =>
-                    item.id ===
-                    deployment.work_location_id
-            );
-
-        return location
-            ? location.location_name
-            : "-";
+    if (!locationId) {
+        return "-";
     }
 
+    const location =
+        locations.find(
+            item =>
+                item.id === locationId
+        );
+
+    return location
+        ? location.location_name
+        : "-";
+}
 
     function getAttendanceDayValue(status) {
 
