@@ -34,9 +34,7 @@ function AttendanceRegister() {
 
     const [employees, setEmployees] =
         useState([]);
-    const [deployments, setDeployments] =
-    useState([]);
-
+ 
 
     const [attendance, setAttendance] =
         useState([]);
@@ -148,164 +146,134 @@ function AttendanceRegister() {
 
     try {
 
-       const [
+      const [
     employeeResult,
     departmentResult,
     designationResult,
-    locationResult,
-    deploymentResult
-] =
-            await Promise.all([
+    locationResult
+] = await Promise.all([
 
-                supabase
-                    .from("employees")
-                    .select("*")
-                    .eq(
-                        "company_id",
-                        currentCompany.id
-                    )
-                    .order(
-                        "employee_name",
-                        {
-                            ascending: true
-                        }
-                    ),
+    // Employees
+    supabase
+        .from("employees")
+        .select(`
+            id,
+            company_id,
+            employee_code,
+            employee_name,
+            department_id,
+            designation_id,
+            location_id,
+            employee_status,
+            is_active
+        `)
+        .eq(
+            "company_id",
+            currentCompany.id
+        )
+        .order(
+            "employee_name",
+            {
+                ascending: true
+            }
+        ),
 
-                supabase
-                    .from("departments")
-                    .select("*")
-                    .eq(
-                        "company_id",
-                        currentCompany.id
-                    )
-                    .order(
-                        "department_name",
-                        {
-                            ascending: true
-                        }
-                    ),
+    // Departments
+    supabase
+        .from("departments")
+        .select("*")
+        .eq(
+            "company_id",
+            currentCompany.id
+        )
+        .order(
+            "department_name",
+            {
+                ascending: true
+            }
+        ),
 
-                supabase
-                    .from("designations")
-                    .select("*")
-                    .eq(
-                        "company_id",
-                        currentCompany.id
-                    )
-                    .order(
-                        "designation_name",
-                        {
-                            ascending: true
-                        }
-                    ),
+    // Designations
+    supabase
+        .from("designations")
+        .select("*")
+        .eq(
+            "company_id",
+            currentCompany.id
+        )
+        .order(
+            "designation_name",
+            {
+                ascending: true
+            }
+        ),
 
-                supabase
-                    .from("work_locations")
-                    .select(`
-                        id,
-                        company_id,
-                        location_code,
-                        location_name,
-                        is_active
-                    `)
-                    .eq(
-                        "company_id",
-                        currentCompany.id
-                    )
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .order(
-                        "location_name",
-                        {
-                            ascending: true
-                        }
-                    ),
-                supabase
-    .from("employee_deployments")
-    .select(`
-        id,
-        employee_id,
-        location_id,
-        effective_from,
-        effective_to,
-        is_active
-    `)
-    .eq(
-        "company_id",
-        currentCompany.id
-    )
-    .eq(
-        "is_active",
-        true
-    )
+    // Work Locations
+    supabase
+        .from("work_locations")
+        .select(`
+            id,
+            company_id,
+            location_code,
+            location_name,
+            is_active
+        `)
+        .eq(
+            "company_id",
+            currentCompany.id
+        )
+        .eq(
+            "is_active",
+            true
+        )
+        .order(
+            "location_name",
+            {
+                ascending: true
+            }
+        )
 
-            ]);
+]);
 
 
-        if (employeeResult.error) {
-            throw employeeResult.error;
-        }
-
-
-        if (departmentResult.error) {
-            throw departmentResult.error;
-        }
-
-
-        if (designationResult.error) {
-            throw designationResult.error;
-        }
-
-
-        if (locationResult.error) {
-            throw locationResult.error;
-        }
-if (deploymentResult.error) {
-    throw deploymentResult.error;
+if (employeeResult.error) {
+    throw employeeResult.error;
 }
 
-        setEmployees(
-            employeeResult.data || []
-        );
+
+if (departmentResult.error) {
+    throw departmentResult.error;
+}
 
 
-        setDepartments(
-            departmentResult.data || []
-        );
+if (designationResult.error) {
+    throw designationResult.error;
+}
 
 
-        setDesignations(
-            designationResult.data || []
-        );
+if (locationResult.error) {
+    throw locationResult.error;
+}
 
 
-        setLocations(
-            locationResult.data || []
-        );
-
-setDeployments(
-    deploymentResult.data || []
+setEmployees(
+    employeeResult.data || []
 );
-    }
-        
-    catch (error) {
 
-        console.error(
-            "Error loading register masters:",
-            error
-        );
 
-        alert(
-            error.message ||
-            "Unable to load register masters."
-        );
+setDepartments(
+    departmentResult.data || []
+);
 
-    }
 
-}
+setDesignations(
+    designationResult.data || []
+);
 
+
+setLocations(
+    locationResult.data || []
+);
     /* ==========================================
         LOAD REGISTER
     ========================================== */
@@ -523,36 +491,7 @@ setDeployments(
     filters.location_id
 ) {
 
-    const deployment =
-        deployments.find(
-            item =>
-                item.employee_id ===
-                    employee.id &&
-
-                item.location_id ===
-                    filters.location_id &&
-
-                item.is_active === true
-        );
-
-
-    if (!deployment) {
-        return false;
-    }
-
-}
-
-                    return true;
-
-                }
-            );
-
-        }, [
-           employees,
-    deployments,
-    filters
-        ]);
-
+    
 
     /* ==========================================
         ATTENDANCE LOOKUP
