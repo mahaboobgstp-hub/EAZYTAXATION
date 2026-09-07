@@ -597,7 +597,12 @@ function Sidebar() {
 >
     Attendance Register
 </NavLink>
-            
+            <NavLink
+    to="/app/payroll-processing"
+    className="submenu-link"
+>
+    Payroll Processing
+</NavLink>
             <NavLink
     to="/app/attendance-settings"
     className="submenu-link"
