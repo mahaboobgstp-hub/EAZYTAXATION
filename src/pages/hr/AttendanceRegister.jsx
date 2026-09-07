@@ -3,13 +3,12 @@ import React, {
     useMemo,
     useState
 } from "react";
-
+import jsPDF from "jspdf";
 import { supabase }
 from "../../supabase/supabaseClient";
 
 import {
-    getAttendanceRegister,
-    getWorkLocations
+    getAttendanceRegister
 } from "../../services/hr/attendanceService";
 
 import {
@@ -882,8 +881,1247 @@ const filteredEmployees =
                 filters.designation_id
         );
 
+/* ==========================================
+    PDF HELPERS
+========================================== */
+
+function formatPdfDate(
+    date
+) {
+
+    if (!date) {
+        return "";
+    }
+
+    return new Date(
+        `${date}T00:00:00`
+    ).toLocaleDateString(
+        "en-IN",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+function getStatusForPdf(
+    employee,
+    date
+) {
+
+    const record =
+        attendanceMap[
+            `${employee.id}_${date}`
+        ];
+
+
+    return getAttendanceCode(
+        record
+    ) || "-";
+
+}
+
+
+/* ==========================================
+    DOWNLOAD FULL REGISTER PDF
+========================================== */
+
+function generateAttendanceRegisterPdf() {
+
+    if (
+        filteredEmployees.length === 0
+    ) {
+
+        alert(
+            "No employees available for the selected filters."
+        );
+
+        return;
+
+    }
+
+
+    const pdf =
+        new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4"
+        });
+
+
+    const pageWidth =
+        pdf.internal.pageSize.getWidth();
+
+
+    const pageHeight =
+        pdf.internal.pageSize.getHeight();
+
+
+    const margin =
+        10;
+
+
+    let y =
+        12;
+
+
+    /* ===============================
+        HEADER
+    =============================== */
+
+    pdf.setFontSize(
+        16
+    );
+
+    pdf.setFont(
+        "helvetica",
+        "bold"
+    );
+
+    pdf.text(
+        "ATTENDANCE REGISTER",
+        pageWidth / 2,
+        y,
+        {
+            align: "center"
+        }
+    );
+
+
+    y += 8;
+
+
+    pdf.setFontSize(
+        10
+    );
+
+    pdf.setFont(
+        "helvetica",
+        "normal"
+    );
+
+
+    pdf.text(
+        `Company: ${currentCompany?.company_name || ""}`,
+        margin,
+        y
+    );
+
+
+    y += 5;
+
+
+    pdf.text(
+        `Period: ${formatPdfDate(filters.from_date)} to ${formatPdfDate(filters.to_date)}`,
+        margin,
+        y
+    );
+
+
+    y += 5;
+
+
+    pdf.text(
+        `Location: ${selectedLocation?.location_name || "All Locations"}`,
+        margin,
+        y
+    );
+
+
+    pdf.text(
+        `Department: ${selectedDepartment?.department_name || "All Departments"}`,
+        pageWidth / 2,
+        y
+    );
+
+
+    y += 5;
+
+
+    pdf.text(
+        `Designation: ${selectedDesignation?.designation_name || "All Designations"}`,
+        margin,
+        y
+    );
+
+
+    y += 8;
+
+
+    /* ===============================
+        CALCULATE COLUMN WIDTH
+    =============================== */
+
+    const employeeWidth =
+        42;
+
+
+    const typeWidth =
+        12;
+
+
+    const totalWidth =
+        16;
+
+
+    const availableDateWidth =
+        pageWidth -
+        (
+            margin * 2 +
+            employeeWidth +
+            typeWidth +
+            totalWidth * 3
+        );
+
+
+    const dateWidth =
+        Math.max(
+            7,
+            availableDateWidth /
+            Math.max(
+                dates.length,
+                1
+            )
+        );
+
+
+    const rowHeight =
+        6;
+
+
+    /* ===============================
+        TABLE HEADER
+    =============================== */
+
+    function drawHeader() {
+
+        let x =
+            margin;
+
+
+        pdf.setFillColor(
+            230,
+            230,
+            230
+        );
+
+
+        pdf.rect(
+            x,
+            y,
+            employeeWidth,
+            8,
+            "F"
+        );
+
+
+        pdf.setDrawColor(
+            150,
+            150,
+            150
+        );
+
+
+        pdf.rect(
+            x,
+            y,
+            employeeWidth,
+            8
+        );
+
+
+        pdf.setFont(
+            "helvetica",
+            "bold"
+        );
+
+
+        pdf.setFontSize(
+            7
+        );
+
+
+        pdf.text(
+            "Employee",
+            x + employeeWidth / 2,
+            y + 5,
+            {
+                align: "center"
+            }
+        );
+
+
+        x +=
+            employeeWidth;
+
+
+        pdf.rect(
+            x,
+            y,
+            typeWidth,
+            8,
+            "F"
+        );
+
+
+        pdf.rect(
+            x,
+            y,
+            typeWidth,
+            8
+        );
+
+
+        pdf.text(
+            "Type",
+            x + typeWidth / 2,
+            y + 5,
+            {
+                align: "center"
+            }
+        );
+
+
+        x +=
+            typeWidth;
+
+
+        dates.forEach(
+            date => {
+
+                pdf.rect(
+                    x,
+                    y,
+                    dateWidth,
+                    8,
+                    "F"
+                );
+
+
+                pdf.rect(
+                    x,
+                    y,
+                    dateWidth,
+                    8
+                );
+
+
+                pdf.setFontSize(
+                    5
+                );
+
+
+                pdf.text(
+                    formatVerticalDate(
+                        date
+                    ),
+                    x + dateWidth / 2,
+                    y + 5,
+                    {
+                        align: "center"
+                    }
+                );
+
+
+                x +=
+                    dateWidth;
+
+            }
+        );
+
+
+        [
+            "WD",
+            "OT",
+            "Pay"
+        ].forEach(
+            title => {
+
+                pdf.setFontSize(
+                    6
+                );
+
+
+                pdf.rect(
+                    x,
+                    y,
+                    totalWidth,
+                    8,
+                    "F"
+                );
+
+
+                pdf.rect(
+                    x,
+                    y,
+                    totalWidth,
+                    8
+                );
+
+
+                pdf.text(
+                    title,
+                    x + totalWidth / 2,
+                    y + 5,
+                    {
+                        align: "center"
+                    }
+                );
+
+
+                x +=
+                    totalWidth;
+
+            }
+        );
+
+
+        y +=
+            8;
+
+    }
+
+
+    drawHeader();
+
+
+    /* ===============================
+        EMPLOYEE ROWS
+    =============================== */
+
+    filteredEmployees.forEach(
+        employee => {
+
+            if (
+                y +
+                rowHeight * 2 >
+                pageHeight - 15
+            ) {
+
+                pdf.addPage();
+
+                y =
+                    12;
+
+
+                drawHeader();
+
+            }
+
+
+            const totals =
+                getEmployeeTotals(
+                    employee
+                );
+
+
+            let x =
+                margin;
+
+
+            pdf.setFont(
+                "helvetica",
+                "bold"
+            );
+
+
+            pdf.setFontSize(
+                6
+            );
+
+
+            pdf.rect(
+                x,
+                y,
+                employeeWidth,
+                rowHeight * 2
+            );
+
+
+            pdf.text(
+                employee.employee_name ||
+                "",
+                x + 2,
+                y + 6
+            );
+
+
+            x +=
+                employeeWidth;
+
+
+            /* ATT ROW */
+
+            pdf.rect(
+                x,
+                y,
+                typeWidth,
+                rowHeight
+            );
+
+
+            pdf.text(
+                "ATT",
+                x + typeWidth / 2,
+                y + 4,
+                {
+                    align: "center"
+                }
+            );
+
+
+            x +=
+                typeWidth;
+
+
+            dates.forEach(
+                date => {
+
+                    const record =
+                        attendanceMap[
+                            `${employee.id}_${date}`
+                        ];
+
+
+                    const status =
+                        getAttendanceCode(
+                            record
+                        );
+
+
+                    pdf.rect(
+                        x,
+                        y,
+                        dateWidth,
+                        rowHeight
+                    );
+
+
+                    pdf.setFont(
+                        "helvetica",
+                        "bold"
+                    );
+
+
+                    pdf.setFontSize(
+                        6
+                    );
+
+
+                    pdf.text(
+                        status,
+                        x + dateWidth / 2,
+                        y + 4,
+                        {
+                            align: "center"
+                        }
+                    );
+
+
+                    x +=
+                        dateWidth;
+
+                }
+            );
+
+
+            [
+                totals.workingDays,
+                totals.overtimeDays,
+                totals.daysPayable
+            ].forEach(
+                value => {
+
+                    pdf.rect(
+                        x,
+                        y,
+                        totalWidth,
+                        rowHeight * 2
+                    );
+
+
+                    pdf.text(
+                        String(
+                            value
+                        ),
+                        x + totalWidth / 2,
+                        y + 7,
+                        {
+                            align: "center"
+                        }
+                    );
+
+
+                    x +=
+                        totalWidth;
+
+                }
+            );
+
+
+            y +=
+                rowHeight;
+
+
+            x =
+                margin +
+                employeeWidth;
+
+
+            /* OT ROW */
+
+            pdf.rect(
+                x,
+                y,
+                typeWidth,
+                rowHeight
+            );
+
+
+            pdf.text(
+                "OT",
+                x + typeWidth / 2,
+                y + 4,
+                {
+                    align: "center"
+                }
+            );
+
+
+            x +=
+                typeWidth;
+
+
+            dates.forEach(
+                date => {
+
+                    const record =
+                        attendanceMap[
+                            `${employee.id}_${date}`
+                        ];
+
+
+                    const overtime =
+                        hasOvertime(
+                            record
+                        );
+
+
+                    pdf.rect(
+                        x,
+                        y,
+                        dateWidth,
+                        rowHeight
+                    );
+
+
+                    pdf.text(
+                        overtime
+                            ? "P"
+                            : "",
+                        x + dateWidth / 2,
+                        y + 4,
+                        {
+                            align: "center"
+                        }
+                    );
+
+
+                    x +=
+                        dateWidth;
+
+                }
+            );
+
+
+            y +=
+                rowHeight;
+
+        }
+    );
+
+
+    /* ===============================
+        FOOTER
+    =============================== */
+
+    const pageCount =
+        pdf.getNumberOfPages();
+
+
+    for (
+        let page = 1;
+        page <= pageCount;
+        page++
+    ) {
+
+        pdf.setPage(
+            page
+        );
+
+
+        pdf.setFontSize(
+            7
+        );
+
+
+        pdf.setFont(
+            "helvetica",
+            "normal"
+        );
+
+
+        pdf.text(
+            `Generated on ${new Date().toLocaleString("en-IN")}`,
+            margin,
+            pageHeight - 6
+        );
+
+
+        pdf.text(
+            `Page ${page} of ${pageCount}`,
+            pageWidth - margin,
+            pageHeight - 6,
+            {
+                align: "right"
+            }
+        );
+
+    }
+
+
+    const fileName =
+        `Attendance_Register_${filters.from_date}_to_${filters.to_date}.pdf`;
+
+
+    pdf.save(
+        fileName
+    );
+
+}
+
+
+/* ==========================================
+    DOWNLOAD SINGLE EMPLOYEE PDF
+========================================== */
+
+function generateEmployeeAttendancePdf(
+    employee
+) {
+
+    if (
+        !employee
+    ) {
+        return;
+    }
+
+
+    const pdf =
+        new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4"
+        });
+
+
+    const pageWidth =
+        pdf.internal.pageSize.getWidth();
+
+
+    const pageHeight =
+        pdf.internal.pageSize.getHeight();
+
+
+    const margin =
+        15;
+
+
+    let y =
+        18;
+
+
+    /* ===============================
+        HEADER
+    =============================== */
+
+    pdf.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    pdf.setFontSize(
+        18
+    );
+
+
+    pdf.text(
+        "EMPLOYEE ATTENDANCE REPORT",
+        pageWidth / 2,
+        y,
+        {
+            align: "center"
+        }
+    );
+
+
+    y +=
+        12;
+
+
+    pdf.setFontSize(
+        11
+    );
+
+
+    pdf.text(
+        `Company: ${currentCompany?.company_name || ""}`,
+        margin,
+        y
+    );
+
+
+    y +=
+        7;
+
+
+    pdf.text(
+        `Employee: ${employee.employee_name || ""}`,
+        margin,
+        y
+    );
+
+
+    y +=
+        7;
+
+
+    pdf.text(
+        `Employee Code: ${employee.employee_code || "-"}`,
+        margin,
+        y
+    );
+
+
+    y +=
+        7;
+
+
+    pdf.text(
+        `Period: ${formatPdfDate(filters.from_date)} to ${formatPdfDate(filters.to_date)}`,
+        margin,
+        y
+    );
+
+
+    y +=
+        10;
+
+
+    /* ===============================
+        TABLE HEADER
+    =============================== */
+
+    const dateColumn =
+        45;
+
+
+    const attendanceColumn =
+        45;
+
+
+    const overtimeColumn =
+        45;
+
+
+    const tableWidth =
+        dateColumn +
+        attendanceColumn +
+        overtimeColumn;
+
+
+    function drawEmployeeTableHeader() {
+
+        pdf.setFillColor(
+            230,
+            230,
+            230
+        );
+
+
+        pdf.rect(
+            margin,
+            y,
+            tableWidth,
+            8,
+            "F"
+        );
+
+
+        pdf.rect(
+            margin,
+            y,
+            dateColumn,
+            8
+        );
+
+
+        pdf.rect(
+            margin + dateColumn,
+            y,
+            attendanceColumn,
+            8
+        );
+
+
+        pdf.rect(
+            margin +
+            dateColumn +
+            attendanceColumn,
+            y,
+            overtimeColumn,
+            8
+        );
+
+
+        pdf.setFont(
+            "helvetica",
+            "bold"
+        );
+
+
+        pdf.setFontSize(
+            9
+        );
+
+
+        pdf.text(
+            "Date",
+            margin +
+            dateColumn / 2,
+            y + 5,
+            {
+                align: "center"
+            }
+        );
+
+
+        pdf.text(
+            "Attendance",
+            margin +
+            dateColumn +
+            attendanceColumn / 2,
+            y + 5,
+            {
+                align: "center"
+            }
+        );
+
+
+        pdf.text(
+            "Overtime",
+            margin +
+            dateColumn +
+            attendanceColumn +
+            overtimeColumn / 2,
+            y + 5,
+            {
+                align: "center"
+            }
+        );
+
+
+        y +=
+            8;
+
+    }
+
+
+    drawEmployeeTableHeader();
+
+
+    /* ===============================
+        DAILY ROWS
+    =============================== */
+
+    dates.forEach(
+        date => {
+
+            if (
+                y >
+                pageHeight - 25
+            ) {
+
+                pdf.addPage();
+
+                y =
+                    18;
+
+
+                drawEmployeeTableHeader();
+
+            }
+
+
+            const record =
+                attendanceMap[
+                    `${employee.id}_${date}`
+                ];
+
+
+            const attendanceCode =
+                getAttendanceCode(
+                    record
+                ) || "-";
+
+
+            const overtime =
+                hasOvertime(
+                    record
+                )
+                    ? "Present"
+                    : "-";
+
+
+            pdf.setFont(
+                "helvetica",
+                "normal"
+            );
+
+
+            pdf.setFontSize(
+                9
+            );
+
+
+            pdf.rect(
+                margin,
+                y,
+                dateColumn,
+                7
+            );
+
+
+            pdf.rect(
+                margin + dateColumn,
+                y,
+                attendanceColumn,
+                7
+            );
+
+
+            pdf.rect(
+                margin +
+                dateColumn +
+                attendanceColumn,
+                y,
+                overtimeColumn,
+                7
+            );
+
+
+            pdf.text(
+                formatPdfDate(
+                    date
+                ),
+                margin + 3,
+                y + 4.5
+            );
+
+
+            pdf.text(
+                attendanceCode,
+                margin +
+                dateColumn +
+                attendanceColumn / 2,
+                y + 4.5,
+                {
+                    align: "center"
+                }
+            );
+
+
+            pdf.text(
+                overtime,
+                margin +
+                dateColumn +
+                attendanceColumn +
+                overtimeColumn / 2,
+                y + 4.5,
+                {
+                    align: "center"
+                }
+            );
+
+
+            y +=
+                7;
+
+        }
+    );
+
+
+    y +=
+        8;
+
+
+    const totals =
+        getEmployeeTotals(
+            employee
+        );
+
+
+    /* ===============================
+        SUMMARY
+    =============================== */
+
+    if (
+        y >
+        pageHeight - 45
+    ) {
+
+        pdf.addPage();
+
+        y =
+            20;
+
+    }
+
+
+    pdf.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    pdf.setFontSize(
+        12
+    );
+
+
+    pdf.text(
+        "Attendance Summary",
+        margin,
+        y
+    );
+
+
+    y +=
+        8;
+
+
+    pdf.setFontSize(
+        10
+    );
+
+
+    pdf.text(
+        `Working Days: ${totals.workingDays}`,
+        margin,
+        y
+    );
+
+
+    y +=
+        6;
+
+
+    pdf.text(
+        `Overtime Days: ${totals.overtimeDays}`,
+        margin,
+        y
+    );
+
+
+    y +=
+        6;
+
+
+    pdf.text(
+        `Days Payable: ${totals.daysPayable}`,
+        margin,
+        y
+    );
+
+
+    /* ===============================
+        FOOTER
+    =============================== */
+
+    const pageCount =
+        pdf.getNumberOfPages();
+
+
+    for (
+        let page = 1;
+        page <= pageCount;
+        page++
+    ) {
+
+        pdf.setPage(
+            page
+        );
+
+
+        pdf.setFont(
+            "helvetica",
+            "normal"
+        );
+
+
+        pdf.setFontSize(
+            7
+        );
+
+
+        pdf.text(
+            `Generated on ${new Date().toLocaleString("en-IN")}`,
+            margin,
+            pageHeight - 8
+        );
+
+
+        pdf.text(
+            `Page ${page} of ${pageCount}`,
+            pageWidth - margin,
+            pageHeight - 8,
+            {
+                align: "right"
+            }
+        );
+
+    }
+
+
+    const safeEmployeeName =
+        (
+            employee.employee_name ||
+            "Employee"
+        )
+            .replace(
+                /[^a-z0-9]/gi,
+                "_"
+            );
+
+
+    pdf.save(
+        `Attendance_${safeEmployeeName}_${filters.from_date}_to_${filters.to_date}.pdf`
+    );
+
+}
+
+
+/* ==========================================
+    PDF BUTTON HANDLERS
+========================================== */
+
 const handleDownloadRegisterPdf = () => {
+
     generateAttendanceRegisterPdf();
+
 };
 
 
@@ -1724,6 +2962,314 @@ const handleDownloadEmployeePdf = (
                 OT P = Overtime
 
             </div>
+                        {/* ===============================
+                EMPLOYEE ATTENDANCE PREVIEW
+            =============================== */}
+
+            {
+                isEmployeePreviewOpen &&
+                selectedEmployee && (
+
+                    <div
+                        style={{
+                            position: "fixed",
+                            inset: 0,
+                            background:
+                                "rgba(0,0,0,0.5)",
+                            display: "flex",
+                            alignItems:
+                                "center",
+                            justifyContent:
+                                "center",
+                            zIndex: 9999
+                        }}
+                    >
+
+                        <div
+                            style={{
+                                background:
+                                    "#ffffff",
+                                width:
+                                    "600px",
+                                maxWidth:
+                                    "90vw",
+                                maxHeight:
+                                    "85vh",
+                                overflowY:
+                                    "auto",
+                                padding:
+                                    "25px",
+                                borderRadius:
+                                    "8px"
+                            }}
+                        >
+
+                            <h2>
+                                Employee Attendance Preview
+                            </h2>
+
+
+                            <p>
+
+                                <strong>
+                                    Employee:
+                                </strong>
+
+                                {" "}
+
+                                {
+                                    selectedEmployee
+                                        .employee_name
+                                }
+
+                            </p>
+
+
+                            <p>
+
+                                <strong>
+                                    Employee Code:
+                                </strong>
+
+                                {" "}
+
+                                {
+                                    selectedEmployee
+                                        .employee_code ||
+                                    "-"
+                                }
+
+                            </p>
+
+
+                            <p>
+
+                                <strong>
+                                    Period:
+                                </strong>
+
+                                {" "}
+
+                                {
+                                    formatPdfDate(
+                                        filters.from_date
+                                    )
+                                }
+
+                                {" to "}
+
+                                {
+                                    formatPdfDate(
+                                        filters.to_date
+                                    )
+                                }
+
+                            </p>
+
+
+                            <table
+                                style={{
+                                    width:
+                                        "100%",
+
+                                    borderCollapse:
+                                        "collapse",
+
+                                    marginTop:
+                                        "20px"
+                                }}
+                            >
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th
+                                            style={{
+                                                border:
+                                                    "1px solid #ccc",
+                                                padding:
+                                                    "8px"
+                                            }}
+                                        >
+                                            Date
+                                        </th>
+
+
+                                        <th
+                                            style={{
+                                                border:
+                                                    "1px solid #ccc",
+                                                padding:
+                                                    "8px"
+                                            }}
+                                        >
+                                            Attendance
+                                        </th>
+
+
+                                        <th
+                                            style={{
+                                                border:
+                                                    "1px solid #ccc",
+                                                padding:
+                                                    "8px"
+                                            }}
+                                        >
+                                            Overtime
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {
+                                        dates.map(
+                                            date => {
+
+                                                const record =
+                                                    attendanceMap[
+                                                        `${selectedEmployee.id}_${date}`
+                                                    ];
+
+
+                                                return (
+
+                                                    <tr
+                                                        key={
+                                                            date
+                                                        }
+                                                    >
+
+                                                        <td
+                                                            style={{
+                                                                border:
+                                                                    "1px solid #ccc",
+                                                                padding:
+                                                                    "8px"
+                                                            }}
+                                                        >
+
+                                                            {
+                                                                formatPdfDate(
+                                                                    date
+                                                                )
+                                                            }
+
+                                                        </td>
+
+
+                                                        <td
+                                                            style={{
+                                                                border:
+                                                                    "1px solid #ccc",
+                                                                padding:
+                                                                    "8px",
+                                                                textAlign:
+                                                                    "center"
+                                                            }}
+                                                        >
+
+                                                            {
+                                                                getAttendanceCode(
+                                                                    record
+                                                                ) || "-"
+                                                            }
+
+                                                        </td>
+
+
+                                                        <td
+                                                            style={{
+                                                                border:
+                                                                    "1px solid #ccc",
+                                                                padding:
+                                                                    "8px",
+                                                                textAlign:
+                                                                    "center"
+                                                            }}
+                                                        >
+
+                                                            {
+                                                                hasOvertime(
+                                                                    record
+                                                                )
+                                                                    ? "Present"
+                                                                    : "-"
+                                                            }
+
+                                                        </td>
+
+                                                    </tr>
+
+                                                );
+
+                                            }
+                                        )
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+
+                            <div
+                                style={{
+                                    marginTop:
+                                        "20px",
+
+                                    display:
+                                        "flex",
+
+                                    gap:
+                                        "10px"
+                                }}
+                            >
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        handleDownloadEmployeePdf(
+                                            selectedEmployee
+                                        )
+                                    }
+                                >
+
+                                    Download PDF
+
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+
+                                        setIsEmployeePreviewOpen(
+                                            false
+                                        );
+
+                                        setSelectedEmployee(
+                                            null
+                                        );
+
+                                    }}
+                                >
+
+                                    Close
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )
+            }
 
         </div>
 
