@@ -4,6 +4,9 @@ import React, {
     useState
 } from "react";
 import jsPDF from "jspdf";
+import {
+    getInvoiceSettings
+} from "../../services/invoiceSettingsService";
 import { supabase }
 from "../../supabase/supabaseClient";
 
@@ -29,6 +32,10 @@ function AttendanceRegister() {
 
     const [loading, setLoading] =
         useState(false);
+    const [
+    invoiceSettings,
+    setInvoiceSettings
+] = useState(null);
 const [
     selectedEmployee,
     setSelectedEmployee
@@ -73,7 +80,38 @@ const [
             designation_id: ""
 
         });
+const loadInvoiceSettings =
+    async () => {
 
+        try {
+
+            if (
+                !currentCompany?.id
+            ) {
+                return;
+            }
+
+
+            const data =
+                await getInvoiceSettings(
+                    currentCompany.id
+                );
+
+
+            setInvoiceSettings(
+                data || null
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Error loading company logo:",
+                error
+            );
+
+        }
+
+    };
     /* ==========================================
         DEFAULT MONTH
     ========================================== */
@@ -129,7 +167,19 @@ const [
 
     }, []);
 
+useEffect(() => {
 
+    if (
+        currentCompany?.id
+    ) {
+
+        loadInvoiceSettings();
+
+    }
+
+}, [
+    currentCompany?.id
+]);
     /* ==========================================
         LOAD MASTER DATA
     ========================================== */
@@ -1054,7 +1104,7 @@ function getPdfStatusStyle(
     DOWNLOAD FULL REGISTER PDF
 ========================================== */
 
-function generateAttendanceRegisterPdf() {
+async function generateAttendanceRegisterPdf() {
 
     if (
         filteredEmployees.length === 0
@@ -1065,6 +1115,23 @@ function generateAttendanceRegisterPdf() {
         );
 
         return;
+
+    }
+
+
+    let logoData =
+        null;
+
+
+    if (
+        invoiceSettings?.show_logo &&
+        invoiceSettings?.logo_url
+    ) {
+
+        logoData =
+            await getImageData(
+                invoiceSettings.logo_url
+            );
 
     }
 
@@ -1090,7 +1157,27 @@ function generateAttendanceRegisterPdf() {
 
 
     let y =
-        12;
+    12;
+
+
+/* ===============================
+    COMPANY LOGO
+=============================== */
+
+if (
+    logoData
+) {
+
+    pdf.addImage(
+        logoData.data,
+        logoData.type,
+        margin,
+        5,
+        18,
+        18
+    );
+
+}
 
 
     /* ===============================
