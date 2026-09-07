@@ -872,21 +872,16 @@ setSalaryComponents([]);
             </div>
 
 
-            <form
-                onSubmit={handleSubmit}
-               
-                style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                        "repeat(2, minmax(250px, 1fr))",
-                    gap: "15px",
-                    padding: "20px",
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    marginBottom: "30px"
-                }}
-            >
-                 <div
+           <form
+    onSubmit={handleSubmit}
+    style={{
+        padding: "20px",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        marginBottom: "30px"
+    }}
+> 
+               <div
         style={{
             display: "flex",
             gap: "10px",
@@ -1631,10 +1626,10 @@ setSalaryComponents([]);
 
 )}
                 <div
-                    style={{
-                        gridColumn: "1 / -1"
-                    }}
-                >
+    style={{
+        marginTop: "20px"
+    }}
+>
 
                     <button
                         type="submit"
