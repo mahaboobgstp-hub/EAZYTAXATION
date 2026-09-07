@@ -1100,6 +1100,116 @@ function getPdfStatusStyle(
     };
 
 }
+
+    async function getImageData(
+    imageUrl
+) {
+
+    try {
+
+        const response =
+            await fetch(
+                imageUrl
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Unable to fetch company logo."
+            );
+
+        }
+
+
+        const blob =
+            await response.blob();
+
+
+        const dataUrl =
+            await new Promise(
+                (
+                    resolve,
+                    reject
+                ) => {
+
+                    const reader =
+                        new FileReader();
+
+
+                    reader.onload =
+                        () => {
+
+                            resolve(
+                                reader.result
+                            );
+
+                        };
+
+
+                    reader.onerror =
+                        () => {
+
+                            reject(
+                                new Error(
+                                    "Unable to read company logo."
+                                )
+                            );
+
+                        };
+
+
+                    reader.readAsDataURL(
+                        blob
+                    );
+
+                }
+            );
+
+
+        let type =
+            "JPEG";
+
+
+        if (
+            blob.type ===
+            "image/png"
+        ) {
+
+            type =
+                "PNG";
+
+        }
+
+
+        return {
+
+            data:
+                dataUrl,
+
+            type:
+                type
+
+        };
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load company logo:",
+            error
+        );
+
+
+        return null;
+
+    }
+
+}
+    
 /* ==========================================
     DOWNLOAD FULL REGISTER PDF
 ========================================== */
@@ -1925,7 +2035,7 @@ pdf.text(
                         {
                             align: "center"
                         }
-                    
+                    );
 
 
                     x +=
@@ -1933,7 +2043,7 @@ pdf.text(
 
                 }
            
-)
+);
 
             y +=
                 rowHeight;
@@ -2516,11 +2626,12 @@ function generateEmployeeAttendancePdf(
     PDF BUTTON HANDLERS
 ========================================== */
 
-const handleDownloadRegisterPdf = () => {
+const handleDownloadRegisterPdf =
+    async () => {
 
-    generateAttendanceRegisterPdf();
+        await generateAttendanceRegisterPdf();
 
-};
+    };
 
 
 const handleDownloadEmployeePdf = (
