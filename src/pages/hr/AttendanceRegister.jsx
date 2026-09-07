@@ -1847,33 +1847,7 @@ if (
     }
 );
 
-                    pdf.setFont(
-                        "helvetica",
-                        "bold"
-                    );
-
-
-                    pdf.setFontSize(
-                        7.5
-                    );
-
-
-                    pdf.text(
-                        status,
-                        x + dateWidth / 2,
-                        y + 4,
-                        {
-                            align: "center"
-                        }
-                    );
-
-
-                    x +=
-                        dateWidth;
-
-                }
-            );
-
+                    
 
             [
                 totals.workingDays,
