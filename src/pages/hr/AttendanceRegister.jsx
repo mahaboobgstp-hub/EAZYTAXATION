@@ -1402,7 +1402,7 @@ if (
 
 
     const totalWidth =
-        16;
+        12;
 
 
     const availableDateWidth =
@@ -1657,7 +1657,7 @@ pdf.text(
 
 
             pdf.setFontSize(
-                6.5
+                8
             );
 
 
@@ -1751,7 +1751,20 @@ pdf.text(
                 rowHeight * 2
             );
 
+pdf.setTextColor(
+    31,
+    41,
+    55
+);
 
+pdf.setFont(
+    "helvetica",
+    "normal"
+);
+
+pdf.setFontSize(
+    7.5
+);
             pdf.text(
                 employee.employee_name ||
                 "",
@@ -1842,14 +1855,14 @@ pdf.text(
 
 
         pdf.setFontSize(
-            6.5
+            8
         );
 
 
         pdf.text(
             status || "",
             x + dateWidth / 2,
-            y + 4.2,
+            y + 4.8,
             {
                 align: "center"
             }
@@ -1863,7 +1876,32 @@ pdf.text(
 );
 
                     
+pdf.setFillColor(
+    255,
+    255,
+    255
+);
 
+pdf.setTextColor(
+    31,
+    41,
+    55
+);
+
+pdf.setDrawColor(
+    190,
+    190,
+    190
+);
+
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
+
+pdf.setFontSize(
+    7
+);
             [
                 totals.workingDays,
                 totals.overtimeDays,
