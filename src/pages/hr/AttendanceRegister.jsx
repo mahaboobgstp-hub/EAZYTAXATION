@@ -30,7 +30,16 @@ function AttendanceRegister() {
 
     const [loading, setLoading] =
         useState(false);
+const [
+    selectedEmployee,
+    setSelectedEmployee
+] = useState(null);
 
+
+const [
+    isEmployeePreviewOpen,
+    setIsEmployeePreviewOpen
+] = useState(false);
 
     const [employees, setEmployees] =
         useState([]);
@@ -873,7 +882,33 @@ const filteredEmployees =
                 filters.designation_id
         );
 
+const handleDownloadRegisterPdf = () => {
+    generateAttendanceRegisterPdf();
+};
 
+
+const handleDownloadEmployeePdf = (
+    employee
+) => {
+
+    generateEmployeeAttendancePdf(
+        employee
+    );
+
+};
+    const handleEmployeeClick = (
+    employee
+) => {
+
+    setSelectedEmployee(
+        employee
+    );
+
+    setIsEmployeePreviewOpen(
+        true
+    );
+
+};
     /* ==========================================
         RENDER
     ========================================== */
@@ -1143,6 +1178,18 @@ const filteredEmployees =
                         }
 
                     </button>
+                    <button
+    type="button"
+    onClick={
+        handleDownloadRegisterPdf
+    }
+    disabled={
+        loading ||
+        filteredEmployees.length === 0
+    }
+>
+    Download Register PDF
+</button>
 
                 </div>
 
@@ -1380,29 +1427,24 @@ const filteredEmployees =
 
                                             <tr>
 
-                                                <td
-                                                    rowSpan="2"
-                                                    style={{
-                                                        border:
-                                                            "1px solid #ccc",
+                                               <td
+    rowSpan="2"
+    className="employee-name-cell"
+>
 
-                                                        padding:
-                                                            "8px",
+    <button
+        type="button"
+        className="employee-name-button"
+        onClick={() =>
+            handleEmployeeClick(
+                employee
+            )
+        }
+    >
+        {employee.employee_name}
+    </button>
 
-                                                        fontWeight:
-                                                            "600",
-
-                                                        verticalAlign:
-                                                            "middle"
-                                                    }}
-                                                >
-
-                                                    {
-                                                        employee.employee_name
-                                                    }
-
-                                                </td>
-
+</td>
 
                                                 <td
                                                     style={{
