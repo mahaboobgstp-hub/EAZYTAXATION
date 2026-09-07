@@ -1,6 +1,4 @@
-import {
-    supabase
-} from "../../supabaseClient";
+import { supabase } from "../../supabase/supabaseClient";
 
 
 /* =========================================
