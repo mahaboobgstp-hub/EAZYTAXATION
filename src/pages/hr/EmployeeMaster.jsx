@@ -357,10 +357,7 @@ const handleSalaryStructureChange =
                 salary_type:
                     formData.salary_type,
 
-                basic_salary:
-                    formData.basic_salary === ""
-                        ? null
-                        : Number(formData.basic_salary),
+               
 
                 employee_status:
                     formData.employee_status,
@@ -490,17 +487,9 @@ else {
 
 }
 if (
-
-    salaryStructure.monthly_salary !== "" ||
-
-    salaryStructure.basic_amount !== "" ||
-
-    salaryStructure.hra_amount !== "" ||
-
-    salaryStructure.special_allowance !== "" ||
-
-    salaryStructure.other_allowance !== ""
-
+    Number(
+        salaryStructure.monthly_salary
+    ) > 0
 ) {
 
     await saveCompleteSalaryStructure(
@@ -510,11 +499,9 @@ if (
             ...salaryStructure,
 
             company_id:
-
                 currentCompanyId,
 
             employee_id:
-
                 savedEmployee.id
 
         },
@@ -524,7 +511,6 @@ if (
     );
 
 }
-
             setFormData(defaultFormData);
 
             
