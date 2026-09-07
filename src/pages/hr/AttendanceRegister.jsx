@@ -209,30 +209,30 @@ function AttendanceRegister() {
         ),
 
     // Work Locations
-    supabase
-        .from("work_locations")
-        .select(`
-            id,
-            company_id,
-            location_code,
-            location_name,
-            is_active
-        `)
-        .eq(
-            "company_id",
-            currentCompany.id
-        )
-        .eq(
-            "is_active",
-            true
-        )
-        .order(
-            "location_name",
-            {
-                ascending: true
-            }
-        )
-
+    // Locations
+supabase
+    .from("locations")
+    .select(`
+        id,
+        company_id,
+        location_code,
+        location_name,
+        is_active
+    `)
+    .eq(
+        "company_id",
+        currentCompany.id
+    )
+    .eq(
+        "is_active",
+        true
+    )
+    .order(
+        "location_name",
+        {
+            ascending: true
+        }
+    )
 ]);
 
 
@@ -270,10 +270,25 @@ setDesignations(
     designationResult.data || []
 );
 
-
 setLocations(
     locationResult.data || []
 );
+
+    } catch (error) {
+
+        console.error(
+            "Error loading register masters:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to load register masters."
+        );
+
+    }
+
+}
     /* ==========================================
         LOAD REGISTER
     ========================================== */
@@ -454,43 +469,64 @@ setLocations(
         FILTER EMPLOYEES
     ========================================== */
 
-    const filteredEmployees =
-        useMemo(() => {
+    /* ==========================================
+    FILTER EMPLOYEES
+========================================== */
 
-            return employees.filter(
-                employee => {
+const filteredEmployees =
+    useMemo(() => {
+
+        return employees.filter(
+            employee => {
+
+                /* =========================
+                    LOCATION FILTER
+                ========================= */
+
+                if (
+                    filters.location_id &&
+                    employee.location_id !==
+                        filters.location_id
+                ) {
+                    return false;
+                }
 
 
-                    if (
-                        filters.department_id &&
-                        employee.department_id !==
+                /* =========================
+                    DEPARTMENT FILTER
+                ========================= */
+
+                if (
+                    filters.department_id &&
+                    employee.department_id !==
                         filters.department_id
-                    ) {
-                        return false;
-                    }
+                ) {
+                    return false;
+                }
 
 
-                    if (
-                        filters.designation_id &&
-                        employee.designation_id !==
+                /* =========================
+                    DESIGNATION FILTER
+                ========================= */
+
+                if (
+                    filters.designation_id &&
+                    employee.designation_id !==
                         filters.designation_id
-                    ) {
-                        return false;
-                    }
+                ) {
+                    return false;
+                }
 
 
-                    /*
-                        Location filtering uses
-                        attendance work_location_id.
+                return true;
 
-                        This ensures register reflects
-                        actual attendance location.
-                    */
+            }
+        );
 
-                   if (
-    filters.location_id
-) {
-
+    }, [
+        employees,
+        filters
+    ]);
     
 
     /* ==========================================
