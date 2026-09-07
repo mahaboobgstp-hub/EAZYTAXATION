@@ -2030,13 +2030,7 @@ pdf.text(
         align: "center"
     }
 );                       
-                    x + dateWidth / 2,
-                        y + 4,
-                        {
-                            align: "center"
-                        }
-                    );
-
+                    
 
                     x +=
                         dateWidth;
