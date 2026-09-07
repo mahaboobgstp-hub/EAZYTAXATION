@@ -1329,7 +1329,7 @@ if (
     );
 
 
-    y += 30;
+    y += 20;
 
 
     pdf.setFontSize(
