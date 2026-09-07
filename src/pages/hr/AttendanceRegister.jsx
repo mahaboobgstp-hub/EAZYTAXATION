@@ -2166,150 +2166,248 @@ pdf.text(
         GRAND TOTAL LABEL
     =============================== */
 
-    pdf.setFillColor(
-        226,
-        232,
-        240
-    );
+   
+
+pdf.setFillColor(
+    226,
+    232,
+    240
+);
 
 
-    pdf.setDrawColor(
-        120,
-        130,
-        140
-    );
+pdf.setDrawColor(
+    120,
+    130,
+    140
+);
 
 
-    pdf.rect(
-        totalX,
-        y,
-        grandTotalLabelWidth,
-        grandTotalHeight,
-        "FD"
-    );
+pdf.setTextColor(
+    31,
+    41,
+    55
+);
 
 
-    pdf.setFont(
-        "helvetica",
-        "bold"
-    );
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
 
 
-    pdf.setFontSize(
-        8
-    );
+pdf.setFontSize(
+    8
+);
 
 
-    pdf.setTextColor(
-        31,
-        41,
-        55
-    );
+pdf.rect(
+    totalX,
+    y,
+    grandTotalLabelWidth,
+    grandTotalHeight,
+    "FD"
+);
 
 
-    pdf.text(
-        "GRAND TOTAL",
-        totalX +
-        grandTotalLabelWidth / 2,
-        y + 5.2,
-        {
-            align: "center"
-        }
-    );
+pdf.text(
+    "GRAND TOTAL",
+    totalX +
+    grandTotalLabelWidth / 2,
+    y + 5.2,
+    {
+        align: "center"
+    }
+);
 
 
-    totalX +=
-        grandTotalLabelWidth;
+totalX +=
+    grandTotalLabelWidth;
 
 
-    /* ===============================
-        WORKING DAYS TOTAL
-    =============================== */
+/* ===============================
+    WORKING DAYS TOTAL
+=============================== */
 
-    pdf.rect(
-        totalX,
-        y,
-        totalWidth,
-        grandTotalHeight,
-        "FD"
-    );
+pdf.setFillColor(
+    248,
+    250,
+    252
+);
 
 
-    pdf.text(
-        String(
-            grandTotals.workingDays
-        ),
-        totalX +
-        totalWidth / 2,
-        y + 5.2,
-        {
-            align: "center"
-        }
-    );
+pdf.setDrawColor(
+    120,
+    130,
+    140
+);
 
 
-    totalX +=
-        totalWidth;
+pdf.setTextColor(
+    31,
+    41,
+    55
+);
 
 
-    /* ===============================
-        OT TOTAL
-    =============================== */
-
-    pdf.rect(
-        totalX,
-        y,
-        totalWidth,
-        grandTotalHeight,
-        "FD"
-    );
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
 
 
-    pdf.text(
-        String(
-            grandTotals.overtimeDays
-        ),
-        totalX +
-        totalWidth / 2,
-        y + 5.2,
-        {
-            align: "center"
-        }
-    );
+pdf.setFontSize(
+    8
+);
 
 
-    totalX +=
-        totalWidth;
+pdf.rect(
+    totalX,
+    y,
+    totalWidth,
+    grandTotalHeight,
+    "FD"
+);
 
 
-    /* ===============================
-        PAYABLE DAYS TOTAL
-    =============================== */
-
-    pdf.rect(
-        totalX,
-        y,
-        totalWidth,
-        grandTotalHeight,
-        "FD"
-    );
-
-
-    pdf.text(
-        String(
-            grandTotals.daysPayable
-        ),
-        totalX +
-        totalWidth / 2,
-        y + 5.2,
-        {
-            align: "center"
-        }
-    );
+pdf.text(
+    String(
+        grandTotals.workingDays
+    ),
+    totalX +
+    totalWidth / 2,
+    y + 5.2,
+    {
+        align: "center"
+    }
+);
 
 
-    y +=
-        grandTotalHeight;
+totalX +=
+    totalWidth;
+
+
+/* ===============================
+    OT TOTAL
+=============================== */
+
+pdf.setFillColor(
+    248,
+    250,
+    252
+);
+
+
+pdf.setDrawColor(
+    120,
+    130,
+    140
+);
+
+
+pdf.setTextColor(
+    31,
+    41,
+    55
+);
+
+
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
+
+
+pdf.setFontSize(
+    8
+);
+
+
+pdf.rect(
+    totalX,
+    y,
+    totalWidth,
+    grandTotalHeight,
+    "FD"
+);
+
+
+pdf.text(
+    String(
+        grandTotals.overtimeDays
+    ),
+    totalX +
+    totalWidth / 2,
+    y + 5.2,
+    {
+        align: "center"
+    }
+);
+
+
+totalX +=
+    totalWidth;
+
+
+/* ===============================
+    PAYABLE DAYS TOTAL
+=============================== */
+
+pdf.setFillColor(
+    248,
+    250,
+    252
+);
+
+
+pdf.setDrawColor(
+    120,
+    130,
+    140
+);
+
+
+pdf.setTextColor(
+    31,
+    41,
+    55
+);
+
+
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
+
+
+pdf.setFontSize(
+    8
+);
+
+
+pdf.rect(
+    totalX,
+    y,
+    totalWidth,
+    grandTotalHeight,
+    "FD"
+);
+
+
+pdf.text(
+    String(
+        grandTotals.daysPayable
+    ),
+    totalX +
+    totalWidth / 2,
+    y + 5.2,
+    {
+        align: "center"
+    }
+);
+
+
+y +=
+    grandTotalHeight;
     /* ===============================
         FOOTER
     =============================== */
