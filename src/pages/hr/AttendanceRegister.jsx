@@ -930,7 +930,24 @@ const filteredEmployees =
                 item.id ===
                 filters.designation_id
         );
+function formatPdfDayHeader(
+    date
+) {
 
+    const value =
+        new Date(
+            `${date}T00:00:00`
+        );
+
+
+    return String(
+        value.getDate()
+    ).padStart(
+        2,
+        "0"
+    );
+
+}
 /* ==========================================
     PDF HELPERS
 ========================================== */
@@ -1283,12 +1300,11 @@ if (
         logoData.type,
         margin,
         5,
-        18,
-        18
+        20,
+        20
     );
 
 }
-
 
     /* ===============================
         HEADER
@@ -1313,7 +1329,7 @@ if (
     );
 
 
-    y += 8;
+    y += 30;
 
 
     pdf.setFontSize(
@@ -1570,22 +1586,21 @@ if (
             );
 
 
-            pdf.setFontSize(
-                5.5
-            );
+           pdf.setFontSize(
+    7.5
+);
 
 
-            pdf.text(
-                formatVerticalDate(
-                    date
-                ),
-                x + dateWidth / 2,
-                y + 5.8,
-                {
-                    align: "center"
-                }
-            );
-
+pdf.text(
+    formatPdfDayHeader(
+        date
+    ),
+    x + dateWidth / 2,
+    y + 5.8,
+    {
+        align: "center"
+    }
+);
 
             x +=
                 dateWidth;
@@ -2020,7 +2035,243 @@ pdf.text(
 }
     );
 
+    /* ===============================
+        GRAND TOTAL ROW
+    =============================== */
 
+    const grandTotals =
+        filteredEmployees.reduce(
+            (
+                result,
+                employee
+            ) => {
+
+                const employeeTotals =
+                    getEmployeeTotals(
+                        employee
+                    );
+
+
+                result.workingDays +=
+                    Number(
+                        employeeTotals.workingDays ||
+                        0
+                    );
+
+
+                result.overtimeDays +=
+                    Number(
+                        employeeTotals.overtimeDays ||
+                        0
+                    );
+
+
+                result.daysPayable +=
+                    Number(
+                        employeeTotals.daysPayable ||
+                        0
+                    );
+
+
+                return result;
+
+            },
+            {
+                workingDays: 0,
+                overtimeDays: 0,
+                daysPayable: 0
+            }
+        );
+
+
+    const grandTotalHeight =
+        8;
+
+
+    /*
+        Check whether there is enough
+        space for the total row.
+    */
+
+    if (
+        y +
+        grandTotalHeight >
+        pageHeight - 15
+    ) {
+
+        pdf.addPage();
+
+
+        y =
+            12;
+
+
+        drawHeader();
+
+    }
+
+
+    let totalX =
+        margin;
+
+
+    const grandTotalLabelWidth =
+        employeeWidth +
+        typeWidth +
+        (
+            dateWidth *
+            dates.length
+        );
+
+
+    /* ===============================
+        GRAND TOTAL LABEL
+    =============================== */
+
+    pdf.setFillColor(
+        226,
+        232,
+        240
+    );
+
+
+    pdf.setDrawColor(
+        120,
+        130,
+        140
+    );
+
+
+    pdf.rect(
+        totalX,
+        y,
+        grandTotalLabelWidth,
+        grandTotalHeight,
+        "FD"
+    );
+
+
+    pdf.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    pdf.setFontSize(
+        8
+    );
+
+
+    pdf.setTextColor(
+        31,
+        41,
+        55
+    );
+
+
+    pdf.text(
+        "GRAND TOTAL",
+        totalX +
+        grandTotalLabelWidth / 2,
+        y + 5.2,
+        {
+            align: "center"
+        }
+    );
+
+
+    totalX +=
+        grandTotalLabelWidth;
+
+
+    /* ===============================
+        WORKING DAYS TOTAL
+    =============================== */
+
+    pdf.rect(
+        totalX,
+        y,
+        totalWidth,
+        grandTotalHeight,
+        "FD"
+    );
+
+
+    pdf.text(
+        String(
+            grandTotals.workingDays
+        ),
+        totalX +
+        totalWidth / 2,
+        y + 5.2,
+        {
+            align: "center"
+        }
+    );
+
+
+    totalX +=
+        totalWidth;
+
+
+    /* ===============================
+        OT TOTAL
+    =============================== */
+
+    pdf.rect(
+        totalX,
+        y,
+        totalWidth,
+        grandTotalHeight,
+        "FD"
+    );
+
+
+    pdf.text(
+        String(
+            grandTotals.overtimeDays
+        ),
+        totalX +
+        totalWidth / 2,
+        y + 5.2,
+        {
+            align: "center"
+        }
+    );
+
+
+    totalX +=
+        totalWidth;
+
+
+    /* ===============================
+        PAYABLE DAYS TOTAL
+    =============================== */
+
+    pdf.rect(
+        totalX,
+        y,
+        totalWidth,
+        grandTotalHeight,
+        "FD"
+    );
+
+
+    pdf.text(
+        String(
+            grandTotals.daysPayable
+        ),
+        totalX +
+        totalWidth / 2,
+        y + 5.2,
+        {
+            align: "center"
+        }
+    );
+
+
+    y +=
+        grandTotalHeight;
     /* ===============================
         FOOTER
     =============================== */
