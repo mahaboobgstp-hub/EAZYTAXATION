@@ -11,6 +11,10 @@ import {
     getLocations,
     getShifts
 } from "../../services/hr/employeeService";
+import {
+    getCompleteSalaryStructure,
+    saveCompleteSalaryStructure
+} from "../../services/hr/salaryStructureService";
 
 
 const defaultFormData = {
@@ -82,6 +86,47 @@ function EmployeeMaster() {
 
     const [formData, setFormData] =
         useState(defaultFormData);
+    const defaultSalaryStructure = {
+
+    id: null,
+
+    effective_from: "",
+
+    effective_to: "",
+
+    monthly_salary: "",
+
+    basic_amount: "",
+
+    hra_amount: "",
+
+    special_allowance: "",
+
+    other_allowance: "",
+
+    is_pf_applicable: false,
+
+    is_esi_applicable: false,
+
+    is_pt_applicable: false,
+
+    is_tds_applicable: false,
+
+    is_active: true,
+
+    remarks: ""
+
+};
+
+
+const [salaryStructure, setSalaryStructure] =
+    useState(
+        defaultSalaryStructure
+    );
+
+
+const [salaryComponents, setSalaryComponents] =
+    useState([]);
 
     const [editingId, setEditingId] =
         useState(null);
@@ -92,19 +137,28 @@ function EmployeeMaster() {
 
     useEffect(() => {
 
-    if (!currentCompanyId) {
+   if (!currentCompanyId) {
 
-        setEmployees([]);
-        setDepartments([]);
-        setDesignations([]);
-        setShifts([]);
-        setLocations([]);
+    setEmployees([]);
+    setDepartments([]);
+    setDesignations([]);
+    setShifts([]);
+    setLocations([]);
 
-        setFormData(defaultFormData);
-        setEditingId(null);
+    setFormData(
+        defaultFormData
+    );
 
-        return;
-    }
+    setSalaryStructure(
+        defaultSalaryStructure
+    );
+
+    setSalaryComponents([]);
+
+    setEditingId(null);
+
+    return;
+}
 
     loadEmployees(currentCompanyId);
     loadDepartments(currentCompanyId);
@@ -209,7 +263,32 @@ const loadLocations = async (companyId) => {
         }));
 
     };
+const handleSalaryStructureChange =
+    (e) => {
 
+        const {
+            name,
+            value,
+            type,
+            checked
+        } =
+            e.target;
+
+
+        setSalaryStructure(
+            prev => ({
+                ...prev,
+
+                [name]:
+
+                    type === "checkbox"
+                        ? checked
+                        : value
+
+            })
+        );
+
+    };
 
     const handleSubmit = async (e) => {
 
@@ -426,43 +505,210 @@ blood_group:
     };
 
 
-    const handleEdit = (employee) => {
+    const handleEdit = async (
+    employee
+) => {
 
-    setEditingId(employee.id);
+    try {
 
-    const editFormData = {
-        ...defaultFormData
-    };
+        setEditingId(
+            employee.id
+        );
 
-    Object.keys(defaultFormData).forEach((key) => {
+
+        const editFormData = {
+            ...defaultFormData
+        };
+
+
+        Object.keys(
+            defaultFormData
+        ).forEach(
+            key => {
+
+                if (
+
+                    employee[key] !== null &&
+
+                    employee[key] !== undefined
+
+                ) {
+
+                    editFormData[key] =
+                        employee[key];
+
+                }
+
+            }
+        );
+
+
+        setFormData(
+            editFormData
+        );
+
+
+        const salaryData =
+            await getCompleteSalaryStructure(
+                employee.id
+            );
+
 
         if (
-            employee[key] !== null &&
-            employee[key] !== undefined
+            salaryData.structure
         ) {
 
-            editFormData[key] = employee[key];
+            setSalaryStructure({
+
+                id:
+
+                    salaryData.structure.id,
+
+                effective_from:
+
+                    salaryData.structure
+                        .effective_from ||
+                    "",
+
+                effective_to:
+
+                    salaryData.structure
+                        .effective_to ||
+                    "",
+
+                monthly_salary:
+
+                    salaryData.structure
+                        .monthly_salary ??
+                    "",
+
+                basic_amount:
+
+                    salaryData.structure
+                        .basic_amount ??
+                    "",
+
+                hra_amount:
+
+                    salaryData.structure
+                        .hra_amount ??
+                    "",
+
+                special_allowance:
+
+                    salaryData.structure
+                        .special_allowance ??
+                    "",
+
+                other_allowance:
+
+                    salaryData.structure
+                        .other_allowance ??
+                    "",
+
+                is_pf_applicable:
+
+                    salaryData.structure
+                        .is_pf_applicable ??
+                    false,
+
+                is_esi_applicable:
+
+                    salaryData.structure
+                        .is_esi_applicable ??
+                    false,
+
+                is_pt_applicable:
+
+                    salaryData.structure
+                        .is_pt_applicable ??
+                    false,
+
+                is_tds_applicable:
+
+                    salaryData.structure
+                        .is_tds_applicable ??
+                    false,
+
+                is_active:
+
+                    salaryData.structure
+                        .is_active ??
+                    true,
+
+                remarks:
+
+                    salaryData.structure
+                        .remarks ||
+                    ""
+
+            });
 
         }
 
-    });
+        else {
 
-    setFormData(editFormData);
+            setSalaryStructure(
+                defaultSalaryStructure
+            );
 
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
+        }
+
+
+        setSalaryComponents(
+            salaryData.components ||
+            []
+        );
+
+
+        window.scrollTo({
+
+            top: 0,
+
+            behavior: "smooth"
+
+        });
+
+    }
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            "Error loading employee salary structure:",
+            error
+        );
+
+
+        alert(
+            error.message ||
+            "Unable to load salary structure."
+        );
+
+    }
 
 };
-
     const handleCancelEdit = () => {
 
-        setEditingId(null);
+    setEditingId(
+        null
+    );
 
-        setFormData(defaultFormData);
 
-    };
+    setFormData(
+        defaultFormData
+    );
+
+
+    setSalaryStructure(
+        defaultSalaryStructure
+    );
+
+
+    setSalaryComponents([]);
+
+};
 
 
     const handleDeactivate = async (employeeId) => {
