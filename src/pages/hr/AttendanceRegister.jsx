@@ -1078,14 +1078,11 @@ function generateAttendanceRegisterPdf() {
 
 
     const dateWidth =
-        Math.max(
-            7,
-            availableDateWidth /
-            Math.max(
-                dates.length,
-                1
-            )
-        );
+    availableDateWidth /
+    Math.max(
+        dates.length,
+        1
+    );
 
 
     const rowHeight =
