@@ -874,34 +874,7 @@ setSalaryComponents([]);
 
             <form
                 onSubmit={handleSubmit}
-                <div
-    className="employee-tabs"
->
-
-    <button
-        type="button"
-        onClick={() =>
-            setActiveTab(
-                "basic"
-            )
-        }
-    >
-        Basic Details
-    </button>
-
-
-    <button
-        type="button"
-        onClick={() =>
-            setActiveTab(
-                "salary"
-            )
-        }
-    >
-        Salary Structure
-    </button>
-
-</div>
+               
                 style={{
                     display: "grid",
                     gridTemplateColumns:
@@ -913,7 +886,81 @@ setSalaryComponents([]);
                     marginBottom: "30px"
                 }}
             >
+                 <div
+        style={{
+            display: "flex",
+            gap: "10px",
+            marginBottom: "20px",
+            borderBottom:
+                "1px solid #ddd",
+            paddingBottom: "10px"
+        }}
+    >
 
+    <button
+            type="button"
+            onClick={() =>
+                setActiveTab(
+                    "basic"
+                )
+            }
+            style={{
+                padding:
+                    "10px 18px",
+                cursor:
+                    "pointer",
+                fontWeight:
+                    activeTab === "basic"
+                        ? "700"
+                        : "400"
+            }}
+        >
+
+            Basic Details
+
+        </button>
+
+
+        <button
+            type="button"
+            onClick={() =>
+                setActiveTab(
+                    "salary"
+                )
+            }
+            style={{
+                padding:
+                    "10px 18px",
+                cursor:
+                    "pointer",
+                fontWeight:
+                    activeTab === "salary"
+                        ? "700"
+                        : "400"
+            }}
+        >
+
+            Salary Structure
+
+        </button>
+
+    </div>
+
+
+    {activeTab === "basic" && (
+
+        <div
+            style={{
+                display:
+                    "grid",
+
+                gridTemplateColumns:
+                    "repeat(2, minmax(250px, 1fr))",
+
+                gap:
+                    "15px"
+            }}
+        >
                 <input
                     name="employee_code"
                     placeholder="Employee Code"
@@ -1064,13 +1111,7 @@ setSalaryComponents([]);
                 </select>
 
 
-                <input
-                    type="number"
-                    name="basic_salary"
-                    placeholder="Basic Salary"
-                    value={formData.basic_salary}
-                    onChange={handleChange}
-                />
+               
 
 
                 <select
@@ -1349,6 +1390,246 @@ setSalaryComponents([]);
         ))}
     </select>
 </div>
+        </div>
+                )}
+
+                {activeTab === "salary" && (
+
+    <div
+        style={{
+            display:
+                "grid",
+
+            gridTemplateColumns:
+                "repeat(2, minmax(250px, 1fr))",
+
+            gap:
+                "15px"
+        }}
+    >
+
+        <h3
+            style={{
+                gridColumn:
+                    "1 / -1"
+            }}
+        >
+
+            Salary Structure
+
+        </h3>
+
+
+        <label>
+
+            Effective From
+
+            <input
+                type="date"
+                name="effective_from"
+                value={
+                    salaryStructure.effective_from
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            />
+
+        </label>
+
+
+        <label>
+
+            Effective To
+
+            <input
+                type="date"
+                name="effective_to"
+                value={
+                    salaryStructure.effective_to
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            />
+
+        </label>
+
+
+        <input
+            type="number"
+            name="monthly_salary"
+            placeholder="Monthly Gross Salary"
+            value={
+                salaryStructure.monthly_salary
+            }
+            onChange={
+                handleSalaryStructureChange
+            }
+        />
+
+
+        <input
+            type="number"
+            name="basic_amount"
+            placeholder="Basic Salary"
+            value={
+                salaryStructure.basic_amount
+            }
+            onChange={
+                handleSalaryStructureChange
+            }
+        />
+
+
+        <input
+            type="number"
+            name="hra_amount"
+            placeholder="HRA"
+            value={
+                salaryStructure.hra_amount
+            }
+            onChange={
+                handleSalaryStructureChange
+            }
+        />
+
+
+        <input
+            type="number"
+            name="special_allowance"
+            placeholder="Special Allowance"
+            value={
+                salaryStructure.special_allowance
+            }
+            onChange={
+                handleSalaryStructureChange
+            }
+        />
+
+
+        <input
+            type="number"
+            name="other_allowance"
+            placeholder="Other Allowance"
+            value={
+                salaryStructure.other_allowance
+            }
+            onChange={
+                handleSalaryStructureChange
+            }
+        />
+
+
+        <h3
+            style={{
+                gridColumn:
+                    "1 / -1",
+
+                marginTop:
+                    "10px"
+            }}
+        >
+
+            Statutory Applicability
+
+        </h3>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                name="is_pf_applicable"
+                checked={
+                    salaryStructure.is_pf_applicable
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            />
+
+            {" "}
+            PF Applicable
+
+        </label>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                name="is_esi_applicable"
+                checked={
+                    salaryStructure.is_esi_applicable
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            />
+
+            {" "}
+            ESI Applicable
+
+        </label>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                name="is_pt_applicable"
+                checked={
+                    salaryStructure.is_pt_applicable
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            />
+
+            {" "}
+            Professional Tax Applicable
+
+        </label>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                name="is_tds_applicable"
+                checked={
+                    salaryStructure.is_tds_applicable
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            />
+
+            {" "}
+            TDS Applicable
+
+        </label>
+
+
+        <textarea
+            name="remarks"
+            placeholder="Salary Structure Remarks"
+            value={
+                salaryStructure.remarks
+            }
+            onChange={
+                handleSalaryStructureChange
+            }
+            style={{
+                gridColumn:
+                    "1 / -1"
+            }}
+        />
+
+    </div>
+
+)}
                 <div
                     style={{
                         gridColumn: "1 / -1"
