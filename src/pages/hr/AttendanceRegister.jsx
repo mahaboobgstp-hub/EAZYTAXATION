@@ -924,7 +924,132 @@ function getStatusForPdf(
 
 }
 
+function getPdfStatusStyle(
+    status
+) {
 
+    if (
+        status === "P"
+    ) {
+
+        return {
+            fill: [
+                220,
+                252,
+                231
+            ],
+
+            text: [
+                22,
+                101,
+                52
+            ]
+        };
+
+    }
+
+
+    if (
+        status === "A"
+    ) {
+
+        return {
+            fill: [
+                254,
+                226,
+                226
+            ],
+
+            text: [
+                185,
+                28,
+                28
+            ]
+        };
+
+    }
+
+
+    if (
+        status === "H"
+    ) {
+
+        return {
+            fill: [
+                254,
+                249,
+                195
+            ],
+
+            text: [
+                133,
+                77,
+                14
+            ]
+        };
+
+    }
+
+
+    if (
+        status === "L"
+    ) {
+
+        return {
+            fill: [
+                237,
+                233,
+                254
+            ],
+
+            text: [
+                109,
+                40,
+                217
+            ]
+        };
+
+    }
+
+
+    if (
+        status === "HD"
+    ) {
+
+        return {
+            fill: [
+                255,
+                237,
+                213
+            ],
+
+            text: [
+                194,
+                65,
+                12
+            ]
+        };
+
+    }
+
+
+    return {
+
+        fill: [
+            243,
+            244,
+            246
+        ],
+
+        text: [
+            156,
+            163,
+            175
+        ]
+
+    };
+
+}
 /* ==========================================
     DOWNLOAD FULL REGISTER PDF
 ========================================== */
@@ -1095,191 +1220,268 @@ function generateAttendanceRegisterPdf() {
 
     function drawHeader() {
 
-        let x =
-            margin;
+    let x =
+        margin;
 
 
-        pdf.setFillColor(
-            230,
-            230,
-            230
-        );
+    const headerHeight =
+        9;
 
 
-        pdf.rect(
-            x,
-            y,
-            employeeWidth,
-            8,
-            "F"
-        );
+    /* ===============================
+        COMMON HEADER STYLE
+    =============================== */
+
+    pdf.setDrawColor(
+        170,
+        180,
+        190
+    );
 
 
-        pdf.setDrawColor(
-            150,
-            150,
-            150
-        );
+    pdf.setTextColor(
+        31,
+        41,
+        55
+    );
 
 
-        pdf.rect(
-            x,
-            y,
-            employeeWidth,
-            8
-        );
+    pdf.setFont(
+        "helvetica",
+        "bold"
+    );
 
 
-        pdf.setFont(
-            "helvetica",
-            "bold"
-        );
+    /* ===============================
+        EMPLOYEE HEADER
+    =============================== */
+
+    pdf.setFillColor(
+        226,
+        232,
+        240
+    );
 
 
-        pdf.setFontSize(
-            7
-        );
+    pdf.rect(
+        x,
+        y,
+        employeeWidth,
+        headerHeight,
+        "FD"
+    );
 
 
-        pdf.text(
-            "Employee",
-            x + employeeWidth / 2,
-            y + 5,
-            {
-                align: "center"
-            }
-        );
+    pdf.setFontSize(
+        8
+    );
 
 
-        x +=
-            employeeWidth;
+    pdf.text(
+        "Employee",
+        x + employeeWidth / 2,
+        y + 5.8,
+        {
+            align: "center"
+        }
+    );
 
 
-        pdf.rect(
-            x,
-            y,
-            typeWidth,
-            8,
-            "F"
-        );
+    x +=
+        employeeWidth;
 
 
-        pdf.rect(
-            x,
-            y,
-            typeWidth,
-            8
-        );
+    /* ===============================
+        TYPE HEADER
+    =============================== */
+
+    pdf.setFillColor(
+        226,
+        232,
+        240
+    );
 
 
-        pdf.text(
-            "Type",
-            x + typeWidth / 2,
-            y + 5,
-            {
-                align: "center"
-            }
-        );
+    pdf.rect(
+        x,
+        y,
+        typeWidth,
+        headerHeight,
+        "FD"
+    );
 
 
-        x +=
-            typeWidth;
+    pdf.setFontSize(
+        7
+    );
 
 
-        dates.forEach(
-            date => {
-
-                pdf.rect(
-                    x,
-                    y,
-                    dateWidth,
-                    8,
-                    "F"
-                );
+    pdf.text(
+        "Type",
+        x + typeWidth / 2,
+        y + 5.8,
+        {
+            align: "center"
+        }
+    );
 
 
-                pdf.rect(
-                    x,
-                    y,
-                    dateWidth,
-                    8
-                );
+    x +=
+        typeWidth;
 
 
-                pdf.setFontSize(
-                    5
-                );
+    /* ===============================
+        DATE HEADERS
+    =============================== */
+
+    dates.forEach(
+        date => {
+
+            pdf.setFillColor(
+                241,
+                245,
+                249
+            );
 
 
-                pdf.text(
-                    formatVerticalDate(
-                        date
-                    ),
-                    x + dateWidth / 2,
-                    y + 5,
-                    {
-                        align: "center"
-                    }
-                );
+            pdf.setTextColor(
+                31,
+                41,
+                55
+            );
 
 
-                x +=
-                    dateWidth;
-
-            }
-        );
-
-
-        [
-            "WD",
-            "OT",
-            "Pay"
-        ].forEach(
-            title => {
-
-                pdf.setFontSize(
-                    6
-                );
+            pdf.setDrawColor(
+                170,
+                180,
+                190
+            );
 
 
-                pdf.rect(
-                    x,
-                    y,
-                    totalWidth,
-                    8,
-                    "F"
-                );
+            pdf.rect(
+                x,
+                y,
+                dateWidth,
+                headerHeight,
+                "FD"
+            );
 
 
-                pdf.rect(
-                    x,
-                    y,
-                    totalWidth,
-                    8
-                );
+            pdf.setFont(
+                "helvetica",
+                "bold"
+            );
 
 
-                pdf.text(
-                    title,
-                    x + totalWidth / 2,
-                    y + 5,
-                    {
-                        align: "center"
-                    }
-                );
+            pdf.setFontSize(
+                5.5
+            );
 
 
-                x +=
-                    totalWidth;
+            pdf.text(
+                formatVerticalDate(
+                    date
+                ),
+                x + dateWidth / 2,
+                y + 5.8,
+                {
+                    align: "center"
+                }
+            );
 
-            }
-        );
+
+            x +=
+                dateWidth;
+
+        }
+    );
 
 
-        y +=
-            8;
+    /* ===============================
+        TOTAL HEADERS
+    =============================== */
 
-    }
+    [
+        "WD",
+        "OT",
+        "Pay"
+    ].forEach(
+        title => {
+
+            pdf.setFillColor(
+                226,
+                232,
+                240
+            );
+
+
+            pdf.setTextColor(
+                31,
+                41,
+                55
+            );
+
+
+            pdf.setDrawColor(
+                170,
+                180,
+                190
+            );
+
+
+            pdf.rect(
+                x,
+                y,
+                totalWidth,
+                headerHeight,
+                "FD"
+            );
+
+
+            pdf.setFont(
+                "helvetica",
+                "bold"
+            );
+
+
+            pdf.setFontSize(
+                6.5
+            );
+
+
+            pdf.text(
+                title,
+                x + totalWidth / 2,
+                y + 5.8,
+                {
+                    align: "center"
+                }
+            );
+
+
+            x +=
+                totalWidth;
+
+        }
+    );
+
+
+    /*
+        Reset colour for
+        employee rows
+    */
+
+    pdf.setTextColor(
+        31,
+        41,
+        55
+    );
+
+
+    y +=
+        headerHeight;
+
+}
 
 
     drawHeader();
@@ -1374,28 +1576,79 @@ function generateAttendanceRegisterPdf() {
                 typeWidth;
 
 
-            dates.forEach(
-                date => {
+           dates.forEach(
+    date => {
 
-                    const record =
-                        attendanceMap[
-                            `${employee.id}_${date}`
-                        ];
-
-
-                    const status =
-                        getAttendanceCode(
-                            record
-                        );
+        const record =
+            attendanceMap[
+                `${employee.id}_${date}`
+            ];
 
 
-                    pdf.rect(
-                        x,
-                        y,
-                        dateWidth,
-                        rowHeight
-                    );
+        const status =
+            getAttendanceCode(
+                record
+            );
 
+
+        const statusStyle =
+            getPdfStatusStyle(
+                status
+            );
+
+
+        pdf.setFillColor(
+            ...statusStyle.fill
+        );
+
+
+        pdf.setDrawColor(
+            190,
+            190,
+            190
+        );
+
+
+        pdf.rect(
+            x,
+            y,
+            dateWidth,
+            rowHeight,
+            "FD"
+        );
+
+
+        pdf.setTextColor(
+            ...statusStyle.text
+        );
+
+
+        pdf.setFont(
+            "helvetica",
+            "bold"
+        );
+
+
+        pdf.setFontSize(
+            6.5
+        );
+
+
+        pdf.text(
+            status || "",
+            x + dateWidth / 2,
+            y + 4.2,
+            {
+                align: "center"
+            }
+        );
+
+
+        x +=
+            dateWidth;
+
+    }
+);
 
                     pdf.setFont(
                         "helvetica",
@@ -1404,7 +1657,7 @@ function generateAttendanceRegisterPdf() {
 
 
                     pdf.setFontSize(
-                        6
+                        7.5
                     );
 
 
@@ -1502,24 +1755,85 @@ function generateAttendanceRegisterPdf() {
 
 
                     const overtime =
-                        hasOvertime(
-                            record
-                        );
+    hasOvertime(
+        record
+    );
 
 
-                    pdf.rect(
-                        x,
-                        y,
-                        dateWidth,
-                        rowHeight
-                    );
+if (
+    overtime
+) {
+
+    pdf.setFillColor(
+        219,
+        234,
+        254
+    );
 
 
-                    pdf.text(
-                        overtime
-                            ? "P"
-                            : "",
-                        x + dateWidth / 2,
+    pdf.setTextColor(
+        29,
+        78,
+        216
+    );
+
+}
+else {
+
+    pdf.setFillColor(
+        243,
+        244,
+        246
+    );
+
+
+    pdf.setTextColor(
+        156,
+        163,
+        175
+    );
+
+}
+
+
+pdf.setDrawColor(
+    190,
+    190,
+    190
+);
+
+
+pdf.rect(
+    x,
+    y,
+    dateWidth,
+    rowHeight,
+    "FD"
+);
+
+
+pdf.setFont(
+    "helvetica",
+    "bold"
+);
+
+
+pdf.setFontSize(
+    6.5
+);
+
+
+pdf.text(
+    overtime
+        ? "P"
+        : "",
+    x + dateWidth / 2,
+    y + 4.2,
+    {
+        align: "center"
+    }
+);                       
+                    x + dateWidth / 2,
                         y + 4,
                         {
                             align: "center"
