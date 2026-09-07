@@ -8,8 +8,19 @@ import {
 ========================================= */
 
 export async function getEmployeeSalaryStructure(
-    employeeId
+    employeeId,
+    companyId
 ) {
+
+    if (
+        !employeeId ||
+        !companyId
+    ) {
+
+        return null;
+
+    }
+
 
     const {
         data,
@@ -25,6 +36,10 @@ export async function getEmployeeSalaryStructure(
             .eq(
                 "employee_id",
                 employeeId
+            )
+            .eq(
+                "company_id",
+                companyId
             )
             .eq(
                 "is_active",
@@ -45,7 +60,6 @@ export async function getEmployeeSalaryStructure(
     return data;
 
 }
-
 
 /* =========================================
    GET EMPLOYEE SALARY COMPONENTS
@@ -111,12 +125,14 @@ export async function getEmployeeSalaryComponents(
 ========================================= */
 
 export async function getCompleteSalaryStructure(
-    employeeId
+    employeeId,
+    companyId
 ) {
 
     const structure =
         await getEmployeeSalaryStructure(
-            employeeId
+            employeeId,
+            companyId
         );
 
 
@@ -151,7 +167,6 @@ export async function getCompleteSalaryStructure(
     };
 
 }
-
 
 /* =========================================
    SAVE EMPLOYEE SALARY STRUCTURE
