@@ -1925,7 +1925,7 @@ pdf.text(
                         {
                             align: "center"
                         }
-                    );
+                    
 
 
                     x +=
