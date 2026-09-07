@@ -459,34 +459,81 @@ blood_group:
             };
 
 
-            if (editingId) {
+            let savedEmployee;
 
-                await updateEmployee(
-                    editingId,
-                    employeeData,
-                    currentCompanyId
-                );
 
-                alert(
-                    "Employee updated successfully."
-                );
+if (editingId) {
 
-            } else {
+    savedEmployee =
+        await updateEmployee(
 
-                await createEmployee(
-                    employeeData,
-                    currentCompanyId
-                );
+            editingId,
 
-                alert(
-                    "Employee created successfully."
-                );
+            employeeData,
 
-            }
+            currentCompanyId
 
+        );
+
+}
+
+else {
+
+    savedEmployee =
+        await createEmployee(
+
+            employeeData,
+
+            currentCompanyId
+
+        );
+
+}
+if (
+
+    salaryStructure.monthly_salary !== "" ||
+
+    salaryStructure.basic_amount !== "" ||
+
+    salaryStructure.hra_amount !== "" ||
+
+    salaryStructure.special_allowance !== "" ||
+
+    salaryStructure.other_allowance !== ""
+
+) {
+
+    await saveCompleteSalaryStructure(
+
+        {
+
+            ...salaryStructure,
+
+            company_id:
+
+                currentCompanyId,
+
+            employee_id:
+
+                savedEmployee.id
+
+        },
+
+        salaryComponents
+
+    );
+
+}
 
             setFormData(defaultFormData);
 
+            
+            setSalaryStructure(
+    defaultSalaryStructure
+);
+
+
+setSalaryComponents([]);
             setEditingId(null);
 
             await loadEmployees(
