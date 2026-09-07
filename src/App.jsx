@@ -22,6 +22,8 @@ import ShiftMaster from "./pages/hr/ShiftMaster";
 import LocationMaster from "./pages/hr/LocationMaster";
 import AttendanceRegister
 from "./pages/hr/AttendanceRegister";
+import PayrollProcessing
+from "./pages/hr/PayrollProcessing";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -199,6 +201,10 @@ function App() {
           <Route
     path="locations"
     element={<LocationMaster />}
+/>
+          <Route
+    path="payroll-processing"
+    element={<PayrollProcessing />}
 />
         </Route>
         
