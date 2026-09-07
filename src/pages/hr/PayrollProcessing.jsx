@@ -8,7 +8,10 @@ import {
 } from "../../context/CompanyContext";
 
 import {
-    getActiveEmployees
+    getActiveEmployees,
+    getDepartments,
+    getDesignations,
+    getLocations
 } from "../../services/hr/employeeService";
 
 import {
@@ -84,7 +87,27 @@ function PayrollProcessing() {
     const [selectedEmployee, setSelectedEmployee] =
         useState(null);
 
+// =============================================
+// PAYROLL FILTERS
+// =============================================
 
+const [locations, setLocations] =
+    useState([]);
+
+const [departments, setDepartments] =
+    useState([]);
+
+const [designations, setDesignations] =
+    useState([]);
+
+const [locationId, setLocationId] =
+    useState("");
+
+const [departmentId, setDepartmentId] =
+    useState("");
+
+const [designationId, setDesignationId] =
+    useState("");
 
     // =============================================
     // RESET WHEN COMPANY CHANGES
@@ -92,15 +115,114 @@ function PayrollProcessing() {
 
     useEffect(() => {
 
-        setPayrollEmployees([]);
+    const loadPayrollFilters =
+        async () => {
 
-        setSelectedEmployee(null);
+            // Reset payroll results
 
-        setError("");
+            setPayrollEmployees([]);
 
-    }, [
-        currentCompanyId
-    ]);
+            setSelectedEmployee(null);
+
+            setError("");
+
+
+            // Reset filters
+
+            setLocationId("");
+
+            setDepartmentId("");
+
+            setDesignationId("");
+
+
+            // No company selected
+
+            if (
+                !currentCompanyId
+            ) {
+
+                setLocations([]);
+
+                setDepartments([]);
+
+                setDesignations([]);
+
+                return;
+
+            }
+
+
+            try {
+
+                const [
+
+                    locationData,
+
+                    departmentData,
+
+                    designationData
+
+                ] =
+                    await Promise.all([
+
+                        getLocations(
+                            currentCompanyId
+                        ),
+
+                        getDepartments(
+                            currentCompanyId
+                        ),
+
+                        getDesignations(
+                            currentCompanyId
+                        )
+
+                    ]);
+
+
+                setLocations(
+                    locationData || []
+                );
+
+
+                setDepartments(
+                    departmentData || []
+                );
+
+
+                setDesignations(
+                    designationData || []
+                );
+
+            }
+
+            catch (
+                error
+            ) {
+
+                console.error(
+                    "Error loading payroll filters:",
+                    error
+                );
+
+
+                setError(
+                    error.message ||
+                    "Unable to load payroll filters."
+                );
+
+            }
+
+        };
+
+
+    loadPayrollFilters();
+
+
+}, [
+    currentCompanyId
+]);
 
 
 
@@ -926,7 +1048,88 @@ function PayrollProcessing() {
 
                     </div>
 
+{/* LOCATION */}
 
+<div>
+
+    <label>
+
+        Location
+
+    </label>
+
+
+    <br />
+
+
+    <select
+
+        value={
+            locationId
+        }
+
+        onChange={
+            event =>
+                setLocationId(
+                    event.target.value
+                )
+        }
+
+        style={{
+
+            marginTop:
+                "6px",
+
+            padding:
+                "8px",
+
+            minWidth:
+                "180px"
+
+        }}
+
+    >
+
+        <option value="">
+
+            All Locations
+
+        </option>
+
+
+        {
+
+            locations.map(
+
+                location => (
+
+                    <option
+
+                        key={
+                            location.id
+                        }
+
+                        value={
+                            location.id
+                        }
+
+                    >
+
+                        {
+                            location.location_name
+                        }
+
+                    </option>
+
+                )
+
+            )
+
+        }
+
+    </select>
+
+</div>
 
                     {/* PERIOD FROM */}
 
