@@ -3166,23 +3166,7 @@ const handleDownloadEmployeePdf = (
                     }}
                 >
 
-                    <button
-                        type="button"
-                        onClick={
-                            loadRegister
-                        }
-                        disabled={
-                            loading
-                        }
-                    >
-
-                        {
-                            loading
-                                ? "Loading..."
-                                : "View Register"
-                        }
-
-                    </button>
+                    
                     <button
     type="button"
     onClick={
@@ -3193,7 +3177,7 @@ const handleDownloadEmployeePdf = (
         filteredEmployees.length === 0
     }
 >
-    Download Register PDF
+    Download Register
 </button>
 
                 </div>
