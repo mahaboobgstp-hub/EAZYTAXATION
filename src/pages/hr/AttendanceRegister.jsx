@@ -1932,7 +1932,7 @@ pdf.text(
                         dateWidth;
 
                 }
-            );
+           
 
 
             y +=
