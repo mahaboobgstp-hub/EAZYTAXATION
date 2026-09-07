@@ -1933,7 +1933,7 @@ pdf.text(
 
                 }
            
-
+)
 
             y +=
                 rowHeight;
