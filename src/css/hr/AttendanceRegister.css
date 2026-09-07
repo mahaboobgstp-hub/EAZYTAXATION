@@ -27,3 +27,38 @@
     background: #ffffff;
     color: #999999;
 }
+.attendance-register-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+
+.attendance-register-actions button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.attendance-register-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+.employee-name-cell {
+    vertical-align: middle;
+    min-width: 180px;
+}
+
+
+.employee-pdf-button {
+    margin-top: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
