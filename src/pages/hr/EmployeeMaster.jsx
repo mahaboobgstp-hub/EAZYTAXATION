@@ -67,7 +67,37 @@ emergency_contact_mobile: "",
 
 blood_group: ""
 };
+const defaultSalaryStructure = {
 
+    id: null,
+
+    effective_from: "",
+
+    effective_to: "",
+
+    monthly_salary: "",
+
+    basic_amount: "",
+
+    hra_amount: "",
+
+    special_allowance: "",
+
+    other_allowance: "",
+
+    is_pf_applicable: false,
+
+    is_esi_applicable: false,
+
+    is_pt_applicable: false,
+
+    is_tds_applicable: false,
+
+    is_active: true,
+
+    remarks: ""
+
+};    
 
 function EmployeeMaster() {
 
@@ -127,6 +157,13 @@ const [salaryStructure, setSalaryStructure] =
 
 const [salaryComponents, setSalaryComponents] =
     useState([]);
+    const [
+    activeTab,
+    setActiveTab
+] =
+    useState(
+        "basic"
+    );
 
     const [editingId, setEditingId] =
         useState(null);
@@ -837,6 +874,34 @@ setSalaryComponents([]);
 
             <form
                 onSubmit={handleSubmit}
+                <div
+    className="employee-tabs"
+>
+
+    <button
+        type="button"
+        onClick={() =>
+            setActiveTab(
+                "basic"
+            )
+        }
+    >
+        Basic Details
+    </button>
+
+
+    <button
+        type="button"
+        onClick={() =>
+            setActiveTab(
+                "salary"
+            )
+        }
+    >
+        Salary Structure
+    </button>
+
+</div>
                 style={{
                     display: "grid",
                     gridTemplateColumns:
