@@ -684,6 +684,56 @@ setSalaryComponents([]);
                     salaryData.structure
                         .is_tds_applicable ??
                     false,
+                // =============================================
+    // OVERTIME CONFIGURATION
+    // =============================================
+
+    overtime_applicable:
+
+        Boolean(
+            overtime_applicable
+        ),
+
+    overtime_rate_type:
+
+        overtime_rate_type ||
+        "DAILY_RATE",
+
+    overtime_rate:
+
+        overtime_rate === "" ||
+        overtime_rate === null ||
+        overtime_rate === undefined
+
+            ? null
+
+            : Number(
+                overtime_rate
+            ),
+
+    overtime_rate_multiplier:
+
+        overtime_rate_multiplier === "" ||
+        overtime_rate_multiplier === null ||
+        overtime_rate_multiplier === undefined
+
+            ? 1
+
+            : Number(
+                overtime_rate_multiplier
+            ),
+
+    overtime_fixed_rate:
+
+        overtime_fixed_rate === "" ||
+        overtime_fixed_rate === null ||
+        overtime_fixed_rate === undefined
+
+            ? null
+
+            : Number(
+                overtime_fixed_rate
+            ),
 
                 is_active:
 
