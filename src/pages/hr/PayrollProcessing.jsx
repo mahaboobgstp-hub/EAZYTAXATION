@@ -1528,10 +1528,10 @@ const employees =
 
     {" "}
 
-    {selectedLocation
+    {locationId
         ? locations.find(
             location =>
-                location.id === selectedLocation
+                location.id === locationId
         )?.location_name
         : "All Locations"
     }
