@@ -532,12 +532,79 @@ const [designationId, setDesignationId] =
                 // GET ACTIVE EMPLOYEES
                 // ---------------------------------
 
-                const employees =
-                    await getActiveEmployees(
+                const allEmployees =
+    await getActiveEmployees(
 
-                        currentCompanyId
+        currentCompanyId
 
-                    );
+    );
+
+
+
+const employees =
+    allEmployees.filter(
+
+        employee => {
+
+            // ---------------------------------
+            // LOCATION FILTER
+            // ---------------------------------
+
+            if (
+
+                locationId &&
+
+                employee.location_id !==
+                locationId
+
+            ) {
+
+                return false;
+
+            }
+
+
+            // ---------------------------------
+            // DEPARTMENT FILTER
+            // ---------------------------------
+
+            if (
+
+                departmentId &&
+
+                employee.department_id !==
+                departmentId
+
+            ) {
+
+                return false;
+
+            }
+
+
+            // ---------------------------------
+            // DESIGNATION FILTER
+            // ---------------------------------
+
+            if (
+
+                designationId &&
+
+                employee.designation_id !==
+                designationId
+
+            ) {
+
+                return false;
+
+            }
+
+
+            return true;
+
+        }
+
+    );
 
 
 
@@ -1131,6 +1198,168 @@ const [designationId, setDesignationId] =
 
 </div>
 
+{/* DEPARTMENT */}
+
+<div>
+
+    <label>
+
+        Department
+
+    </label>
+
+    <br />
+
+    <select
+
+        value={
+            departmentId
+        }
+
+        onChange={
+            event =>
+                setDepartmentId(
+                    event.target.value
+                )
+        }
+
+        style={{
+
+            marginTop:
+                "6px",
+
+            padding:
+                "8px",
+
+            minWidth:
+                "180px"
+
+        }}
+
+    >
+
+        <option value="">
+
+            All Departments
+
+        </option>
+
+
+        {
+
+            departments.map(
+
+                department => (
+
+                    <option
+
+                        key={
+                            department.id
+                        }
+
+                        value={
+                            department.id
+                        }
+
+                    >
+
+                        {
+                            department.department_name
+                        }
+
+                    </option>
+
+                )
+
+            )
+
+        }
+
+    </select>
+
+</div>
+
+                    {/* DESIGNATION */}
+
+<div>
+
+    <label>
+
+        Designation
+
+    </label>
+
+    <br />
+
+    <select
+
+        value={
+            designationId
+        }
+
+        onChange={
+            event =>
+                setDesignationId(
+                    event.target.value
+                )
+        }
+
+        style={{
+
+            marginTop:
+                "6px",
+
+            padding:
+                "8px",
+
+            minWidth:
+                "180px"
+
+        }}
+
+    >
+
+        <option value="">
+
+            All Designations
+
+        </option>
+
+
+        {
+
+            designations.map(
+
+                designation => (
+
+                    <option
+
+                        key={
+                            designation.id
+                        }
+
+                        value={
+                            designation.id
+                        }
+
+                    >
+
+                        {
+                            designation.designation_name
+                        }
+
+                    </option>
+
+                )
+
+            )
+
+        }
+
+    </select>
+
+</div>
+                    
                     {/* PERIOD FROM */}
 
                     <div>
@@ -1282,7 +1511,52 @@ const [designationId, setDesignationId] =
 
             </div>
 
+{/* FILTER SUMMARY */}
 
+<div
+    style={{
+        marginTop: "15px",
+        marginBottom: "20px",
+        padding: "10px 15px",
+        border: "1px solid #d1d5db",
+        borderRadius: "6px",
+        background: "#f8fafc",
+        fontSize: "14px"
+    }}
+>
+    <strong>Showing Payroll For:</strong>
+
+    {" "}
+
+    {selectedLocation
+        ? locations.find(
+            location =>
+                location.id === selectedLocation
+        )?.location_name
+        : "All Locations"
+    }
+
+    {" | "}
+
+    {selectedDepartment
+        ? departments.find(
+            department =>
+                department.id === selectedDepartment
+        )?.department_name
+        : "All Departments"
+    }
+
+    {" | "}
+
+    {selectedDesignation
+        ? designations.find(
+            designation =>
+                designation.id === selectedDesignation
+        )?.designation_name
+        : "All Designations"
+    }
+
+</div>
 
             {/* =====================================
                 ERROR
