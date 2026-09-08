@@ -93,6 +93,22 @@ const defaultSalaryStructure = {
 
     is_tds_applicable: false,
 
+
+    // =============================================
+    // OVERTIME CONFIGURATION
+    // =============================================
+
+    overtime_applicable: false,
+
+    overtime_rate_type: "DAILY_RATE",
+
+    overtime_rate: "",
+
+    overtime_rate_multiplier: 1,
+
+    overtime_fixed_rate: "",
+
+
     is_active: true,
 
     remarks: ""
