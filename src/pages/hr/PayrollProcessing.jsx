@@ -661,11 +661,17 @@ const employees =
                     // -----------------------------
 
                     const salaryStructure =
-                        await getEmployeeSalaryStructure(
+    await getEmployeeSalaryStructure(
 
-                            employee.id
+        employee.id,
 
-                        );
+        currentCompanyId,
+
+        payrollPeriod.period_from,
+
+        payrollPeriod.period_to
+
+    );
 
 
                     // -----------------------------
