@@ -7,12 +7,16 @@ import { supabase } from "../../supabase/supabaseClient";
 
 export async function getEmployeeSalaryStructure(
     employeeId,
-    companyId
+    companyId,
+    periodFrom,
+    periodTo
 ) {
 
     if (
         !employeeId ||
-        !companyId
+        !companyId ||
+        !periodFrom ||
+        !periodTo
     ) {
 
         return null;
@@ -43,6 +47,23 @@ export async function getEmployeeSalaryStructure(
                 "is_active",
                 true
             )
+            .lte(
+                "effective_from",
+                periodTo
+            )
+            .or(
+                `effective_to.is.null,effective_to.gte.${periodFrom}`
+            )
+            .order(
+                "effective_from",
+                {
+                    ascending:
+                        false
+                }
+            )
+            .limit(
+                1
+            )
             .maybeSingle();
 
 
@@ -58,7 +79,6 @@ export async function getEmployeeSalaryStructure(
     return data;
 
 }
-
 /* =========================================
    GET EMPLOYEE SALARY COMPONENTS
 ========================================= */
