@@ -132,38 +132,7 @@ function EmployeeMaster() {
 
     const [formData, setFormData] =
         useState(defaultFormData);
-    const defaultSalaryStructure = {
-
-    id: null,
-
-    effective_from: "",
-
-    effective_to: "",
-
-    monthly_salary: "",
-
-    basic_amount: "",
-
-    hra_amount: "",
-
-    special_allowance: "",
-
-    other_allowance: "",
-
-    is_pf_applicable: false,
-
-    is_esi_applicable: false,
-
-    is_pt_applicable: false,
-
-    is_tds_applicable: false,
-
-    is_active: true,
-
-    remarks: ""
-
-};
-
+    
 
 const [salaryStructure, setSalaryStructure] =
     useState(
