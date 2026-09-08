@@ -1538,20 +1538,20 @@ const employees =
 
     {" | "}
 
-    {selectedDepartment
+    {departmentId
         ? departments.find(
             department =>
-                department.id === selectedDepartment
+                department.id === departmentId
         )?.department_name
         : "All Departments"
     }
 
     {" | "}
 
-    {selectedDesignation
+    {designationId
         ? designations.find(
             designation =>
-                designation.id === selectedDesignation
+                designation.id === designationId
         )?.designation_name
         : "All Designations"
     }
