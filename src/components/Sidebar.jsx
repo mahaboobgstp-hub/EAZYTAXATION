@@ -303,7 +303,7 @@ function Sidebar() {
 
                             <NavLink
 
-                                to="/gst-rates"
+                                to="/app/gst-rates"
 
                                 className="submenu-link"
 
