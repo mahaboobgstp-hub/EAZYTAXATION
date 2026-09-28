@@ -36,6 +36,7 @@ import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import SalesRegister from "./pages/sales/SalesRegister";
+import GSTRates from "./pages/GSTRates";
 
 function App() {
 
@@ -133,6 +134,11 @@ function App() {
             path="sales"
             element={<SalesInvoice />}
           />
+
+          <Route
+    path="/gst-rates"
+    element={<GSTRates />}
+/>
 <Route
   path="delivery-challans"
   element={<DeliveryChallan />}
