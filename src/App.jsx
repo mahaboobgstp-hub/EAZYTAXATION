@@ -136,7 +136,7 @@ function App() {
           />
 
           <Route
-    path="gst-rates"
+    path="/app/gst-rates"
     element={<GSTRates />}
 />
 <Route
