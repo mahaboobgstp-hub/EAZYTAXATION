@@ -534,23 +534,23 @@ if (
 ) {
 
     await saveCompleteSalaryStructure(
+    {
 
-        {
+        ...salaryStructure,
 
-            ...salaryStructure,
+        monthly_salary:
+            grossSalary,
 
-            company_id:
-                currentCompanyId,
+        company_id:
+            currentCompanyId,
 
-            employee_id:
-                savedEmployee.id
+        employee_id:
+            savedEmployee.id
 
-        },
+    },
 
-        salaryComponents
-
-    );
-
+    salaryComponents
+);
 }
             setFormData(defaultFormData);
 
@@ -885,7 +885,66 @@ overtime_fixed_rate:
         }
 
     };
+    // =============================================
+    // SALARY CONTRIBUTION & CTC CALCULATIONS
+    // =============================================
 
+    const basicAmount =
+        Number(salaryStructure.basic_amount || 0);
+
+    const grossSalary =
+        Number(salaryStructure.basic_amount || 0) +
+        Number(salaryStructure.hra_amount || 0) +
+        Number(salaryStructure.da_amount || 0) +
+        Number(salaryStructure.special_allowance || 0) +
+        Number(salaryStructure.other_allowance || 0);
+
+    const employeePfRate =
+        Number(salaryStructure.employee_pf_rate || 0);
+
+    const employerPfRate =
+        Number(salaryStructure.employer_pf_rate || 0);
+
+    const employeeEsiRate =
+        Number(salaryStructure.employee_esi_rate || 0);
+
+    const employerEsiRate =
+        Number(salaryStructure.employer_esi_rate || 0);
+
+    const employeePfAmount =
+        salaryStructure.is_pf_applicable
+            ? (basicAmount * employeePfRate) / 100
+            : 0;
+
+    const employerPfAmount =
+        salaryStructure.is_pf_applicable
+            ? (basicAmount * employerPfRate) / 100
+            : 0;
+
+    const employeeEsiAmount =
+        salaryStructure.is_esi_applicable
+            ? (grossSalary * employeeEsiRate) / 100
+            : 0;
+
+    const employerEsiAmount =
+        salaryStructure.is_esi_applicable
+            ? (grossSalary * employerEsiRate) / 100
+            : 0;
+
+    const totalEmployeeContribution =
+        employeePfAmount +
+        employeeEsiAmount;
+
+    const totalEmployerContribution =
+        employerPfAmount +
+        employerEsiAmount;
+
+    const monthlyCtc =
+        grossSalary +
+        totalEmployerContribution;
+
+    const annualCtc =
+        monthlyCtc * 12;
 
     return (
 
@@ -1728,7 +1787,7 @@ overtime_fixed_rate:
     style={{
         gridColumn: "1 / -1",
         marginTop: "15px",
-        padding: "15px",
+        padding: "18px",
         border: "1px solid #ddd",
         borderRadius: "6px",
         background: "#f8f9fa"
@@ -1739,43 +1798,166 @@ overtime_fixed_rate:
         Salary Summary
     </h3>
 
+    {/* ================================
+        SALARY BREAKUP
+    ================================= */}
+
+    <h4>
+        Salary Breakup
+    </h4>
+
     <div
         style={{
             display: "grid",
             gridTemplateColumns:
                 "repeat(2, minmax(250px, 1fr))",
-            gap: "10px"
+            gap: "10px",
+            marginBottom: "15px"
         }}
     >
 
         <div>
             <strong>Basic:</strong>{" "}
-            ₹{Number(salaryStructure.basic_amount || 0).toFixed(2)}
+            ₹{basicAmount.toFixed(2)}
         </div>
 
         <div>
             <strong>HRA:</strong>{" "}
-            ₹{Number(salaryStructure.hra_amount || 0).toFixed(2)}
+            ₹{Number(
+                salaryStructure.hra_amount || 0
+            ).toFixed(2)}
         </div>
 
         <div>
             <strong>DA:</strong>{" "}
-            ₹{Number(salaryStructure.da_amount || 0).toFixed(2)}
+            ₹{Number(
+                salaryStructure.da_amount || 0
+            ).toFixed(2)}
         </div>
 
         <div>
             <strong>Special Allowance:</strong>{" "}
-            ₹{Number(salaryStructure.special_allowance || 0).toFixed(2)}
+            ₹{Number(
+                salaryStructure.special_allowance || 0
+            ).toFixed(2)}
         </div>
 
         <div>
             <strong>Other Allowance:</strong>{" "}
-            ₹{Number(salaryStructure.other_allowance || 0).toFixed(2)}
+            ₹{Number(
+                salaryStructure.other_allowance || 0
+            ).toFixed(2)}
         </div>
 
         <div>
             <strong>Gross Salary:</strong>{" "}
-            ₹{Number(salaryStructure.monthly_salary || 0).toFixed(2)}
+            ₹{grossSalary.toFixed(2)}
+        </div>
+
+    </div>
+
+
+    {/* ================================
+        EMPLOYEE CONTRIBUTIONS
+    ================================= */}
+
+    <h4>
+        Employee Contributions / Deductions
+    </h4>
+
+    <div
+        style={{
+            display: "grid",
+            gridTemplateColumns:
+                "repeat(2, minmax(250px, 1fr))",
+            gap: "10px",
+            marginBottom: "15px"
+        }}
+    >
+
+        <div>
+            <strong>Employee PF:</strong>{" "}
+            ₹{employeePfAmount.toFixed(2)}
+        </div>
+
+        <div>
+            <strong>Employee ESI:</strong>{" "}
+            ₹{employeeEsiAmount.toFixed(2)}
+        </div>
+
+        <div>
+            <strong>Total Employee Contribution:</strong>{" "}
+            ₹{totalEmployeeContribution.toFixed(2)}
+        </div>
+
+    </div>
+
+
+    {/* ================================
+        EMPLOYER CONTRIBUTIONS
+    ================================= */}
+
+    <h4>
+        Employer Contributions
+    </h4>
+
+    <div
+        style={{
+            display: "grid",
+            gridTemplateColumns:
+                "repeat(2, minmax(250px, 1fr))",
+            gap: "10px",
+            marginBottom: "15px"
+        }}
+    >
+
+        <div>
+            <strong>Employer PF:</strong>{" "}
+            ₹{employerPfAmount.toFixed(2)}
+        </div>
+
+        <div>
+            <strong>Employer ESI:</strong>{" "}
+            ₹{employerEsiAmount.toFixed(2)}
+        </div>
+
+        <div>
+            <strong>Total Employer Contribution:</strong>{" "}
+            ₹{totalEmployerContribution.toFixed(2)}
+        </div>
+
+    </div>
+
+
+    {/* ================================
+        CTC
+    ================================= */}
+
+    <div
+        style={{
+            marginTop: "10px",
+            paddingTop: "15px",
+            borderTop: "1px solid #ccc"
+        }}
+    >
+
+        <div
+            style={{
+                fontSize: "18px",
+                fontWeight: "700"
+            }}
+        >
+            Monthly CTC: ₹{monthlyCtc.toFixed(2)}
+        </div>
+
+        <div
+            style={{
+                fontSize: "18px",
+                fontWeight: "700",
+                marginTop: "8px"
+            }}
+        >
+            Annual CTC: ₹{annualCtc.toFixed(2)}
         </div>
 
     </div>
