@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useCompany } from "../../context/CompanyContext";
-import "./EmployeeMaster.css";
+import "../../css/hr/EmployeeMaster.css";
 
 import {
     getEmployees,
