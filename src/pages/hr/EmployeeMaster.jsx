@@ -95,11 +95,8 @@ employee_esi_rate: 0.75,
 
 employer_esi_rate: 3.25,
 
-gratuity_applicable: false,
 
-gratuity_rate: 4.81,
-    other_allowance: "",
-
+    
     is_pf_applicable: false,
 
     is_esi_applicable: false,
@@ -308,25 +305,32 @@ const handleSalaryStructureChange =
             value,
             type,
             checked
-        } =
-            e.target;
+        } = e.target;
 
+        setSalaryStructure(prev => {
 
-        setSalaryStructure(
-            prev => ({
+            const updated = {
                 ...prev,
-
                 [name]:
-
                     type === "checkbox"
                         ? checked
                         : value
+            };
 
-            })
-        );
+            const grossSalary =
+                Number(updated.basic_amount || 0) +
+                Number(updated.hra_amount || 0) +
+                Number(updated.da_amount || 0) +
+                Number(updated.special_allowance || 0) +
+                Number(updated.other_allowance || 0);
+
+            updated.monthly_salary = grossSalary;
+
+            return updated;
+
+        });
 
     };
-
     const handleSubmit = async (e) => {
 
         e.preventDefault();
@@ -706,17 +710,6 @@ employer_esi_rate:
         .employer_esi_rate ??
     3.25,
 
-gratuity_applicable:
-
-    salaryData.structure
-        .gratuity_applicable ??
-    false,
-
-gratuity_rate:
-
-    salaryData.structure
-        .gratuity_rate ??
-    4.81,
                 
                 is_pf_applicable:
 
@@ -747,51 +740,33 @@ gratuity_rate:
 
     overtime_applicable:
 
-        Boolean(
-            overtime_applicable
-        ),
+    salaryData.structure
+        .overtime_applicable ??
+    false,
 
-    overtime_rate_type:
+overtime_rate_type:
 
-        overtime_rate_type ||
-        "DAILY_RATE",
+    salaryData.structure
+        .overtime_rate_type ||
+    "DAILY_RATE",
 
-    overtime_rate:
+overtime_rate:
 
-        overtime_rate === "" ||
-        overtime_rate === null ||
-        overtime_rate === undefined
+    salaryData.structure
+        .overtime_rate ?? 
+    "",
 
-            ? null
+overtime_rate_multiplier:
 
-            : Number(
-                overtime_rate
-            ),
+    salaryData.structure
+        .overtime_rate_multiplier ??
+    1,
 
-    overtime_rate_multiplier:
+overtime_fixed_rate:
 
-        overtime_rate_multiplier === "" ||
-        overtime_rate_multiplier === null ||
-        overtime_rate_multiplier === undefined
-
-            ? 1
-
-            : Number(
-                overtime_rate_multiplier
-            ),
-
-    overtime_fixed_rate:
-
-        overtime_fixed_rate === "" ||
-        overtime_fixed_rate === null ||
-        overtime_fixed_rate === undefined
-
-            ? null
-
-            : Number(
-                overtime_fixed_rate
-            ),
-
+    salaryData.structure
+        .overtime_fixed_rate ??
+    "",
                 is_active:
 
                     salaryData.structure
@@ -1543,17 +1518,20 @@ gratuity_rate:
         </label>
 
 
-        <input
-            type="number"
-            name="monthly_salary"
-            placeholder="Monthly Gross Salary"
-            value={
-                salaryStructure.monthly_salary
-            }
-            onChange={
-                handleSalaryStructureChange
-            }
-        />
+        <div>
+    <label>Monthly Gross Salary</label>
+
+    <input
+        type="number"
+        name="monthly_salary"
+        value={salaryStructure.monthly_salary}
+        readOnly
+        style={{
+            backgroundColor: "#f5f5f5",
+            fontWeight: "600"
+        }}
+    />
+</div>
 
 
         <input
@@ -1745,40 +1723,64 @@ gratuity_rate:
     </>
 )}
 
+            
+        <div
+    style={{
+        gridColumn: "1 / -1",
+        marginTop: "15px",
+        padding: "15px",
+        border: "1px solid #ddd",
+        borderRadius: "6px",
+        background: "#f8f9fa"
+    }}
+>
+
+    <h3 style={{ marginTop: 0 }}>
+        Salary Summary
+    </h3>
+
+    <div
+        style={{
+            display: "grid",
+            gridTemplateColumns:
+                "repeat(2, minmax(250px, 1fr))",
+            gap: "10px"
+        }}
+    >
+
         <div>
+            <strong>Basic:</strong>{" "}
+            ₹{Number(salaryStructure.basic_amount || 0).toFixed(2)}
+        </div>
 
-    <label>
-        <input
-            type="checkbox"
-            name="gratuity_applicable"
-            checked={salaryStructure.gratuity_applicable}
-            onChange={handleSalaryStructureChange}
-        />
+        <div>
+            <strong>HRA:</strong>{" "}
+            ₹{Number(salaryStructure.hra_amount || 0).toFixed(2)}
+        </div>
 
-        {" "}Gratuity Applicable
+        <div>
+            <strong>DA:</strong>{" "}
+            ₹{Number(salaryStructure.da_amount || 0).toFixed(2)}
+        </div>
 
-    </label>
+        <div>
+            <strong>Special Allowance:</strong>{" "}
+            ₹{Number(salaryStructure.special_allowance || 0).toFixed(2)}
+        </div>
 
-</div>
+        <div>
+            <strong>Other Allowance:</strong>{" "}
+            ₹{Number(salaryStructure.other_allowance || 0).toFixed(2)}
+        </div>
 
-{salaryStructure.gratuity_applicable && (
-
-    <div>
-
-        <label>Gratuity %</label>
-
-        <input
-            type="number"
-            name="gratuity_rate"
-            value={salaryStructure.gratuity_rate}
-            onChange={handleSalaryStructureChange}
-            min="0"
-            step="0.01"
-        />
+        <div>
+            <strong>Gross Salary:</strong>{" "}
+            ₹{Number(salaryStructure.monthly_salary || 0).toFixed(2)}
+        </div>
 
     </div>
 
-)}
+</div>
         <label>
 
             <input
