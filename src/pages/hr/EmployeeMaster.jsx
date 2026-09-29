@@ -1583,11 +1583,12 @@ gratuity_rate:
 
 <div>
 
-    <label>DA</label>
+   
 
     <input
         type="number"
         name="da_amount"
+        placeholder="DA"
         value={salaryStructure.da_amount}
         onChange={handleSalaryStructureChange}
         min="0"
