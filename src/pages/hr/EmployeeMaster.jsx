@@ -654,8 +654,6 @@ setSalaryComponents([]);
 
                 basic_amount:
 
-                    basic_amount:
-
     salaryData.structure
         .basic_amount ??
     "",
