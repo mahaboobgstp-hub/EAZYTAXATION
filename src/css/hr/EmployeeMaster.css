@@ -1,1 +1,450 @@
+/* =========================================================
+   EMPLOYEE MASTER - MODERN ERP STYLES
+   Salary Structure UI
+========================================================= */
 
+.employee-master-page {
+    padding: 25px;
+    color: #1f2937;
+}
+
+/* =========================================================
+   FORM CONTAINER
+========================================================= */
+
+.employee-master-form {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+/* =========================================================
+   TABS
+========================================================= */
+
+.employee-master-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 24px;
+    padding-bottom: 0;
+}
+
+.employee-master-tab {
+    border: none;
+    background: transparent;
+    padding: 12px 20px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s ease;
+}
+
+.employee-master-tab:hover {
+    color: #2563eb;
+    background: #f8fafc;
+}
+
+.employee-master-tab.active {
+    color: #2563eb;
+    font-weight: 600;
+    border-bottom-color: #2563eb;
+}
+
+/* =========================================================
+   SALARY STRUCTURE
+========================================================= */
+
+.salary-structure-tab {
+    display: flex !important;
+    flex-direction: column;
+    gap: 20px !important;
+}
+
+/* Main title */
+
+.salary-section-title {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* Section cards */
+
+.salary-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.salary-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.salary-section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 650;
+    color: #1e293b;
+}
+
+.salary-section-description {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* =========================================================
+   FIELD GRID
+========================================================= */
+
+.salary-field-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 18px 22px;
+}
+
+/* Individual field */
+
+.salary-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.salary-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.salary-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.salary-field input,
+.salary-field select,
+.salary-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.salary-field input:focus,
+.salary-field select:focus,
+.salary-field textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.salary-field input[readonly] {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+/* =========================================================
+   GROSS SALARY
+========================================================= */
+
+.gross-salary-field {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.gross-salary-field label {
+    color: #1d4ed8;
+}
+
+.gross-salary-field input {
+    border-color: #93c5fd;
+    background: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+/* =========================================================
+   STATUTORY SETTINGS
+========================================================= */
+
+.statutory-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.statutory-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 15px;
+    background: #f8fafc;
+}
+
+.statutory-card-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 14px;
+}
+
+.statutory-card-header label {
+    font-size: 14px;
+    font-weight: 650;
+    color: #334155;
+}
+
+.statutory-card input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #2563eb;
+}
+
+.statutory-rate-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.statutory-rate-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.statutory-rate-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.statutory-rate-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    font-size: 14px;
+}
+
+/* =========================================================
+   CONTRIBUTION SUMMARY
+========================================================= */
+
+.contribution-summary {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.contribution-card {
+    border-radius: 10px;
+    padding: 17px;
+    border: 1px solid #e2e8f0;
+}
+
+.contribution-card.employee {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.contribution-card.employer {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.contribution-card h4 {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.contribution-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 7px 0;
+    font-size: 13px;
+    color: #475569;
+}
+
+.contribution-row strong {
+    color: #1e293b;
+}
+
+.contribution-total {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(100, 116, 139, 0.2);
+    font-weight: 700;
+    color: #111827;
+}
+
+/* =========================================================
+   CTC SUMMARY
+========================================================= */
+
+.ctc-summary {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.ctc-card {
+    padding: 18px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.ctc-card.highlight {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.ctc-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.ctc-value {
+    font-size: 21px;
+    font-weight: 750;
+    color: #0f172a;
+}
+
+.ctc-card.highlight .ctc-value {
+    color: #1d4ed8;
+}
+
+/* =========================================================
+   CHECKBOX ROW
+========================================================= */
+
+.salary-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 0;
+}
+
+.salary-checkbox-row input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #2563eb;
+}
+
+.salary-checkbox-row label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* =========================================================
+   REMARKS
+========================================================= */
+
+.salary-remarks textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+.employee-save-button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px 22px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.employee-save-button:hover {
+    background: #1d4ed8;
+}
+
+.employee-save-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .salary-field-grid,
+    .statutory-grid,
+    .contribution-summary,
+    .ctc-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .salary-field.full-width {
+        grid-column: auto;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .employee-master-page {
+        padding: 15px;
+    }
+
+    .employee-master-form {
+        padding: 15px;
+    }
+
+    .salary-section {
+        padding: 15px;
+    }
+
+    .statutory-rate-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .employee-master-tabs {
+        overflow-x: auto;
+    }
+
+}
