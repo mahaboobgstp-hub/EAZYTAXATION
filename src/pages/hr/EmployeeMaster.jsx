@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useCompany } from "../../context/CompanyContext";
+import "./EmployeeMaster.css";
 
 import {
     getEmployees,
@@ -948,11 +949,7 @@ overtime_fixed_rate:
 
     return (
 
-        <div
-            style={{
-                padding: "25px"
-            }}
-        >
+        <div className="employee-master-page">
 
             <h2>
                 Employee Master
@@ -998,25 +995,11 @@ overtime_fixed_rate:
             </div>
 
 
-           <form
+          <form
     onSubmit={handleSubmit}
-    style={{
-        padding: "20px",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        marginBottom: "30px"
-    }}
-> 
-               <div
-        style={{
-            display: "flex",
-            gap: "10px",
-            marginBottom: "20px",
-            borderBottom:
-                "1px solid #ddd",
-            paddingBottom: "10px"
-        }}
-    >
+    className="employee-master-form"
+>
+               <div className="employee-master-tabs">
 
     <button
             type="button"
@@ -1025,16 +1008,11 @@ overtime_fixed_rate:
                     "basic"
                 )
             }
-            style={{
-                padding:
-                    "10px 18px",
-                cursor:
-                    "pointer",
-                fontWeight:
-                    activeTab === "basic"
-                        ? "700"
-                        : "400"
-            }}
+            className={
+    activeTab === "basic"
+        ? "employee-master-tab active"
+        : "employee-master-tab"
+}
         >
 
             Basic Details
@@ -1049,16 +1027,11 @@ overtime_fixed_rate:
                     "salary"
                 )
             }
-            style={{
-                padding:
-                    "10px 18px",
-                cursor:
-                    "pointer",
-                fontWeight:
-                    activeTab === "salary"
-                        ? "700"
-                        : "400"
-            }}
+            className={
+    activeTab === "basic"
+        ? "employee-master-tab active"
+        : "employee-master-tab"
+}
         >
 
             Salary Structure
@@ -1068,21 +1041,10 @@ overtime_fixed_rate:
     </div>
 
 
-    {activeTab === "basic" && (
+    {activeTab === "salary" && (
 
-        <div
-            style={{
-                display:
-                    "grid",
-
-                gridTemplateColumns:
-                    "repeat(2, minmax(250px, 1fr))",
-
-                gap:
-                    "15px"
-            }}
-        >
-                <input
+    <div className="salary-structure-tab">               
+        <input
                     name="employee_code"
                     placeholder="Employee Code"
                     value={formData.employee_code}
@@ -1592,24 +1554,23 @@ overtime_fixed_rate:
     />
 </div>
 
+<div className="salary-field">
+    <label>Basic Salary</label>
 
-        <input
-            type="number"
-            name="basic_amount"
-            placeholder="Basic Salary"
-            value={
-                salaryStructure.basic_amount
-            }
-            onChange={
-                handleSalaryStructureChange
-            }
-        />
-
-
+    <input
+        type="number"
+        name="basic_amount"
+        value={salaryStructure.basic_amount}
+        onChange={handleSalaryStructureChange}
+    />
+</div>
+        
+<div className="salary-field">
+    <label>HRA</label>
         <input
             type="number"
             name="hra_amount"
-            placeholder="HRA"
+           
             value={
                 salaryStructure.hra_amount
             }
@@ -1617,26 +1578,29 @@ overtime_fixed_rate:
                 handleSalaryStructureChange
             }
         />
+</div>
 
-<div>
 
    
-
+<div className="salary-field">
+    <label>DA</label>
     <input
         type="number"
         name="da_amount"
-        placeholder="DA"
+       
         value={salaryStructure.da_amount}
         onChange={handleSalaryStructureChange}
         min="0"
         step="0.01"
     />
-
 </div>
+
+<div className="salary-field">
+    <label>Special Allowance</label>
         <input
             type="number"
             name="special_allowance"
-            placeholder="Special Allowance"
+           
             value={
                 salaryStructure.special_allowance
             }
@@ -1645,11 +1609,13 @@ overtime_fixed_rate:
             }
         />
 
-
+</div>
+        <div className="salary-field">
+    <label>Other Allowance</label>
         <input
             type="number"
             name="other_allowance"
-            placeholder="Other Allowance"
+            
             value={
                 salaryStructure.other_allowance
             }
@@ -1657,7 +1623,7 @@ overtime_fixed_rate:
                 handleSalaryStructureChange
             }
         />
-
+        </div>
 
         <h3
             style={{
