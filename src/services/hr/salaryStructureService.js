@@ -211,6 +211,8 @@ export async function saveEmployeeSalaryStructure(
     basic_amount,
 
     hra_amount,
+    da_amount,
+   
 
     special_allowance,
 
@@ -218,7 +220,15 @@ export async function saveEmployeeSalaryStructure(
 
     is_pf_applicable,
 
-    is_esi_applicable,
+employee_pf_rate,
+
+employer_pf_rate,
+
+is_esi_applicable,
+
+employee_esi_rate,
+
+employer_esi_rate,
 
     is_pt_applicable,
 
@@ -272,13 +282,19 @@ export async function saveEmployeeSalaryStructure(
                 basic_amount
             ) || 0,
 
-        hra_amount:
+       hra_amount:
 
-            Number(
-                hra_amount
-            ) || 0,
+    Number(
+        hra_amount
+    ) || 0,
 
-        special_allowance:
+da_amount:
+
+    Number(
+        da_amount
+    ) || 0,
+
+special_allowance:
 
             Number(
                 special_allowance
@@ -290,19 +306,43 @@ export async function saveEmployeeSalaryStructure(
                 other_allowance
             ) || 0,
 
-        is_pf_applicable:
+       is_pf_applicable:
 
-            Boolean(
-                is_pf_applicable
-            ),
+    Boolean(
+        is_pf_applicable
+    ),
 
-        is_esi_applicable:
+employee_pf_rate:
 
-            Boolean(
-                is_esi_applicable
-            ),
+    Number(
+        employee_pf_rate
+    ) || 0,
 
-        is_pt_applicable:
+employer_pf_rate:
+
+    Number(
+        employer_pf_rate
+    ) || 0,
+
+is_esi_applicable:
+
+    Boolean(
+        is_esi_applicable
+    ),
+
+employee_esi_rate:
+
+    Number(
+        employee_esi_rate
+    ) || 0,
+
+employer_esi_rate:
+
+    Number(
+        employer_esi_rate
+    ) || 0,
+
+is_pt_applicable:
 
             Boolean(
                 is_pt_applicable
