@@ -77,12 +77,27 @@ const defaultSalaryStructure = {
 
     monthly_salary: "",
 
-    basic_amount: "",
+basic_amount: "",
 
-    hra_amount: "",
+hra_amount: "",
 
-    special_allowance: "",
+da_amount: "",
 
+special_allowance: "",
+
+other_allowance: "",
+
+employee_pf_rate: 12,
+
+employer_pf_rate: 12,
+
+employee_esi_rate: 0.75,
+
+employer_esi_rate: 3.25,
+
+gratuity_applicable: false,
+
+gratuity_rate: 4.81,
     other_allowance: "",
 
     is_pf_applicable: false,
@@ -639,28 +654,72 @@ setSalaryComponents([]);
 
                 basic_amount:
 
-                    salaryData.structure
-                        .basic_amount ??
-                    "",
+                    basic_amount:
 
-                hra_amount:
+    salaryData.structure
+        .basic_amount ??
+    "",
 
-                    salaryData.structure
-                        .hra_amount ??
-                    "",
+hra_amount:
 
-                special_allowance:
+    salaryData.structure
+        .hra_amount ??
+    "",
 
-                    salaryData.structure
-                        .special_allowance ??
-                    "",
+da_amount:
 
-                other_allowance:
+    salaryData.structure
+        .da_amount ??
+    "",
 
-                    salaryData.structure
-                        .other_allowance ??
-                    "",
+special_allowance:
 
+    salaryData.structure
+        .special_allowance ??
+    "",
+
+other_allowance:
+
+    salaryData.structure
+        .other_allowance ??
+    "",
+
+employee_pf_rate:
+
+    salaryData.structure
+        .employee_pf_rate ??
+    12,
+
+employer_pf_rate:
+
+    salaryData.structure
+        .employer_pf_rate ??
+    12,
+
+employee_esi_rate:
+
+    salaryData.structure
+        .employee_esi_rate ??
+    0.75,
+
+employer_esi_rate:
+
+    salaryData.structure
+        .employer_esi_rate ??
+    3.25,
+
+gratuity_applicable:
+
+    salaryData.structure
+        .gratuity_applicable ??
+    false,
+
+gratuity_rate:
+
+    salaryData.structure
+        .gratuity_rate ??
+    4.81,
+                
                 is_pf_applicable:
 
                     salaryData.structure
@@ -1524,7 +1583,20 @@ setSalaryComponents([]);
             }
         />
 
+<div>
 
+    <label>DA</label>
+
+    <input
+        type="number"
+        name="da_amount"
+        value={salaryStructure.da_amount}
+        onChange={handleSalaryStructureChange}
+        min="0"
+        step="0.01"
+    />
+
+</div>
         <input
             type="number"
             name="special_allowance"
@@ -1583,6 +1655,41 @@ setSalaryComponents([]);
             PF Applicable
 
         </label>
+        {salaryStructure.is_pf_applicable && (
+    <>
+
+        <div>
+
+            <label>Employee PF %</label>
+
+            <input
+                type="number"
+                name="employee_pf_rate"
+                value={salaryStructure.employee_pf_rate}
+                onChange={handleSalaryStructureChange}
+                min="0"
+                step="0.01"
+            />
+
+        </div>
+
+        <div>
+
+            <label>Employer PF %</label>
+
+            <input
+                type="number"
+                name="employer_pf_rate"
+                value={salaryStructure.employer_pf_rate}
+                onChange={handleSalaryStructureChange}
+                min="0"
+                step="0.01"
+            />
+
+        </div>
+
+    </>
+)}
 
 
         <label>
@@ -1603,7 +1710,76 @@ setSalaryComponents([]);
 
         </label>
 
+{salaryStructure.is_esi_applicable && (
+    <>
 
+        <div>
+
+            <label>Employee ESI %</label>
+
+            <input
+                type="number"
+                name="employee_esi_rate"
+                value={salaryStructure.employee_esi_rate}
+                onChange={handleSalaryStructureChange}
+                min="0"
+                step="0.01"
+            />
+
+        </div>
+
+        <div>
+
+            <label>Employer ESI %</label>
+
+            <input
+                type="number"
+                name="employer_esi_rate"
+                value={salaryStructure.employer_esi_rate}
+                onChange={handleSalaryStructureChange}
+                min="0"
+                step="0.01"
+            />
+
+        </div>
+
+    </>
+)}
+
+        <div>
+
+    <label>
+        <input
+            type="checkbox"
+            name="gratuity_applicable"
+            checked={salaryStructure.gratuity_applicable}
+            onChange={handleSalaryStructureChange}
+        />
+
+        {" "}Gratuity Applicable
+
+    </label>
+
+</div>
+
+{salaryStructure.gratuity_applicable && (
+
+    <div>
+
+        <label>Gratuity %</label>
+
+        <input
+            type="number"
+            name="gratuity_rate"
+            value={salaryStructure.gratuity_rate}
+            onChange={handleSalaryStructureChange}
+            min="0"
+            step="0.01"
+        />
+
+    </div>
+
+)}
         <label>
 
             <input
