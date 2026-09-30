@@ -230,9 +230,8 @@ employee_esi_rate,
 
 employer_esi_rate,
 
-    is_pt_applicable,
-
-    is_tds_applicable,
+    professional_tax_state,
+tds_regime,
 
 
     // =============================================
@@ -342,18 +341,17 @@ employer_esi_rate:
         employer_esi_rate
     ) || 0,
 
-is_pt_applicable:
+professional_tax_state:
 
-            Boolean(
-                is_pt_applicable
-            ),
+    professional_tax_state ||
+    null,
 
-        is_tds_applicable:
+tds_regime:
 
-            Boolean(
-                is_tds_applicable
-            ),
-           // =============================================
+    tds_regime ||
+    "NEW",
+       
+       // =============================================
     // OVERTIME CONFIGURATION
     // =============================================
 
