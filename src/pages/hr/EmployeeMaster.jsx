@@ -102,10 +102,9 @@ employer_esi_rate: 3.25,
 
     is_esi_applicable: false,
 
-    is_pt_applicable: false,
+    professional_tax_state: "",
 
-    is_tds_applicable: false,
-
+tds_regime: "NEW",
 
     // =============================================
     // OVERTIME CONFIGURATION
@@ -711,6 +710,17 @@ employer_esi_rate:
         .employer_esi_rate ??
     3.25,
 
+      professional_tax_state:
+
+    salaryData.structure
+        .professional_tax_state ||
+    "",
+
+tds_regime:
+
+    salaryData.structure
+        .tds_regime ||
+    "NEW",
                 
                 is_pf_applicable:
 
@@ -999,6 +1009,7 @@ overtime_fixed_rate:
     onSubmit={handleSubmit}
     className="employee-master-form"
 >
+              
                <div className="employee-master-tabs">
 
     <button
@@ -1037,6 +1048,23 @@ overtime_fixed_rate:
             Salary Structure
 
         </button>
+
+                   <button
+    type="button"
+    onClick={() =>
+        setActiveTab("taxes")
+    }
+    style={{
+        padding: "10px 18px",
+        cursor: "pointer",
+        fontWeight:
+            activeTab === "taxes"
+                ? "700"
+                : "400"
+    }}
+>
+    Taxes
+</button>
 
     </div>
 
@@ -1929,43 +1957,7 @@ overtime_fixed_rate:
     </div>
 
 </div>
-        <label>
-
-            <input
-                type="checkbox"
-                name="is_pt_applicable"
-                checked={
-                    salaryStructure.is_pt_applicable
-                }
-                onChange={
-                    handleSalaryStructureChange
-                }
-            />
-
-            {" "}
-            Professional Tax Applicable
-
-        </label>
-
-
-        <label>
-
-            <input
-                type="checkbox"
-                name="is_tds_applicable"
-                checked={
-                    salaryStructure.is_tds_applicable
-                }
-                onChange={
-                    handleSalaryStructureChange
-                }
-            />
-
-            {" "}
-            TDS Applicable
-
-        </label>
-
+        
 
         <textarea
             name="remarks"
@@ -1985,6 +1977,318 @@ overtime_fixed_rate:
     </div>
 
 )}
+
+              {activeTab === "taxes" && (
+
+    <div
+        style={{
+            display: "grid",
+            gridTemplateColumns:
+                "repeat(2, minmax(250px, 1fr))",
+            gap: "15px"
+        }}
+    >
+
+        <h3
+            style={{
+                gridColumn: "1 / -1"
+            }}
+        >
+            Tax Configuration
+        </h3>
+
+
+        {/* PROFESSIONAL TAX */}
+
+        <h4
+            style={{
+                gridColumn: "1 / -1",
+                marginBottom: "0"
+            }}
+        >
+            Professional Tax
+        </h4>
+
+
+        <div>
+
+            <label>
+                Professional Tax State
+            </label>
+
+            <select
+                name="professional_tax_state"
+                value={
+                    salaryStructure.professional_tax_state
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            >
+
+                <option value="">
+                    Select State
+                </option>
+
+                <option value="Andhra Pradesh">
+                    Andhra Pradesh
+                </option>
+
+                <option value="Arunachal Pradesh">
+                    Arunachal Pradesh
+                </option>
+
+                <option value="Assam">
+                    Assam
+                </option>
+
+                <option value="Bihar">
+                    Bihar
+                </option>
+
+                <option value="Chhattisgarh">
+                    Chhattisgarh
+                </option>
+
+                <option value="Goa">
+                    Goa
+                </option>
+
+                <option value="Gujarat">
+                    Gujarat
+                </option>
+
+                <option value="Haryana">
+                    Haryana
+                </option>
+
+                <option value="Himachal Pradesh">
+                    Himachal Pradesh
+                </option>
+
+                <option value="Jharkhand">
+                    Jharkhand
+                </option>
+
+                <option value="Karnataka">
+                    Karnataka
+                </option>
+
+                <option value="Kerala">
+                    Kerala
+                </option>
+
+                <option value="Madhya Pradesh">
+                    Madhya Pradesh
+                </option>
+
+                <option value="Maharashtra">
+                    Maharashtra
+                </option>
+
+                <option value="Manipur">
+                    Manipur
+                </option>
+
+                <option value="Meghalaya">
+                    Meghalaya
+                </option>
+
+                <option value="Mizoram">
+                    Mizoram
+                </option>
+
+                <option value="Nagaland">
+                    Nagaland
+                </option>
+
+                <option value="Odisha">
+                    Odisha
+                </option>
+
+                <option value="Punjab">
+                    Punjab
+                </option>
+
+                <option value="Rajasthan">
+                    Rajasthan
+                </option>
+
+                <option value="Sikkim">
+                    Sikkim
+                </option>
+
+                <option value="Tamil Nadu">
+                    Tamil Nadu
+                </option>
+
+                <option value="Telangana">
+                    Telangana
+                </option>
+
+                <option value="Tripura">
+                    Tripura
+                </option>
+
+                <option value="Uttar Pradesh">
+                    Uttar Pradesh
+                </option>
+
+                <option value="Uttarakhand">
+                    Uttarakhand
+                </option>
+
+                <option value="West Bengal">
+                    West Bengal
+                </option>
+
+                <option value="Andaman and Nicobar Islands">
+                    Andaman and Nicobar Islands
+                </option>
+
+                <option value="Chandigarh">
+                    Chandigarh
+                </option>
+
+                <option value="Dadra and Nagar Haveli and Daman and Diu">
+                    Dadra and Nagar Haveli and Daman and Diu
+                </option>
+
+                <option value="Delhi">
+                    Delhi
+                </option>
+
+                <option value="Jammu and Kashmir">
+                    Jammu and Kashmir
+                </option>
+
+                <option value="Ladakh">
+                    Ladakh
+                </option>
+
+                <option value="Lakshadweep">
+                    Lakshadweep
+                </option>
+
+                <option value="Puducherry">
+                    Puducherry
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div
+            style={{
+                padding: "12px",
+                background: "#f8f9fa",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+            }}
+        >
+
+            <strong>
+                Professional Tax
+            </strong>
+
+            <div style={{ marginTop: "6px" }}>
+                Automatically calculated according
+                to the selected state and applicable
+                Professional Tax rules.
+            </div>
+
+        </div>
+
+
+        {/* TDS */}
+
+        <h4
+            style={{
+                gridColumn: "1 / -1",
+                marginTop: "20px",
+                marginBottom: "0"
+            }}
+        >
+            Income Tax / TDS
+        </h4>
+
+
+        <div>
+
+            <label>
+                Tax Regime
+            </label>
+
+            <select
+                name="tds_regime"
+                value={
+                    salaryStructure.tds_regime
+                }
+                onChange={
+                    handleSalaryStructureChange
+                }
+            >
+
+                <option value="NEW">
+                    New Tax Regime
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div
+            style={{
+                padding: "12px",
+                background: "#f8f9fa",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+            }}
+        >
+
+            <strong>
+                TDS Calculation
+            </strong>
+
+            <div style={{ marginTop: "6px" }}>
+                TDS will be calculated automatically
+                during payroll processing based on
+                the applicable tax rules.
+            </div>
+
+        </div>
+
+
+        <div
+            style={{
+                gridColumn: "1 / -1",
+                marginTop: "10px",
+                padding: "12px",
+                background: "#fff3cd",
+                border: "1px solid #ffeeba",
+                borderRadius: "6px"
+            }}
+        >
+
+            <strong>
+                Tax Calculation Notice
+            </strong>
+
+            <div style={{ marginTop: "6px" }}>
+                Professional Tax and TDS amounts
+                should not be manually entered here.
+                They will be determined automatically
+                during payroll processing.
+            </div>
+
+        </div>
+
+    </div>
+
+)}
+              
                 <div
     style={{
         marginTop: "20px"
