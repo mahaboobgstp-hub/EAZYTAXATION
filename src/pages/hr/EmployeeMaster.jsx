@@ -1094,7 +1094,39 @@ overtime_fixed_rate:
     Deductions
 </button>
     </div>
+<button
+    type="button"
+    onClick={() =>
+        setActiveTab("documents")
+    }
+    style={{
+        padding: "10px 18px",
+        cursor: "pointer",
+        fontWeight:
+            activeTab === "documents"
+                ? "700"
+                : "400"
+    }}
+>
+    Documents
+</button>
 
+<button
+    type="button"
+    onClick={() =>
+        setActiveTab("finalSettlement")
+    }
+    style={{
+        padding: "10px 18px",
+        cursor: "pointer",
+        fontWeight:
+            activeTab === "finalSettlement"
+                ? "700"
+                : "400"
+    }}
+>
+    Final Settlement
+</button>
 
     {activeTab === "salary" && (
 
@@ -2569,7 +2601,65 @@ overtime_fixed_rate:
     </div>
 
 )}
-              
+{activeTab === "finalSettlement" && (
+
+    <div
+        style={{
+            padding: "20px"
+        }}
+    >
+
+        {!formData.date_of_leaving ? (
+
+            <div
+                style={{
+                    padding: "15px",
+                    background: "#fff3cd",
+                    border: "1px solid #ffeeba",
+                    borderRadius: "6px"
+                }}
+            >
+
+                <strong>
+                    Final Settlement Not Available
+                </strong>
+
+                <p>
+                    Please enter the employee's
+                    Date of Leaving in Basic Details
+                    before preparing the Full & Final
+                    Settlement.
+                </p>
+
+            </div>
+
+        ) : (
+
+            <div>
+
+                <h3>
+                    Full & Final Settlement
+                </h3>
+
+                <p>
+                    Last Working Date:{" "}
+                    <strong>
+                        {formData.date_of_leaving}
+                    </strong>
+                </p>
+
+                <p>
+                    Settlement calculation will be
+                    available here.
+                </p>
+
+            </div>
+
+        )}
+
+    </div>
+
+)}              
               
                 <div
     style={{
