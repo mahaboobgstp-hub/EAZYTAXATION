@@ -2586,6 +2586,341 @@ overtime_fixed_rate:
     </div>
 
 )}
+
+{activeTab === "documents" && (
+
+    <div className="employee-documents-tab">
+
+        <div className="documents-header">
+
+            <div>
+                <h3>
+                    Employee Documents
+                </h3>
+
+                <p>
+                    Generate and manage HR documents
+                    for this employee.
+                </p>
+            </div>
+
+        </div>
+
+
+        {!editingId && (
+
+            <div className="documents-warning">
+
+                <strong>
+                    Save the employee first
+                </strong>
+
+                <p>
+                    Documents can be generated or
+                    uploaded only after the employee
+                    record has been saved.
+                </p>
+
+            </div>
+
+        )}
+
+
+        {editingId && (
+
+            <>
+
+                {/* =====================================
+                    DOCUMENT GENERATION
+                ====================================== */}
+
+                <div className="documents-section">
+
+                    <div className="documents-section-header">
+
+                        <div>
+                            <h4>
+                                Generate HR Document
+                            </h4>
+
+                            <p>
+                                Select a document type
+                                to generate for this
+                                employee.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div className="documents-generation-grid">
+
+                        <div className="documents-field">
+
+                            <label>
+                                Document Type
+                            </label>
+
+                            <select
+                                name="document_type"
+                                value={
+                                    documentType ||
+                                    ""
+                                }
+                                onChange={(e) =>
+                                    setDocumentType(
+                                        e.target.value
+                                    )
+                                }
+                            >
+
+                                <option value="">
+                                    Select Document
+                                </option>
+
+                                <option value="offer_letter">
+                                    Offer Letter
+                                </option>
+
+                                <option value="joining_letter">
+                                    Joining Letter
+                                </option>
+
+                                <option value="appointment_letter">
+                                    Appointment Letter
+                                </option>
+
+                                <option value="appointment_letter_salary_annexure">
+                                    Appointment Letter + Salary Annexure
+                                </option>
+
+                                <option value="experience_letter">
+                                    Experience Letter
+                                </option>
+
+                                <option
+                                    value="relieving_letter"
+                                    disabled={
+                                        !formData.date_of_leaving
+                                    }
+                                >
+                                    Relieving Letter
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div className="documents-action-field">
+
+                            <button
+                                type="button"
+                                className="employee-save-button"
+                                disabled={
+                                    !documentType
+                                }
+                                onClick={() => {
+
+                                    alert(
+                                        "Document generation will be connected next."
+                                    );
+
+                                }}
+                            >
+                                Generate Document
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    {!formData.date_of_leaving && (
+
+                        <div className="documents-info">
+
+                            <strong>
+                                Relieving Letter:
+                            </strong>
+
+                            <span>
+                                Enter Date of Leaving
+                                in Basic Details to
+                                enable the Relieving
+                                Letter.
+                            </span>
+
+                        </div>
+
+                    )}
+
+                </div>
+
+
+                {/* =====================================
+                    UPLOAD DOCUMENT
+                ====================================== */}
+
+                <div className="documents-section">
+
+                    <div className="documents-section-header">
+
+                        <div>
+                            <h4>
+                                Upload Existing Document
+                            </h4>
+
+                            <p>
+                                Upload employee documents
+                                that were received or
+                                generated outside the ERP.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div className="documents-upload-grid">
+
+                        <div className="documents-field">
+
+                            <label>
+                                Document Type
+                            </label>
+
+                            <select>
+
+                                <option value="">
+                                    Select Document
+                                </option>
+
+                                <option value="aadhaar">
+                                    Aadhaar
+                                </option>
+
+                                <option value="pan">
+                                    PAN
+                                </option>
+
+                                <option value="passport">
+                                    Passport
+                                </option>
+
+                                <option value="driving_license">
+                                    Driving Licence
+                                </option>
+
+                                <option value="offer_letter">
+                                    Offer Letter
+                                </option>
+
+                                <option value="joining_letter">
+                                    Joining Letter
+                                </option>
+
+                                <option value="appointment_letter">
+                                    Appointment Letter
+                                </option>
+
+                                <option value="experience_letter">
+                                    Experience Letter
+                                </option>
+
+                                <option value="relieving_letter">
+                                    Relieving Letter
+                                </option>
+
+                                <option value="other">
+                                    Other
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div className="documents-field">
+
+                            <label>
+                                Select File
+                            </label>
+
+                            <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                            />
+
+                        </div>
+
+
+                        <div className="documents-action-field">
+
+                            <button
+                                type="button"
+                                className="employee-save-button"
+                                onClick={() => {
+
+                                    alert(
+                                        "Document upload will be connected next."
+                                    );
+
+                                }}
+                            >
+                                Upload Document
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {/* =====================================
+                    EXISTING DOCUMENTS
+                ====================================== */}
+
+                <div className="documents-section">
+
+                    <div className="documents-section-header">
+
+                        <div>
+                            <h4>
+                                Employee Documents
+                            </h4>
+
+                            <p>
+                                Documents already stored
+                                for this employee.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div className="documents-empty-state">
+
+                        <strong>
+                            No documents available
+                        </strong>
+
+                        <p>
+                            Generated or uploaded
+                            documents will appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </>
+
+        )}
+
+    </div>
+
+)}              
 {activeTab === "finalSettlement" && (
 
     <div
