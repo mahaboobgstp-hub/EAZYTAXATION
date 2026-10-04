@@ -603,6 +603,13 @@ function Sidebar() {
 >
     Payroll Processing
 </NavLink>
+
+<NavLink
+    to="/app/payroll-policy-settings"
+    className="submenu-link"
+>
+    Payroll Policy Settings
+</NavLink>            
             <NavLink
     to="/app/attendance-settings"
     className="submenu-link"
