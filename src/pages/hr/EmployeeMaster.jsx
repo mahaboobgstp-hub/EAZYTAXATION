@@ -1025,109 +1025,93 @@ overtime_fixed_rate:
                <div className="employee-master-tabs">
 
     <button
-            type="button"
-            onClick={() =>
-                setActiveTab(
-                    "basic"
-                )
-            }
-            className={
-    activeTab === "basic"
-        ? "employee-master-tab active"
-        : "employee-master-tab"
-}
-        >
-
-            Basic Details
-
-        </button>
-
+    type="button"
+    className={
+        activeTab === "basic"
+            ? "employee-master-tab active"
+            : "employee-master-tab"
+    }
+    onClick={() =>
+        setActiveTab("basic")
+    }
+>
+    Basic Details
+</button>
+           
 
         <button
-            type="button"
-            onClick={() =>
-                setActiveTab(
-                    "salary"
-                )
-            }
-            className={
-    activeTab === "basic"
-        ? "employee-master-tab active"
-        : "employee-master-tab"
-}
-        >
-
-            Salary Structure
-
-        </button>
-
-                   <button
     type="button"
+    className={
+        activeTab === "salary"
+            ? "employee-master-tab active"
+            : "employee-master-tab"
+    }
+    onClick={() =>
+        setActiveTab("salary")
+    }
+>
+    Salary Structure
+</button>
+
+                   
+                  <button
+    type="button"
+    className={
+        activeTab === "taxes"
+            ? "employee-master-tab active"
+            : "employee-master-tab"
+    }
     onClick={() =>
         setActiveTab("taxes")
     }
-    style={{
-        padding: "10px 18px",
-        cursor: "pointer",
-        fontWeight:
-            activeTab === "taxes"
-                ? "700"
-                : "400"
-    }}
 >
     Taxes
 </button>
-<button
+                   
+                   <button
     type="button"
+    className={
+        activeTab === "deductions"
+            ? "employee-master-tab active"
+            : "employee-master-tab"
+    }
     onClick={() =>
         setActiveTab("deductions")
     }
-    style={{
-        padding: "10px 18px",
-        cursor: "pointer",
-        fontWeight:
-            activeTab === "deductions"
-                ? "700"
-                : "400"
-    }}
 >
     Deductions
 </button>
-    </div>
+                   
+   
+              
 <button
     type="button"
+    className={
+        activeTab === "documents"
+            ? "employee-master-tab active"
+            : "employee-master-tab"
+    }
     onClick={() =>
         setActiveTab("documents")
     }
-    style={{
-        padding: "10px 18px",
-        cursor: "pointer",
-        fontWeight:
-            activeTab === "documents"
-                ? "700"
-                : "400"
-    }}
 >
     Documents
 </button>
-
+                   
 <button
     type="button"
+    className={
+        activeTab === "finalSettlement"
+            ? "employee-master-tab active"
+            : "employee-master-tab"
+    }
     onClick={() =>
         setActiveTab("finalSettlement")
     }
-    style={{
-        padding: "10px 18px",
-        cursor: "pointer",
-        fontWeight:
-            activeTab === "finalSettlement"
-                ? "700"
-                : "400"
-    }}
 >
     Final Settlement
 </button>
-
+</div>
     {activeTab === "salary" && (
 
     <div className="salary-structure-tab">               
