@@ -162,6 +162,18 @@ const [salaryComponents, setSalaryComponents] =
         "basic"
     );
 
+
+    const [deductionSettings, setDeductionSettings] =
+    useState({
+        leave_policy_id: "",
+        late_deduction_policy_id: "",
+        absence_deduction_policy_id: "",
+        salary_advance_enabled: true,
+        loan_recovery_enabled: true,
+        other_deductions_enabled: true,
+        deduction_override_enabled: false,
+        remarks: ""
+    });
     const [editingId, setEditingId] =
         useState(null);
 
@@ -1065,7 +1077,22 @@ overtime_fixed_rate:
 >
     Taxes
 </button>
-
+<button
+    type="button"
+    onClick={() =>
+        setActiveTab("deductions")
+    }
+    style={{
+        padding: "10px 18px",
+        cursor: "pointer",
+        fontWeight:
+            activeTab === "deductions"
+                ? "700"
+                : "400"
+    }}
+>
+    Deductions
+</button>
     </div>
 
 
@@ -2288,6 +2315,261 @@ overtime_fixed_rate:
     </div>
 
 )}
+
+              {activeTab === "deductions" && (
+
+    <div
+        style={{
+            display: "grid",
+            gridTemplateColumns:
+                "repeat(2, minmax(250px, 1fr))",
+            gap: "15px"
+        }}
+    >
+
+        <h3
+            style={{
+                gridColumn: "1 / -1"
+            }}
+        >
+            Employee Deduction Settings
+        </h3>
+
+
+        <div
+            style={{
+                gridColumn: "1 / -1",
+                padding: "12px",
+                background: "#f8f9fa",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+            }}
+        >
+
+            <strong>
+                Policy Based Deductions
+            </strong>
+
+            <div style={{ marginTop: "6px" }}>
+                Leave, late and absence deductions
+                will be calculated according to the
+                policies assigned to this employee.
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Leave Policy
+            </label>
+
+            <select
+                name="leave_policy_id"
+                value={
+                    deductionSettings.leave_policy_id
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        leave_policy_id:
+                            e.target.value
+                    }))
+                }
+            >
+
+                <option value="">
+                    Select Leave Policy
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Late Deduction Policy
+            </label>
+
+            <select
+                name="late_deduction_policy_id"
+                value={
+                    deductionSettings
+                        .late_deduction_policy_id
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        late_deduction_policy_id:
+                            e.target.value
+                    }))
+                }
+            >
+
+                <option value="">
+                    Select Late Deduction Policy
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Absence Deduction Policy
+            </label>
+
+            <select
+                name="absence_deduction_policy_id"
+                value={
+                    deductionSettings
+                        .absence_deduction_policy_id
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        absence_deduction_policy_id:
+                            e.target.value
+                    }))
+                }
+            >
+
+                <option value="">
+                    Select Absence Policy
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <h4
+            style={{
+                gridColumn: "1 / -1",
+                marginBottom: "0"
+            }}
+        >
+            Other Deduction Controls
+        </h4>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                checked={
+                    deductionSettings
+                        .salary_advance_enabled
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        salary_advance_enabled:
+                            e.target.checked
+                    }))
+                }
+            />
+
+            {" "}
+            Salary Advance Recovery
+
+        </label>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                checked={
+                    deductionSettings
+                        .loan_recovery_enabled
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        loan_recovery_enabled:
+                            e.target.checked
+                    }))
+                }
+            />
+
+            {" "}
+            Loan Recovery
+
+        </label>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                checked={
+                    deductionSettings
+                        .other_deductions_enabled
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        other_deductions_enabled:
+                            e.target.checked
+                    }))
+                }
+            />
+
+            {" "}
+            Other Deductions
+
+        </label>
+
+
+        <label>
+
+            <input
+                type="checkbox"
+                checked={
+                    deductionSettings
+                        .deduction_override_enabled
+                }
+                onChange={(e) =>
+                    setDeductionSettings(prev => ({
+                        ...prev,
+                        deduction_override_enabled:
+                            e.target.checked
+                    }))
+                }
+            />
+
+            {" "}
+            Allow Employee-Specific Overrides
+
+        </label>
+
+
+        <textarea
+            placeholder="Deduction Remarks"
+            value={
+                deductionSettings.remarks
+            }
+            onChange={(e) =>
+                setDeductionSettings(prev => ({
+                    ...prev,
+                    remarks: e.target.value
+                }))
+            }
+            style={{
+                gridColumn: "1 / -1"
+            }}
+        />
+
+    </div>
+
+)}
+              
               
                 <div
     style={{
