@@ -176,6 +176,8 @@ const [salaryComponents, setSalaryComponents] =
     });
     const [editingId, setEditingId] =
         useState(null);
+    const [documentType, setDocumentType] =
+    useState("");
 
     const [loading, setLoading] =
         useState(false);
@@ -867,6 +869,8 @@ overtime_fixed_rate:
 
 
     setSalaryComponents([]);
+
+        setDocumentType("");
 
 };
 
