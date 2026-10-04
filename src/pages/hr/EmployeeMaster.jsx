@@ -1112,7 +1112,8 @@ overtime_fixed_rate:
     Final Settlement
 </button>
 </div>
-    {activeTab === "salary" && (
+              
+    {activeTab === "basic" && (
 
     <div className="salary-structure-tab">               
         <input
