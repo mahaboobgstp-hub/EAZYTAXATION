@@ -453,3 +453,194 @@
     }
 
 }
+/* =========================================================
+   EMPLOYEE DOCUMENTS
+========================================================= */
+
+.employee-documents-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.documents-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.documents-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.documents-header p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   DOCUMENT SECTION
+========================================================= */
+
+.documents-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.documents-section-header {
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.documents-section-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.documents-section-header p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+
+/* =========================================================
+   DOCUMENT FIELDS
+========================================================= */
+
+.documents-generation-grid,
+.documents-upload-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(220px, 1fr)
+        minmax(220px, 1fr)
+        auto;
+    gap: 18px;
+    align-items: end;
+}
+
+.documents-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.documents-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.documents-field input,
+.documents-field select {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+}
+
+.documents-field input:focus,
+.documents-field select:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow:
+        0 0 0 3px
+        rgba(37, 99, 235, 0.10);
+}
+
+.documents-action-field {
+    display: flex;
+    align-items: flex-end;
+}
+
+
+/* =========================================================
+   INFORMATION / WARNING
+========================================================= */
+
+.documents-warning {
+    padding: 16px 18px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+}
+
+.documents-warning strong {
+    color: #9a3412;
+}
+
+.documents-warning p {
+    margin: 6px 0 0;
+    color: #7c2d12;
+    font-size: 13px;
+}
+
+.documents-info {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    color: #1e40af;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   EMPTY DOCUMENT STATE
+========================================================= */
+
+.documents-empty-state {
+    padding: 35px 20px;
+    text-align: center;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.documents-empty-state strong {
+    display: block;
+    color: #334155;
+    font-size: 14px;
+}
+
+.documents-empty-state p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .documents-generation-grid,
+    .documents-upload-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .documents-action-field {
+        align-items: stretch;
+    }
+
+}
