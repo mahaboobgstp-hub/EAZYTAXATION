@@ -609,7 +609,14 @@ function Sidebar() {
     className="submenu-link"
 >
     Payroll Policy Settings
-</NavLink>            
+</NavLink>    
+
+            <NavLink
+    to="/app/payroll-policy-master"
+    className="submenu-link"
+>
+    Payroll Policy Master
+</NavLink>
             <NavLink
     to="/app/attendance-settings"
     className="submenu-link"
