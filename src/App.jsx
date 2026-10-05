@@ -27,6 +27,7 @@ from "./pages/hr/PayrollProcessing";
 import PayrollPolicySettings from "./pages/hr/PayrollPolicySettings";
 import PayrollPolicyMaster
     from "./pages/hr/PayrollPolicyMaster";
+import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -225,6 +226,10 @@ function App() {
     element={
         <PayrollPolicyMaster />
     }
+/>
+            <Route
+    path="statutory-configuration"
+    element={<StatutoryConfiguration />}
 />
           
         </Route>
