@@ -617,6 +617,14 @@ function Sidebar() {
 >
     Payroll Policy Master
 </NavLink>
+
+<NavLink
+    to="/app/statutory-configuration"
+    className="submenu-link"
+>
+    Statutory Configuration
+</NavLink>
+            
             <NavLink
     to="/app/attendance-settings"
     className="submenu-link"
