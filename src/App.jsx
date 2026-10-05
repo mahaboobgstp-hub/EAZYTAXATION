@@ -25,7 +25,8 @@ from "./pages/hr/AttendanceRegister";
 import PayrollProcessing
 from "./pages/hr/PayrollProcessing";
 import PayrollPolicySettings from "./pages/hr/PayrollPolicySettings";
-
+import PayrollPolicyMaster
+    from "./pages/hr/PayrollPolicyMaster";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -217,6 +218,13 @@ function App() {
           <Route
     path="payroll-policy-settings"
     element={<PayrollPolicySettings />}
+/>
+
+          <Route
+    path="payroll-policy-master"
+    element={
+        <PayrollPolicyMaster />
+    }
 />
           
         </Route>
