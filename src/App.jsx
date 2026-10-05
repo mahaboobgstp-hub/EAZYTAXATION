@@ -25,7 +25,7 @@ from "./pages/hr/AttendanceRegister";
 import PayrollProcessing
 from "./pages/hr/PayrollProcessing";
 import PayrollPolicySettings from "./pages/hr/PayrollPolicySettings";
-import LateDeductionPolicy from "./pages/hr/LateDeductionPolicy";
+
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
@@ -218,12 +218,7 @@ function App() {
     path="payroll-policy-settings"
     element={<PayrollPolicySettings />}
 />
-          <Route
-    path="late-deduction-policies"
-    element={
-        <LateDeductionPolicy />
-    }
-/>
+          
         </Route>
         
       </Routes>
