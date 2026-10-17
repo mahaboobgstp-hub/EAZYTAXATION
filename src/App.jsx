@@ -36,6 +36,7 @@ import EmployeeLoansAdvances from "./pages/hr/EmployeeLoansAdvances";
 import HolidayCalendarLeaveLedger from "./pages/hr/HolidayCalendarLeaveLedger";
 import EmployeeDocumentRepository from "./pages/hr/EmployeeDocumentRepository";
 import PerformanceManagement from "./pages/hr/PerformanceManagement";
+import HRDashboardReports from "./pages/hr/HRDashboardReports";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
@@ -268,6 +269,11 @@ function App() {
             <Route
   path="holiday-calendar-leave-ledger"
   element={<HolidayCalendarLeaveLedger />}
+/>
+
+            <Route
+  path="hr-dashboard-reports"
+  element={<HRDashboardReports />}
 />
           
         </Route>
