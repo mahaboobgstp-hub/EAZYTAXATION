@@ -32,6 +32,7 @@ import PayrollPolicyMaster
 import LeaveManagement from "./pages/hr/LeaveManagement";
 import FinalSettlement from "./pages/hr/FinalSettlement";
 import ExpenseReimbursement from "./pages/hr/ExpenseReimbursement";
+import EmployeeLoansAdvances from "./pages/hr/EmployeeLoansAdvances";
 import EmployeeDocumentRepository from "./pages/hr/EmployeeDocumentRepository";
 import PerformanceManagement from "./pages/hr/PerformanceManagement";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
@@ -232,7 +233,10 @@ function App() {
   path="expense-reimbursement"
   element={<ExpenseReimbursement />}
 />
-            
+  <Route
+  path="employee-loans-advances"
+  element={<EmployeeLoansAdvances />}
+/>          
 <Route
     path="shifts"
     element={<ShiftMaster />}
