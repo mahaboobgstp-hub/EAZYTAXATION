@@ -708,6 +708,12 @@ function Sidebar() {
 >
   Holiday Calendar & Leave Ledger
 </NavLink>
+            <NavLink
+  to="/app/hr-dashboard-reports"
+  className="submenu-link"
+>
+  HR Dashboard & Reports
+</NavLink>
             
         </div>
 
