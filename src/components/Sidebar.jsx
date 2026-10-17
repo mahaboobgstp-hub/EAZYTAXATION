@@ -610,6 +610,9 @@ function Sidebar() {
 >
     Payroll Policy Settings
 </NavLink>    
+            <NavLink to="/app/leave-management" className="submenu-link">
+  Leave Management
+</NavLink>
 
             <NavLink
     to="/app/payroll-policy-master"
