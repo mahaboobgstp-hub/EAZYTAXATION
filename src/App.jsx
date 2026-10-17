@@ -37,6 +37,7 @@ import HolidayCalendarLeaveLedger from "./pages/hr/HolidayCalendarLeaveLedger";
 import EmployeeDocumentRepository from "./pages/hr/EmployeeDocumentRepository";
 import PerformanceManagement from "./pages/hr/PerformanceManagement";
 import HRDashboardReports from "./pages/hr/HRDashboardReports";
+import EmployeeSelfService from "./pages/hr/EmployeeSelfService";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
@@ -275,7 +276,11 @@ function App() {
   path="hr-dashboard-reports"
   element={<HRDashboardReports />}
 />
-          
+
+            <Route
+  path="employee-self-service"
+  element={<EmployeeSelfService />}
+/>
         </Route>
         
       </Routes>
