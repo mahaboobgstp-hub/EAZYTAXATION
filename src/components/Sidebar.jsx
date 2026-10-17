@@ -694,6 +694,14 @@ function Sidebar() {
 >
   Expense Reimbursement
 </NavLink>
+            
+<NavLink
+  to="/app/employee-loans-advances"
+  className="submenu-link"
+>
+  Employee Loans & Advances
+</NavLink>
+            
         </div>
 
     )
