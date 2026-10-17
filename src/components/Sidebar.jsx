@@ -655,6 +655,19 @@ function Sidebar() {
 >
     Location Master
 </NavLink>
+            <NavLink
+    to="/app/payslips"
+    className="submenu-link"
+>
+    Payslips
+</NavLink>
+
+<NavLink
+    to="/app/employee-documents"
+    className="submenu-link"
+>
+    Employee Documents
+</NavLink>
 
         </div>
 
