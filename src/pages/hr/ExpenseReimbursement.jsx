@@ -12,7 +12,7 @@ import {
   FiSearch,
   FiTrash2,
   FiUploadCloud,
-  FiWallet,
+  FiCreditCard,
   FiX,
 } from "react-icons/fi";
 import "../../css/hr/ExpenseReimbursement.css";
