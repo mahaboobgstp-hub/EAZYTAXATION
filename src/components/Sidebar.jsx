@@ -671,6 +671,9 @@ function Sidebar() {
 >
     Employee Documents
 </NavLink>
+            <NavLink to="/app/final-settlement" className="submenu-link">
+  Final Settlement
+</NavLink>
 
         </div>
 
