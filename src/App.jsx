@@ -16,6 +16,8 @@ import Vendors from './pages/masters/Vendors';
 import EmployeeMaster from "./pages/hr/EmployeeMaster";
 import AttendanceEntry from "./pages/hr/AttendanceEntry";
 import AttendanceSettings from "./pages/hr/AttendanceSettings";
+import Payslips from "./pages/hr/Payslips";
+import EmployeeDocuments from "./pages/hr/EmployeeDocuments";
 import DepartmentMaster from "./pages/hr/DepartmentMaster";
 import DesignationMaster from "./pages/hr/DesignationMaster";
 import ShiftMaster from "./pages/hr/ShiftMaster";
@@ -204,6 +206,12 @@ function App() {
     path="designations"
     element={<DesignationMaster />}
 />
+<Route path="payslips" element={<Payslips />} />
+<Route
+    path="employee-documents"
+    element={<EmployeeDocuments />}
+/>
+            
 <Route
     path="shifts"
     element={<ShiftMaster />}
