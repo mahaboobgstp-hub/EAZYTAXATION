@@ -701,6 +701,13 @@ function Sidebar() {
 >
   Employee Loans & Advances
 </NavLink>
+
+            <NavLink
+  to="/app/holiday-calendar-leave-ledger"
+  className="submenu-link"
+>
+  Holiday Calendar & Leave Ledger
+</NavLink>
             
         </div>
 
