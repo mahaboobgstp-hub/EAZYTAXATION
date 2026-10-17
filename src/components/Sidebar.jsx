@@ -688,7 +688,12 @@ function Sidebar() {
 >
   Performance Management
 </NavLink>
-            
+            <NavLink
+  to="/app/expense-reimbursement"
+  className="submenu-link"
+>
+  Expense Reimbursement
+</NavLink>
         </div>
 
     )
