@@ -674,6 +674,14 @@ function Sidebar() {
             <NavLink to="/app/final-settlement" className="submenu-link">
   Final Settlement
 </NavLink>
+            
+<NavLink
+  to="/app/employee-document-repository"
+  className="submenu-link"
+>
+  Document Repository
+</NavLink>
+
 
         </div>
 
