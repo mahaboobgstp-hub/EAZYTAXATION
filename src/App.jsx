@@ -37,6 +37,11 @@ import HolidayCalendarLeaveLedger from "./pages/hr/HolidayCalendarLeaveLedger";
 import EmployeeDocumentRepository from "./pages/hr/EmployeeDocumentRepository";
 import PerformanceManagement from "./pages/hr/PerformanceManagement";
 import HRDashboardReports from "./pages/hr/HRDashboardReports";
+import AssetRegister from "./pages/hr/AssetRegister";
+import EmployeeAssetAssignment from "./pages/hr/EmployeeAssetAssignment";
+import VehicleManagement from "./pages/hr/VehicleManagement";
+import AssetMaintenance from "./pages/hr/AssetMaintenance";
+import AssetDashboardReports from "./pages/hr/AssetDashboardReports";
 import EmployeeSelfService from "./pages/hr/EmployeeSelfService";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
@@ -280,6 +285,31 @@ function App() {
             <Route
   path="employee-self-service"
   element={<EmployeeSelfService />}
+/>
+            {/* Employee Asset Management */}
+<Route
+  path="asset-register"
+  element={<AssetRegister />}
+/>
+
+<Route
+  path="employee-asset-assignment"
+  element={<EmployeeAssetAssignment />}
+/>
+
+<Route
+  path="vehicle-management"
+  element={<VehicleManagement />}
+/>
+
+<Route
+  path="asset-maintenance"
+  element={<AssetMaintenance />}
+/>
+
+<Route
+  path="asset-dashboard-reports"
+  element={<AssetDashboardReports />}
 />
         </Route>
         
