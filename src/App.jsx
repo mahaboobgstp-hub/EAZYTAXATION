@@ -33,6 +33,7 @@ import LeaveManagement from "./pages/hr/LeaveManagement";
 import FinalSettlement from "./pages/hr/FinalSettlement";
 import ExpenseReimbursement from "./pages/hr/ExpenseReimbursement";
 import EmployeeLoansAdvances from "./pages/hr/EmployeeLoansAdvances";
+import HolidayCalendarLeaveLedger from "./pages/hr/HolidayCalendarLeaveLedger";
 import EmployeeDocumentRepository from "./pages/hr/EmployeeDocumentRepository";
 import PerformanceManagement from "./pages/hr/PerformanceManagement";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
@@ -263,6 +264,10 @@ function App() {
             <Route
     path="statutory-configuration"
     element={<StatutoryConfiguration />}
+/>
+            <Route
+  path="holiday-calendar-leave-ledger"
+  element={<HolidayCalendarLeaveLedger />}
 />
           
         </Route>
