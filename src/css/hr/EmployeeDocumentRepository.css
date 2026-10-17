@@ -1,0 +1,408 @@
+
+/* =========================================
+   EMPLOYEE DOCUMENT REPOSITORY
+   EAZYTAXATION HR MODULE
+========================================= */
+
+.document-repository {
+  padding: 24px;
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.document-repository * {
+  box-sizing: border-box;
+}
+
+/* Header */
+
+.document-repository-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.document-repository-header h1 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.document-repository-header p {
+  margin: 7px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* Summary cards */
+
+.document-repository-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.document-repository-summary-card {
+  padding: 19px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
+}
+
+.document-repository-summary-card span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.document-repository-summary-card strong {
+  display: block;
+  color: #0f172a;
+  font-size: 27px;
+  font-weight: 700;
+}
+
+/* General cards */
+
+.document-repository-card {
+  padding: 20px;
+  margin-bottom: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
+}
+
+.document-repository-card h2 {
+  margin: 0 0 18px;
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* Filters */
+
+.document-repository-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  align-items: end;
+}
+
+.document-repository-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.document-repository-field label {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.document-repository-field input,
+.document-repository-field select,
+.document-repository-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.document-repository-field input:focus,
+.document-repository-field select:focus,
+.document-repository-field textarea:focus {
+  border-color: #475569;
+  box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.1);
+}
+
+.document-repository-field textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Buttons */
+
+.document-repository-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.document-repository-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.document-repository-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.document-repository-btn-primary {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
+}
+
+.document-repository-btn-primary:hover {
+  background: #334155;
+  border-color: #334155;
+}
+
+.document-repository-btn-danger {
+  background: #ffffff;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.document-repository-btn-danger:hover {
+  background: #fef2f2;
+}
+
+/* Table */
+
+.document-repository-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.document-repository-table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.document-repository-table th,
+.document-repository-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.document-repository-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.document-repository-table td {
+  color: #334155;
+}
+
+.document-repository-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.document-repository-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.document-repository-table td .document-repository-actions {
+  flex-wrap: nowrap;
+}
+
+/* Status labels */
+
+.document-repository-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.document-repository-status-active {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.document-repository-status-pending {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.document-repository-status-expired {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.document-repository-status-inactive {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+/* Empty state */
+
+.document-repository-empty {
+  padding: 38px 16px;
+  color: #64748b;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Modal */
+
+.document-repository-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.document-repository-modal {
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 25px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+}
+
+.document-repository-modal h2 {
+  margin: 0 0 22px;
+  color: #0f172a;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.document-repository-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.document-repository-form-full {
+  grid-column: 1 / -1;
+}
+
+.document-repository-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Pagination, if used */
+
+.document-repository-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+  .document-repository-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .document-repository-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .document-repository {
+    padding: 14px;
+  }
+
+  .document-repository-header h1 {
+    font-size: 21px;
+  }
+
+  .document-repository-card {
+    padding: 14px;
+  }
+
+  .document-repository-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .document-repository-summary-card {
+    padding: 14px;
+  }
+
+  .document-repository-summary-card strong {
+    font-size: 23px;
+  }
+
+  .document-repository-filters,
+  .document-repository-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .document-repository-form-full {
+    grid-column: auto;
+  }
+
+  .document-repository-modal {
+    padding: 18px;
+  }
+
+  .document-repository-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .document-repository-modal-footer .document-repository-btn {
+    width: 100%;
+  }
+}
