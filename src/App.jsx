@@ -33,7 +33,7 @@ import LeaveManagement from "./pages/hr/LeaveManagement";
 import FinalSettlement from "./pages/hr/FinalSettlement";
 
 import EmployeeDocumentRepository from "./pages/hr/EmployeeDocumentRepository";
-
+import PerformanceManagement from "./pages/hr/PerformanceManagement";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
@@ -222,6 +222,11 @@ function App() {
 <Route
   path="employee-document-repository"
   element={<EmployeeDocumentRepository />}
+    
+/>
+            <Route
+  path="performance-management"
+  element={<PerformanceManagement />}
 />
 
             
