@@ -720,6 +720,42 @@ function Sidebar() {
 >
   Employee Self-Service
 </NavLink>
+
+            {/* Employee Asset Management */}
+<NavLink
+  to="/app/asset-dashboard-reports"
+  className="submenu-link"
+>
+  Asset Dashboard & Reports
+</NavLink>
+
+<NavLink
+  to="/app/asset-register"
+  className="submenu-link"
+>
+  Asset Register
+</NavLink>
+
+<NavLink
+  to="/app/employee-asset-assignment"
+  className="submenu-link"
+>
+  Employee Asset Assignment
+</NavLink>
+
+<NavLink
+  to="/app/vehicle-management"
+  className="submenu-link"
+>
+  Vehicle Management
+</NavLink>
+
+<NavLink
+  to="/app/asset-maintenance"
+  className="submenu-link"
+>
+  Maintenance & Incidents
+</NavLink>
             
         </div>
 
