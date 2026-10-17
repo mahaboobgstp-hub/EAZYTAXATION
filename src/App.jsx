@@ -30,6 +30,7 @@ import PayrollPolicySettings from "./pages/hr/PayrollPolicySettings";
 import PayrollPolicyMaster
     from "./pages/hr/PayrollPolicyMaster";
 import LeaveManagement from "./pages/hr/LeaveManagement";
+import FinalSettlement from "./pages/hr/FinalSettlement";
 import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
@@ -213,6 +214,7 @@ function App() {
     element={<EmployeeDocuments />}
 />
             <Route path="leave-management" element={<LeaveManagement />} />
+            <Route path="final-settlement" element={<FinalSettlement />} />
             
 <Route
     path="shifts"
