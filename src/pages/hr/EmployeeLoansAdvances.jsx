@@ -11,7 +11,7 @@ import {
   FiPlus,
   FiSearch,
   FiTrash2,
-  FiWallet,
+  FiCreditCard,
   FiX,
 } from "react-icons/fi";
 import "../../css/hr/EmployeeLoansAdvances.css";
