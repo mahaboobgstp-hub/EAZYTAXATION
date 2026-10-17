@@ -682,7 +682,13 @@ function Sidebar() {
   Document Repository
 </NavLink>
 
-
+<NavLink
+  to="/app/performance-management"
+  className="submenu-link"
+>
+  Performance Management
+</NavLink>
+            
         </div>
 
     )
