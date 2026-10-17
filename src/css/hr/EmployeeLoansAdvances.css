@@ -1,0 +1,940 @@
+
+.ela-page {
+  padding: 26px;
+  min-width: 0;
+  color: #1e293b;
+  font-family: inherit;
+}
+
+.ela-page *,
+.ela-page *::before,
+.ela-page *::after {
+  box-sizing: border-box;
+}
+
+.ela-page button,
+.ela-page input,
+.ela-page select,
+.ela-page textarea {
+  font: inherit;
+}
+
+.ela-page button {
+  cursor: pointer;
+}
+
+.ela-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.ela-eyebrow {
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.ela-header h1 {
+  margin: 0;
+  color: #172554;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 750;
+  letter-spacing: -0.6px;
+}
+
+.ela-header p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ela-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ela-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 15px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.ela-btn svg {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.ela-btn-primary {
+  color: #fff;
+  background: #2457d6;
+  border-color: #2457d6;
+}
+
+.ela-btn-primary:hover {
+  background: #1945b2;
+}
+
+.ela-btn-secondary {
+  color: #334155;
+  background: #fff;
+  border-color: #dbe3ef;
+}
+
+.ela-btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #b9c8dd;
+}
+
+.ela-btn-danger {
+  color: #b42318;
+  background: #fff;
+  border-color: #fecaca;
+}
+
+.ela-btn-danger:hover {
+  background: #fff1f1;
+}
+
+.ela-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 12px 15px;
+  color: #76511b;
+  background: #fff9e9;
+  border: 1px solid #f3dfae;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.ela-notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.ela-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ela-summary-card {
+  min-width: 0;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+}
+
+.ela-summary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 39px;
+  height: 39px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  font-size: 19px;
+}
+
+.ela-icon-blue {
+  color: #2457d6;
+  background: #eaf0ff;
+}
+
+.ela-icon-orange {
+  color: #c36a0a;
+  background: #fff1dd;
+}
+
+.ela-icon-purple {
+  color: #7543bd;
+  background: #f1eaff;
+}
+
+.ela-icon-green {
+  color: #13834a;
+  background: #e4f8ec;
+}
+
+.ela-summary-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.ela-summary-value {
+  margin: 9px 0 7px;
+  color: #172554;
+  font-size: clamp(21px, 2.3vw, 28px);
+  font-weight: 750;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.ela-summary-note {
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ela-panel {
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+}
+
+.ela-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 0;
+}
+
+.ela-panel-header h2 {
+  margin: 0;
+  color: #172554;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.ela-panel-header p {
+  margin: 7px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ela-record-count {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.ela-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 20px 22px;
+}
+
+.ela-search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 245px;
+  gap: 9px;
+  min-width: 170px;
+  height: 40px;
+  padding: 0 12px;
+  color: #94a3b8;
+  background: #fff;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+}
+
+.ela-search svg {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.ela-search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  color: #334155;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: 12px;
+}
+
+.ela-search input::placeholder {
+  color: #94a3b8;
+}
+
+.ela-filter {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  gap: 7px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+}
+
+.ela-filter > svg {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.ela-filter select {
+  width: 100%;
+  min-width: 100px;
+  max-width: 165px;
+  height: 100%;
+  padding: 0;
+  color: #475569;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ela-reset-btn {
+  height: 38px;
+  padding: 0 10px;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #dce4ee;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.ela-reset-btn:hover {
+  color: #2457d6;
+  background: #eff5ff;
+}
+
+.ela-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-top: 1px solid #edf1f6;
+}
+
+.ela-table {
+  width: 100%;
+  min-width: 1020px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ela-table thead {
+  background: #f8fafc;
+}
+
+.ela-table th {
+  padding: 14px 15px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.ela-table td {
+  padding: 15px;
+  color: #475569;
+  font-size: 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.ela-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ela-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.ela-employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 175px;
+}
+
+.ela-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 37px;
+  height: 37px;
+  color: #2457d6;
+  background: #eaf0ff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.ela-employee-cell > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ela-employee-cell strong {
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ela-employee-cell span,
+.ela-employee-cell small,
+.ela-cell-subtitle {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.ela-type {
+  display: inline-block;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.ela-cell-subtitle {
+  display: block;
+  margin-top: 5px;
+}
+
+.ela-money {
+  color: #172554;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.ela-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ela-status-pending {
+  color: #9a5b08;
+  background: #fff3d9;
+}
+
+.ela-status-approved {
+  color: #2558bd;
+  background: #eaf1ff;
+}
+
+.ela-status-disbursed {
+  color: #7543bd;
+  background: #f1eaff;
+}
+
+.ela-status-rejected {
+  color: #b42318;
+  background: #fff0f0;
+}
+
+.ela-status-closed {
+  color: #147b47;
+  background: #e2f7eb;
+}
+
+.ela-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ela-actions button,
+.ela-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 31px;
+  height: 31px;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 14px;
+}
+
+.ela-actions button:hover,
+.ela-icon-btn:hover {
+  color: #2457d6;
+  background: #eff5ff;
+  border-color: #cad9ff;
+}
+
+.ela-actions button.ela-approve-action {
+  color: #15803d;
+}
+
+.ela-actions button.ela-approve-action:hover {
+  background: #e8f8ee;
+  border-color: #b7e7c9;
+}
+
+.ela-actions button.ela-delete-action:hover {
+  color: #c62828;
+  background: #fff1f1;
+  border-color: #ffd0d0;
+}
+
+.ela-empty {
+  padding: 35px 15px !important;
+  text-align: center;
+  color: #94a3b8 !important;
+}
+
+.ela-table-footer {
+  padding: 14px 22px;
+  color: #94a3b8;
+  font-size: 11px;
+  border-top: 1px solid #edf1f6;
+}
+
+.ela-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.ela-modal {
+  width: 100%;
+  max-width: 790px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+}
+
+.ela-modal-small {
+  max-width: 540px;
+}
+
+.ela-detail-modal {
+  max-width: 760px;
+}
+
+.ela-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 23px 25px;
+  background: #fff;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.ela-modal-header h2 {
+  margin: 0;
+  color: #172554;
+  font-size: 19px;
+}
+
+.ela-modal-header p {
+  margin: 7px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ela-icon-btn {
+  width: 35px;
+  height: 35px;
+  font-size: 18px;
+}
+
+.ela-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  padding: 23px 25px;
+}
+
+.ela-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.ela-form-grid input,
+.ela-form-grid select,
+.ela-form-grid textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 10px 11px;
+  color: #334155;
+  background: #fff;
+  border: 1px solid #dbe3ed;
+  border-radius: 7px;
+  outline: none;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.ela-form-grid textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.ela-form-grid input:focus,
+.ela-form-grid select:focus,
+.ela-form-grid textarea:focus {
+  border-color: #6c91f2;
+  box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.08);
+}
+
+.ela-form-grid input::placeholder,
+.ela-form-grid textarea::placeholder {
+  color: #a0aabb;
+}
+
+.ela-form-full {
+  grid-column: 1 / -1;
+}
+
+.ela-installment-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px;
+  color: #475569;
+  background: #f8faff;
+  border: 1px solid #dce7ff;
+  border-radius: 9px;
+}
+
+.ela-installment-preview span {
+  font-size: 11px;
+}
+
+.ela-installment-preview strong {
+  color: #2457d6;
+  font-size: 23px;
+}
+
+.ela-installment-preview small {
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.ela-rejection-info {
+  padding: 12px;
+  color: #a61b1b;
+  background: #fff4f4;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.ela-rejection-info p {
+  margin: 6px 0 0;
+  line-height: 1.6;
+}
+
+.ela-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 17px 25px 22px;
+  background: #fff;
+  border-top: 1px solid #edf1f6;
+}
+
+.ela-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 22px 25px;
+  background: #f8faff;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.ela-avatar-large {
+  width: 52px;
+  height: 52px;
+  font-size: 15px;
+}
+
+.ela-detail-employee {
+  flex: 1;
+  min-width: 0;
+}
+
+.ela-detail-hero h3 {
+  margin: 0 0 6px;
+  color: #172554;
+  font-size: 16px;
+}
+
+.ela-detail-hero p {
+  margin: 4px 0 7px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.ela-detail-amount {
+  color: #172554;
+  font-size: 19px;
+  white-space: nowrap;
+}
+
+.ela-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 22px 25px;
+}
+
+.ela-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 13px;
+  background: #f8fafc;
+  border: 1px solid #edf1f6;
+  border-radius: 9px;
+}
+
+.ela-detail-grid span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.ela-detail-grid strong {
+  color: #1e293b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ela-detail-description {
+  padding: 0 25px 24px;
+}
+
+.ela-detail-description h4 {
+  margin: 14px 0 8px;
+  color: #334155;
+  font-size: 12px;
+}
+
+.ela-detail-description > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ela-repayment-wrap {
+  margin-top: 10px;
+  border: 1px solid #edf1f6;
+  border-radius: 8px;
+}
+
+.ela-repayment-table {
+  min-width: 450px;
+  border-top: 0;
+}
+
+.ela-detail-footer {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1150px) {
+  .ela-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ela-search {
+    flex-basis: 100%;
+  }
+
+  .ela-filter {
+    flex: 1 1 180px;
+  }
+
+  .ela-filter select {
+    max-width: none;
+    flex: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .ela-page {
+    padding: 16px;
+  }
+
+  .ela-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ela-header-actions {
+    width: 100%;
+  }
+
+  .ela-header-actions .ela-btn {
+    flex: 1;
+  }
+
+  .ela-summary-grid {
+    gap: 10px;
+  }
+
+  .ela-summary-card {
+    padding: 14px;
+  }
+
+  .ela-summary-icon {
+    margin-bottom: 12px;
+  }
+
+  .ela-summary-value {
+    font-size: 22px;
+  }
+
+  .ela-panel-header {
+    align-items: flex-start;
+    padding: 18px 15px 0;
+  }
+
+  .ela-filters {
+    padding: 16px 15px;
+  }
+
+  .ela-filter {
+    flex-basis: 100%;
+  }
+
+  .ela-filter select {
+    max-width: none;
+  }
+
+  .ela-table-footer {
+    padding: 13px 15px;
+  }
+
+  .ela-modal-backdrop {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .ela-modal {
+    max-height: calc(100vh - 20px);
+  }
+
+  .ela-modal-header {
+    padding: 18px;
+  }
+
+  .ela-form-grid {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 15px;
+  }
+
+  .ela-form-full {
+    grid-column: auto;
+  }
+
+  .ela-modal-footer {
+    padding: 15px 18px 18px;
+    flex-wrap: wrap;
+  }
+
+  .ela-detail-hero {
+    flex-wrap: wrap;
+    padding: 18px;
+  }
+
+  .ela-detail-amount {
+    flex-basis: 100%;
+    margin-left: 67px;
+  }
+
+  .ela-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 18px;
+    gap: 9px;
+  }
+
+  .ela-detail-description {
+    padding: 0 18px 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ela-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ela-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ela-header-actions .ela-btn {
+    width: 100%;
+  }
+
+  .ela-panel-header {
+    flex-direction: column;
+  }
+
+  .ela-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
