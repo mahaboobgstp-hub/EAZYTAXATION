@@ -714,6 +714,12 @@ function Sidebar() {
 >
   HR Dashboard & Reports
 </NavLink>
+           <NavLink
+  to="/app/employee-self-service"
+  className="submenu-link"
+>
+  Employee Self-Service
+</NavLink>
             
         </div>
 
