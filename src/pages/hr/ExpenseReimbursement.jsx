@@ -521,7 +521,7 @@ export default function ExpenseReimbursement() {
       </header>
 
       <div className="er-prototype-notice">
-        <FiWallet />
+        <FiCreditCard />
         <span>
           <strong>Prototype mode:</strong> sample records and changes are held
           in temporary browser state. Receipt selection is for UI testing only;
@@ -531,7 +531,7 @@ export default function ExpenseReimbursement() {
 
       <section className="er-summary-grid">
         <SummaryCard
-          icon={FiWallet}
+          icon={FiCreditCard}
           color="blue"
           label="Total Claims"
           value={claims.length}
