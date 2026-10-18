@@ -58,6 +58,46 @@ import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import SalesRegister from "./pages/sales/SalesRegister";
 import GSTRates from "./pages/GSTRates";
 
+/* ===========================
+   RECRUITMENT MANAGEMENT
+=========================== */
+import RecruitmentDashboardReports
+  from "./pages/hr/RecruitmentDashboardReports";
+import JobRequisitionManagement
+  from "./pages/hr/JobRequisitionManagement";
+import CandidateManagement
+  from "./pages/hr/CandidateManagement";
+import InterviewManagement
+  from "./pages/hr/InterviewManagement";
+import OfferManagement
+  from "./pages/hr/OfferManagement";
+
+/* ===========================
+   TRAINING & DEVELOPMENT
+=========================== */
+import TrainingDashboardReports
+  from "./pages/hr/TrainingDashboardReports";
+import TrainingProgramMaster
+  from "./pages/hr/TrainingProgramMaster";
+import TrainingCalendar
+  from "./pages/hr/TrainingCalendar";
+import EmployeeTrainingAssignments
+  from "./pages/hr/EmployeeTrainingAssignments";
+import TrainingAssessmentFeedback
+  from "./pages/hr/TrainingAssessmentFeedback";
+
+/* ===========================
+   HR BUDGET MANAGEMENT
+=========================== */
+import HRBudgetDashboardReports
+  from "./pages/hr/HRBudgetDashboardReports";
+import HRBudgetPlanning
+  from "./pages/hr/HRBudgetPlanning";
+import HRExpenseTracking
+  from "./pages/hr/HRExpenseTracking";
+import HRBudgetApprovals
+  from "./pages/hr/HRBudgetApprovals";
+
 function App() {
 
   return (
@@ -311,6 +351,86 @@ function App() {
   path="asset-dashboard-reports"
   element={<AssetDashboardReports />}
 />
+            
+{/* ===========================
+    RECRUITMENT MANAGEMENT
+=========================== */}
+<Route
+  path="recruitment-dashboard-reports"
+  element={<RecruitmentDashboardReports />}
+/>
+
+<Route
+  path="job-requisition-management"
+  element={<JobRequisitionManagement />}
+/>
+
+<Route
+  path="candidate-management"
+  element={<CandidateManagement />}
+/>
+
+<Route
+  path="interview-management"
+  element={<InterviewManagement />}
+/>
+
+<Route
+  path="offer-management"
+  element={<OfferManagement />}
+/>
+
+{/* ===========================
+    TRAINING & DEVELOPMENT
+=========================== */}
+<Route
+  path="training-dashboard-reports"
+  element={<TrainingDashboardReports />}
+/>
+
+<Route
+  path="training-program-master"
+  element={<TrainingProgramMaster />}
+/>
+
+<Route
+  path="training-calendar"
+  element={<TrainingCalendar />}
+/>
+
+<Route
+  path="employee-training-assignments"
+  element={<EmployeeTrainingAssignments />}
+/>
+
+<Route
+  path="training-assessment-feedback"
+  element={<TrainingAssessmentFeedback />}
+/>
+
+{/* ===========================
+    HR BUDGET MANAGEMENT
+=========================== */}
+<Route
+  path="hr-budget-dashboard-reports"
+  element={<HRBudgetDashboardReports />}
+/>
+
+<Route
+  path="hr-budget-planning"
+  element={<HRBudgetPlanning />}
+/>
+
+<Route
+  path="hr-expense-tracking"
+  element={<HRExpenseTracking />}
+/>
+
+<Route
+  path="hr-budget-approvals"
+  element={<HRBudgetApprovals />}
+/>
+
         </Route>
         
       </Routes>
