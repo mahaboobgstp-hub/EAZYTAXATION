@@ -546,7 +546,7 @@ export default function EmployeeLoansAdvances() {
       </header>
 
       <div className="ela-notice">
-        <FiWallet />
+        <FiCreditCard />
         <span>
           <strong>Prototype mode:</strong> applications and repayments use
           temporary browser state. No real disbursement or payroll deduction
@@ -577,7 +577,7 @@ export default function EmployeeLoansAdvances() {
           note="Awaiting disbursement"
         />
         <SummaryCard
-          icon={FiWallet}
+          icon={FiCreditCard}
           color="green"
           label="Total Recovered"
           value={money(recoveredAmount)}
@@ -787,7 +787,7 @@ export default function EmployeeLoansAdvances() {
                             aria-label={`Record repayment for ${loan.id}`}
                             onClick={() => openRepayment(loan)}
                           >
-                            <FiWallet />
+                            <FiCreditCard />
                           </button>
                         )}
                       </div>
@@ -1257,7 +1257,7 @@ export default function EmployeeLoansAdvances() {
                   className="ela-btn ela-btn-primary"
                   onClick={() => openRepayment(selectedLoan)}
                 >
-                  <FiWallet /> Record Repayment
+                  <FiCreditCard /> Record Repayment
                 </button>
               )}
 
