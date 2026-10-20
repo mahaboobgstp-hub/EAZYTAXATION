@@ -384,6 +384,12 @@ const LOCKED_HR_GROUPS = new Set([
   "HR Budget",
 ]);
 
+
+const LOCKED_MODULES = new Set([
+  "inventory",
+  "supply-chain",
+]);
+
 const isRouteAvailable = (path) =>
   AVAILABLE_ROUTES.has(path);
 
