@@ -33,7 +33,7 @@ const MODULES = {
     dashboard: "/app/dashboard",
     groups: [
       {
-        title: "Sales & Billing",
+        title: "Sales",
         icon: FiDollarSign,
         links: [
           ["Add Sales Invoice", "/app/sales"],
@@ -45,7 +45,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Purchases & Supplier Bills",
+        title: "Purchases",
         icon: FiShoppingCart,
         links: [
           ["Add Purchase Invoice", "/app/purchases"],
@@ -56,7 +56,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Expenses & Payments",
+        title: "Expenses",
         icon: FiTruck,
         links: [
           ["Add Expense", "/app/expenses"],
@@ -68,7 +68,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Accounting & Statements",
+        title: "Accounting",
         icon: FiBookOpen,
         links: [
           ["Journal Voucher", "/journal-voucher"],
@@ -79,7 +79,7 @@ const MODULES = {
         ],
       },
       {
-        title: "GST & Taxation",
+        title: "GST & Tax",
         icon: FiFileText,
         links: [
           ["GSTR-1", "/app/gstr1"],
@@ -90,7 +90,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Financial Reports",
+        title: "Reports",
         icon: FiBarChart2,
         links: [
           ["Sales Reports", "/app/sales-reports"],
@@ -109,7 +109,7 @@ const MODULES = {
     dashboard: "/app/hr-dashboard-reports",
     groups: [
       {
-        title: "People Management",
+        title: "Employees",
         icon: FiUsers,
         links: [
           ["Employee Master", "/app/employees"],
@@ -122,7 +122,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Time & Attendance",
+        title: "Attendance",
         icon: FiCalendar,
         links: [
           ["Attendance Entry", "/app/attendance"],
@@ -137,7 +137,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Payroll & Compliance",
+        title: "Payroll",
         icon: FiDollarSign,
         links: [
           ["Payroll Processing", "/app/payroll-processing"],
@@ -160,7 +160,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Training & Development",
+        title: "Training",
         icon: FiBookOpen,
         links: [
           ["Training Dashboard & Reports", "/app/training-dashboard-reports"],
@@ -171,7 +171,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Performance & Employee Services",
+        title: "Employee Performance",
         icon: FiUserCheck,
         links: [
           ["Performance Management", "/app/performance-management"],
@@ -180,7 +180,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Employee Assets & Services",
+        title: "Employee Assets",
         icon: FiBriefcase,
         links: [
           ["Asset Dashboard & Reports", "/app/asset-dashboard-reports"],
@@ -191,7 +191,7 @@ const MODULES = {
         ],
       },
       {
-        title: "HR Budget Management",
+        title: "HR Budget",
         icon: FiBarChart2,
         links: [
           ["HR Budget Dashboard & Reports", "/app/hr-budget-dashboard-reports"],
@@ -259,14 +259,14 @@ const MODULES = {
 
 const COMMON_GROUPS = [
   {
-    title: "Company Workspace",
+    title: "Company",
     icon: FiBriefcase,
     links: [
       ["Company Master", "/app/companies"],
     ],
   },
   {
-    title: "Common Masters",
+    title: "Masters",
     icon: FiDatabase,
     links: [
       ["Customers", "/app/customers"],
@@ -281,7 +281,7 @@ const COMMON_GROUPS = [
     ],
   },
   {
-    title: "Administration & Security",
+    title: "Administration",
     icon: FiSettings,
     links: [
       ["Company Settings", "/app/company-settings"],
