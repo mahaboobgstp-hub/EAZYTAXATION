@@ -716,3 +716,66 @@
 .sidebar .menu-title > svg {
   flex-shrink: 0;
 }
+
+
+/* =========================================
+   CENTRALIZED LOCKED MENU STYLING
+========================================= */
+
+.sidebar .menu-title-locked,
+.sidebar .menu-link-locked {
+  color: #8d98aa;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.sidebar .menu-title-locked:hover,
+.sidebar .menu-link-locked:hover {
+  background: transparent;
+  color: #8d98aa;
+}
+
+.sidebar .submenu-link-locked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #929daf;
+  cursor: not-allowed;
+  opacity: 0.8;
+  text-decoration: none;
+  user-select: none;
+}
+
+.sidebar .submenu-link-locked:hover {
+  background: transparent;
+  color: #929daf;
+}
+
+.sidebar .sidebar-lock-icon {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  margin-left: auto;
+  color: #a3adbd;
+}
+
+.sidebar .menu-title-locked .sidebar-lock-icon {
+  color: #b4bdca;
+}
+
+.sidebar .sidebar-group-locked {
+  opacity: 0.86;
+}
+
+.sidebar .menu-link-locked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar .menu-link-locked span {
+  flex: 1;
+  min-width: 0;
+}
+
