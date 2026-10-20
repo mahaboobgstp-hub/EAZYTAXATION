@@ -694,3 +694,25 @@
     min-height: 38px;
   }
 }
+/* Compact, professional sidebar group labels */
+.sidebar .menu-title {
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.sidebar .menu-left {
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.sidebar .menu-left span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar .menu-title > svg {
+  flex-shrink: 0;
+}
