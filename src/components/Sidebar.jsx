@@ -333,6 +333,7 @@ const COMMON_GROUPS = [
 const AVAILABLE_ROUTES = new Set([
   // Payroll core
   "/app/employees",
+  "/app/employee-documents",
   "/app/departments",
   "/app/designations",
   "/app/locations",
