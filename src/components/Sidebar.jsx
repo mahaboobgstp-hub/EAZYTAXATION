@@ -171,7 +171,7 @@ const MODULES = {
         ],
       },
       {
-        title: "Employee Performance",
+        title: "Emp Performance",
         icon: FiUserCheck,
         links: [
           ["Performance Management", "/app/performance-management"],
