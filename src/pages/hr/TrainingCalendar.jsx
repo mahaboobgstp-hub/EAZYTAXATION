@@ -380,18 +380,26 @@ setError("");
 
 };
 
-const deleteSession = (session) => {
-const confirmed = window.confirm(
-"Delete session "${session.sessionCode}" for ${session.programme}?"
-);
 
-if (confirmed) {
+const deleteSession = (session) => {
+  const confirmed = window.confirm(
+    'Delete session "' +
+      session.sessionCode +
+      '" for ' +
+      session.programme +
+      '?'
+  );
+
+  if (!confirmed) return;
+
   setSessions((current) =>
     current.filter((item) => item.id !== session.id)
   );
-}
 
+  setModalOpen(false);
+  setError("");
 };
+
 
 const exportCsv = () => {
 const headers = [
