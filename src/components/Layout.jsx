@@ -1,23 +1,25 @@
-import { Outlet } from "react-router-dom";
-import Sidebar from './Sidebar';
-import Header from './Header';
 
-import '../css/Layout.css';
+import { Outlet } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
+import { ModuleProvider } from "../context/ModuleContext";
+import "../css/Layout.css";
 
 function Layout() {
   return (
-    <div className="layout">
+    <ModuleProvider>
+      <div className="layout">
+        <Sidebar />
 
-      <Sidebar />
+        <div className="main-container">
+          <Header />
 
-      <div className="main-container">
-        <Header />
-        <div className="page-content">
-          <Outlet />
+          <div className="page-content">
+            <Outlet />
+          </div>
         </div>
       </div>
-
-    </div>
+    </ModuleProvider>
   );
 }
 
