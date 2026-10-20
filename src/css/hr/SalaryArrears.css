@@ -1,1 +1,576 @@
 
+.salary-arrears-page {
+  --arrears-primary: #2457d6;
+  --arrears-primary-dark: #1945b4;
+  --arrears-text: #172033;
+  --arrears-muted: #697586;
+  --arrears-border: #e2e8f0;
+  --arrears-surface: #ffffff;
+  --arrears-background: #f6f8fc;
+
+  width: 100%;
+  min-width: 0;
+  padding: 26px;
+  color: var(--arrears-text);
+  background: var(--arrears-background);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.salary-arrears-page *,
+.salary-arrears-page *::before,
+.salary-arrears-page *::after {
+  box-sizing: border-box;
+}
+
+.arrears-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.arrears-eyebrow {
+  margin-bottom: 8px;
+  color: var(--arrears-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.arrears-page-header h1 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 34px);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+}
+
+.arrears-page-header p,
+.arrears-panel-heading p {
+  margin: 8px 0 0;
+  color: var(--arrears-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.arrears-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.arrears-btn {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.arrears-btn:active {
+  transform: translateY(1px);
+}
+
+.arrears-btn-primary {
+  color: #ffffff;
+  background: var(--arrears-primary);
+}
+
+.arrears-btn-primary:hover {
+  background: var(--arrears-primary-dark);
+}
+
+.arrears-btn-secondary {
+  color: #344054;
+  background: #ffffff;
+  border-color: #d9e0eb;
+}
+
+.arrears-btn-secondary:hover {
+  background: #f0f4fa;
+  border-color: #bac7d9;
+}
+
+.arrears-demo-notice {
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  border: 1px solid #c9dcf8;
+  border-radius: 10px;
+  background: #edf5ff;
+  color: #244b83;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.arrears-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.arrears-summary-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 130px;
+  padding: 19px;
+  border: 1px solid var(--arrears-border);
+  border-radius: 13px;
+  background: var(--arrears-surface);
+  box-shadow: 0 2px 7px rgb(15 23 42 / 3%);
+}
+
+.arrears-summary-card > span {
+  color: var(--arrears-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.arrears-summary-card strong {
+  display: block;
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.arrears-summary-card small {
+  margin-top: 8px;
+  color: #8a94a5;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.arrears-panel {
+  min-width: 0;
+  margin-bottom: 22px;
+  overflow: hidden;
+  border: 1px solid var(--arrears-border);
+  border-radius: 13px;
+  background: var(--arrears-surface);
+  box-shadow: 0 2px 7px rgb(15 23 42 / 3%);
+}
+
+.arrears-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 21px 22px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.arrears-panel-heading h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.arrears-record-count {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: #eff4ff;
+  color: var(--arrears-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.arrears-close-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--arrears-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475467;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.arrears-form-panel form {
+  padding: 22px;
+}
+
+.arrears-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 19px;
+}
+
+.arrears-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.arrears-form-grid label > span {
+  color: #dc3545;
+}
+
+.arrears-form-grid input,
+.arrears-form-grid select,
+.arrears-form-grid textarea,
+.arrears-filters input,
+.arrears-filters select {
+  width: 100%;
+  min-width: 0;
+  min-height: 43px;
+  padding: 10px 12px;
+  border: 1px solid #d8dfeb;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: var(--arrears-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.arrears-form-grid textarea {
+  resize: vertical;
+}
+
+.arrears-form-grid input:focus,
+.arrears-form-grid select:focus,
+.arrears-form-grid textarea:focus,
+.arrears-filters input:focus,
+.arrears-filters select:focus {
+  border-color: var(--arrears-primary);
+  box-shadow: 0 0 0 3px rgb(36 87 214 / 10%);
+}
+
+.arrears-full-width {
+  grid-column: 1 / -1;
+}
+
+.arrears-calculation-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 23px;
+  padding: 18px;
+  border: 1px solid #dbe6fb;
+  border-radius: 11px;
+  background: #f4f7ff;
+}
+
+.arrears-calculation-preview > div {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.arrears-calculation-preview span {
+  color: #68758b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.arrears-calculation-preview strong {
+  overflow-wrap: anywhere;
+  color: #1c2e50;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.arrears-calculation-preview .arrears-preview-total strong {
+  color: var(--arrears-primary);
+}
+
+.arrears-calculation-note {
+  margin: 12px 0 0;
+  color: #737f91;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.arrears-form-error {
+  margin-top: 17px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.arrears-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #edf0f5;
+}
+
+.arrears-filters {
+  display: flex;
+  gap: 12px;
+  padding: 18px 22px;
+}
+
+.arrears-filters input {
+  flex: 1;
+}
+
+.arrears-filters select {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.arrears-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.arrears-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.arrears-table th {
+  padding: 14px 16px;
+  background: #f8faff;
+  color: #697586;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-top: 1px solid #edf0f5;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.arrears-table td {
+  padding: 16px;
+  border-bottom: 1px solid #edf0f5;
+  vertical-align: middle;
+  color: #344054;
+  line-height: 1.6;
+}
+
+.arrears-table tbody tr:hover {
+  background: #fafcff;
+}
+
+.arrears-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.arrears-table td strong {
+  display: block;
+  color: #1d2939;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.arrears-table td small {
+  display: block;
+  margin-top: 5px;
+  color: #7b8798;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.arrears-table .arrears-amount {
+  color: #174dbd;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.arrears-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.arrears-status.draft {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.arrears-status.submitted {
+  background: #fff4df;
+  color: #9a6700;
+}
+
+.arrears-status.approved {
+  background: #e8f8ef;
+  color: #18794e;
+}
+
+.arrears-status.partially-paid {
+  background: #eaf2ff;
+  color: #2457c5;
+}
+
+.arrears-status.paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.arrears-status.rejected {
+  background: #feecec;
+  color: #b42318;
+}
+
+.arrears-row-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 100px;
+}
+
+.arrears-row-actions button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--arrears-primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.arrears-row-actions button:hover {
+  text-decoration: underline;
+}
+
+.arrears-row-actions .arrears-reject-action {
+  color: #c0392b;
+}
+
+.arrears-no-action {
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.arrears-empty {
+  padding: 38px 20px !important;
+  color: #7b8798 !important;
+  text-align: center;
+  line-height: 1.8 !important;
+}
+
+.arrears-register-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 15px 22px;
+  border-top: 1px solid #edf0f5;
+  background: #fcfdff;
+  color: #697586;
+  font-size: 11px;
+}
+
+@media (max-width: 1100px) {
+  .salary-arrears-page {
+    padding: 20px;
+  }
+
+  .arrears-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .arrears-table {
+    min-width: 1000px;
+  }
+}
+
+@media (max-width: 640px) {
+  .salary-arrears-page {
+    padding: 14px;
+  }
+
+  .arrears-page-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .arrears-header-actions {
+    width: 100%;
+  }
+
+  .arrears-header-actions .arrears-btn {
+    flex: 1;
+  }
+
+  .arrears-summary-grid {
+    gap: 10px;
+  }
+
+  .arrears-summary-card {
+    min-height: 112px;
+    padding: 13px;
+  }
+
+  .arrears-summary-card strong {
+    margin-top: 11px;
+    font-size: 18px;
+  }
+
+  .arrears-panel-heading {
+    padding: 16px;
+  }
+
+  .arrears-form-panel form {
+    padding: 16px;
+  }
+
+  .arrears-form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .arrears-full-width {
+    grid-column: auto;
+  }
+
+  .arrears-calculation-preview {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 15px;
+  }
+
+  .arrears-filters {
+    flex-direction: column;
+    padding: 14px 16px;
+  }
+
+  .arrears-filters select {
+    width: 100%;
+  }
+
+  .arrears-register-footer {
+    padding: 14px 16px;
+  }
+}
