@@ -105,6 +105,7 @@ const MODULES = {
     ],
   },
 
+
   hr: {
     dashboard: "/app/hr-dashboard-reports",
     groups: [
@@ -130,22 +131,7 @@ const MODULES = {
           ["Attendance Settings", "/app/attendance-settings"],
           ["Shift Master", "/app/shifts"],
           ["Leave Management", "/app/leave-management"],
-          [
-            "Holiday Calendar & Leave Ledger",
-            "/app/holiday-calendar-leave-ledger",
-          ],
-        ],
-      },
-      {
-        title: "Payroll",
-        icon: FiDollarSign,
-        links: [
-          ["Payroll Processing", "/app/payroll-processing"],
-          ["Payslips", "/app/payslips"],
-          ["Payroll Policy Settings", "/app/payroll-policy-settings"],
-          ["Payroll Policy Master", "/app/payroll-policy-master"],
-          ["Statutory Configuration", "/app/statutory-configuration"],
-          ["Final Settlement", "/app/final-settlement"],
+          ["Holiday Calendar & Leave Ledger", "/app/holiday-calendar-leave-ledger"],
         ],
       },
       {
@@ -171,12 +157,10 @@ const MODULES = {
         ],
       },
       {
-        title: "Emp Performance",
+        title: "Performance",
         icon: FiUserCheck,
         links: [
           ["Performance Management", "/app/performance-management"],
-          ["Expense Reimbursement", "/app/expense-reimbursement"],
-          ["Employee Loans & Advances", "/app/employee-loans-advances"],
         ],
       },
       {
@@ -191,6 +175,14 @@ const MODULES = {
         ],
       },
       {
+        title: "Employee Services",
+        icon: FiUsers,
+        links: [
+          ["Expense Reimbursement", "/app/expense-reimbursement"],
+          ["Employee Loans & Advances", "/app/employee-loans-advances"],
+        ],
+      },
+      {
         title: "HR Budget",
         icon: FiBarChart2,
         links: [
@@ -202,6 +194,37 @@ const MODULES = {
       },
     ],
   },
+
+  payroll: {
+    dashboard: "/app/payroll-processing",
+    groups: [
+      {
+        title: "Salary Processing",
+        icon: FiDollarSign,
+        links: [
+          ["Payroll Processing", "/app/payroll-processing"],
+          ["Payslips", "/app/payslips"],
+          ["Final Settlement", "/app/final-settlement"],
+        ],
+      },
+      {
+        title: "Payroll Policies",
+        icon: FiClipboard,
+        links: [
+          ["Payroll Policy Settings", "/app/payroll-policy-settings"],
+          ["Payroll Policy Master", "/app/payroll-policy-master"],
+        ],
+      },
+      {
+        title: "Statutory Compliance",
+        icon: FiFileText,
+        links: [
+          ["Statutory Configuration", "/app/statutory-configuration"],
+        ],
+      },
+    ],
+  },
+
 
   inventory: {
     dashboard: "/app/dashboard",
@@ -393,15 +416,19 @@ function Sidebar() {
           }
         >
           <FiHome />
-          <span>
-            {activeModule === "hr"
-              ? "HR Dashboard"
-              : activeModule === "inventory"
-                ? "Inventory Dashboard"
-                : activeModule === "supply-chain"
-                  ? "Supply Chain Dashboard"
-                  : "Dashboard"}
-          </span>
+          
+<span>
+  {activeModule === "hr"
+    ? "HR Dashboard"
+    : activeModule === "payroll"
+      ? "Payroll Dashboard"
+      : activeModule === "inventory"
+        ? "Inventory Dashboard"
+        : activeModule === "supply-chain"
+          ? "Supply Chain Dashboard"
+          : "Dashboard"}
+</span>
+
         </NavLink>
 
         {currentModule.groups.map((group) =>
