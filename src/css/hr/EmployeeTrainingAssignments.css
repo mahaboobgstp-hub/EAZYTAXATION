@@ -1,0 +1,805 @@
+.eta-page {
+  min-height: 100%;
+  padding: 24px;
+  color: #172033;
+  background: #f7f9fc;
+  font-family: inherit;
+}
+
+.eta-page * {
+  box-sizing: border-box;
+}
+
+.eta-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.eta-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.eta-heading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  color: #4338ca;
+  background: #e9e8ff;
+  border-radius: 12px;
+  font-size: 24px;
+}
+
+.eta-heading h1 {
+  margin: 0 0 7px;
+  color: #172033;
+  font-size: 25px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+}
+
+.eta-heading p,
+.eta-panel-header p {
+  margin: 0;
+  color: #697586;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.eta-heading p {
+  max-width: 680px;
+}
+
+.eta-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.eta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.eta-btn svg {
+  font-size: 15px;
+}
+
+.eta-btn-primary {
+  color: #fff;
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.eta-btn-primary:hover {
+  background: #3730a3;
+  border-color: #3730a3;
+}
+
+.eta-btn-secondary,
+.eta-btn-reset {
+  color: #344054;
+  background: #fff;
+  border-color: #d8dee9;
+}
+
+.eta-btn-secondary:hover,
+.eta-btn-reset:hover {
+  background: #f0f3f9;
+  border-color: #bfc8d7;
+}
+
+.eta-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.eta-metric-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 19px;
+  background: #fff;
+  border: 1px solid #e7ebf2;
+  border-radius: 12px;
+  box-shadow: 0 2px 7px rgba(16, 24, 40, 0.025);
+}
+
+.eta-metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  font-size: 21px;
+}
+
+.eta-blue {
+  color: #2563eb;
+  background: #e9f1ff;
+}
+
+.eta-green {
+  color: #16835d;
+  background: #e3f8ed;
+}
+
+.eta-orange {
+  color: #c46b12;
+  background: #fff1db;
+}
+
+.eta-purple {
+  color: #7c3aed;
+  background: #f0e8ff;
+}
+
+.eta-metric-card > div:last-child {
+  min-width: 0;
+}
+
+.eta-metric-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: #697586;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.eta-metric-card strong {
+  display: block;
+  color: #172033;
+  font-size: 23px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.eta-metric-card small {
+  display: block;
+  margin-top: 5px;
+  color: #8a94a5;
+  font-size: 11px;
+}
+
+.eta-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 15px;
+  margin-bottom: 20px;
+  color: #8b5b0c;
+  background: #fff9eb;
+  border: 1px solid #f5dfad;
+  border-radius: 9px;
+}
+
+.eta-info-banner > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.eta-info-banner p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.eta-panel {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e7ebf2;
+  border-radius: 12px;
+  box-shadow: 0 2px 7px rgba(16, 24, 40, 0.025);
+}
+
+.eta-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 21px 22px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.eta-panel-header h2 {
+  margin: 0 0 6px;
+  color: #172033;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.eta-record-count {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  color: #475467;
+  background: #f0f3f9;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.eta-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 17px 22px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.eta-search-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 240px;
+  min-width: 180px;
+  height: 39px;
+  padding: 0 11px;
+  color: #8993a4;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+}
+
+.eta-search-box:focus-within {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.eta-search-box svg {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.eta-search-box input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  color: #172033;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 12px;
+}
+
+.eta-filter-control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 130px;
+}
+
+.eta-filter-control span {
+  color: #697586;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.eta-filter-control select,
+.eta-form-field select,
+.eta-form-field input,
+.eta-form-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  color: #273449;
+  background: #fff;
+  border: 1px solid #d8dee9;
+  border-radius: 7px;
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.eta-filter-control select {
+  height: 39px;
+  padding: 0 9px;
+}
+
+.eta-filter-control select:focus,
+.eta-form-field select:focus,
+.eta-form-field input:focus,
+.eta-form-field textarea:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.eta-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.eta-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.eta-table thead {
+  background: #f8f9fc;
+}
+
+.eta-table th {
+  padding: 13px 14px;
+  color: #697586;
+  border-bottom: 1px solid #e7ebf2;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.eta-table th:first-child,
+.eta-table td:first-child {
+  padding-left: 22px;
+}
+
+.eta-table td {
+  padding: 15px 14px;
+  color: #344054;
+  border-bottom: 1px solid #edf0f5;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.eta-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.eta-table tbody tr:hover {
+  background: #fafbff;
+}
+
+.eta-employee-cell,
+.eta-programme-cell,
+.eta-session-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 130px;
+}
+
+.eta-employee-cell strong,
+.eta-programme-cell strong,
+.eta-session-cell strong {
+  color: #202b3e;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.eta-employee-cell span,
+.eta-programme-cell small {
+  color: #6366a6;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.eta-employee-cell small,
+.eta-session-cell span {
+  color: #8993a4;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.eta-inline-select {
+  max-width: 130px;
+  min-height: 33px;
+  padding: 6px 8px;
+  color: #475467;
+  background: #f8f9fc;
+  border: 1px solid #d8dee9;
+  border-radius: 7px;
+  outline: none;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.eta-inline-select:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.eta-attendance-present {
+  color: #16794c;
+  background: #e4f8ed;
+  border-color: #c4ecd5;
+}
+
+.eta-attendance-late {
+  color: #a65a0b;
+  background: #fff1df;
+  border-color: #f5dfad;
+}
+
+.eta-attendance-absent {
+  color: #b42318;
+  background: #fce8e8;
+  border-color: #f3c2c2;
+}
+
+.eta-attendance-excused {
+  color: #5b4ab3;
+  background: #eee9ff;
+  border-color: #ddd4ff;
+}
+
+.eta-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.eta-completion-assigned {
+  color: #2859b7;
+  background: #eaf1ff;
+}
+
+.eta-completion-in-progress {
+  color: #a65a0b;
+  background: #fff1df;
+}
+
+.eta-completion-completed {
+  color: #16794c;
+  background: #e4f8ed;
+}
+
+.eta-completion-failed {
+  color: #b42318;
+  background: #fce8e8;
+}
+
+.eta-completion-withdrawn {
+  color: #667085;
+  background: #f0f2f5;
+}
+
+.eta-score-cell {
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+.eta-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eta-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: #596579;
+  background: #fff;
+  border: 1px solid #e2e7ef;
+  border-radius: 7px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.eta-icon-btn:hover {
+  background: #f0f3fa;
+  border-color: #c8d0de;
+}
+
+.eta-icon-btn.eta-delete-btn:hover {
+  color: #c62828;
+  background: #fff0f0;
+  border-color: #f4b8b8;
+}
+
+.eta-empty-state {
+  height: 210px;
+  color: #8993a4 !important;
+  text-align: center !important;
+}
+
+.eta-empty-state svg,
+.eta-empty-state strong,
+.eta-empty-state span {
+  display: block;
+  margin: 0 auto 10px;
+}
+
+.eta-empty-state svg {
+  font-size: 27px;
+}
+
+.eta-empty-state strong {
+  color: #344054;
+  font-size: 14px;
+}
+
+.eta-empty-state span {
+  font-size: 12px;
+}
+
+.eta-table-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 22px;
+  color: #8993a4;
+  border-top: 1px solid #edf0f5;
+  font-size: 11px;
+}
+
+.eta-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.eta-modal {
+  width: 100%;
+  max-width: 790px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e5e9f0;
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
+}
+
+.eta-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 23px 25px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.eta-modal-header h2 {
+  margin: 0 0 7px;
+  color: #172033;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.eta-modal-header p {
+  margin: 0;
+  color: #697586;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.eta-modal form {
+  padding: 23px 25px 25px;
+}
+
+.eta-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.eta-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.eta-form-field > span {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.eta-form-field input,
+.eta-form-field select {
+  min-height: 40px;
+}
+
+.eta-form-field textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.eta-full-width {
+  grid-column: 1 / -1;
+}
+
+.eta-form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 11px 12px;
+  color: #b42318;
+  background: #fff1f1;
+  border: 1px solid #f3c2c2;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.eta-form-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.eta-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 23px;
+  padding-top: 18px;
+  border-top: 1px solid #edf0f5;
+}
+
+@media (max-width: 1200px) {
+  .eta-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .eta-page-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 760px) {
+  .eta-page {
+    padding: 15px;
+  }
+
+  .eta-heading h1 {
+    font-size: 21px;
+  }
+
+  .eta-heading p {
+    font-size: 12px;
+  }
+
+  .eta-header-actions {
+    width: 100%;
+  }
+
+  .eta-header-actions .eta-btn {
+    flex: 1;
+  }
+
+  .eta-metrics {
+    gap: 10px;
+  }
+
+  .eta-metric-card {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .eta-metric-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .eta-metric-card strong {
+    font-size: 19px;
+  }
+
+  .eta-panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 17px;
+  }
+
+  .eta-filters {
+    padding: 15px;
+  }
+
+  .eta-search-box {
+    flex-basis: 100%;
+  }
+
+  .eta-filter-control {
+    flex: 1 1 130px;
+  }
+
+  .eta-btn-reset {
+    flex: 1 1 100%;
+  }
+
+  .eta-table {
+    min-width: 1000px;
+  }
+
+  .eta-table-footer {
+    flex-direction: column;
+    padding: 12px 15px;
+  }
+
+  .eta-modal-overlay {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .eta-modal {
+    max-height: calc(100vh - 20px);
+  }
+
+  .eta-modal-header,
+  .eta-modal form {
+    padding: 18px;
+  }
+
+  .eta-form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .eta-full-width {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .eta-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .eta-heading-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .eta-heading h1 {
+    font-size: 19px;
+  }
+
+  .eta-header-actions {
+    flex-direction: column;
+  }
+
+  .eta-header-actions .eta-btn {
+    width: 100%;
+  }
+}
