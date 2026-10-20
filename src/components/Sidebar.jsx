@@ -197,10 +197,12 @@ const MODULES = {
         icon: FiDollarSign,
         links: [
           ["Payroll Processing", "/app/payroll-processing"],
+          ["Salary Arrears", "/app/salary-arrears"],
           ["Payslips", "/app/payslips"],
           ["Final Settlement", "/app/final-settlement"],
         ],
       },
+
       {
         title: "Payroll Policies",
         icon: FiClipboard,
