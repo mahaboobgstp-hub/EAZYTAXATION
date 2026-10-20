@@ -31,7 +31,7 @@ import "../css/Sidebar.css";
 
 const MODULES = {
   billing: {
-    dashboard: "/app/dashboard",
+    dashboard: "/app/billing-dashboard",
     groups: [
       {
         title: "Sales",
