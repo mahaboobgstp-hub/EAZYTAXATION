@@ -227,15 +227,21 @@ setForm((current) => ({ ...current, [field]: value }));
 setError("");
 };
 
+
 const openCreate = () => {
-setEditingId(null);
-setForm({
-...EMPTY_FORM,
-code: "TRN-${String( Math.max(0, ...programmes.map((item) => item.id)) + 1 ).padStart(3, "0")}",
-});
-setError("");
-setModalOpen(true);
+  setEditingId(null);
+  setForm({
+    ...EMPTY_FORM,
+    code:
+      "TRN-" +
+      String(
+        Math.max(0, ...programmes.map((item) => item.id)) + 1
+      ).padStart(3, "0"),
+  });
+  setError("");
+  setModalOpen(true);
 };
+
 
 const openEdit = (programme) => {
 setEditingId(programme.id);
