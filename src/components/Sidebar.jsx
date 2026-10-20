@@ -756,6 +756,107 @@ function Sidebar() {
 >
   Maintenance & Incidents
 </NavLink>
+
+            {/* RECRUITMENT MANAGEMENT */}
+<NavLink
+  to="/app/recruitment-dashboard-reports"
+  className="submenu-link"
+>
+  Recruitment Dashboard & Reports
+</NavLink>
+
+<NavLink
+  to="/app/job-requisition-management"
+  className="submenu-link"
+>
+  Job Requisition & Vacancies
+</NavLink>
+
+<NavLink
+  to="/app/candidate-management"
+  className="submenu-link"
+>
+  Candidate Management
+</NavLink>
+
+<NavLink
+  to="/app/interview-management"
+  className="submenu-link"
+>
+  Interview Scheduling & Evaluation
+</NavLink>
+
+<NavLink
+  to="/app/offer-management"
+  className="submenu-link"
+>
+  Offer Management
+</NavLink>
+
+{/* TRAINING & DEVELOPMENT */}
+<NavLink
+  to="/app/training-dashboard-reports"
+  className="submenu-link"
+>
+  Training Dashboard & Reports
+</NavLink>
+
+<NavLink
+  to="/app/training-program-master"
+  className="submenu-link"
+>
+  Training Programme Master
+</NavLink>
+
+<NavLink
+  to="/app/training-calendar"
+  className="submenu-link"
+>
+  Training Calendar
+</NavLink>
+
+<NavLink
+  to="/app/employee-training-assignments"
+  className="submenu-link"
+>
+  Employee Training Assignments
+</NavLink>
+
+<NavLink
+  to="/app/training-assessment-feedback"
+  className="submenu-link"
+>
+  Training Assessment & Feedback
+</NavLink>
+
+{/* HR BUDGET MANAGEMENT */}
+<NavLink
+  to="/app/hr-budget-dashboard-reports"
+  className="submenu-link"
+>
+  HR Budget Dashboard & Reports
+</NavLink>
+
+<NavLink
+  to="/app/hr-budget-planning"
+  className="submenu-link"
+>
+  HR Budget Planning
+</NavLink>
+
+<NavLink
+  to="/app/hr-expense-tracking"
+  className="submenu-link"
+>
+  HR Expense Tracking
+</NavLink>
+
+<NavLink
+  to="/app/hr-budget-approvals"
+  className="submenu-link"
+>
+  HR Budget Approvals & Revisions
+</NavLink>
             
         </div>
 
@@ -1236,106 +1337,7 @@ function Sidebar() {
                             </NavLink>
 
                             
-{/* RECRUITMENT MANAGEMENT */}
-<NavLink
-  to="/app/recruitment-dashboard-reports"
-  className="submenu-link"
->
-  Recruitment Dashboard & Reports
-</NavLink>
 
-<NavLink
-  to="/app/job-requisition-management"
-  className="submenu-link"
->
-  Job Requisition & Vacancies
-</NavLink>
-
-<NavLink
-  to="/app/candidate-management"
-  className="submenu-link"
->
-  Candidate Management
-</NavLink>
-
-<NavLink
-  to="/app/interview-management"
-  className="submenu-link"
->
-  Interview Scheduling & Evaluation
-</NavLink>
-
-<NavLink
-  to="/app/offer-management"
-  className="submenu-link"
->
-  Offer Management
-</NavLink>
-
-{/* TRAINING & DEVELOPMENT */}
-<NavLink
-  to="/app/training-dashboard-reports"
-  className="submenu-link"
->
-  Training Dashboard & Reports
-</NavLink>
-
-<NavLink
-  to="/app/training-program-master"
-  className="submenu-link"
->
-  Training Programme Master
-</NavLink>
-
-<NavLink
-  to="/app/training-calendar"
-  className="submenu-link"
->
-  Training Calendar
-</NavLink>
-
-<NavLink
-  to="/app/employee-training-assignments"
-  className="submenu-link"
->
-  Employee Training Assignments
-</NavLink>
-
-<NavLink
-  to="/app/training-assessment-feedback"
-  className="submenu-link"
->
-  Training Assessment & Feedback
-</NavLink>
-
-{/* HR BUDGET MANAGEMENT */}
-<NavLink
-  to="/app/hr-budget-dashboard-reports"
-  className="submenu-link"
->
-  HR Budget Dashboard & Reports
-</NavLink>
-
-<NavLink
-  to="/app/hr-budget-planning"
-  className="submenu-link"
->
-  HR Budget Planning
-</NavLink>
-
-<NavLink
-  to="/app/hr-expense-tracking"
-  className="submenu-link"
->
-  HR Expense Tracking
-</NavLink>
-
-<NavLink
-  to="/app/hr-budget-approvals"
-  className="submenu-link"
->
-  HR Budget Approvals & Revisions
-</NavLink>
 
 
                         </div>
