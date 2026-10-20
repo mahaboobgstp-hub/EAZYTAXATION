@@ -163,8 +163,10 @@ currency: "INR",
 maximumFractionDigits: 0,
 }).format(Number(value) || 0);
 
+
 const escapeCsv = (value) =>
-""${String(value ?? "").replace(/"/g, '""')}"";
+  `"${String(value ?? "").replace(/"/g, '""')}"`;
+
 
 export default function TrainingProgramMaster() {
 const [programmes, setProgrammes] = useState(INITIAL_PROGRAMMES);
