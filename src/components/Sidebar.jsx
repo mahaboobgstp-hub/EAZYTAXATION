@@ -179,7 +179,7 @@ const MODULES = {
   },
 
   payroll: {
-    dashboard: "/app/payroll-processing",
+    dashboard: "/app/payroll-dashboard",
     groups: [
       {
         title: "Attendance",
