@@ -5,40 +5,21 @@
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  min-height: 76px;
-  padding: 14px 24px;
+  justify-content: flex-start;
+  min-height: 54px;
+  padding: 8px 16px;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-}
-
-.header-brand {
-  flex-shrink: 0;
-}
-
-.header-brand h3 {
-  margin: 0;
-  color: #172554;
-  font-size: 19px;
-  font-weight: 750;
-  letter-spacing: -0.3px;
-}
-
-.header-brand span {
-  display: block;
-  margin-top: 4px;
-  color: #64748b;
-  font-size: 11px;
 }
 
 .module-switcher {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   overflow-x: auto;
-  max-width: 100%;
   padding: 4px 0;
+  scrollbar-width: thin;
 }
 
 .module-button {
@@ -51,10 +32,7 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .module-button:hover {
@@ -73,16 +51,13 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   .header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
-    padding: 14px 16px;
+    padding: 6px 10px;
   }
 
-  .module-switcher {
-    width: 100%;
+  .module-button {
+    padding: 9px 11px;
+    font-size: 11px;
   }
 }
-
