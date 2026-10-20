@@ -406,6 +406,7 @@ function Sidebar() {
   const [commonOpen, setCommonOpen] = useState(false);
 
   const currentModule = MODULES[activeModule] || MODULES.billing;
+  const currentModuleLocked = LOCKED_MODULES.has(activeModule);
 
   const toggleMenu = (menuName) => {
     setOpenMenu((previous) => previous === menuName ? "" : menuName);
@@ -418,7 +419,9 @@ function Sidebar() {
     const isOpen = openMenu === menuKey;
 
     const moduleId = keyPrefix === "common" ? "common" : keyPrefix;
-    const groupLocked = isGroupLocked(moduleId, group);
+    const groupLocked =
+  currentModuleLocked ||
+  isGroupLocked(moduleId, group);
 
     // HR groups scheduled for later releases are locked as a whole.
     // Other groups can expand, but unavailable pages cannot be opened.
@@ -548,7 +551,7 @@ function Sidebar() {
 
       <nav className="sidebar-menu" aria-label="Main navigation">
         
-        {isRouteAvailable(currentModule.dashboard) ? (
+        {!currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
           <NavLink
             to={currentModule.dashboard}
             className={({ isActive }) =>
