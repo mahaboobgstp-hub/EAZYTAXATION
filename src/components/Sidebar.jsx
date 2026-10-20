@@ -24,6 +24,7 @@ import {
   FiClipboard,
   FiUserCheck,
   FiDatabase,
+  FiLock,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -320,6 +321,75 @@ const COMMON_GROUPS = [
   },
 ];
 
+
+/*
+ * CENTRAL PAGE AVAILABILITY CONFIGURATION
+ *
+ * Routes listed here can be opened from the sidebar.
+ * All other routes display a lock icon and cannot be clicked.
+ *
+ * Review this list as pages are developed and tested.
+ */
+const AVAILABLE_ROUTES = new Set([
+  // Payroll core
+  "/app/employees",
+  "/app/departments",
+  "/app/designations",
+  "/app/locations",
+  "/app/attendance",
+  "/app/attendance-register",
+  "/app/attendance-settings",
+  "/app/shifts",
+  "/app/leave-management",
+  "/app/holiday-calendar-leave-ledger",
+  "/app/payroll-processing",
+  "/app/salary-arrears",
+  "/app/payslips",
+  "/app/final-settlement",
+  "/app/payroll-policy-settings",
+  "/app/payroll-policy-master",
+  "/app/statutory-configuration",
+  "/app/expense-reimbursement",
+  "/app/employee-loans-advances",
+
+  // Billing pages available for initial testing
+  "/app/dashboard",
+  "/app/companies",
+  "/app/customers",
+  "/app/vendors",
+  "/app/sales",
+  "/app/sales-register",
+  "/app/purchases",
+  "/app/expenses",
+  "/app/items",
+  "/app/uom",
+  "/app/expense-categories",
+  "/app/asset-categories",
+  "/app/gst-rates",
+  "/app/delivery-challans",
+  "/app/quotation",
+  "/app/invoice-settings",
+]);
+
+/*
+ * These HR groups remain locked until a later release.
+ * Group titles must match the titles in MODULES.hr.
+ */
+const LOCKED_HR_GROUPS = new Set([
+  "Recruitment",
+  "Training",
+  "Performance",
+  "Employee Assets",
+  "HR Budget",
+]);
+
+const isRouteAvailable = (path) =>
+  AVAILABLE_ROUTES.has(path);
+
+const isGroupLocked = (moduleId, group) =>
+  moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
+
+
 function Sidebar() {
   const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
@@ -334,45 +404,102 @@ function Sidebar() {
     setOpenMenu((previous) => previous === menuName ? "" : menuName);
   };
 
+  
   const renderGroup = (group, keyPrefix) => {
     const menuKey = `${keyPrefix}-${group.title}`;
     const Icon = group.icon;
     const isOpen = openMenu === menuKey;
 
+    const moduleId = keyPrefix === "common" ? "common" : keyPrefix;
+    const groupLocked = isGroupLocked(moduleId, group);
+
+    // HR groups scheduled for later releases are locked as a whole.
+    // Other groups can expand, but unavailable pages cannot be opened.
+    const availableLinks = group.links.filter(([, path]) =>
+      isRouteAvailable(path)
+    );
+
+    const allLinksLocked =
+      groupLocked || availableLinks.length === 0;
+
     return (
-      <div className="sidebar-group" key={menuKey}>
+      <div
+        className={`sidebar-group ${
+          allLinksLocked ? "sidebar-group-locked" : ""
+        }`}
+        key={menuKey}
+      >
         <button
           type="button"
-          className="menu-title"
-          aria-expanded={isOpen}
-          onClick={() => toggleMenu(menuKey)}
+          className={`menu-title ${
+            groupLocked ? "menu-title-locked" : ""
+          }`}
+          aria-expanded={groupLocked ? false : isOpen}
+          aria-disabled={groupLocked}
+          title={
+            groupLocked
+              ? "Coming soon — planned for a future release"
+              : undefined
+          }
+          onClick={() => {
+            if (groupLocked) return;
+            toggleMenu(menuKey);
+          }}
         >
           <span className="menu-left">
             <Icon />
             <span>{group.title}</span>
           </span>
 
-          {isOpen ? <FiChevronDown /> : <FiChevronRight />}
+          {groupLocked ? (
+            <FiLock className="sidebar-lock-icon" aria-hidden="true" />
+          ) : isOpen ? (
+            <FiChevronDown />
+          ) : (
+            <FiChevronRight />
+          )}
         </button>
 
-        {isOpen && (
+        {isOpen && !groupLocked && (
           <div className="submenu">
-            {group.links.map(([label, path]) => (
-              <NavLink
-                key={`${label}-${path}`}
-                to={path}
-                className={({ isActive }) =>
-                  `submenu-link ${isActive ? "active" : ""}`
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
+            {group.links.map(([label, path]) => {
+              const available = isRouteAvailable(path);
+
+              if (!available) {
+                return (
+                  <div
+                    key={`${label}-${path}`}
+                    className="submenu-link submenu-link-locked"
+                    aria-disabled="true"
+                    title="Coming soon — this page is not available yet"
+                  >
+                    <span>{label}</span>
+                    <FiLock
+                      className="sidebar-lock-icon"
+                      aria-hidden="true"
+                    />
+                  </div>
+                );
+              }
+
+              return (
+                <NavLink
+                  key={`${label}-${path}`}
+                  to={path}
+                  className={({ isActive }) =>
+                    `submenu-link ${isActive ? "active" : ""}`
+                  }
+                >
+                  <span>{label}</span>
+                </NavLink>
+              );
+            })}
           </div>
         )}
       </div>
     );
   };
+
 
   return (
     <aside className="sidebar">
@@ -413,27 +540,49 @@ function Sidebar() {
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
-        <NavLink
-          to={currentModule.dashboard}
-          className={({ isActive }) =>
-            `menu-link ${isActive ? "active" : ""}`
-          }
-        >
-          <FiHome />
-          
-<span>
-  {activeModule === "hr"
-    ? "HR Dashboard"
-    : activeModule === "payroll"
-      ? "Payroll Dashboard"
-      : activeModule === "inventory"
-        ? "Inventory Dashboard"
-        : activeModule === "supply-chain"
-          ? "Supply Chain Dashboard"
-          : "Dashboard"}
-</span>
+        
+        {isRouteAvailable(currentModule.dashboard) ? (
+          <NavLink
+            to={currentModule.dashboard}
+            className={({ isActive }) =>
+              `menu-link ${isActive ? "active" : ""}`
+            }
+          >
+            <FiHome />
+            <span>
+              {activeModule === "hr"
+                ? "HR Dashboard"
+                : activeModule === "payroll"
+                  ? "Payroll Dashboard"
+                  : activeModule === "inventory"
+                    ? "Inventory Dashboard"
+                    : activeModule === "supply-chain"
+                      ? "Supply Chain Dashboard"
+                      : "Dashboard"}
+            </span>
+          </NavLink>
+        ) : (
+          <div
+            className="menu-link menu-link-locked"
+            aria-disabled="true"
+            title="Coming soon — this dashboard is not available yet"
+          >
+            <FiHome />
+            <span>
+              {activeModule === "hr"
+                ? "HR Dashboard"
+                : activeModule === "payroll"
+                  ? "Payroll Dashboard"
+                  : activeModule === "inventory"
+                    ? "Inventory Dashboard"
+                    : activeModule === "supply-chain"
+                      ? "Supply Chain Dashboard"
+                      : "Dashboard"}
+            </span>
+            <FiLock className="sidebar-lock-icon" aria-hidden="true" />
+          </div>
+        )}
 
-        </NavLink>
 
         {currentModule.groups.map((group) =>
           renderGroup(group, activeModule)
