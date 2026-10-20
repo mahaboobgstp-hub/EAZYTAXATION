@@ -14,15 +14,7 @@ function Header() {
 
   return (
     <header className="header">
-      <div className="header-brand">
-        <h3>EAZYTAXATION ERP</h3>
-        <span>Enterprise Resource Planning</span>
-      </div>
-
-      <nav
-        className="module-switcher"
-        aria-label="ERP modules"
-      >
+      <nav className="module-switcher" aria-label="ERP modules">
         {modules.map((module) => (
           <button
             key={module.id}
