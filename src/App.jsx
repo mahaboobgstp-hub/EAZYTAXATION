@@ -31,6 +31,9 @@ import PayrollPolicyMaster
     from "./pages/hr/PayrollPolicyMaster";
 import LeaveManagement from "./pages/hr/LeaveManagement";
 import FinalSettlement from "./pages/hr/FinalSettlement";
+
+import SalaryArrears from "./pages/hr/SalaryArrears";
+
 import ExpenseReimbursement from "./pages/hr/ExpenseReimbursement";
 import EmployeeLoansAdvances from "./pages/hr/EmployeeLoansAdvances";
 import HolidayCalendarLeaveLedger from "./pages/hr/HolidayCalendarLeaveLedger";
@@ -279,8 +282,7 @@ function App() {
 />
 <Route
   path="expense-reimbursement"
-  element={<ExpenseReimbursement />}
-/>
+  element={<ExpenseReimbursement /
   <Route
   path="employee-loans-advances"
   element={<EmployeeLoansAdvances />}
@@ -297,6 +299,13 @@ function App() {
     path="payroll-processing"
     element={<PayrollProcessing />}
 />
+
+            
+<Route
+  path="salary-arrears"
+  element={<SalaryArrears />}
+/>
+
           <Route
     path="payroll-policy-settings"
     element={<PayrollPolicySettings />}
