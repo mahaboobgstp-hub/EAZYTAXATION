@@ -142,8 +142,9 @@ status: "Draft",
 notes: "",
 };
 
+
 const escapeCsv = (value) =>
-""${String(value ?? "").replace(/"/g, '""')}"";
+  `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 const formatDate = (value) => {
 if (!value) return "—";
