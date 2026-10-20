@@ -3,18 +3,21 @@ import React, { createContext, useContext, useState } from "react";
 
 const ModuleContext = createContext(null);
 
-const VALID_MODULES = [
-  "billing",
-  "hr",
-  "inventory",
-  "supply-chain",
+export const MODULES = [
+  { id: "billing", label: "Billing & Accounting" },
+  { id: "hr", label: "HR Management" },
+  { id: "payroll", label: "Payroll Management" },
+  { id: "inventory", label: "Inventory Management" },
+  { id: "supply-chain", label: "Supply Chain" },
 ];
+
+const VALID_MODULES = MODULES.map((module) => module.id);
 
 export function ModuleProvider({ children }) {
   const [activeModule, setActiveModuleState] = useState(() => {
     try {
-      const savedModule = sessionStorage.getItem("eazytaxation-active-module");
-      return VALID_MODULES.includes(savedModule) ? savedModule : "billing";
+      const saved = sessionStorage.getItem("eazytaxation-active-module");
+      return VALID_MODULES.includes(saved) ? saved : "billing";
     } catch {
       return "billing";
     }
@@ -28,7 +31,7 @@ export function ModuleProvider({ children }) {
     try {
       sessionStorage.setItem("eazytaxation-active-module", moduleName);
     } catch {
-      // The module selector still works if session storage is unavailable.
+      // The selector continues to work if browser storage is unavailable.
     }
   };
 
