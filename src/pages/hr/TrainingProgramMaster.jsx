@@ -314,18 +314,22 @@ setError("");
 
 };
 
-const deleteProgramme = (programme) => {
-const confirmed = window.confirm(
-"Delete "${programme.title}" from the programme master?"
-);
 
-if (confirmed) {
+const deleteProgramme = (programme) => {
+  const confirmed = window.confirm(
+    'Delete "' + programme.title + '" from the programme master?'
+  );
+
+  if (!confirmed) return;
+
   setProgrammes((current) =>
     current.filter((item) => item.id !== programme.id)
   );
-}
 
+  setModalOpen(false);
+  setError("");
 };
+
 
 const exportCsv = () => {
 const headers = [
