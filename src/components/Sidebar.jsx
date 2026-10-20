@@ -122,18 +122,7 @@ const MODULES = {
           ["Employee Self-Service", "/app/employee-self-service"],
         ],
       },
-      {
-        title: "Attendance",
-        icon: FiCalendar,
-        links: [
-          ["Attendance Entry", "/app/attendance"],
-          ["Attendance Register", "/app/attendance-register"],
-          ["Attendance Settings", "/app/attendance-settings"],
-          ["Shift Master", "/app/shifts"],
-          ["Leave Management", "/app/leave-management"],
-          ["Holiday Calendar & Leave Ledger", "/app/holiday-calendar-leave-ledger"],
-        ],
-      },
+      
       {
         title: "Recruitment",
         icon: FiUserCheck,
@@ -174,14 +163,7 @@ const MODULES = {
           ["Maintenance & Incidents", "/app/asset-maintenance"],
         ],
       },
-      {
-        title: "Employee Services",
-        icon: FiUsers,
-        links: [
-          ["Expense Reimbursement", "/app/expense-reimbursement"],
-          ["Employee Loans & Advances", "/app/employee-loans-advances"],
-        ],
-      },
+      
       {
         title: "HR Budget",
         icon: FiBarChart2,
@@ -199,6 +181,18 @@ const MODULES = {
     dashboard: "/app/payroll-processing",
     groups: [
       {
+        title: "Attendance",
+        icon: FiCalendar,
+        links: [
+          ["Attendance Entry", "/app/attendance"],
+          ["Attendance Register", "/app/attendance-register"],
+          ["Attendance Settings", "/app/attendance-settings"],
+          ["Shift Master", "/app/shifts"],
+          ["Leave Management", "/app/leave-management"],
+          ["Holiday Calendar & Leave Ledger", "/app/holiday-calendar-leave-ledger"],
+        ],
+      },
+      {
         title: "Salary Processing",
         icon: FiDollarSign,
         links: [
@@ -213,6 +207,14 @@ const MODULES = {
         links: [
           ["Payroll Policy Settings", "/app/payroll-policy-settings"],
           ["Payroll Policy Master", "/app/payroll-policy-master"],
+        ],
+      },
+      {
+        title: "Employee Services",
+        icon: FiUsers,
+        links: [
+          ["Expense Reimbursement", "/app/expense-reimbursement"],
+          ["Employee Loans & Advances", "/app/employee-loans-advances"],
         ],
       },
       {
