@@ -116,6 +116,7 @@ const MODULES = {
         links: [
           ["Employee Master", "/app/employees"],
           ["Employee Register", "/app/employee-register"],
+          ["Employee Settings", "/app/employee-settings"],
           ["Department Master", "/app/departments"],
           ["Designation Master", "/app/designations"],
           ["Location Master", "/app/locations"],
@@ -335,6 +336,7 @@ const AVAILABLE_ROUTES = new Set([
   // Payroll core
   "/app/employees",
   "/app/employee-register",
+  "/app/employee-settings",
   "/app/employee-documents",
   "/app/departments",
   "/app/designations",
