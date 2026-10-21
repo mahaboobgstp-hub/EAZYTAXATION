@@ -652,6 +652,9 @@ setSalaryComponents([]);
             employee.id
         );
 
+        setPhotoFile(null);
+setPhotoPreview("");
+
 
         const editFormData = {
             ...defaultFormData
@@ -684,6 +687,23 @@ setSalaryComponents([]);
             editFormData
         );
 
+        if (employee.profile_photo_url) {
+    const { data, error } = await supabase.storage
+        .from("employee-photos")
+        .createSignedUrl(
+            employee.profile_photo_url,
+            3600
+        );
+
+    if (error) {
+        console.error("Unable to load employee photo:", error);
+        setPhotoPreview("");
+    } else {
+        setPhotoPreview(data.signedUrl);
+    }
+} else {
+    setPhotoPreview("");
+        }
 
         const salaryData =
             await getCompleteSalaryStructure(
