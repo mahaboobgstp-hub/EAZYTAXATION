@@ -1125,6 +1125,61 @@ overtime_fixed_rate:
   
 {activeTab === "basic" && (
     <div className="employee-basic-layout">
+        
+<div className="employee-photo-section">
+    <div className="employee-photo-preview">
+        {photoPreview ? (
+            <img
+                src={photoPreview}
+                alt="Employee preview"
+            />
+        ) : (
+            <div className="employee-photo-placeholder">
+                <span>👤</span>
+                <small>No photo selected</small>
+            </div>
+        )}
+    </div>
+
+    <div className="employee-photo-controls">
+        <h3>Employee Photo</h3>
+        <p>Choose a clear employee photograph.</p>
+
+        <label className="employee-photo-upload-button">
+            Choose Photo
+            <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => {
+                    const file = event.target.files?.[0];
+
+                    if (!file) return;
+
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert("Please select an image smaller than 2 MB.");
+                        event.target.value = "";
+                        return;
+                    }
+
+                    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                        alert("Please select a JPG, PNG, or WebP image.");
+                        event.target.value = "";
+                        return;
+                    }
+
+                    setPhotoFile(file);
+
+                    setPhotoPreview(
+                        URL.createObjectURL(file)
+                    );
+                }}
+            />
+        </label>
+
+        <small>JPG, PNG or WebP · Maximum 2 MB</small>
+    </div>
+</div>
+
 
         <div className="employee-basic-intro">
             <h3>Employee Information</h3>
