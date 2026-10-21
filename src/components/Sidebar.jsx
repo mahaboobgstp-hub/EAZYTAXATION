@@ -115,6 +115,7 @@ const MODULES = {
         icon: FiUsers,
         links: [
           ["Employee Master", "/app/employees"],
+          ["Employee Register", "/app/employee-register"],
           ["Department Master", "/app/departments"],
           ["Designation Master", "/app/designations"],
           ["Location Master", "/app/locations"],
