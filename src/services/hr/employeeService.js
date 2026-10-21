@@ -53,13 +53,33 @@ export async function getEmployeeById(employeeId, companyId) {
 
 
 // CREATE EMPLOYEE
+
 export async function createEmployee(data, companyId) {
     if (!companyId) {
         throw new Error("Please select a Current Company.");
     }
 
+    let employeeCode = data.employee_code?.trim();
+
+    // Generate a code when one was not supplied.
+    if (!employeeCode) {
+        const { data: generatedCode, error: allocationError } =
+            await supabase.rpc("allocate_employee_id", {
+                p_company_id: companyId
+            });
+
+        if (allocationError) throw allocationError;
+
+        if (!generatedCode) {
+            throw new Error("Employee ID generation failed.");
+        }
+
+        employeeCode = generatedCode;
+    }
+
     const employeeData = {
         ...data,
+        employee_code: employeeCode,
         company_id: companyId
     };
 
@@ -73,6 +93,7 @@ export async function createEmployee(data, companyId) {
 
     return employee;
 }
+
 
 
 // UPDATE EMPLOYEE
