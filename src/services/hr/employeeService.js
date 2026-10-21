@@ -54,45 +54,44 @@ export async function getEmployeeById(employeeId, companyId) {
 
 // CREATE EMPLOYEE
 
+
 export async function createEmployee(data, companyId) {
     if (!companyId) {
         throw new Error("Please select a Current Company.");
     }
 
-    let employeeCode = data.employee_code?.trim();
-
-    // Generate a code when one was not supplied.
-    if (!employeeCode) {
-        const { data: generatedCode, error: allocationError } =
-            await supabase.rpc("allocate_employee_id", {
-                p_company_id: companyId
-            });
-
-        if (allocationError) throw allocationError;
-
-        if (!generatedCode) {
-            throw new Error("Employee ID generation failed.");
-        }
-
-        employeeCode = generatedCode;
-    }
-
     const employeeData = {
         ...data,
-        employee_code: employeeCode,
-        company_id: companyId
+        employee_code: data.employee_code?.trim() || null
     };
 
-    const { data: employee, error } = await supabase
-        .from("employees")
-        .insert([employeeData])
-        .select()
-        .single();
+    const { data: result, error } = await supabase.rpc(
+        "create_employee_with_generated_id",
+        {
+            p_company_id: companyId,
+            p_employee_data: employeeData
+        }
+    );
 
-    if (error) throw error;
+    if (error) {
+        throw error;
+    }
+
+    // PostgreSQL composite-return functions may be returned
+    // as a single object or as an array by the API.
+    const employee = Array.isArray(result)
+        ? result[0]
+        : result;
+
+    if (!employee || !employee.id || !employee.employee_code) {
+        throw new Error(
+            "Employee was not returned correctly after saving."
+        );
+    }
 
     return employee;
 }
+
 
 
 
