@@ -14,6 +14,7 @@ import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
 import Vendors from './pages/masters/Vendors';
 import EmployeeMaster from "./pages/hr/EmployeeMaster";
+import EmployeeRegister from "./pages/hr/EmployeeRegister";
 import AttendanceEntry from "./pages/hr/AttendanceEntry";
 import AttendanceSettings from "./pages/hr/AttendanceSettings";
 import Payslips from "./pages/hr/Payslips";
@@ -246,7 +247,10 @@ function App() {
     path="employees"
     element={<EmployeeMaster />}
 />
-
+<Route
+    path="employee-register"
+    element={<EmployeeRegister />}
+/>
 <Route
     path="attendance"
     element={<AttendanceEntry />}
