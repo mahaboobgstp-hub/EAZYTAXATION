@@ -70,6 +70,48 @@ emergency_contact_mobile: "",
     blood_group: "",
     profile_photo_url: ""
 };
+
+
+async function uploadEmployeePhoto(file, companyId, employeeId) {
+    if (!file) return null;
+
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+        throw new Error("Please select a JPG, PNG, or WebP image.");
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+        throw new Error("Employee photo must be smaller than 2 MB.");
+    }
+
+    const extension = file.type === "image/png"
+        ? "png"
+        : file.type === "image/webp"
+            ? "webp"
+            : "jpg";
+
+    const filePath =
+        `${companyId}/${employeeId}/profile.${extension}`;
+
+    const { error } = await supabase.storage
+        .from("employee-photos")
+        .upload(filePath, file, {
+            upsert: true,
+            contentType: file.type
+        });
+
+    if (error) {
+        throw error;
+    }
+
+    return filePath;
+}
+
 const defaultSalaryStructure = {
 
     id: null,
@@ -516,36 +558,38 @@ blood_group:
             };
 
 
-            let savedEmployee;
-
+  
+let savedEmployee;
 
 if (editingId) {
-
-    savedEmployee =
-        await updateEmployee(
-
-            editingId,
-
-            employeeData,
-
-            currentCompanyId
-
-        );
-
+    savedEmployee = await updateEmployee(
+        editingId,
+        employeeData,
+        currentCompanyId
+    );
+} else {
+    savedEmployee = await createEmployee(
+        employeeData,
+        currentCompanyId
+    );
 }
 
-else {
+if (photoFile) {
+    const photoPath = await uploadEmployeePhoto(
+        photoFile,
+        currentCompanyId,
+        savedEmployee.id
+    );
 
-    savedEmployee =
-        await createEmployee(
-
-            employeeData,
-
-            currentCompanyId
-
-        );
-
+    await updateEmployee(
+        savedEmployee.id,
+        {
+            profile_photo_url: photoPath
+        },
+        currentCompanyId
+    );
 }
+
 if (
     Number(
         salaryStructure.monthly_salary
