@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useCompany } from "../../context/CompanyContext";
 import "../../css/hr/EmployeeMaster.css";
+import { supabase } from "../../supabase/supabaseClient";
 
 import {
     getEmployees,
