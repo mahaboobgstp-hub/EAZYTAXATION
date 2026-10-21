@@ -1258,6 +1258,8 @@ overtime_fixed_rate:
             <div className="employee-basic-grid">
 
                 
+
+                
 <label className="employee-form-field">
     Employee Code *
 
@@ -1265,11 +1267,11 @@ overtime_fixed_rate:
         name="employee_code"
         value={formData.employee_code}
         onChange={handleChange}
-        placeholder="Auto-generated employee code"
+        placeholder="Enter employee code"
         required
-        readOnly={!editingId}
     />
 </label>
+
 
 
                 <label className="employee-form-field">
