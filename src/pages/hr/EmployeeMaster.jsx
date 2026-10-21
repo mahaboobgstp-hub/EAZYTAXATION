@@ -409,13 +409,7 @@ const handleSalaryStructureChange =
             }
 
 
-            if (!formData.employee_code.trim()) {
-
-                alert("Employee Code is required.");
-
-                return;
-
-            }
+            
 
 
             if (!formData.employee_name.trim()) {
@@ -439,7 +433,7 @@ const handleSalaryStructureChange =
             const employeeData = {
 
                 employee_code:
-                    formData.employee_code.trim(),
+    formData.employee_code.trim() || null,
 
                 employee_name:
                     formData.employee_name.trim(),
@@ -1260,16 +1254,20 @@ overtime_fixed_rate:
                 
 
                 
-<label className="employee-form-field">
-    Employee Code *
+  <label className="employee-form-field">
+    Employee Code
 
     <input
         name="employee_code"
         value={formData.employee_code}
         onChange={handleChange}
-        placeholder="Enter employee code"
-        required
+        placeholder="Leave blank for automatic ID"
     />
+
+    <small>
+        Leave blank to generate automatically.
+        Manual codes are subject to company settings.
+    </small>
 </label>
 
 
