@@ -145,6 +145,9 @@ function EmployeeMaster() {
 
     const [formData, setFormData] =
         useState(defaultFormData);
+
+    const [photoFile, setPhotoFile] = useState(null);
+const [photoPreview, setPhotoPreview] = useState("");
     
 
 const [salaryStructure, setSalaryStructure] =
