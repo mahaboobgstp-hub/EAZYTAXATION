@@ -66,7 +66,8 @@ ifsc_code: "",
 emergency_contact_name: "",
 emergency_contact_mobile: "",
 
-blood_group: ""
+    blood_group: "",
+    profile_photo_url: ""
 };
 const defaultSalaryStructure = {
 
