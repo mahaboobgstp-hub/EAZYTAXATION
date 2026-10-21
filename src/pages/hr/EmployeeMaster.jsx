@@ -1117,440 +1117,351 @@ overtime_fixed_rate:
 </button>
 </div>
               
-    {activeTab === "basic" && (
+              
+  
+{activeTab === "basic" && (
+    <div className="employee-basic-layout">
 
-    <div className="salary-structure-tab">               
-        <input
-                    name="employee_code"
-                    placeholder="Employee Code"
-                    value={formData.employee_code}
-                    onChange={handleChange}
-                />
+        <div className="employee-basic-intro">
+            <h3>Employee Information</h3>
+            <p>Enter the employee's personal and employment details.</p>
+        </div>
 
+        <section className="employee-basic-section">
+            <h3>Basic Information</h3>
+            <div className="employee-basic-grid">
 
-                <input
-                    name="employee_name"
-                    placeholder="Employee Name"
-                    value={formData.employee_name}
-                    onChange={handleChange}
-                />
+                <label className="employee-form-field">
+                    Employee Code *
+                    <input
+                        name="employee_code"
+                        value={formData.employee_code}
+                        onChange={handleChange}
+                        placeholder="Enter employee code"
+                        required
+                    />
+                </label>
 
+                <label className="employee-form-field">
+                    Employee Name *
+                    <input
+                        name="employee_name"
+                        value={formData.employee_name}
+                        onChange={handleChange}
+                        placeholder="Enter full name"
+                        required
+                    />
+                </label>
 
-                <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                >
+                <label className="employee-form-field">
+                    Gender
+                    <select name="gender" value={formData.gender} onChange={handleChange}>
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </label>
 
-                    <option value="">
-                        Select Gender
-                    </option>
+                <label className="employee-form-field">
+                    Mobile Number
+                    <input
+                        type="tel"
+                        name="mobile"
+                        value={formData.mobile}
+                        onChange={handleChange}
+                        placeholder="Enter mobile number"
+                    />
+                </label>
 
-                    <option value="Male">
-                        Male
-                    </option>
+            </div>
+        </section>
 
-                    <option value="Female">
-                        Female
-                    </option>
+        <section className="employee-basic-section">
+            <h3>Personal Details</h3>
+            <div className="employee-basic-grid">
 
-                    <option value="Other">
-                        Other
-                    </option>
+                <label className="employee-form-field">
+                    Date of Birth
+                    <input
+                        type="date"
+                        name="date_of_birth"
+                        value={formData.date_of_birth}
+                        onChange={handleChange}
+                    />
+                </label>
 
-                </select>
+                <label className="employee-form-field">
+                    Marital Status
+                    <select name="marital_status" value={formData.marital_status} onChange={handleChange}>
+                        <option value="">Select marital status</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Divorced">Divorced</option>
+                        <option value="Widowed">Widowed</option>
+                    </select>
+                </label>
 
+                <label className="employee-form-field">
+                    Alternate Mobile
+                    <input
+                        type="tel"
+                        name="alternate_mobile"
+                        value={formData.alternate_mobile}
+                        onChange={handleChange}
+                        placeholder="Enter alternate mobile"
+                    />
+                </label>
 
-                <input
-                    name="mobile"
-                    placeholder="Mobile"
-                    value={formData.mobile}
-                    onChange={handleChange}
-                />
-<h3 style={{ gridColumn: "1 / -1" }}>
-    Personal Details
-</h3>
+                <label className="employee-form-field">
+                    Email Address
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Enter email address"
+                    />
+                </label>
 
-<input
-    type="date"
-    name="date_of_birth"
-    value={formData.date_of_birth}
-    onChange={handleChange}
-    placeholder="Date of Birth"
-/>
+            </div>
+        </section>
 
-<select
-    name="marital_status"
-    value={formData.marital_status}
-    onChange={handleChange}
->
-    <option value="">Select Marital Status</option>
-    <option value="Single">Single</option>
-    <option value="Married">Married</option>
-    <option value="Divorced">Divorced</option>
-    <option value="Widowed">Widowed</option>
-</select>
+        <section className="employee-basic-section">
+            <h3>Employment Details</h3>
+            <div className="employee-basic-grid">
 
-<input
-    name="alternate_mobile"
-    placeholder="Alternate Mobile"
-    value={formData.alternate_mobile}
-    onChange={handleChange}
-/>
-
-<input
-    type="email"
-    name="email"
-    placeholder="Email"
-    value={formData.email}
-    onChange={handleChange}
-/>
-
-                <label>
-
-                    Date of Joining
-
+                <label className="employee-form-field">
+                    Date of Joining *
                     <input
                         type="date"
                         name="date_of_joining"
-                        value={
-                            formData.date_of_joining
-                        }
+                        value={formData.date_of_joining}
                         onChange={handleChange}
+                        required
                     />
-
                 </label>
 
+                <label className="employee-form-field">
+                    Employment Type
+                    <select name="employment_type" value={formData.employment_type} onChange={handleChange}>
+                        <option value="Permanent">Permanent</option>
+                        <option value="Temporary">Temporary</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Part Time">Part Time</option>
+                    </select>
+                </label>
 
-                <select
-                    name="employment_type"
-                    value={
-                        formData.employment_type
-                    }
-                    onChange={handleChange}
-                >
+                <label className="employee-form-field">
+                    Salary Type
+                    <select name="salary_type" value={formData.salary_type} onChange={handleChange}>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Daily">Daily</option>
+                        <option value="Hourly">Hourly</option>
+                    </select>
+                </label>
 
-                    <option value="Permanent">
-                        Permanent
-                    </option>
+                <label className="employee-form-field">
+                    Department
+                    <select name="department_id" value={formData.department_id} onChange={handleChange}>
+                        <option value="">Select department</option>
+                        {departments.map(department => (
+                            <option key={department.id} value={department.id}>
+                                {department.department_name}
+                            </option>
+                        ))}
+                    </select>
+                </label>
 
-                    <option value="Contract">
-                        Contract
-                    </option>
+                <label className="employee-form-field">
+                    Designation
+                    <select name="designation_id" value={formData.designation_id} onChange={handleChange}>
+                        <option value="">Select designation</option>
+                        {designations.map(designation => (
+                            <option key={designation.id} value={designation.id}>
+                                {designation.designation_name}
+                            </option>
+                        ))}
+                    </select>
+                </label>
 
-                    <option value="Temporary">
-                        Temporary
-                    </option>
+                <label className="employee-form-field">
+                    Default Shift
+                    <select name="default_shift_id" value={formData.default_shift_id} onChange={handleChange}>
+                        <option value="">Select shift</option>
+                        {shifts.map(shift => (
+                            <option key={shift.id} value={shift.id}>
+                                {shift.shift_name}
+                            </option>
+                        ))}
+                    </select>
+                </label>
 
-                    <option value="Part Time">
-                        Part Time
-                    </option>
+                <label className="employee-form-field">
+                    Location
+                    <select name="location_id" value={formData.location_id} onChange={handleChange}>
+                        <option value="">Select location</option>
+                        {locations.map(location => (
+                            <option key={location.id} value={location.id}>
+                                {location.location_code} - {location.location_name}
+                            </option>
+                        ))}
+                    </select>
+                </label>
 
-                </select>
+            </div>
+        </section>
 
+        <section className="employee-basic-section">
+            <h3>Address Details</h3>
+            <div className="employee-basic-grid">
 
-                <select
-                    name="salary_type"
-                    value={formData.salary_type}
-                    onChange={handleChange}
-                >
+                <label className="employee-form-field">
+                    Address Line 1
+                    <input name="address_line1" value={formData.address_line1} onChange={handleChange} placeholder="House number, street" />
+                </label>
 
-                    <option value="Monthly">
-                        Monthly
-                    </option>
+                <label className="employee-form-field">
+                    Address Line 2
+                    <input name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Area, landmark" />
+                </label>
 
-                    <option value="Daily">
-                        Daily
-                    </option>
+                <label className="employee-form-field">
+                    City
+                    <input name="city" value={formData.city} onChange={handleChange} placeholder="Enter city" />
+                </label>
 
-                    <option value="Hourly">
-                        Hourly
-                    </option>
+                <label className="employee-form-field">
+                    District
+                    <input name="district" value={formData.district} onChange={handleChange} placeholder="Enter district" />
+                </label>
 
-                </select>
+                <label className="employee-form-field">
+                    State
+                    <input name="state" value={formData.state} onChange={handleChange} placeholder="Enter state" />
+                </label>
 
+                <label className="employee-form-field">
+                    PIN Code
+                    <input name="pincode" value={formData.pincode} onChange={handleChange} placeholder="Enter PIN code" />
+                </label>
 
-               
+            </div>
+        </section>
 
+        <section className="employee-basic-section">
+            <h3>Emergency Contact</h3>
+            <div className="employee-basic-grid">
 
-                <select
-                    name="employee_status"
-                    value={
-                        formData.employee_status
-                    }
-                    onChange={handleChange}
-                >
+                <label className="employee-form-field">
+                    Contact Person Name
+                    <input name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Enter contact name" />
+                </label>
 
-                    <option value="Active">
-                        Active
-                    </option>
+                <label className="employee-form-field">
+                    Contact Mobile
+                    <input name="emergency_contact_mobile" value={formData.emergency_contact_mobile} onChange={handleChange} placeholder="Enter contact mobile" />
+                </label>
 
-                    <option value="Inactive">
-                        Inactive
-                    </option>
+                <label className="employee-form-field">
+                    Blood Group
+                    <select name="blood_group" value={formData.blood_group} onChange={handleChange}>
+                        <option value="">Select blood group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
+                </label>
 
-                </select>
-<h3 style={{ gridColumn: "1 / -1" }}>
-    Employment Details
-</h3>
+            </div>
+        </section>
 
-<select
-    name="department_id"
-    value={formData.department_id}
-    onChange={handleChange}
->
-    <option value="">
-        Select Department
-    </option>
+        <section className="employee-basic-section">
+            <h3>Identity and Statutory Details</h3>
+            <div className="employee-basic-grid">
 
-    {departments.map(department => (
-        <option
-            key={department.id}
-            value={department.id}
-        >
-            {department.department_name}
-        </option>
-    ))}
-</select>
+                <label className="employee-form-field">
+                    Aadhaar Number
+                    <input name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} placeholder="Enter Aadhaar number" />
+                </label>
 
-<select
-    name="designation_id"
-    value={formData.designation_id}
-    onChange={handleChange}
->
-    <option value="">
-        Select Designation
-    </option>
+                <label className="employee-form-field">
+                    PAN Number
+                    <input name="pan_number" value={formData.pan_number} onChange={handleChange} placeholder="Enter PAN" />
+                </label>
 
-    {designations.map(designation => (
-        <option
-            key={designation.id}
-            value={designation.id}
-        >
-            {designation.designation_name}
-        </option>
-    ))}
-</select>
+                <label className="employee-form-field">
+                    Passport Number
+                    <input name="passport_number" value={formData.passport_number} onChange={handleChange} placeholder="Enter passport number" />
+                </label>
 
-<select
-    name="default_shift_id"
-    value={formData.default_shift_id}
-    onChange={handleChange}
->
-    <option value="">
-        Select Default Shift
-    </option>
+                <label className="employee-form-field">
+                    Driving Licence Number
+                    <input name="driving_license_number" value={formData.driving_license_number} onChange={handleChange} placeholder="Enter licence number" />
+                </label>
 
-    {shifts.map(shift => (
-        <option
-            key={shift.id}
-            value={shift.id}
-        >
-            {shift.shift_name}
-        </option>
-    ))}
-</select>
+                <label className="employee-form-field">
+                    UAN Number
+                    <input name="uan_number" value={formData.uan_number} onChange={handleChange} placeholder="Enter UAN" />
+                </label>
 
-<input
-    type="date"
-    name="date_of_leaving"
-    value={formData.date_of_leaving}
-    onChange={handleChange}
-/>
-                <h3 style={{ gridColumn: "1 / -1" }}>
-    Address
-</h3>
+                <label className="employee-form-field">
+                    PF Number
+                    <input name="pf_number" value={formData.pf_number} onChange={handleChange} placeholder="Enter PF number" />
+                </label>
 
-<input
-    name="address_line1"
-    placeholder="Address Line 1"
-    value={formData.address_line1}
-    onChange={handleChange}
-/>
+                <label className="employee-form-field">
+                    ESI Number
+                    <input name="esi_number" value={formData.esi_number} onChange={handleChange} placeholder="Enter ESI number" />
+                </label>
 
-<input
-    name="address_line2"
-    placeholder="Address Line 2"
-    value={formData.address_line2}
-    onChange={handleChange}
-/>
+            </div>
+        </section>
 
-<input
-    name="city"
-    placeholder="City"
-    value={formData.city}
-    onChange={handleChange}
-/>
+        <section className="employee-basic-section">
+            <h3>Bank Details</h3>
+            <div className="employee-basic-grid">
 
-<input
-    name="district"
-    placeholder="District"
-    value={formData.district}
-    onChange={handleChange}
-/>
+                <label className="employee-form-field">
+                    Bank Name
+                    <input name="bank_name" value={formData.bank_name} onChange={handleChange} placeholder="Enter bank name" />
+                </label>
 
-<input
-    name="state"
-    placeholder="State"
-    value={formData.state}
-    onChange={handleChange}
-/>
+                <label className="employee-form-field">
+                    Bank Account Number
+                    <input name="bank_account_number" value={formData.bank_account_number} onChange={handleChange} placeholder="Enter account number" />
+                </label>
 
-<input
-    name="pincode"
-    placeholder="Pincode"
-    value={formData.pincode}
-    onChange={handleChange}
-/>
+                <label className="employee-form-field">
+                    IFSC Code
+                    <input name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} placeholder="Enter IFSC code" />
+                </label>
 
-                <h3 style={{ gridColumn: "1 / -1" }}>
-    Emergency Contact
-</h3>
+            </div>
+        </section>
 
-<input
-    name="emergency_contact_name"
-    placeholder="Emergency Contact Name"
-    value={formData.emergency_contact_name}
-    onChange={handleChange}
-/>
-
-<input
-    name="emergency_contact_mobile"
-    placeholder="Emergency Contact Mobile"
-    value={formData.emergency_contact_mobile}
-    onChange={handleChange}
-/>
-
-<select
-    name="blood_group"
-    value={formData.blood_group}
-    onChange={handleChange}
->
-    <option value="">
-        Select Blood Group
-    </option>
-
-    <option value="A+">A+</option>
-    <option value="A-">A-</option>
-    <option value="B+">B+</option>
-    <option value="B-">B-</option>
-    <option value="O+">O+</option>
-    <option value="O-">O-</option>
-    <option value="AB+">AB+</option>
-    <option value="AB-">AB-</option>
-</select>
-                <h3 style={{ gridColumn: "1 / -1" }}>
-    Identity & Statutory Details
-</h3>
-
-<input
-    name="aadhaar_number"
-    placeholder="Aadhaar Number"
-    value={formData.aadhaar_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="pan_number"
-    placeholder="PAN Number"
-    value={formData.pan_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="passport_number"
-    placeholder="Passport Number"
-    value={formData.passport_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="driving_license_number"
-    placeholder="Driving Licence Number"
-    value={formData.driving_license_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="uan_number"
-    placeholder="UAN Number"
-    value={formData.uan_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="pf_number"
-    placeholder="PF Number"
-    value={formData.pf_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="esi_number"
-    placeholder="ESI Number"
-    value={formData.esi_number}
-    onChange={handleChange}
-/>
-                <h3 style={{ gridColumn: "1 / -1" }}>
-    Bank Details
-</h3>
-
-<input
-    name="bank_name"
-    placeholder="Bank Name"
-    value={formData.bank_name}
-    onChange={handleChange}
-/>
-
-<input
-    name="bank_account_number"
-    placeholder="Bank Account Number"
-    value={formData.bank_account_number}
-    onChange={handleChange}
-/>
-
-<input
-    name="ifsc_code"
-    placeholder="IFSC Code"
-    value={formData.ifsc_code}
-    onChange={handleChange}
-/>
-                
-
+        <section className="employee-basic-section">
+            <h3>Additional Information</h3>
+            <label className="employee-form-field">
+                Remarks
                 <textarea
                     name="remarks"
-                    placeholder="Remarks"
                     value={formData.remarks}
                     onChange={handleChange}
-                    style={{
-                        gridColumn: "1 / -1"
-                    }}
+                    placeholder="Enter additional notes"
+                    rows={3}
                 />
+            </label>
+        </section>
 
-<div>
-    <label>Location</label>
+    </div>
+)}
 
-    <select
-        name="location_id"
-        value={formData.location_id}
-        onChange={handleChange}
-    >
-        <option value="">
-            Select Location
-        </option>
-
-        {locations.map((location) => (
-            <option
-                key={location.id}
-                value={location.id}
-            >
-                {location.location_code} - {location.location_name}
-            </option>
-        ))}
-    </select>
-</div>
-        </div>
-                )}
 
                 {activeTab === "salary" && (
 
