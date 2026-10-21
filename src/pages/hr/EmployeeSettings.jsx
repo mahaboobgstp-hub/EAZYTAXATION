@@ -1,5 +1,15 @@
+
 import { useEffect, useMemo, useState } from "react";
 import "../../css/hr/EmployeeSettings.css";
+import { useCompany } from "../../context/CompanyContext";
+import {
+  getSalaryComponents,
+  createSalaryComponent,
+  updateSalaryComponent,
+  activateSalaryComponent,
+  deactivateSalaryComponent,
+} from "../../services/hr/salaryComponentService";
+
 
 const initialSettings = {
   format: "{COMP}{SEQ}",
@@ -243,13 +253,14 @@ function SalaryComponentsPanel() {
         setMessage("Salary component created successfully.");
       }
 
-      resetForm();
-      await loadComponents();
-      setMessage(
-        editingId
-          ? "Salary component updated successfully."
-          : "Salary component created successfully."
-      );
+      const wasEditing = Boolean(editingId);
+resetForm();
+await loadComponents();
+setMessage(
+  wasEditing
+    ? "Salary component updated successfully."
+    : "Salary component created successfully."
+);
     } catch (err) {
       setError(
         err.code === "23505"
