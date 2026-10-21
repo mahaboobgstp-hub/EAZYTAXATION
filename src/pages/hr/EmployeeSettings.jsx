@@ -1,5 +1,4 @@
-
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../../css/hr/EmployeeSettings.css";
 
 const initialSettings = {
