@@ -616,6 +616,8 @@ if (
 );
 }
             setFormData(defaultFormData);
+            setPhotoFile(null);
+setPhotoPreview("");
 
             
             setSalaryStructure(
