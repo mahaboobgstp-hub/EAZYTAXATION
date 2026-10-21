@@ -14,6 +14,7 @@ const initialSettings = {
 
 const tabs = [
   { id: "id", label: "Employee ID Settings", icon: "▤" },
+  { id: "salary-components", label: "Salary Components", icon: "₹" },
   { id: "general", label: "General Settings", icon: "⚙" },
   { id: "documents", label: "Documents Settings", icon: "▧" },
   { id: "statutory", label: "Statutory Settings", icon: "◇" },
@@ -68,6 +69,526 @@ function SettingSwitch({ title, description, checked, onChange }) {
     </div>
   );
 }
+
+
+function SalaryComponentsPanel() {
+  const { currentCompanyId, loading: companyLoading } = useCompany();
+
+  const [components, setComponents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const emptyForm = {
+    component_code: "",
+    component_name: "",
+    component_category: "EARNING",
+    calculation_type: "FIXED",
+    percentage_base: "",
+    default_amount: "0",
+    default_percentage: "",
+    affects_pf: false,
+    affects_esi: false,
+    affects_pt: false,
+    affects_tds: false,
+    display_order: "0",
+    description: "",
+    is_active: true,
+  };
+
+  const [form, setForm] = useState(emptyForm);
+
+  async function loadComponents() {
+    if (!currentCompanyId) {
+      setComponents([]);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await getSalaryComponents(currentCompanyId, true);
+      setComponents(data);
+    } catch (err) {
+      setError(err.message || "Unable to load salary components.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadComponents();
+  }, [currentCompanyId]);
+
+  function changeField(event) {
+    const { name, value, type, checked } = event.target;
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    setMessage("");
+    setError("");
+  }
+
+  function startEdit(component) {
+    setEditingId(component.id);
+
+    setForm({
+      component_code: component.component_code || "",
+      component_name: component.component_name || "",
+      component_category: component.component_category,
+      calculation_type: component.calculation_type,
+      percentage_base: component.percentage_base || "",
+      default_amount: String(component.default_amount ?? 0),
+      default_percentage:
+        component.default_percentage == null
+          ? ""
+          : String(component.default_percentage),
+      affects_pf: component.affects_pf,
+      affects_esi: component.affects_esi,
+      affects_pt: component.affects_pt,
+      affects_tds: component.affects_tds,
+      display_order: String(component.display_order ?? 0),
+      description: component.description || "",
+      is_active: component.is_active,
+    });
+
+    setMessage("");
+    setError("");
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setForm({ ...emptyForm });
+    setMessage("");
+    setError("");
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    if (!currentCompanyId) {
+      setError("Please select a company first.");
+      return;
+    }
+
+    if (!form.component_code.trim() || !form.component_name.trim()) {
+      setError("Component code and component name are required.");
+      return;
+    }
+
+    const amount = Number(form.default_amount);
+    const percentage =
+      form.default_percentage === ""
+        ? null
+        : Number(form.default_percentage);
+
+    if (!Number.isFinite(amount) || amount < 0) {
+      setError("Default amount must be zero or greater.");
+      return;
+    }
+
+    if (
+      percentage !== null &&
+      (!Number.isFinite(percentage) || percentage < 0)
+    ) {
+      setError("Default percentage must be zero or greater.");
+      return;
+    }
+
+    if (form.calculation_type === "PERCENTAGE" && percentage === null) {
+      setError("Enter a default percentage for percentage-based components.");
+      return;
+    }
+
+    if (
+      form.calculation_type === "PERCENTAGE" &&
+      !form.percentage_base
+    ) {
+      setError("Choose the base used to calculate the percentage.");
+      return;
+    }
+
+    const payload = {
+      ...form,
+      default_amount: amount,
+      default_percentage: percentage,
+      display_order: Number(form.display_order) || 0,
+      percentage_base:
+        form.calculation_type === "PERCENTAGE"
+          ? form.percentage_base
+          : null,
+    };
+
+    setSaving(true);
+
+    try {
+      if (editingId) {
+        await updateSalaryComponent(
+          editingId,
+          currentCompanyId,
+          payload
+        );
+        setMessage("Salary component updated successfully.");
+      } else {
+        await createSalaryComponent(currentCompanyId, payload);
+        setMessage("Salary component created successfully.");
+      }
+
+      resetForm();
+      await loadComponents();
+      setMessage(
+        editingId
+          ? "Salary component updated successfully."
+          : "Salary component created successfully."
+      );
+    } catch (err) {
+      setError(
+        err.code === "23505"
+          ? "This component code or name already exists for this company."
+          : err.message || "Unable to save salary component."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleActive(component) {
+    setMessage("");
+    setError("");
+
+    try {
+      if (component.is_active) {
+        await deactivateSalaryComponent(component.id, currentCompanyId);
+      } else {
+        await activateSalaryComponent(component.id, currentCompanyId);
+      }
+
+      await loadComponents();
+      setMessage(
+        component.is_active
+          ? "Component deactivated. Existing records have not been deleted."
+          : "Component activated successfully."
+      );
+    } catch (err) {
+      setError(err.message || "Unable to change component status.");
+    }
+  }
+
+  const visibleComponents = components.filter(
+    (component) => showInactive || component.is_active
+  );
+
+  if (companyLoading) {
+    return <section className="es-card">Loading company information...</section>;
+  }
+
+  if (!currentCompanyId) {
+    return (
+      <section className="es-card">
+        <h2>Select a company</h2>
+        <p>Select a company from the application company selector to manage its salary components.</p>
+      </section>
+    );
+  }
+
+  return (
+    <div className="es-salary-components">
+      <section className="es-card">
+        <div className="es-card-heading">
+          <h2>{editingId ? "Edit Salary Component" : "Add Salary Component"}</h2>
+          <p>
+            Configure salary heads for the selected company. Deactivating a
+            component does not delete existing salary records.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="es-component-form-grid">
+            <Field label="Component Code" required>
+              <input
+                name="component_code"
+                value={form.component_code}
+                onChange={changeField}
+                placeholder="BASIC"
+                maxLength={40}
+                required
+              />
+            </Field>
+
+            <Field label="Component Name" required>
+              <input
+                name="component_name"
+                value={form.component_name}
+                onChange={changeField}
+                placeholder="Basic Salary"
+                maxLength={100}
+                required
+              />
+            </Field>
+
+            <Field label="Category" required>
+              <select
+                name="component_category"
+                value={form.component_category}
+                onChange={changeField}
+              >
+                <option value="EARNING">Earnings</option>
+                <option value="EMPLOYEE_DEDUCTION">Employee Deduction</option>
+                <option value="EMPLOYER_CONTRIBUTION">Employer Contribution</option>
+                <option value="REIMBURSEMENT">Reimbursement</option>
+              </select>
+            </Field>
+
+            <Field label="Calculation Method" required>
+              <select
+                name="calculation_type"
+                value={form.calculation_type}
+                onChange={changeField}
+              >
+                <option value="FIXED">Fixed Amount</option>
+                <option value="PERCENTAGE">Percentage</option>
+              </select>
+            </Field>
+
+            {form.calculation_type === "PERCENTAGE" && (
+              <Field label="Percentage Base" required>
+                <select
+                  name="percentage_base"
+                  value={form.percentage_base}
+                  onChange={changeField}
+                  required
+                >
+                  <option value="">Select base</option>
+                  <option value="BASIC">Basic Salary</option>
+                  <option value="GROSS">Gross Earnings</option>
+                  <option value="CTC">CTC</option>
+                </select>
+              </Field>
+            )}
+
+            <Field label="Default Monthly Amount (₹)">
+              <input
+                name="default_amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.default_amount}
+                onChange={changeField}
+              />
+            </Field>
+
+            {form.calculation_type === "PERCENTAGE" && (
+              <Field label="Default Percentage (%)" required>
+                <input
+                  name="default_percentage"
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  value={form.default_percentage}
+                  onChange={changeField}
+                  required
+                />
+              </Field>
+            )}
+
+            <Field label="Display Order">
+              <input
+                name="display_order"
+                type="number"
+                step="1"
+                value={form.display_order}
+                onChange={changeField}
+              />
+            </Field>
+
+            <Field label="Description">
+              <input
+                name="description"
+                value={form.description}
+                onChange={changeField}
+                placeholder="Optional notes"
+                maxLength={500}
+              />
+            </Field>
+          </div>
+
+          <div className="es-component-flags">
+            <label>
+              <input
+                type="checkbox"
+                name="affects_pf"
+                checked={form.affects_pf}
+                onChange={changeField}
+              />
+              Include in PF calculation base
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                name="affects_esi"
+                checked={form.affects_esi}
+                onChange={changeField}
+              />
+              Include in ESI calculation base
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                name="affects_pt"
+                checked={form.affects_pt}
+                onChange={changeField}
+              />
+              Include in professional-tax base
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                name="affects_tds"
+                checked={form.affects_tds}
+                onChange={changeField}
+              />
+              Include in TDS calculation base
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                name="is_active"
+                checked={form.is_active}
+                onChange={changeField}
+              />
+              Active component
+            </label>
+          </div>
+
+          {error && <div className="es-message error" role="alert">{error}</div>}
+          {message && <div className="es-message success" role="status">{message}</div>}
+
+          <div className="es-actions">
+            {editingId && (
+              <button
+                type="button"
+                className="es-button secondary"
+                onClick={resetForm}
+                disabled={saving}
+              >
+                Cancel Edit
+              </button>
+            )}
+
+            <button
+              type="submit"
+              className="es-button primary"
+              disabled={saving}
+            >
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Update Component"
+                  : "Add Component"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="es-card">
+        <div className="es-card-heading es-components-list-heading">
+          <div>
+            <h2>Configured Salary Components</h2>
+            <p>{visibleComponents.length} component(s) shown</p>
+          </div>
+
+          <label className="es-inactive-filter">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(event) => setShowInactive(event.target.checked)}
+            />
+            Show inactive
+          </label>
+        </div>
+
+        {loading ? (
+          <p>Loading salary components...</p>
+        ) : visibleComponents.length === 0 ? (
+          <p>No components found. Add your first salary component above.</p>
+        ) : (
+          <div className="es-components-table-wrap">
+            <table className="es-components-table">
+              <thead>
+                <tr>
+                  <th>Code / Name</th>
+                  <th>Category</th>
+                  <th>Method</th>
+                  <th>Default</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleComponents.map((component) => (
+                  <tr key={component.id}>
+                    <td>
+                      <strong>{component.component_code}</strong>
+                      <small>{component.component_name}</small>
+                    </td>
+                    <td>{component.component_category.replaceAll("_", " ")}</td>
+                    <td>
+                      {component.calculation_type === "PERCENTAGE"
+                        ? `Percentage${component.percentage_base ? ` of ${component.percentage_base}` : ""}`
+                        : "Fixed"}
+                    </td>
+                    <td>
+                      ₹{Number(component.default_amount || 0).toLocaleString("en-IN")}
+                      {component.calculation_type === "PERCENTAGE" &&
+                        ` / ${component.default_percentage ?? 0}%`}
+                    </td>
+                    <td>
+                      <span className={component.is_active ? "es-component-active" : "es-component-inactive"}>
+                        {component.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="es-component-actions">
+                        <button
+                          type="button"
+                          className="es-button secondary"
+                          onClick={() => startEdit(component)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="es-button secondary"
+                          onClick={() => toggleActive(component)}
+                        >
+                          {component.is_active ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 
 export default function EmployeeSettings() {
   const [activeTab, setActiveTab] = useState("id");
@@ -173,7 +694,9 @@ export default function EmployeeSettings() {
         ))}
       </div>
 
-      {activeTab === "id" ? (
+      {activeTab === "salary-components" ? (
+  <SalaryComponentsPanel />
+) : activeTab === "id" ? (
         <form className="es-workspace" onSubmit={handleSave}>
           <div className="es-information-banner">
             <div className="es-info-icon">i</div>
