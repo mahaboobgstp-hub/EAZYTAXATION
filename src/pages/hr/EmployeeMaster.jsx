@@ -1726,18 +1726,7 @@ const totalGrossSalary = grossSalary + additionalEarnings;
 
                 {activeTab === "salary" && (
 
-    <div
-        style={{
-            display:
-                "grid",
-
-            gridTemplateColumns:
-                "repeat(2, minmax(250px, 1fr))",
-
-            gap:
-                "15px"
-        }}
-    >
+<div className="salary-structure-layout">
 
         <h3
             style={{
