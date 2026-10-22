@@ -1997,288 +1997,231 @@ const totalGrossSalary = grossSalary + additionalEarnings;
 )}
 
             
-        <div
-    style={{
-        gridColumn: "1 / -1",
-        marginTop: "15px",
-        padding: "18px",
-        border: "1px solid #ddd",
-        borderRadius: "6px",
-        background: "#f8f9fa"
-    }}
->
+    
+<div className="salary-summary-panel">
+    <h3>Salary Summary</h3>
 
-    <h3 style={{ marginTop: 0 }}>
-        Salary Summary
-    </h3>
-
-    {/* ================================
-        SALARY BREAKUP
-    ================================= */}
-
-    <h4>
-        Salary Breakup
-    </h4>
-
-    <div
-        style={{
-            display: "grid",
-            gridTemplateColumns:
-                "repeat(2, minmax(250px, 1fr))",
-            gap: "10px",
-            marginBottom: "15px"
-        }}
-    >
-
-        <div>
-            <strong>Basic:</strong>{" "}
-            ₹{basicAmount.toFixed(2)}
+    <div className="salary-summary-grid">
+        <div className="salary-summary-item">
+            <span>Basic Salary</span>
+            <strong>₹{basicAmount.toFixed(2)}</strong>
         </div>
 
-        <div>
-            <strong>HRA:</strong>{" "}
-            ₹{Number(
-                salaryStructure.hra_amount || 0
-            ).toFixed(2)}
+        <div className="salary-summary-item">
+            <span>HRA</span>
+            <strong>
+                ₹{Number(salaryStructure.hra_amount || 0).toFixed(2)}
+            </strong>
         </div>
 
-        <div>
-            <strong>DA:</strong>{" "}
-            ₹{Number(
-                salaryStructure.da_amount || 0
-            ).toFixed(2)}
+        <div className="salary-summary-item">
+            <span>DA</span>
+            <strong>
+                ₹{Number(salaryStructure.da_amount || 0).toFixed(2)}
+            </strong>
         </div>
 
-        <div>
-            <strong>Special Allowance:</strong>{" "}
-            ₹{Number(
-                salaryStructure.special_allowance || 0
-            ).toFixed(2)}
+        <div className="salary-summary-item">
+            <span>Special Allowance</span>
+            <strong>
+                ₹{Number(salaryStructure.special_allowance || 0).toFixed(2)}
+            </strong>
         </div>
 
-        <div>
-            <strong>Other Allowance:</strong>{" "}
-            ₹{Number(
-                salaryStructure.other_allowance || 0
-            ).toFixed(2)}
-        </div>
-
-        <div>
-            <strong>Gross Salary:</strong>{" "}
-            ₹{grossSalary.toFixed(2)}
-        </div>
-
-   
-
-            
-<section className="salary-components-section">
-    <div className="salary-components-heading">
-        <div>
-            <h3>Company Salary Components</h3>
-            <p>
-                Configure additional salary heads for this employee.
-            </p>
+        <div className="salary-summary-item">
+            <span>Other Allowance</span>
+            <strong>
+                ₹{Number(salaryStructure.other_allowance || 0).toFixed(2)}
+            </strong>
         </div>
     </div>
 
-    {salaryComponentsLoading ? (
-        <p>Loading company salary components...</p>
-    ) : (
-        ["EARNING", "EMPLOYEE_DEDUCTION",
-         "EMPLOYER_CONTRIBUTION", "REIMBURSEMENT"].map((category) => {
-            const categoryComponents =
-                getComponentsByCategory(category);
+    <div className="salary-components-section">
+        <h4>Other Salary Components</h4>
+        <p className="salary-section-description">
+            Configure company-specific salary heads here.
+            Standard salary fields are managed above.
+        </p>
 
-            if (categoryComponents.length === 0) return null;
+        {salaryComponentsLoading ? (
+            <p>Loading salary components...</p>
+        ) : (
+            ["EARNING", "EMPLOYEE_DEDUCTION",
+             "EMPLOYER_CONTRIBUTION", "REIMBURSEMENT"].map((category) => {
+                const categoryComponents =
+                    getComponentsByCategory(category);
 
-            const titles = {
-                EARNING: "Additional Earnings",
-                EMPLOYEE_DEDUCTION: "Employee Deductions",
-                EMPLOYER_CONTRIBUTION: "Employer Contributions",
-                REIMBURSEMENT: "Reimbursements",
-            };
+                if (categoryComponents.length === 0) {
+                    return null;
+                }
 
-            return (
-                <div className="salary-component-group" key={category}>
-                    <h4>{titles[category]}</h4>
+                const titles = {
+                    EARNING: "Earnings",
+                    EMPLOYEE_DEDUCTION: "Employee Deductions",
+                    EMPLOYER_CONTRIBUTION: "Employer Contributions",
+                    REIMBURSEMENT: "Reimbursements"
+                };
 
-                    <div className="salary-component-grid">
-                        {categoryComponents.map((component) => {
-                            const assigned = getAssignedComponent(component);
+                return (
+                    <div
+                        className="salary-component-group"
+                        key={category}
+                    >
+                        <h5>{titles[category]}</h5>
 
-                            return (
-                                <label
-                                    className="salary-component-field"
-                                    key={component.id}
-                                >
-                                    <span>
-                                        {component.component_name}
-                                        <small>{component.component_code}</small>
-                                    </span>
+                        <div className="salary-component-grid">
+                            {categoryComponents.map((component) => {
+                                const assigned =
+                                    getAssignedComponent(component);
 
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={assigned?.amount ?? ""}
-                                        placeholder={
-                                            String(component.default_amount ?? 0)
-                                        }
-                                        onChange={(event) => {
-                                            const amount = event.target.value;
+                                return (
+                                    <label
+                                        className="salary-component-field"
+                                        key={component.id}
+                                    >
+                                        <span>
+                                            {component.component_name}
+                                            <small>
+                                                {component.component_code}
+                                            </small>
+                                        </span>
 
-                                            setSalaryComponents((previous) => {
-                                                const existing = previous.findIndex(
-                                                    (item) =>
-                                                        item.master_component_id === component.id ||
-                                                        item.component_code === component.component_code
-                                                );
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={assigned?.amount ?? ""}
+                                            placeholder={String(
+                                                component.default_amount ?? 0
+                                            )}
+                                            onChange={(event) => {
+                                                const amount =
+                                                    event.target.value;
 
-                                                const nextItem = {
-    ...(existing >= 0
-        ? previous[existing]
-        : {}),
-    master_component_id: component.id,
-    component_code: component.component_code,
-    component_name: component.component_name,
-    component_type: category,
-    calculation_type: component.calculation_type,
-    percentage_base: component.percentage_base,
-    percentage: component.default_percentage,
-    amount,
-    is_active: true,
-};
+                                                setSalaryComponents((previous) => {
+                                                    const existing =
+                                                        previous.findIndex(
+                                                            (item) =>
+                                                                item.master_component_id ===
+                                                                    component.id ||
+                                                                item.component_code ===
+                                                                    component.component_code
+                                                        );
 
-                                                if (existing >= 0) {
-                                                    return previous.map((item, index) =>
-                                                        index === existing
-                                                            ? nextItem
-                                                            : item
-                                                    );
-                                                }
+                                                    const nextItem = {
+                                                        ...(existing >= 0
+                                                            ? previous[existing]
+                                                            : {}),
+                                                        master_component_id:
+                                                            component.id,
+                                                        component_code:
+                                                            component.component_code,
+                                                        component_name:
+                                                            component.component_name,
+                                                        component_type: category,
+                                                        calculation_type:
+                                                            component.calculation_type,
+                                                        percentage_base:
+                                                            component.percentage_base,
+                                                        percentage:
+                                                            component.default_percentage,
+                                                        amount,
+                                                        is_active: true
+                                                    };
 
-                                                return [...previous, nextItem];
-                                            });
-                                        }}
-                                    />
-                                </label>
-                            );
-                        })}
+                                                    if (existing >= 0) {
+                                                        return previous.map(
+                                                            (item, index) =>
+                                                                index === existing
+                                                                    ? nextItem
+                                                                    : item
+                                                        );
+                                                    }
+
+                                                    return [
+                                                        ...previous,
+                                                        nextItem
+                                                    ];
+                                                });
+                                            }}
+                                        />
+                                    </label>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            );
-        })
-    )}
-</section>
-        
+                );
+            })
+        )}
     </div>
 
-    {/* ================================
-        EMPLOYEE CONTRIBUTIONS
-    ================================= */}
+    <div className="salary-contribution-section">
+        <h4>Employee Contributions</h4>
 
-    <h4>
-        Employee Contributions / Deductions
-    </h4>
+        <div className="salary-summary-grid">
+            <div className="salary-summary-item">
+                <span>Employee PF</span>
+                <strong>₹{employeePfAmount.toFixed(2)}</strong>
+            </div>
 
-    <div
-        style={{
-            display: "grid",
-            gridTemplateColumns:
-                "repeat(2, minmax(250px, 1fr))",
-            gap: "10px",
-            marginBottom: "15px"
-        }}
-    >
+            <div className="salary-summary-item">
+                <span>Employee ESI</span>
+                <strong>₹{employeeEsiAmount.toFixed(2)}</strong>
+            </div>
 
-        <div>
-            <strong>Employee PF:</strong>{" "}
-            ₹{employeePfAmount.toFixed(2)}
+            <div className="salary-summary-item">
+                <span>Total Employee Contributions</span>
+                <strong>
+                    ₹{totalEmployeeContribution.toFixed(2)}
+                </strong>
+            </div>
         </div>
 
-        <div>
-            <strong>Employee ESI:</strong>{" "}
-            ₹{employeeEsiAmount.toFixed(2)}
-        </div>
+        <h4>Employer Contributions</h4>
 
-        <div>
-            <strong>Total Employee Contribution:</strong>{" "}
-            ₹{totalEmployeeContribution.toFixed(2)}
-        </div>
+        <div className="salary-summary-grid">
+            <div className="salary-summary-item">
+                <span>Employer PF</span>
+                <strong>₹{employerPfAmount.toFixed(2)}</strong>
+            </div>
 
+            <div className="salary-summary-item">
+                <span>Employer ESI</span>
+                <strong>₹{employerEsiAmount.toFixed(2)}</strong>
+            </div>
+
+            <div className="salary-summary-item">
+                <span>Total Employer Contributions</span>
+                <strong>
+                    ₹{totalEmployerContribution.toFixed(2)}
+                </strong>
+            </div>
+        </div>
     </div>
 
-
-    {/* ================================
-        EMPLOYER CONTRIBUTIONS
-    ================================= */}
-
-    <h4>
-        Employer Contributions
-    </h4>
-
-    <div
-        style={{
-            display: "grid",
-            gridTemplateColumns:
-                "repeat(2, minmax(250px, 1fr))",
-            gap: "10px",
-            marginBottom: "15px"
-        }}
-    >
-
+    <div className="salary-ctc-panel">
         <div>
-            <strong>Employer PF:</strong>{" "}
-            ₹{employerPfAmount.toFixed(2)}
+            <span>Monthly Gross Salary</span>
+            <strong>₹{totalGrossSalary.toFixed(2)}</strong>
         </div>
 
         <div>
-            <strong>Employer ESI:</strong>{" "}
-            ₹{employerEsiAmount.toFixed(2)}
+            <span>Monthly CTC</span>
+            <strong>₹{(totalGrossSalary + totalEmployerContribution).toFixed(2)}</strong>
         </div>
 
         <div>
-            <strong>Total Employer Contribution:</strong>{" "}
-            ₹{totalEmployerContribution.toFixed(2)}
+            <span>Annual CTC</span>
+            <strong>
+                ₹{(
+                    (totalGrossSalary + totalEmployerContribution) * 12
+                ).toFixed(2)}
+            </strong>
         </div>
-
     </div>
-
-
-    {/* ================================
-        CTC
-    ================================= */}
-
-    <div
-        style={{
-            marginTop: "10px",
-            paddingTop: "15px",
-            borderTop: "1px solid #ccc"
-        }}
-    >
-
-        <div
-            style={{
-                fontSize: "18px",
-                fontWeight: "700"
-            }}
-        >
-            Monthly CTC: ₹{monthlyCtc.toFixed(2)}
-        </div>
-
-        <div
-            style={{
-                fontSize: "18px",
-                fontWeight: "700",
-                marginTop: "8px"
-            }}
-        >
-            Annual CTC: ₹{annualCtc.toFixed(2)}
-        </div>
-
-    </div>
-
 </div>
+
+
         
 
         <textarea
