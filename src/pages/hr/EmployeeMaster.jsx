@@ -479,12 +479,40 @@ const getAssignedComponent = (masterComponent) =>
             )
     );
 
-const getComponentsByCategory = (category) =>
-    availableSalaryComponents.filter(
-        (component) =>
+const getComponentsByCategory = (category) => {
+    const standardCodes = new Set([
+        "BASIC",
+        "HRA",
+        "DA",
+        "SA",
+        "OA"
+    ]);
+
+    const standardNames = new Set([
+        "BASIC SALARY",
+        "HOUSE RENT ALLOWANCE",
+        "DEARNESS ALLOWANCE",
+        "SPECIAL ALLOWANCE",
+        "OTHER ALLOWANCE"
+    ]);
+
+    return availableSalaryComponents.filter((component) => {
+        const code = String(
+            component.component_code || ""
+        ).trim().toUpperCase();
+
+        const name = String(
+            component.component_name || ""
+        ).trim().toUpperCase();
+
+        return (
             component.is_active &&
-            component.component_category === category
-    );
+            component.component_category === category &&
+            !standardCodes.has(code) &&
+            !standardNames.has(name)
+        );
+    });
+};
 
 
     const handleSubmit = async (e) => {
