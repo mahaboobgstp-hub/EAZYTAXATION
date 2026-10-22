@@ -430,6 +430,45 @@ const handleSalaryStructureChange =
         });
 
     };
+    const getComponentAmount = (component) => {
+    const amount = Number(component.amount || 0);
+
+    if (component.calculation_type !== "PERCENTAGE") {
+        return amount;
+    }
+
+    const percentage = Number(component.percentage || 0);
+
+    const base = Number(component.percentage_base === "BASIC"
+        ? basicAmount
+        : component.percentage_base === "GROSS"
+            ? grossSalary
+            : 0);
+
+    return base * percentage / 100;
+};
+
+const getAssignedComponent = (masterComponent) =>
+    salaryComponents.find(
+        (component) =>
+            component.master_component_id === masterComponent.id ||
+            component.component_code === masterComponent.component_code
+    );
+
+const getComponentsByCategory = (category) =>
+    availableSalaryComponents.filter(
+        (component) =>
+            component.is_active &&
+            component.component_category === category
+    );
+
+const additionalEarnings = getComponentsByCategory("EARNING")
+    .reduce((total, component) => {
+        const assigned = getAssignedComponent(component);
+        return total + (assigned ? getComponentAmount(assigned) : 0);
+    }, 0);
+
+const totalGrossSalary = grossSalary + additionalEarnings;
     const handleSubmit = async (e) => {
 
         e.preventDefault();
