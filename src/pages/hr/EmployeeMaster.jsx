@@ -2014,8 +2014,109 @@ overtime_fixed_rate:
             ₹{grossSalary.toFixed(2)}
         </div>
 
+   
+
+            
+<section className="salary-components-section">
+    <div className="salary-components-heading">
+        <div>
+            <h3>Company Salary Components</h3>
+            <p>
+                Configure additional salary heads for this employee.
+            </p>
+        </div>
     </div>
 
+    {salaryComponentsLoading ? (
+        <p>Loading company salary components...</p>
+    ) : (
+        ["EARNING", "EMPLOYEE_DEDUCTION",
+         "EMPLOYER_CONTRIBUTION", "REIMBURSEMENT"].map((category) => {
+            const categoryComponents =
+                getComponentsByCategory(category);
+
+            if (categoryComponents.length === 0) return null;
+
+            const titles = {
+                EARNING: "Additional Earnings",
+                EMPLOYEE_DEDUCTION: "Employee Deductions",
+                EMPLOYER_CONTRIBUTION: "Employer Contributions",
+                REIMBURSEMENT: "Reimbursements",
+            };
+
+            return (
+                <div className="salary-component-group" key={category}>
+                    <h4>{titles[category]}</h4>
+
+                    <div className="salary-component-grid">
+                        {categoryComponents.map((component) => {
+                            const assigned = getAssignedComponent(component);
+
+                            return (
+                                <label
+                                    className="salary-component-field"
+                                    key={component.id}
+                                >
+                                    <span>
+                                        {component.component_name}
+                                        <small>{component.component_code}</small>
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={assigned?.amount ?? ""}
+                                        placeholder={
+                                            String(component.default_amount ?? 0)
+                                        }
+                                        onChange={(event) => {
+                                            const amount = event.target.value;
+
+                                            setSalaryComponents((previous) => {
+                                                const existing = previous.findIndex(
+                                                    (item) =>
+                                                        item.master_component_id === component.id ||
+                                                        item.component_code === component.component_code
+                                                );
+
+                                                const nextItem = {
+                                                    ...(existing >= 0
+                                                        ? previous[existing]
+                                                        : {}),
+                                                    master_component_id: component.id,
+                                                    component_code: component.component_code,
+                                                    component_name: component.component_name,
+                                                    component_type: category,
+                                                    calculation_type: component.calculation_type,
+                                                    percentage: component.default_percentage,
+                                                    amount,
+                                                    is_active: true,
+                                                };
+
+                                                if (existing >= 0) {
+                                                    return previous.map((item, index) =>
+                                                        index === existing
+                                                            ? nextItem
+                                                            : item
+                                                    );
+                                                }
+
+                                                return [...previous, nextItem];
+                                            });
+                                        }}
+                                    />
+                                </label>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        })
+    )}
+</section>
+        
+    </div>
 
     {/* ================================
         EMPLOYEE CONTRIBUTIONS
