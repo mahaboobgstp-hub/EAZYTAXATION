@@ -350,20 +350,20 @@ tds_regime:
         id
     ) {
 
-        result =
-            await supabase
-                .from(
-                    "employee_salary_structures"
-                )
-                .update(
-                    payload
-                )
-                .eq(
-                    "id",
-                    id
-                )
-                .select()
-                .single();
+        if (!company_id || !employee_id) {
+    throw new Error(
+        "Company and employee are required to update a salary structure."
+    );
+}
+
+result = await supabase
+    .from("employee_salary_structures")
+    .update(payload)
+    .eq("id", id)
+    .eq("company_id", company_id)
+    .eq("employee_id", employee_id)
+    .select()
+    .single();
 
     }
 
@@ -526,7 +526,14 @@ export async function saveCompleteSalaryStructure(
     structureData,
     components
 ) {
-
+if (
+    !structureData?.company_id ||
+    !structureData?.employee_id
+) {
+    throw new Error(
+        "Company and employee are required to save salary details."
+    );
+}
     /*
        Step 1:
        Save structure header
