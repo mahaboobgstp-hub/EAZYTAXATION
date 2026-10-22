@@ -793,9 +793,10 @@ setPhotoPreview("");
         }
 
         const salaryData =
-            await getCompleteSalaryStructure(
-                employee.id
-            );
+    await getCompleteSalaryStructure(
+        employee.id,
+        currentCompanyId
+    );
 
 
         if (
