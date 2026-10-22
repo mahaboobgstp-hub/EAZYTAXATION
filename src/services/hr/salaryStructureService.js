@@ -411,185 +411,110 @@ tds_regime:
    SAVE EMPLOYEE SALARY COMPONENTS
 ========================================= */
 
+
 export async function saveEmployeeSalaryComponents(
     companyId,
     employeeId,
     salaryStructureId,
     components
 ) {
-
-    if (
-        !salaryStructureId
-    ) {
-
+    if (!companyId || !employeeId || !salaryStructureId) {
         throw new Error(
-            "Salary structure must be saved before saving components."
+            "Company, employee, and salary structure are required."
         );
-
     }
 
-
-    /*
-       Soft deactivate existing components.
-
-       This avoids duplicate active
-       component records.
-    */
-
-    const {
-        error:
-            deactivateError
-    } =
+    // Confirm the salary structure belongs to this company
+    // and employee before modifying its components.
+    const { data: structure, error: structureError } =
         await supabase
-            .from(
-                "employee_salary_components"
-            )
-            .update(
-                {
+            .from("employee_salary_structures")
+            .select("id")
+            .eq("id", salaryStructureId)
+            .eq("company_id", companyId)
+            .eq("employee_id", employeeId)
+            .maybeSingle();
 
-                    is_active:
-                        false,
+    if (structureError) {
+        throw structureError;
+    }
 
-                    updated_at:
+    if (!structure) {
+        throw new Error(
+            "Salary structure was not found for this company and employee."
+        );
+    }
 
-                        new Date()
-                            .toISOString()
+    // Deactivate only this employee's components for this structure.
+    const { error: deactivateError } = await supabase
+        .from("employee_salary_components")
+        .update({
+            is_active: false,
+            updated_at: new Date().toISOString()
+        })
+        .eq("salary_structure_id", salaryStructureId)
+        .eq("company_id", companyId)
+        .eq("employee_id", employeeId);
 
-                }
-            )
-            .eq(
-                "salary_structure_id",
-                salaryStructureId
-            );
-
-
-    if (
-        deactivateError
-    ) {
-
+    if (deactivateError) {
         throw deactivateError;
-
     }
 
-
-    /*
-       Remove empty component rows
-       before inserting.
-    */
-
-    const validComponents =
-        (
-            components ||
-            []
+    const validComponents = (components || [])
+        .filter(component =>
+            component.component_name &&
+            component.component_name.trim() !== ""
         )
-            .filter(
-                component =>
-                    component.component_name &&
-                    component.component_name
-                        .trim() !== ""
-            )
-            .map(
-                component => ({
+        .map(component => ({
+            company_id: companyId,
+            employee_id: employeeId,
+            salary_structure_id: salaryStructureId,
 
-                    company_id:
+            // These columns now exist after the migration in Step 1.
+            master_component_id:
+                component.master_component_id || null,
 
-                        companyId,
+            percentage_base:
+                component.percentage_base || null,
 
-                    employee_id:
+            component_name:
+                component.component_name.trim(),
 
-                        employeeId,
+            component_type:
+                component.component_type || "EARNING",
 
-                    salary_structure_id:
+            calculation_type:
+                component.calculation_type || "FIXED",
 
-                        salaryStructureId,
+            amount: Number(component.amount) || 0,
 
-                    component_name:
+            percentage:
+                component.percentage === "" ||
+                component.percentage === null ||
+                component.percentage === undefined
+                    ? null
+                    : Number(component.percentage),
 
-                        component.component_name
-                            .trim(),
+            is_active: true,
+            remarks: component.remarks || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }));
 
-                    component_type:
-
-                        component.component_type ||
-                        "Earning",
-
-                    calculation_type:
-
-                        component.calculation_type ||
-                        "Fixed",
-
-                    amount:
-
-                        Number(
-                            component.amount
-                        ) || 0,
-
-                    percentage:
-
-                        component.percentage
-                            ? Number(
-                                component.percentage
-                            )
-                            : null,
-
-                    is_active:
-
-                        true,
-
-                    remarks:
-
-                        component.remarks ||
-                        null,
-
-                    created_at:
-
-                        new Date()
-                            .toISOString(),
-
-                    updated_at:
-
-                        new Date()
-                            .toISOString()
-
-                })
-            );
-
-
-    if (
-        validComponents.length ===
-        0
-    ) {
-
+    if (validComponents.length === 0) {
         return [];
-
     }
 
+    const { data, error } = await supabase
+        .from("employee_salary_components")
+        .insert(validComponents)
+        .select("*");
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from(
-                "employee_salary_components"
-            )
-            .insert(
-                validComponents
-            )
-            .select();
-
-
-    if (
-        error
-    ) {
-
+    if (error) {
         throw error;
-
     }
-
 
     return data || [];
-
 }
 
 
