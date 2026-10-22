@@ -2102,18 +2102,19 @@ const totalGrossSalary = grossSalary + additionalEarnings;
                                                 );
 
                                                 const nextItem = {
-                                                    ...(existing >= 0
-                                                        ? previous[existing]
-                                                        : {}),
-                                                    master_component_id: component.id,
-                                                    component_code: component.component_code,
-                                                    component_name: component.component_name,
-                                                    component_type: category,
-                                                    calculation_type: component.calculation_type,
-                                                    percentage: component.default_percentage,
-                                                    amount,
-                                                    is_active: true,
-                                                };
+    ...(existing >= 0
+        ? previous[existing]
+        : {}),
+    master_component_id: component.id,
+    component_code: component.component_code,
+    component_name: component.component_name,
+    component_type: category,
+    calculation_type: component.calculation_type,
+    percentage_base: component.percentage_base,
+    percentage: component.default_percentage,
+    amount,
+    is_active: true,
+};
 
                                                 if (existing >= 0) {
                                                     return previous.map((item, index) =>
