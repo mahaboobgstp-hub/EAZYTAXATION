@@ -479,21 +479,50 @@ const getAssignedComponent = (masterComponent) =>
             )
     );
 
+
 const getComponentsByCategory = (category) => {
-    const standardCodes = new Set([
+    const excludedCodes = new Set([
+        // Standard salary heads already shown separately
         "BASIC",
         "HRA",
         "DA",
         "SA",
-        "OA"
+        "OA",
+
+        // Employee statutory contributions
+        "PF-EMP",
+        "ESI-EMP",
+        "PT-EMP",
+        "TDS-EMP",
+
+        // Employer statutory contributions
+        "PF-ER",
+        "ESI-ER",
+        "EPS-ER",
+        "EDLI-ER",
+        "PF-ADMIN",
+        "EDLI-ADMIN",
+        "GRATUITY-ER"
     ]);
 
-    const standardNames = new Set([
+    const excludedNames = new Set([
         "BASIC SALARY",
         "HOUSE RENT ALLOWANCE",
         "DEARNESS ALLOWANCE",
         "SPECIAL ALLOWANCE",
-        "OTHER ALLOWANCE"
+        "OTHER ALLOWANCE",
+
+        "EMPLOYEE PF CONTRIBUTION",
+        "EMPLOYEE ESI CONTRIBUTION",
+        "EMPLOYEE PROFESSIONAL TAX",
+        "EMPLOYEE TDS",
+        "EMPLOYER PF CONTRIBUTION",
+        "EMPLOYER ESI CONTRIBUTION",
+        "EMPLOYER EPS CONTRIBUTION",
+        "EMPLOYER EDLI CONTRIBUTION",
+        "PF ADMINISTRATION CHARGES",
+        "EDLI ADMINISTRATION CHARGES",
+        "EMPLOYER GRATUITY CONTRIBUTION"
     ]);
 
     return availableSalaryComponents.filter((component) => {
@@ -506,13 +535,14 @@ const getComponentsByCategory = (category) => {
         ).trim().toUpperCase();
 
         return (
-            component.is_active &&
+            component.is_active === true &&
             component.component_category === category &&
-            !standardCodes.has(code) &&
-            !standardNames.has(name)
+            !excludedCodes.has(code) &&
+            !excludedNames.has(name)
         );
     });
 };
+
 
 
     const handleSubmit = async (e) => {
