@@ -470,9 +470,13 @@ const handleSalaryStructureChange =
 
 const getAssignedComponent = (masterComponent) =>
     salaryComponents.find(
-        (component) =>
+        component =>
             component.master_component_id === masterComponent.id ||
-            component.component_code === masterComponent.component_code
+            (
+                component.component_code &&
+                component.component_code ===
+                    masterComponent.component_code
+            )
     );
 
 const getComponentsByCategory = (category) =>
