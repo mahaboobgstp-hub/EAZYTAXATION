@@ -433,19 +433,39 @@ const handleSalaryStructureChange =
     const getComponentAmount = (component) => {
     const amount = Number(component.amount || 0);
 
-    if (component.calculation_type !== "PERCENTAGE") {
+    const calculationType = String(
+        component.calculation_type || "FIXED"
+    ).toUpperCase();
+
+    if (calculationType !== "PERCENTAGE") {
         return amount;
     }
 
     const percentage = Number(component.percentage || 0);
 
-    const base = Number(component.percentage_base === "BASIC"
-        ? basicAmount
-        : component.percentage_base === "GROSS"
-            ? grossSalary
-            : 0);
+    const baseType = String(
+        component.percentage_base || ""
+    ).toUpperCase();
 
-    return base * percentage / 100;
+    const basic = Number(
+        salaryStructure.basic_amount || 0
+    );
+
+    const baseGross =
+        Number(salaryStructure.basic_amount || 0) +
+        Number(salaryStructure.hra_amount || 0) +
+        Number(salaryStructure.da_amount || 0) +
+        Number(salaryStructure.special_allowance || 0) +
+        Number(salaryStructure.other_allowance || 0);
+
+    const base =
+        baseType === "BASIC"
+            ? basic
+            : baseType === "GROSS"
+                ? baseGross
+                : 0;
+
+    return (base * percentage) / 100;
 };
 
 const getAssignedComponent = (masterComponent) =>
