@@ -462,13 +462,7 @@ const getComponentsByCategory = (category) =>
             component.component_category === category
     );
 
-const additionalEarnings = getComponentsByCategory("EARNING")
-    .reduce((total, component) => {
-        const assigned = getAssignedComponent(component);
-        return total + (assigned ? getComponentAmount(assigned) : 0);
-    }, 0);
 
-const totalGrossSalary = grossSalary + additionalEarnings;
     const handleSubmit = async (e) => {
 
         e.preventDefault();
@@ -1068,6 +1062,13 @@ overtime_fixed_rate:
         Number(salaryStructure.special_allowance || 0) +
         Number(salaryStructure.other_allowance || 0);
 
+    const additionalEarnings = getComponentsByCategory("EARNING")
+    .reduce((total, component) => {
+        const assigned = getAssignedComponent(component);
+        return total + (assigned ? getComponentAmount(assigned) : 0);
+    }, 0);
+
+const totalGrossSalary = grossSalary + additionalEarnings;
     const employeePfRate =
         Number(salaryStructure.employee_pf_rate || 0);
 
