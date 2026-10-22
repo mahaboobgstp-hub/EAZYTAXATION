@@ -17,7 +17,9 @@ import {
     getCompleteSalaryStructure,
     saveCompleteSalaryStructure
 } from "../../services/hr/salaryStructureService";
-
+import {
+    getSalaryComponents
+} from "../../services/hr/salaryComponentService";
 
 const defaultFormData = {
     employee_code: "",
@@ -209,7 +211,15 @@ const [salaryComponents, setSalaryComponents] =
         "basic"
     );
 
+const [
+    availableSalaryComponents,
+    setAvailableSalaryComponents
+] = useState([]);
 
+const [
+    salaryComponentsLoading,
+    setSalaryComponentsLoading
+] = useState(false);
     const [deductionSettings, setDeductionSettings] =
     useState({
         leave_policy_id: "",
@@ -239,7 +249,7 @@ const [salaryComponents, setSalaryComponents] =
     setDesignations([]);
     setShifts([]);
     setLocations([]);
-
+    setAvailableSalaryComponents([]);
     setFormData(
         defaultFormData
     );
@@ -260,6 +270,7 @@ const [salaryComponents, setSalaryComponents] =
     loadDesignations(currentCompanyId);
     loadShifts(currentCompanyId);
     loadLocations(currentCompanyId);
+    loadAvailableSalaryComponents(currentCompanyId);    
 
 }, [currentCompanyId]);
 
@@ -345,6 +356,33 @@ const loadLocations = async (companyId) => {
     }
 
 };
+const loadAvailableSalaryComponents = async (companyId) => {
+    if (!companyId) {
+        setAvailableSalaryComponents([]);
+        return;
+    }
+
+    setSalaryComponentsLoading(true);
+
+    try {
+        const data = await getSalaryComponents(companyId, false);
+        setAvailableSalaryComponents(data || []);
+    } catch (error) {
+        console.error(
+            "Error loading company salary components:",
+            error
+        );
+
+        setAvailableSalaryComponents([]);
+        alert(
+            error.message ||
+            "Unable to load salary components."
+        );
+    } finally {
+        setSalaryComponentsLoading(false);
+    }
+};
+    
     const handleChange = (e) => {
 
         const {
