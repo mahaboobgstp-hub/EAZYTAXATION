@@ -8,133 +8,66 @@ import { supabase } from "../../supabase/supabaseClient";
 export async function getEmployeeSalaryStructure(
     employeeId,
     companyId,
-    periodFrom,
-    periodTo
+    periodFrom = null,
+    periodTo = null
 ) {
-
-    if (
-        !employeeId ||
-        !companyId ||
-        !periodFrom ||
-        !periodTo
-    ) {
-
+    if (!employeeId || !companyId) {
         return null;
-
     }
 
+    let query = supabase
+        .from("employee_salary_structures")
+        .select("*")
+        .eq("employee_id", employeeId)
+        .eq("company_id", companyId)
+        .eq("is_active", true);
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from(
-                "employee_salary_structures"
-            )
-            .select(
-                "*"
-            )
-            .eq(
-                "employee_id",
-                employeeId
-            )
-            .eq(
-                "company_id",
-                companyId
-            )
-            .eq(
-                "is_active",
-                true
-            )
-            .lte(
-                "effective_from",
-                periodTo
-            )
+    if (periodFrom && periodTo) {
+        query = query
+            .lte("effective_from", periodTo)
             .or(
                 `effective_to.is.null,effective_to.gte.${periodFrom}`
-            )
-            .order(
-                "effective_from",
-                {
-                    ascending:
-                        false
-                }
-            )
-            .limit(
-                1
-            )
-            .maybeSingle();
-
-
-    if (
-        error
-    ) {
-
-        throw error;
-
+            );
     }
 
+    const { data, error } = await query
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        throw error;
+    }
 
     return data;
-
 }
 /* =========================================
    GET EMPLOYEE SALARY COMPONENTS
 ========================================= */
 
 export async function getEmployeeSalaryComponents(
-    salaryStructureId
+    salaryStructureId,
+    companyId,
+    employeeId
 ) {
-
-    if (
-        !salaryStructureId
-    ) {
-
+    if (!salaryStructureId || !companyId || !employeeId) {
         return [];
-
     }
 
+    const { data, error } = await supabase
+        .from("employee_salary_components")
+        .select("*")
+        .eq("salary_structure_id", salaryStructureId)
+        .eq("company_id", companyId)
+        .eq("employee_id", employeeId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: true });
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from(
-                "employee_salary_components"
-            )
-            .select(
-                "*"
-            )
-            .eq(
-                "salary_structure_id",
-                salaryStructureId
-            )
-            .eq(
-                "is_active",
-                true
-            )
-            .order(
-                "created_at",
-                {
-                    ascending:
-                        true
-                }
-            );
-
-
-    if (
-        error
-    ) {
-
+    if (error) {
         throw error;
-
     }
-
 
     return data || [];
-
 }
 
 
@@ -146,44 +79,35 @@ export async function getCompleteSalaryStructure(
     employeeId,
     companyId
 ) {
-
-    const structure =
-        await getEmployeeSalaryStructure(
-            employeeId,
-            companyId
-        );
-
-
-    if (
-        !structure
-    ) {
-
+    if (!employeeId || !companyId) {
         return {
-
-            structure:
-                null,
-
-            components:
-                []
-
+            structure: null,
+            components: []
         };
-
     }
 
+    const structure = await getEmployeeSalaryStructure(
+        employeeId,
+        companyId
+    );
 
-    const components =
-        await getEmployeeSalaryComponents(
-            structure.id
-        );
+    if (!structure) {
+        return {
+            structure: null,
+            components: []
+        };
+    }
 
+    const components = await getEmployeeSalaryComponents(
+        structure.id,
+        companyId,
+        employeeId
+    );
 
     return {
-
         structure,
         components
-
     };
-
 }
 
 /* =========================================
