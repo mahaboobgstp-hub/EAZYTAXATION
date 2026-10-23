@@ -1136,8 +1136,11 @@ overtime_fixed_rate:
     // =============================================
 
     
-const basicAmount = Number(salaryStructure.basic_amount || 0);
-const daAmount = Number(salaryStructure.da_amount || 0);
+const basicAmount =
+    Number(salaryStructure.basic_amount || 0);
+
+const daAmount =
+    Number(salaryStructure.da_amount || 0);
 
 const grossSalary =
     basicAmount +
@@ -1146,7 +1149,7 @@ const grossSalary =
     Number(salaryStructure.special_allowance || 0) +
     Number(salaryStructure.other_allowance || 0);
 
-// Additional earning components
+// Additional earnings are included in gross salary.
 const additionalEarnings =
     getComponentsByCategory("EARNING").reduce(
         (total, component) => {
@@ -1158,9 +1161,8 @@ const additionalEarnings =
         0
     );
 
-// Reimbursements are tracked separately from salary gross.
-// Include them in CTC only where the configured treatment
-// says they form part of the employer's package cost.
+// Reimbursements are tracked separately from gross salary
+// but included in CTC as requested.
 const additionalReimbursements =
     getComponentsByCategory("REIMBURSEMENT").reduce(
         (total, component) => {
@@ -1172,41 +1174,45 @@ const additionalReimbursements =
         0
     );
 
-const totalGrossSalary = grossSalary + additionalEarnings;
+const totalGrossSalary =
+    grossSalary + additionalEarnings;
 
 const employeePfRate =
     Number(salaryStructure.employee_pf_rate || 0);
+
 const employerPfRate =
     Number(salaryStructure.employer_pf_rate || 0);
+
 const employeeEsiRate =
     Number(salaryStructure.employee_esi_rate || 0);
+
 const employerEsiRate =
     Number(salaryStructure.employer_esi_rate || 0);
 
-// Temporary PF wage base only.
-// Replace with the effective-dated statutory rules engine
-// before using this calculation for production payroll.
+// Temporary calculation bases.
+// These must ultimately come from the statutory rules engine.
 const pfWageBase = basicAmount + daAmount;
-
-// ESI base is provisional; the statutory rules engine must
-// determine eligible wages, eligibility and applicable limits.
 const esiWageBase = totalGrossSalary;
 
-const employeePfAmount = salaryStructure.is_pf_applicable
-    ? (pfWageBase * employeePfRate) / 100
-    : 0;
+const employeePfAmount =
+    salaryStructure.is_pf_applicable
+        ? (pfWageBase * employeePfRate) / 100
+        : 0;
 
-const employerPfAmount = salaryStructure.is_pf_applicable
-    ? (pfWageBase * employerPfRate) / 100
-    : 0;
+const employerPfAmount =
+    salaryStructure.is_pf_applicable
+        ? (pfWageBase * employerPfRate) / 100
+        : 0;
 
-const employeeEsiAmount = salaryStructure.is_esi_applicable
-    ? (esiWageBase * employeeEsiRate) / 100
-    : 0;
+const employeeEsiAmount =
+    salaryStructure.is_esi_applicable
+        ? (esiWageBase * employeeEsiRate) / 100
+        : 0;
 
-const employerEsiAmount = salaryStructure.is_esi_applicable
-    ? (esiWageBase * employerEsiRate) / 100
-    : 0;
+const employerEsiAmount =
+    salaryStructure.is_esi_applicable
+        ? (esiWageBase * employerEsiRate) / 100
+        : 0;
 
 const totalEmployeeContribution =
     employeePfAmount + employeeEsiAmount;
@@ -1214,12 +1220,20 @@ const totalEmployeeContribution =
 const totalEmployerContribution =
     employerPfAmount + employerEsiAmount;
 
+// EPS, EDLI and administration charges will be supplied
+// by the configurable statutory rules engine in a later step.
+const employerEpsAmount = null;
+const employerEdliAmount = null;
+const employerAdminCharges = null;
+
 const monthlyCtc =
     totalGrossSalary +
     totalEmployerContribution +
     additionalReimbursements;
 
 const annualCtc = monthlyCtc * 12;
+
+
 
 
     return (
