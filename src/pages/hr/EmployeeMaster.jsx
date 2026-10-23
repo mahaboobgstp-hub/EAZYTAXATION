@@ -1135,69 +1135,92 @@ overtime_fixed_rate:
     // SALARY CONTRIBUTION & CTC CALCULATIONS
     // =============================================
 
-    const basicAmount =
-        Number(salaryStructure.basic_amount || 0);
+    
+const basicAmount = Number(salaryStructure.basic_amount || 0);
+const daAmount = Number(salaryStructure.da_amount || 0);
 
-    const grossSalary =
-        Number(salaryStructure.basic_amount || 0) +
-        Number(salaryStructure.hra_amount || 0) +
-        Number(salaryStructure.da_amount || 0) +
-        Number(salaryStructure.special_allowance || 0) +
-        Number(salaryStructure.other_allowance || 0);
+const grossSalary =
+    basicAmount +
+    Number(salaryStructure.hra_amount || 0) +
+    daAmount +
+    Number(salaryStructure.special_allowance || 0) +
+    Number(salaryStructure.other_allowance || 0);
 
-    const additionalEarnings = getComponentsByCategory("EARNING")
-    .reduce((total, component) => {
-        const assigned = getAssignedComponent(component);
-        return total + (assigned ? getComponentAmount(assigned) : 0);
-    }, 0);
+// Additional earning components
+const additionalEarnings =
+    getComponentsByCategory("EARNING").reduce(
+        (total, component) => {
+            const assigned = getAssignedComponent(component);
+            return total + (
+                assigned ? getComponentAmount(assigned) : 0
+            );
+        },
+        0
+    );
+
+// Reimbursements are tracked separately from salary gross.
+// Include them in CTC only where the configured treatment
+// says they form part of the employer's package cost.
+const additionalReimbursements =
+    getComponentsByCategory("REIMBURSEMENT").reduce(
+        (total, component) => {
+            const assigned = getAssignedComponent(component);
+            return total + (
+                assigned ? getComponentAmount(assigned) : 0
+            );
+        },
+        0
+    );
 
 const totalGrossSalary = grossSalary + additionalEarnings;
-    const employeePfRate =
-        Number(salaryStructure.employee_pf_rate || 0);
 
-    const employerPfRate =
-        Number(salaryStructure.employer_pf_rate || 0);
+const employeePfRate =
+    Number(salaryStructure.employee_pf_rate || 0);
+const employerPfRate =
+    Number(salaryStructure.employer_pf_rate || 0);
+const employeeEsiRate =
+    Number(salaryStructure.employee_esi_rate || 0);
+const employerEsiRate =
+    Number(salaryStructure.employer_esi_rate || 0);
 
-    const employeeEsiRate =
-        Number(salaryStructure.employee_esi_rate || 0);
+// Temporary PF wage base only.
+// Replace with the effective-dated statutory rules engine
+// before using this calculation for production payroll.
+const pfWageBase = basicAmount + daAmount;
 
-    const employerEsiRate =
-        Number(salaryStructure.employer_esi_rate || 0);
+// ESI base is provisional; the statutory rules engine must
+// determine eligible wages, eligibility and applicable limits.
+const esiWageBase = totalGrossSalary;
 
-    const employeePfAmount =
-        salaryStructure.is_pf_applicable
-            ? (basicAmount * employeePfRate) / 100
-            : 0;
+const employeePfAmount = salaryStructure.is_pf_applicable
+    ? (pfWageBase * employeePfRate) / 100
+    : 0;
 
-    const employerPfAmount =
-        salaryStructure.is_pf_applicable
-            ? (basicAmount * employerPfRate) / 100
-            : 0;
+const employerPfAmount = salaryStructure.is_pf_applicable
+    ? (pfWageBase * employerPfRate) / 100
+    : 0;
 
-    const employeeEsiAmount =
-        salaryStructure.is_esi_applicable
-            ? (grossSalary * employeeEsiRate) / 100
-            : 0;
+const employeeEsiAmount = salaryStructure.is_esi_applicable
+    ? (esiWageBase * employeeEsiRate) / 100
+    : 0;
 
-    const employerEsiAmount =
-        salaryStructure.is_esi_applicable
-            ? (grossSalary * employerEsiRate) / 100
-            : 0;
+const employerEsiAmount = salaryStructure.is_esi_applicable
+    ? (esiWageBase * employerEsiRate) / 100
+    : 0;
 
-    const totalEmployeeContribution =
-        employeePfAmount +
-        employeeEsiAmount;
+const totalEmployeeContribution =
+    employeePfAmount + employeeEsiAmount;
 
-    const totalEmployerContribution =
-        employerPfAmount +
-        employerEsiAmount;
+const totalEmployerContribution =
+    employerPfAmount + employerEsiAmount;
 
-    const monthlyCtc =
-        grossSalary +
-        totalEmployerContribution;
+const monthlyCtc =
+    totalGrossSalary +
+    totalEmployerContribution +
+    additionalReimbursements;
 
-    const annualCtc =
-        monthlyCtc * 12;
+const annualCtc = monthlyCtc * 12;
+
 
     return (
 
