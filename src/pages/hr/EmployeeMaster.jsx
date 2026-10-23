@@ -2245,6 +2245,34 @@ const annualCtc = monthlyCtc * 12;
                 <span>Employer ESI</span>
                 <strong>₹{employerEsiAmount.toFixed(2)}</strong>
             </div>
+            
+<div className="salary-summary-item">
+    <span>Employer EPS</span>
+    <strong>
+        {employerEpsAmount === null
+            ? "Policy setup required"
+            : `₹${employerEpsAmount.toFixed(2)}`}
+    </strong>
+</div>
+
+<div className="salary-summary-item">
+    <span>Employer EDLI</span>
+    <strong>
+        {employerEdliAmount === null
+            ? "Policy setup required"
+            : `₹${employerEdliAmount.toFixed(2)}`}
+    </strong>
+</div>
+
+<div className="salary-summary-item">
+    <span>Employer Administration Charges</span>
+    <strong>
+        {employerAdminCharges === null
+            ? "Policy setup required"
+            : `₹${employerAdminCharges.toFixed(2)}`}
+    </strong>
+</div>
+
 
             <div className="salary-summary-item">
                 <span>Total Employer Contributions</span>
