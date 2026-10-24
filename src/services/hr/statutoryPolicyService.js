@@ -171,3 +171,175 @@ export async function getStatutoryPolicyForDate(
 
     return matching[0] || null;
 }
+
+
+const ALLOWED_CALCULATION_BASES = new Set([
+    "BASIC",
+    "BASIC_DA",
+    "ELIGIBLE_GROSS",
+    "GROSS",
+    "CEILING_CAPPED_WAGES",
+    "FIXED_AMOUNT",
+    "SLAB",
+    "OTHER"
+]);
+
+// Create a draft policy version.
+// New policies remain inactive until explicitly activated.
+export async function createStatutoryPolicyVersion({
+    companyId,
+    policyCode,
+    policyName,
+    stateId = null,
+    effectiveFrom,
+    effectiveTo = null,
+    ratePercent = null,
+    fixedAmount = null,
+    wageFloor = null,
+    wageCeiling = null,
+    calculationBase,
+    eligibilityRules = {},
+    calculationRules = {},
+    sourceReference = null,
+    remarks = null
+}) {
+    requireCompanyId(companyId);
+    requireDate(effectiveFrom);
+
+    if (
+        effectiveTo !== null &&
+        effectiveTo !== "" &&
+        effectiveTo < effectiveFrom
+    ) {
+        throw new Error(
+            "Effective To cannot be earlier than Effective From."
+        );
+    }
+
+    if (
+        !Object.values(STATUTORY_POLICY_CODES).includes(policyCode)
+    ) {
+        throw new Error("Unsupported statutory policy code.");
+    }
+
+    if (!String(policyName || "").trim()) {
+        throw new Error("Policy name is required.");
+    }
+
+    if (!ALLOWED_CALCULATION_BASES.has(calculationBase)) {
+        throw new Error("Invalid statutory calculation base.");
+    }
+
+    if (
+        policyCode === STATUTORY_POLICY_CODES.PT_EMPLOYEE &&
+        !stateId
+    ) {
+        throw new Error(
+            "Professional Tax policy requires a state."
+        );
+    }
+
+    const numericFields = {
+        ratePercent,
+        fixedAmount,
+        wageFloor,
+        wageCeiling
+    };
+
+    for (const [field, value] of Object.entries(numericFields)) {
+        if (
+            value !== null &&
+            value !== "" &&
+            (!Number.isFinite(Number(value)) || Number(value) < 0)
+        ) {
+            throw new Error(`${field} must be a non-negative number.`);
+        }
+    }
+
+    const hasRate =
+        ratePercent !== null && ratePercent !== "";
+    const hasFixedAmount =
+        fixedAmount !== null && fixedAmount !== "";
+
+    if (
+        !hasRate &&
+        !hasFixedAmount &&
+        !["SLAB", "OTHER"].includes(calculationBase)
+    ) {
+        throw new Error(
+            "Provide a rate, fixed amount, or SLAB/OTHER calculation base."
+        );
+    }
+
+    if (
+        wageFloor !== null &&
+        wageFloor !== "" &&
+        wageCeiling !== null &&
+        wageCeiling !== "" &&
+        Number(wageCeiling) < Number(wageFloor)
+    ) {
+        throw new Error(
+            "Wage ceiling cannot be lower than wage floor."
+        );
+    }
+
+    const payload = {
+        company_id: companyId,
+        policy_code: policyCode,
+        policy_name: String(policyName).trim(),
+        state_id: stateId || null,
+        effective_from: effectiveFrom,
+        effective_to: effectiveTo || null,
+        rate_percent: hasRate ? Number(ratePercent) : null,
+        fixed_amount: hasFixedAmount ? Number(fixedAmount) : null,
+        wage_floor:
+            wageFloor === null || wageFloor === ""
+                ? null
+                : Number(wageFloor),
+        wage_ceiling:
+            wageCeiling === null || wageCeiling === ""
+                ? null
+                : Number(wageCeiling),
+        calculation_base: calculationBase,
+        eligibility_rules: eligibilityRules,
+        calculation_rules: calculationRules,
+        source_reference: sourceReference || null,
+        remarks: remarks || null,
+        is_active: false
+    };
+
+    const { data, error } = await supabase
+        .from("statutory_policy_versions")
+        .insert(payload)
+        .select(POLICY_COLUMNS)
+        .single();
+
+    if (error) throw error;
+
+    return data;
+}
+
+// Activate a draft using the transaction-safe PostgreSQL function.
+export async function activateStatutoryPolicyVersion(
+    companyId,
+    policyId
+) {
+    requireCompanyId(companyId);
+
+    if (!policyId) {
+        throw new Error("A policy version ID is required.");
+    }
+
+    const { data, error } = await supabase.rpc(
+        "activate_statutory_policy_version",
+        {
+            p_company_id: companyId,
+            p_policy_id: policyId
+        }
+    );
+
+    if (error) throw error;
+
+    return data;
+}
+
