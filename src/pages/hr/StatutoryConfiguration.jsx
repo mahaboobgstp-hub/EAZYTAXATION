@@ -829,12 +829,14 @@ async function handleActivateStatutoryPolicy(policy) {
         setErrorMessage("");
         setMessage("");
 
-        await activateStatutoryPolicyVersion(
-            currentCompanyId,
-            policy.id
-        );
+        
+await activateStatutoryPolicyPackage(
+    currentCompanyId,
+    policy.id
+);
 
-        await loadStatutoryPolicies();
+await loadStatutoryPolicyPackages(currentCompanyId);
+
 
         setMessage(
             "Policy activated successfully. Payroll integration and legal validation remain separate steps."
