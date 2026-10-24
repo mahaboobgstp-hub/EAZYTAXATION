@@ -352,3 +352,85 @@ export async function activateSalaryTdsPolicy(policyId, companyId) {
   if (error) throw error;
   return data;
 }
+export async function saveEmployeeTdsAssignment({
+  companyId,
+  employeeId,
+  policyId,
+  effectiveFrom
+}) {
+  requireCompanyId(companyId);
+
+  if (!employeeId) {
+    throw new Error("Save the employee before assigning a TDS policy.");
+  }
+
+  if (!policyId) {
+    throw new Error("Select a salary TDS policy.");
+  }
+
+  const { data: policy, error: policyError } = await supabase
+    .from("salary_tds_policies")
+    .select("id, tax_regime, policy_status, effective_from, effective_to")
+    .eq("id", policyId)
+    .eq("company_id", companyId)
+    .single();
+
+  if (policyError) throw policyError;
+
+  if (policy.policy_status !== "ACTIVE") {
+    throw new Error("Only an active TDS policy can be assigned.");
+  }
+
+  const assignmentDate = effectiveFrom || policy.effective_from;
+
+  if (
+    assignmentDate < policy.effective_from ||
+    (policy.effective_to && assignmentDate > policy.effective_to)
+  ) {
+    throw new Error("The assignment date is outside the policy period.");
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("employee_tds_assignments")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("employee_id", employeeId)
+    .eq("is_active", true)
+    .is("effective_to", null)
+    .order("effective_from", { ascending: false })
+    .limit(1);
+
+  if (existingError) throw existingError;
+
+  const payload = {
+    company_id: companyId,
+    employee_id: employeeId,
+    policy_id: policyId,
+    tax_regime: policy.tax_regime,
+    effective_from: assignmentDate,
+    effective_to: null,
+    is_active: true
+  };
+
+  if (existing?.length) {
+    const { data, error } = await supabase
+      .from("employee_tds_assignments")
+      .update(payload)
+      .eq("id", existing[0].id)
+      .eq("company_id", companyId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  const { data, error } = await supabase
+    .from("employee_tds_assignments")
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
