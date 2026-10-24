@@ -1081,18 +1081,7 @@ overtime_fixed_rate:
 
         }
             
-const { data: tdsAssignments, error: tdsAssignmentError } = await supabase
-    .from("employee_tds_assignments")
-    .select("id, policy_id, tax_regime, effective_from")
-    .eq("company_id", currentCompanyId)
-    .eq("employee_id", employee.id)
-    .eq("is_active", true)
-    .order("effective_from", { ascending: false })
-    .limit(1);
 
-if (tdsAssignmentError) throw tdsAssignmentError;
-
-setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
 
 
         else {
@@ -1153,6 +1142,19 @@ setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
     setSalaryStructure(
         defaultSalaryStructure
     );
+
+        const { data: tdsAssignments, error: tdsAssignmentError } = await supabase
+    .from("employee_tds_assignments")
+    .select("id, policy_id, tax_regime, effective_from")
+    .eq("company_id", currentCompanyId)
+    .eq("employee_id", employee.id)
+    .eq("is_active", true)
+    .order("effective_from", { ascending: false })
+    .limit(1);
+
+if (tdsAssignmentError) throw tdsAssignmentError;
+
+setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
 
 
     setSalaryComponents([]);
