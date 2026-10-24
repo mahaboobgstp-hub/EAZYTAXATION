@@ -359,12 +359,13 @@ const [tdsLoading, setTdsLoading] = useState(false);
 const [tdsSaving, setTdsSaving] = useState(false);
 
     const [statutoryPolicies, setStatutoryPolicies] = useState([]);
+    const [statutoryPolicyPackages, setStatutoryPolicyPackages] = useState([]);
 const [statutoryPolicyForm, setStatutoryPolicyForm] = useState(
     initialStatutoryPolicyForm
 );
 const [statutoryPolicySaving, setStatutoryPolicySaving] = useState(false);
 const [statutoryPolicyLoading, setStatutoryPolicyLoading] = useState(false);
-    const [statutoryPolicyPackages, setStatutoryPolicyPackages] = useState([]);
+    
 
     useEffect(() => {
     if (currentCompanyId) {
@@ -849,7 +850,49 @@ await loadStatutoryPolicyPackages(currentCompanyId);
         setStatutoryPolicySaving(false);
     }
 }
-    
+   
+async function handleActivateStatutoryPolicyPackage(policy) {
+    if (!currentCompanyId || !policy?.id) {
+        setErrorMessage("The selected company or package is missing.");
+        return;
+    }
+
+    if (policy.status === "ACTIVE") {
+        setMessage("This package is already active.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Activate statutory package Version ${policy.version_number}, effective ${policy.effective_from}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        setStatutoryPolicySaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        await activateStatutoryPolicyPackage(
+            currentCompanyId,
+            policy.id
+        );
+
+        await loadStatutoryPolicyPackages(currentCompanyId);
+
+        setMessage(
+            `Statutory package Version ${policy.version_number} activated successfully.`
+        );
+    } catch (error) {
+        console.error("Unable to activate statutory package:", error);
+        setErrorMessage(
+            error.message || "Unable to activate statutory package."
+        );
+    } finally {
+        setStatutoryPolicySaving(false);
+    }
+}
+ 
     async function handleSaveSettings() {
         if (!currentCompanyId) {
             setErrorMessage("Please select a company first.");
@@ -2296,101 +2339,80 @@ alert(
             title="Statutory Policy History"
             description="Company-specific policy versions and their effective periods."
         >
-            <div className="sc-actions">
-                <button
-                    type="button"
-                    className="sc-button secondary"
-                    onClick={loadStatutoryPolicies}
-                    disabled={statutoryPolicyLoading}
-                >
-                    {statutoryPolicyLoading ? "Refreshing..." : "Refresh History"}
-                </button>
-            </div>
+            
+<div className="sc-actions">
+    <button
+        type="button"
+        className="sc-button secondary"
+        onClick={() => loadStatutoryPolicyPackages(currentCompanyId)}
+        disabled={statutoryPolicyLoading}
+    >
+        {statutoryPolicyLoading ? "Refreshing..." : "Refresh History"}
+    </button>
+</div>
 
-            {statutoryPolicyLoading ? (
-                <p className="sc-muted">Loading statutory policy history...</p>
-            ) : statutoryPolicyPackages.length === 0 ? (
-                <p className="sc-muted">
-                    No statutory policy versions found for this company.
-                </p>
-            ) : (
-                <div className="sc-table-wrap">
-                    <table className="sc-table">
-                        <thead>
-                            <tr>
-                                <th>Policy</th>
-                                <th>Effective From</th>
-                                <th>Effective To</th>
-                                <th>Rate (%)</th>
-                                <th>Fixed Amount (₹)</th>
-                                <th>Calculation Base</th>
-                                <th>Status</th>
-                                <th>Source</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
+{statutoryPolicyLoading ? (
+    <p className="sc-muted">Loading statutory package history...</p>
+) : statutoryPolicyPackages.length === 0 ? (
+    <p className="sc-muted">
+        No statutory policy packages found for this company.
+    </p>
+) : (
+    <div className="sc-table-wrap">
+        <table className="sc-table">
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Policy Name</th>
+                    <th>Effective From</th>
+                    <th>Effective To</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {statutoryPolicyPackages.map((policy) => (
+                    <tr key={policy.id}>
+                        <td>{policy.version_number}</td>
+                        <td>{policy.policy_name}</td>
+                        <td>{policy.effective_from || "-"}</td>
+                        <td>{policy.effective_to || "No end date"}</td>
+                        <td>
+                            <span
+                                className={
+                                    policy.status === "ACTIVE"
+                                        ? "sc-status active"
+                                        : "sc-status inactive"
+                                }
+                            >
+                                {policy.status}
+                            </span>
+                        </td>
+                        <td>{policy.remarks || "-"}</td>
+                        <td>
+                            {policy.status === "DRAFT" && (
+                                <button
+                                    type="button"
+                                    className="sc-link-button"
+                                    disabled={statutoryPolicySaving}
+                                    onClick={() =>
+                                        handleActivateStatutoryPolicyPackage(
+                                            policy
+                                        )
+                                    }
+                                >
+                                    Activate
+                                </button>
+                            )}
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+)}
 
-                        <tbody>
-                            {statutoryPolicyPackages.map(policy => (
-                                <tr key={policy.id}>
-                                    <td>
-                                        <strong>{policy.policy_name}</strong>
-                                        <div>
-                                            <small>{policy.policy_code}</small>
-                                        </div>
-                                    </td>
-
-                                    <td>{policy.effective_from || "-"}</td>
-                                    <td>{policy.effective_to || "No end date"}</td>
-
-                                    <td>
-                                        {policy.rate_percent == null
-                                            ? "-"
-                                            : policy.rate_percent}
-                                    </td>
-
-                                    <td>
-                                        {policy.fixed_amount == null
-                                            ? "-"
-                                            : policy.fixed_amount}
-                                    </td>
-
-                                    <td>{policy.calculation_base || "-"}</td>
-
-                                    <td>
-                                        <span
-                                            className={
-                                                policy.is_active
-                                                    ? "sc-status active"
-                                                    : "sc-status inactive"
-                                            }
-                                        >
-                                            {policy.is_active ? "Active" : "Draft"}
-                                        </span>
-                                    </td>
-
-                                    <td>{policy.source_reference || "-"}</td>
-
-                                    <td>
-                                        {!policy.is_active && (
-                                            <button
-                                                type="button"
-                                                className="sc-link-button"
-                                                disabled={statutoryPolicySaving}
-                                                onClick={() =>
-                                                    handleActivateStatutoryPolicy(policy)
-                                                }
-                                            >
-                                                Activate
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
         </Section>
     </>
 )}
