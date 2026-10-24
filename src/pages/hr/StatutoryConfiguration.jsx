@@ -26,6 +26,12 @@ import {
     createStatutoryPolicyVersion,
     activateStatutoryPolicyVersion
 } from "../../services/hr/statutoryPolicyService";
+import {
+    getStatutoryPolicyPackages,
+    getActiveStatutoryPolicyPackage,
+    createStatutoryPolicyPackageDraft,
+    activateStatutoryPolicyPackage
+} from "../../services/hr/statutoryPolicyService";
 
 const initialSettings = {
     pf_applicable: false,
