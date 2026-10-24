@@ -9,6 +9,16 @@ import {
     updatePTRegistration,
     deactivatePTRegistration
 } from "../../services/hr/statutorySettingsService";
+
+import {
+    getSalaryTdsPolicies,
+    getSalaryTdsPolicy,
+    createSalaryTdsPolicy,
+    updateSalaryTdsPolicy,
+    saveSalaryTdsSlabs,
+    activateSalaryTdsPolicy
+} from "../../services/hr/salaryTdsPolicyService";
+
 import { supabase } from "../../supabase/supabaseClient";
 import "../../css/hr/StatutoryConfiguration.css";
 
@@ -97,12 +107,15 @@ const initialComponents = {
     pt_component_applicable: false
 };
 
+
 const tabs = [
     { id: "profile", label: "Company Profile" },
     { id: "components", label: "Statutory Components" },
+    { id: "tds", label: "Income Tax / TDS" },
     { id: "pt", label: "Professional Tax" },
     { id: "history", label: "Policy History" }
 ];
+
 
 function Field({
     label,
@@ -218,6 +231,60 @@ function AmountField(props) {
     );
 }
 
+const initialTdsPolicy = {
+    id: null,
+    policy_code: "",
+    policy_name: "",
+    tax_year: "2026-27",
+    applicable_act: "INCOME_TAX_ACT_2025",
+    tax_regime: "NEW",
+    effective_from: "2026-04-01",
+    effective_to: "",
+    standard_deduction: "75000",
+    rebate_income_limit: "",
+    maximum_rebate: "",
+    cess_percent: "4",
+    remarks: ""
+};
+
+const initialTdsSlabs = [
+    {
+        income_from: "0",
+        income_to: "400000",
+        tax_rate_percent: "0"
+    },
+    {
+        income_from: "400000",
+        income_to: "800000",
+        tax_rate_percent: "5"
+    },
+    {
+        income_from: "800000",
+        income_to: "1200000",
+        tax_rate_percent: "10"
+    },
+    {
+        income_from: "1200000",
+        income_to: "1600000",
+        tax_rate_percent: "15"
+    },
+    {
+        income_from: "1600000",
+        income_to: "2000000",
+        tax_rate_percent: "20"
+    },
+    {
+        income_from: "2000000",
+        income_to: "2400000",
+        tax_rate_percent: "25"
+    },
+    {
+        income_from: "2400000",
+        income_to: "",
+        tax_rate_percent: "30"
+    }
+];
+
 function StatutoryConfiguration() {
     const { currentCompany, currentCompanyId } = useCompany();
 
@@ -233,6 +300,14 @@ function StatutoryConfiguration() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    
+const [tdsPolicies, setTdsPolicies] = useState([]);
+const [tdsPolicyForm, setTdsPolicyForm] = useState(initialTdsPolicy);
+const [tdsSlabs, setTdsSlabs] = useState(initialTdsSlabs);
+const [selectedTdsPolicyId, setSelectedTdsPolicyId] = useState("");
+const [tdsLoading, setTdsLoading] = useState(false);
+const [tdsSaving, setTdsSaving] = useState(false);
+
 
     useEffect(() => {
         if (currentCompanyId) {
@@ -242,6 +317,12 @@ function StatutoryConfiguration() {
             setSettingsId(null);
             setPTRegistrations([]);
             setStates([]);
+            
+setTdsPolicies([]);
+setSelectedTdsPolicyId("");
+setTdsPolicyForm(initialTdsPolicy);
+setTdsSlabs(initialTdsSlabs);
+
         }
     }, [currentCompanyId]);
 
@@ -282,6 +363,10 @@ function StatutoryConfiguration() {
             setErrorMessage(
                 error.message || "Unable to load statutory configuration."
             );
+            
+const policyData = await getSalaryTdsPolicies(currentCompanyId);
+setTdsPolicies(policyData || []);
+
         } finally {
             setLoading(false);
         }
@@ -307,6 +392,219 @@ function StatutoryConfiguration() {
         const { name, value } = event.target;
         setPTForm(previous => ({ ...previous, [name]: value }));
     }
+
+function handleTdsPolicyChange(event) {
+    const { name, value } = event.target;
+
+    setTdsPolicyForm(previous => ({
+        ...previous,
+        [name]: value
+    }));
+}
+
+function handleTdsSlabChange(index, field, value) {
+    setTdsSlabs(previous =>
+        previous.map((slab, i) =>
+            i === index
+                ? { ...slab, [field]: value }
+                : slab
+        )
+    );
+}
+
+function addTdsSlab() {
+    const last = tdsSlabs[tdsSlabs.length - 1];
+
+    setTdsSlabs(previous => [
+        ...previous.map((slab, i) =>
+            i === previous.length - 1 && !slab.income_to
+                ? { ...slab, income_to: "" }
+                : slab
+        ),
+        {
+            income_from: last?.income_to || "",
+            income_to: "",
+            tax_rate_percent: ""
+        }
+    ]);
+}
+
+function removeTdsSlab(index) {
+    setTdsSlabs(previous =>
+        previous.filter((_, i) => i !== index)
+    );
+}
+
+async function handleNewTdsPolicy() {
+    setTdsPolicyForm(initialTdsPolicy);
+    setTdsSlabs(initialTdsSlabs);
+    setSelectedTdsPolicyId("");
+    setMessage("");
+    setErrorMessage("");
+}
+
+async function handleSelectTdsPolicy(policyId) {
+    if (!policyId) {
+        handleNewTdsPolicy();
+        return;
+    }
+
+    try {
+        setTdsLoading(true);
+        setErrorMessage("");
+        setMessage("");
+
+        const policy = await getSalaryTdsPolicy(
+            policyId,
+            currentCompanyId
+        );
+
+        setSelectedTdsPolicyId(policy.id);
+        setTdsPolicyForm({
+            ...initialTdsPolicy,
+            ...policy,
+            effective_to: policy.effective_to || "",
+            standard_deduction: String(policy.standard_deduction ?? 0),
+            rebate_income_limit: String(policy.rebate_income_limit ?? 0),
+            maximum_rebate: String(policy.maximum_rebate ?? 0),
+            cess_percent: String(policy.cess_percent ?? 4),
+            remarks: policy.calculation_settings?.remarks || ""
+        });
+
+        setTdsSlabs(
+            (policy.slabs || []).map(slab => ({
+                income_from: String(slab.income_from),
+                income_to: slab.income_to == null ? "" : String(slab.income_to),
+                tax_rate_percent: String(slab.tax_rate_percent)
+            }))
+        );
+    } catch (error) {
+        setErrorMessage(error.message || "Unable to load TDS policy.");
+    } finally {
+        setTdsLoading(false);
+    }
+}
+
+async function handleSaveTdsPolicy() {
+    if (!currentCompanyId) {
+        setErrorMessage("Please select a company first.");
+        return;
+    }
+
+    if (
+        !tdsPolicyForm.policy_code.trim() ||
+        !tdsPolicyForm.policy_name.trim() ||
+        !tdsPolicyForm.tax_year ||
+        !tdsPolicyForm.tax_regime ||
+        !tdsPolicyForm.effective_from
+    ) {
+        setErrorMessage(
+            "Enter policy code, name, tax year, regime and effective-from date."
+        );
+        return;
+    }
+
+    if (
+        tdsPolicyForm.effective_to &&
+        tdsPolicyForm.effective_to < tdsPolicyForm.effective_from
+    ) {
+        setErrorMessage("Effective-to date cannot precede effective-from date.");
+        return;
+    }
+
+    try {
+        setTdsSaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        const payload = {
+            policy_code: tdsPolicyForm.policy_code.trim(),
+            policy_name: tdsPolicyForm.policy_name.trim(),
+            tax_year: tdsPolicyForm.tax_year,
+            applicable_act: tdsPolicyForm.applicable_act,
+            tax_regime: tdsPolicyForm.tax_regime,
+            effective_from: tdsPolicyForm.effective_from,
+            effective_to: tdsPolicyForm.effective_to || null,
+            standard_deduction: Number(tdsPolicyForm.standard_deduction || 0),
+            rebate_income_limit: Number(tdsPolicyForm.rebate_income_limit || 0),
+            maximum_rebate: Number(tdsPolicyForm.maximum_rebate || 0),
+            cess_percent: Number(tdsPolicyForm.cess_percent || 0),
+            calculation_settings: {
+                remarks: tdsPolicyForm.remarks || ""
+            }
+        };
+
+        let saved;
+
+        if (selectedTdsPolicyId) {
+            saved = await updateSalaryTdsPolicy(
+                selectedTdsPolicyId,
+                payload,
+                currentCompanyId
+            );
+        } else {
+            saved = await createSalaryTdsPolicy(
+                payload,
+                currentCompanyId
+            );
+            setSelectedTdsPolicyId(saved.id);
+        }
+
+        await saveSalaryTdsSlabs(
+            saved.id,
+            tdsSlabs,
+            currentCompanyId
+        );
+
+        const refreshed = await getSalaryTdsPolicies(currentCompanyId);
+        setTdsPolicies(refreshed || []);
+        setTdsPolicyForm(previous => ({ ...previous, id: saved.id }));
+
+        setMessage(
+            "TDS policy and slabs saved as Draft. Verify the official tax rules before activation."
+        );
+    } catch (error) {
+        setErrorMessage(error.message || "Unable to save TDS policy.");
+    } finally {
+        setTdsSaving(false);
+    }
+}
+
+async function handleActivateTdsPolicy() {
+    if (!selectedTdsPolicyId) {
+        setErrorMessage("Save the policy as a Draft before activating it.");
+        return;
+    }
+
+    if (!window.confirm(
+        "Activate this policy? Confirm that its tax slabs, rebate, deductions and other rules have been verified for the selected tax year."
+    )) return;
+
+    try {
+        setTdsSaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        await activateSalaryTdsPolicy(
+            selectedTdsPolicyId,
+            currentCompanyId
+        );
+
+        const refreshed = await getSalaryTdsPolicies(currentCompanyId);
+        setTdsPolicies(refreshed || []);
+
+        setTdsPolicyForm(previous => ({
+            ...previous,
+            policy_status: "ACTIVE"
+        }));
+
+        setMessage("Policy activated. Confirm its legal calculations before using it for payroll.");
+    } catch (error) {
+        setErrorMessage(error.message || "Unable to activate TDS policy.");
+    } finally {
+        setTdsSaving(false);
+    }
+}
 
     async function handleSaveSettings() {
         if (!currentCompanyId) {
@@ -1097,6 +1395,317 @@ function StatutoryConfiguration() {
                             </div>
                         </>
                     )}
+
+                    
+{activeTab === "tds" && (
+    <>
+        <Section
+            title="Salary Income Tax / TDS Policies"
+            description="Create multiple company-scoped salary tax policies. Each policy has its own tax year, regime, effective dates and tax slabs."
+        >
+            <div className="sc-grid">
+                <Field
+                    label="Select existing policy"
+                    name="selected_tds_policy"
+                    value={selectedTdsPolicyId}
+                    onChange={event => handleSelectTdsPolicy(event.target.value)}
+                    options={[
+                        { value: "", label: "Create a new policy" },
+                        ...tdsPolicies.map(policy => ({
+                            value: policy.id,
+                            label: `${policy.policy_code} — ${policy.policy_name} (${policy.policy_status})`
+                        }))
+                    ]}
+                />
+
+                <div className="sc-field">
+                    <label>Policy status</label>
+                    <input
+                        value={tdsPolicyForm.policy_status || "DRAFT"}
+                        readOnly
+                    />
+                </div>
+            </div>
+
+            <div className="sc-actions">
+                <button
+                    type="button"
+                    className="sc-button secondary"
+                    onClick={handleNewTdsPolicy}
+                >
+                    + New Policy
+                </button>
+            </div>
+        </Section>
+
+        <Section
+            title="Policy Details"
+            description="Only Draft policies can be edited in this initial version."
+        >
+            <div className="sc-grid">
+                <Field
+                    label="Policy Code"
+                    name="policy_code"
+                    value={tdsPolicyForm.policy_code}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                    placeholder="SALARY-TDS-NEW-2026-27"
+                />
+
+                <Field
+                    label="Policy Name"
+                    name="policy_name"
+                    value={tdsPolicyForm.policy_name}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                    placeholder="Salary TDS — New Regime"
+                />
+
+                <Field
+                    label="Tax Year"
+                    name="tax_year"
+                    value={tdsPolicyForm.tax_year}
+                    onChange={handleTdsPolicyChange}
+                    options={[
+                        { value: "2026-27", label: "2026–27" },
+                        { value: "2027-28", label: "2027–28" }
+                    ]}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <Field
+                    label="Applicable law"
+                    name="applicable_act"
+                    value={tdsPolicyForm.applicable_act}
+                    onChange={handleTdsPolicyChange}
+                    options={[
+                        {
+                            value: "INCOME_TAX_ACT_2025",
+                            label: "Income-tax Act, 2025"
+                        },
+                        {
+                            value: "INCOME_TAX_ACT_1961",
+                            label: "Income-tax Act, 1961 — historical"
+                        }
+                    ]}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <Field
+                    label="Tax Regime"
+                    name="tax_regime"
+                    value={tdsPolicyForm.tax_regime}
+                    onChange={handleTdsPolicyChange}
+                    options={[
+                        { value: "NEW", label: "New Tax Regime" },
+                        { value: "OLD", label: "Old Tax Regime" }
+                    ]}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <Field
+                    label="Effective From"
+                    name="effective_from"
+                    type="date"
+                    value={tdsPolicyForm.effective_from}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <Field
+                    label="Effective To (optional)"
+                    name="effective_to"
+                    type="date"
+                    value={tdsPolicyForm.effective_to}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <AmountField
+                    label="Standard Deduction (₹ / year)"
+                    name="standard_deduction"
+                    value={tdsPolicyForm.standard_deduction}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <AmountField
+                    label="Rebate Income Limit (₹)"
+                    name="rebate_income_limit"
+                    value={tdsPolicyForm.rebate_income_limit}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <AmountField
+                    label="Maximum Rebate (₹)"
+                    name="maximum_rebate"
+                    value={tdsPolicyForm.maximum_rebate}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <RateField
+                    label="Health & Education Cess (%)"
+                    name="cess_percent"
+                    value={tdsPolicyForm.cess_percent}
+                    onChange={handleTdsPolicyChange}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+
+                <Field
+                    label="Policy Notes / Source Reference"
+                    name="remarks"
+                    value={tdsPolicyForm.remarks}
+                    onChange={handleTdsPolicyChange}
+                    type="textarea"
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                />
+            </div>
+        </Section>
+
+        <Section
+            title="Income Tax Slabs"
+            description="Enter continuous income ranges and their tax rates. The final slab must have no upper limit."
+        >
+            <div className="sc-table-wrap">
+                <table className="sc-table">
+                    <thead>
+                        <tr>
+                            <th>Income From (₹)</th>
+                            <th>Income To (₹)</th>
+                            <th>Rate (%)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {tdsSlabs.map((slab, index) => (
+                            <tr key={index}>
+                                <td>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={slab.income_from}
+                                        disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                                        onChange={event =>
+                                            handleTdsSlabChange(
+                                                index,
+                                                "income_from",
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={slab.income_to}
+                                        placeholder="No upper limit"
+                                        disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                                        onChange={event =>
+                                            handleTdsSlabChange(
+                                                index,
+                                                "income_to",
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="0.001"
+                                        value={slab.tax_rate_percent}
+                                        disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                                        onChange={event =>
+                                            handleTdsSlabChange(
+                                                index,
+                                                "tax_rate_percent",
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        className="sc-link-button danger"
+                                        disabled={
+                                            tdsPolicyForm.policy_status === "ACTIVE" ||
+                                            tdsSlabs.length <= 1
+                                        }
+                                        onClick={() => removeTdsSlab(index)}
+                                    >
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="sc-actions">
+                <button
+                    type="button"
+                    className="sc-button secondary"
+                    onClick={addTdsSlab}
+                    disabled={tdsPolicyForm.policy_status === "ACTIVE"}
+                >
+                    + Add Slab
+                </button>
+            </div>
+        </Section>
+
+        <div className="sc-notice">
+            <strong>Before activation</strong>
+            <p>
+                Check the applicable tax year, regime, slab boundaries,
+                rebate eligibility, marginal relief, surcharge, cess,
+                exemptions and deduction rules against the official rules.
+                This form does not yet configure every tax-law condition.
+            </p>
+        </div>
+
+        <div className="sc-sticky-actions">
+            <span>
+                {tdsLoading ? "Loading policy..." : "Company-scoped TDS policy"}
+            </span>
+
+            <button
+                type="button"
+                className="sc-button primary"
+                onClick={handleSaveTdsPolicy}
+                disabled={
+                    tdsSaving ||
+                    tdsLoading ||
+                    tdsPolicyForm.policy_status === "ACTIVE"
+                }
+            >
+                {tdsSaving ? "Saving..." : "Save Draft"}
+            </button>
+
+            <button
+                type="button"
+                className="sc-button secondary"
+                onClick={handleActivateTdsPolicy}
+                disabled={
+                    tdsSaving ||
+                    tdsLoading ||
+                    tdsPolicyForm.policy_status === "ACTIVE"
+                }
+            >
+                Activate Policy
+            </button>
+        </div>
+    </>
+)}
+
 
                     {activeTab === "pt" && (
                         <>
