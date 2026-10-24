@@ -364,6 +364,7 @@ const [statutoryPolicyForm, setStatutoryPolicyForm] = useState(
 );
 const [statutoryPolicySaving, setStatutoryPolicySaving] = useState(false);
 const [statutoryPolicyLoading, setStatutoryPolicyLoading] = useState(false);
+    const [statutoryPolicyPackages, setStatutoryPolicyPackages] = useState([]);
 
     useEffect(() => {
     if (currentCompanyId) {
@@ -969,26 +970,32 @@ await loadStatutoryPolicyPackages(currentCompanyId);
         setErrorMessage("");
     }
 
+
 const loadStatutoryPolicyPackages = async (companyId) => {
     if (!companyId) {
-        setStatutoryPolicies([]);
+        setStatutoryPolicyPackages([]);
         return;
     }
 
     try {
-        const packages =
-            await getStatutoryPolicyPackages(companyId);
+        setStatutoryPolicyLoading(true);
 
-        setStatutoryPolicies(packages || []);
+        const packages = await getStatutoryPolicyPackages(companyId);
+
+        setStatutoryPolicyPackages(packages || []);
     } catch (error) {
         console.error(
             "Unable to load statutory package history:",
             error
         );
-
-        throw error;
+        setErrorMessage(
+            error.message || "Unable to load statutory package history."
+        );
+    } finally {
+        setStatutoryPolicyLoading(false);
     }
 };
+
     
     const handleSaveComponentDraft = async () => {
     if (!currentCompanyId) {
