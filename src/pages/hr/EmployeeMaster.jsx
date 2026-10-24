@@ -17,6 +17,12 @@ import {
     getCompleteSalaryStructure,
     saveCompleteSalaryStructure
 } from "../../services/hr/salaryStructureService";
+
+import {
+    getSalaryTdsPolicies,
+    assignSalaryTdsPolicy
+} from "../../services/hr/salaryTdsPolicyService";
+
 import {
     getSalaryComponents
 } from "../../services/hr/salaryComponentService";
@@ -200,6 +206,10 @@ const [salaryStructure, setSalaryStructure] =
         defaultSalaryStructure
     );
 
+const [availableTdsPolicies, setAvailableTdsPolicies] = useState([]);
+const [tdsPolicyId, setTdsPolicyId] = useState("");
+const [tdsPolicyLoading, setTdsPolicyLoading] = useState(false);
+
 
 const [salaryComponents, setSalaryComponents] =
     useState([]);
@@ -250,6 +260,8 @@ const [
     setShifts([]);
     setLocations([]);
     setAvailableSalaryComponents([]);
+       setAvailableTdsPolicies([]);
+setTdsPolicyId("");
     setFormData(
         defaultFormData
     );
@@ -271,6 +283,7 @@ const [
     loadShifts(currentCompanyId);
     loadLocations(currentCompanyId);
     loadAvailableSalaryComponents(currentCompanyId);    
+        loadAvailableTdsPolicies(currentCompanyId);
 
 }, [currentCompanyId]);
 
@@ -382,7 +395,34 @@ const loadAvailableSalaryComponents = async (companyId) => {
         setSalaryComponentsLoading(false);
     }
 };
+
     
+const loadAvailableTdsPolicies = async (companyId) => {
+    if (!companyId) {
+        setAvailableTdsPolicies([]);
+        setTdsPolicyId("");
+        return;
+    }
+
+    try {
+        setTdsPolicyLoading(true);
+
+        const policies = await getSalaryTdsPolicies(companyId);
+
+        setAvailableTdsPolicies(
+            (policies || []).filter(
+                policy => policy.policy_status === "ACTIVE"
+            )
+        );
+    } catch (error) {
+        console.error("Unable to load TDS policies:", error);
+        setAvailableTdsPolicies([]);
+        alert(error.message || "Unable to load TDS policies.");
+    } finally {
+        setTdsPolicyLoading(false);
+    }
+};
+
     const handleChange = (e) => {
 
         const {
@@ -2563,76 +2603,84 @@ const annualCtc = monthlyCtc * 12;
         </h4>
 
 
-        <div>
+        
+<div>
+    <label htmlFor="employee_tds_policy_id">
+        Salary TDS Policy
+    </label>
 
-            <label>
-                Tax Regime
-            </label>
+    <select
+        id="employee_tds_policy_id"
+        value={tdsPolicyId}
+        onChange={(event) => {
+            const policyId = event.target.value;
+            setTdsPolicyId(policyId);
 
-            <select
-                name="tds_regime"
-                value={
-                    salaryStructure.tds_regime
-                }
-                onChange={
-                    handleSalaryStructureChange
-                }
-            >
+            const selectedPolicy = availableTdsPolicies.find(
+                policy => policy.id === policyId
+            );
 
-                <option value="NEW">
-                    New Tax Regime
-                </option>
+            if (selectedPolicy) {
+                setSalaryStructure(previous => ({
+                    ...previous,
+                    tds_regime: selectedPolicy.tax_regime
+                }));
+            }
+        }}
+        disabled={tdsPolicyLoading}
+    >
+        <option value="">
+            {tdsPolicyLoading
+                ? "Loading TDS policies..."
+                : "Select salary TDS policy"}
+        </option>
 
-            </select>
+        {availableTdsPolicies.map(policy => (
+            <option key={policy.id} value={policy.id}>
+                {policy.policy_code} — {policy.policy_name}
+                {" ("}{policy.tax_year}{")"}
+            </option>
+        ))}
+    </select>
 
-        </div>
+    <small>
+        Only active company policies are available. Create and activate
+        a policy in Statutory Configuration first.
+    </small>
+</div>
 
+<div>
+    <label>Assigned Tax Regime</label>
 
-        <div
-            style={{
-                padding: "12px",
-                background: "#f8f9fa",
-                border: "1px solid #ddd",
-                borderRadius: "6px"
-            }}
-        >
+    <input
+        value={
+            salaryStructure.tds_regime === "OLD"
+                ? "Old Tax Regime"
+                : "New Tax Regime"
+        }
+        readOnly
+    />
+</div>
 
-            <strong>
-                TDS Calculation
-            </strong>
+<div
+    style={{
+        gridColumn: "1 / -1",
+        padding: "12px",
+        background: "#f8f9fa",
+        border: "1px solid #ddd",
+        borderRadius: "6px"
+    }}
+>
+    <strong>Salary TDS</strong>
 
-            <div style={{ marginTop: "6px" }}>
-                TDS will be calculated automatically
-                during payroll processing based on
-                the applicable tax rules.
-            </div>
+    <p>
+        The assigned policy will provide the tax slabs and policy settings
+        used by payroll. The final TDS amount depends on estimated annual
+        taxable income, declarations, tax already deducted and the
+        remaining payroll periods.
+    </p>
+</div>
 
-        </div>
-
-
-        <div
-            style={{
-                gridColumn: "1 / -1",
-                marginTop: "10px",
-                padding: "12px",
-                background: "#fff3cd",
-                border: "1px solid #ffeeba",
-                borderRadius: "6px"
-            }}
-        >
-
-            <strong>
-                Tax Calculation Notice
-            </strong>
-
-            <div style={{ marginTop: "6px" }}>
-                Professional Tax and TDS amounts
-                should not be manually entered here.
-                They will be determined automatically
-                during payroll processing.
-            </div>
-
-        </div>
 
     </div>
 
