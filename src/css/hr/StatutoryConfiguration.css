@@ -354,3 +354,83 @@
         width: 100%;
     }
 }
+
+
+/* Salary TDS policy editor */
+
+.sc-table input {
+    width: 100%;
+    min-width: 100px;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    font: inherit;
+}
+
+.sc-table input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.sc-field input:read-only {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.sc-notice {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border: 1px solid #e5d6a5;
+    border-radius: 8px;
+    background: #fffaf0;
+}
+
+.sc-notice p {
+    margin: 6px 0 0;
+    line-height: 1.5;
+}
+
+.sc-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.sc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sc-table th,
+.sc-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.sc-sticky-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.sc-sticky-actions > span {
+    flex: 1;
+    min-width: 180px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+@media (max-width: 700px) {
+    .sc-sticky-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .sc-sticky-actions .sc-button {
+        width: 100%;
+    }
+}
+
