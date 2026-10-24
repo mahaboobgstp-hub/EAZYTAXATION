@@ -21,6 +21,11 @@ import {
 
 import { supabase } from "../../supabase/supabaseClient";
 import "../../css/hr/StatutoryConfiguration.css";
+import {
+    getStatutoryPolicies,
+    createStatutoryPolicyVersion,
+    activateStatutoryPolicyVersion
+} from "../../services/hr/statutoryPolicyService";
 
 const initialSettings = {
     pf_applicable: false,
@@ -107,7 +112,46 @@ const initialComponents = {
     pt_component_applicable: false
 };
 
+const statutoryPolicyTypes = [
+    { value: "EPF_EMPLOYEE", label: "EPF — Employee Contribution" },
+    { value: "EPF_EMPLOYER_TOTAL", label: "EPF — Total Employer Contribution" },
+    { value: "EPS_EMPLOYER", label: "EPS — Employer Pension Allocation" },
+    { value: "EDLI_EMPLOYER", label: "EDLI — Employer Insurance Contribution" },
+    { value: "EPF_ADMIN_CHARGE", label: "EPF — Administration Charges" },
+    { value: "EDLI_ADMIN_CHARGE", label: "EDLI — Administration Charges" },
+    { value: "ESI_EMPLOYEE", label: "ESI — Employee Contribution" },
+    { value: "ESI_EMPLOYER", label: "ESI — Employer Contribution" },
+    { value: "GRATUITY_EMPLOYER", label: "Gratuity — Employer Benefit" }
+];
 
+const initialStatutoryPolicyForm = {
+    policy_code: "EPF_EMPLOYEE",
+    policy_name: "EPF Employee Contribution",
+    effective_from: "",
+    effective_to: "",
+    rate_percent: "",
+    fixed_amount: "",
+    wage_floor: "",
+    wage_ceiling: "",
+    calculation_base: "BASIC_DA",
+    source_reference: "",
+    remarks: ""
+};
+
+const statutoryCalculationBases = [
+    { value: "BASIC", label: "Basic salary" },
+    { value: "BASIC_DA", label: "Basic + DA" },
+    { value: "ELIGIBLE_GROSS", label: "Eligible gross wages" },
+    { value: "GROSS", label: "Gross wages" },
+    { value: "CEILING_CAPPED_WAGES", label: "Wages subject to ceiling" },
+    { value: "FIXED_AMOUNT", label: "Fixed amount" },
+    { value: "SLAB", label: "Slab-based calculation" },
+    { value: "OTHER", label: "Other / configured rules" }
+];
+
+function getStatutoryPolicyName(code) {
+    return statutoryPolicyTypes.find(item => item.value === code)?.label || code;
+}
 const tabs = [
     { id: "profile", label: "Company Profile" },
     { id: "components", label: "Statutory Components" },
@@ -308,23 +352,32 @@ const [selectedTdsPolicyId, setSelectedTdsPolicyId] = useState("");
 const [tdsLoading, setTdsLoading] = useState(false);
 const [tdsSaving, setTdsSaving] = useState(false);
 
+    const [statutoryPolicies, setStatutoryPolicies] = useState([]);
+const [statutoryPolicyForm, setStatutoryPolicyForm] = useState(
+    initialStatutoryPolicyForm
+);
+const [statutoryPolicySaving, setStatutoryPolicySaving] = useState(false);
+const [statutoryPolicyLoading, setStatutoryPolicyLoading] = useState(false);
 
     useEffect(() => {
-        if (currentCompanyId) {
-            loadConfiguration();
-        } else {
-            setSettings(initialSettings);
-            setSettingsId(null);
-            setPTRegistrations([]);
-            setStates([]);
-            
-setTdsPolicies([]);
-setSelectedTdsPolicyId("");
-setTdsPolicyForm(initialTdsPolicy);
-setTdsSlabs(initialTdsSlabs);
+    if (currentCompanyId) {
+        loadConfiguration();
+        loadStatutoryPolicies();
+    } else {
+        setSettings(initialSettings);
+        setSettingsId(null);
+        setPTRegistrations([]);
+        setStates([]);
 
-        }
-    }, [currentCompanyId]);
+        setTdsPolicies([]);
+        setSelectedTdsPolicyId("");
+        setTdsPolicyForm(initialTdsPolicy);
+        setTdsSlabs(initialTdsSlabs);
+
+        setStatutoryPolicies([]);
+        setStatutoryPolicyForm(initialStatutoryPolicyForm);
+    }
+}, [currentCompanyId]);
 
     async function loadConfiguration() {
         try {
@@ -606,6 +659,188 @@ async function handleActivateTdsPolicy() {
     }
 }
 
+async function loadStatutoryPolicies() {
+    if (!currentCompanyId) {
+        setStatutoryPolicies([]);
+        return;
+    }
+
+    try {
+        setStatutoryPolicyLoading(true);
+
+        const policies = await getStatutoryPolicies(currentCompanyId);
+
+        setStatutoryPolicies(policies || []);
+    } catch (error) {
+        console.error("Unable to load statutory policies:", error);
+        setErrorMessage(
+            error.message || "Unable to load statutory policy history."
+        );
+    } finally {
+        setStatutoryPolicyLoading(false);
+    }
+}
+
+function handleStatutoryPolicyChange(event) {
+    const { name, value } = event.target;
+
+    setStatutoryPolicyForm(previous => ({
+        ...previous,
+        [name]: value,
+        ...(name === "policy_code"
+            ? { policy_name: getStatutoryPolicyName(value) }
+            : {})
+    }));
+}
+
+function resetStatutoryPolicyForm() {
+    setStatutoryPolicyForm(initialStatutoryPolicyForm);
+    setMessage("");
+    setErrorMessage("");
+}
+
+async function handleSaveStatutoryPolicy() {
+    if (!currentCompanyId) {
+        setErrorMessage("Please select a company first.");
+        return;
+    }
+
+    const form = statutoryPolicyForm;
+
+    if (!form.policy_code || !form.policy_name.trim()) {
+        setErrorMessage("Select a policy type and enter its name.");
+        return;
+    }
+
+    if (!form.effective_from) {
+        setErrorMessage("Enter the policy effective-from date.");
+        return;
+    }
+
+    if (
+        form.effective_to &&
+        form.effective_to < form.effective_from
+    ) {
+        setErrorMessage(
+            "Effective-to date cannot precede effective-from date."
+        );
+        return;
+    }
+
+    const numericFields = [
+        ["Rate", form.rate_percent],
+        ["Fixed amount", form.fixed_amount],
+        ["Wage floor", form.wage_floor],
+        ["Wage ceiling", form.wage_ceiling]
+    ];
+
+    for (const [label, value] of numericFields) {
+        if (value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
+            setErrorMessage(`${label} must be a valid non-negative number.`);
+            return;
+        }
+    }
+
+    if (
+        form.wage_floor !== "" &&
+        form.wage_ceiling !== "" &&
+        Number(form.wage_ceiling) < Number(form.wage_floor)
+    ) {
+        setErrorMessage("Wage ceiling cannot be lower than wage floor.");
+        return;
+    }
+
+    if (
+        form.rate_percent === "" &&
+        form.fixed_amount === "" &&
+        !["SLAB", "OTHER"].includes(form.calculation_base)
+    ) {
+        setErrorMessage(
+            "Enter a rate or fixed amount, or select a slab/other calculation."
+        );
+        return;
+    }
+
+    try {
+        setStatutoryPolicySaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        await createStatutoryPolicyVersion({
+            companyId: currentCompanyId,
+            policyCode: form.policy_code,
+            policyName: form.policy_name.trim(),
+            effectiveFrom: form.effective_from,
+            effectiveTo: form.effective_to || null,
+            ratePercent:
+                form.rate_percent === "" ? null : Number(form.rate_percent),
+            fixedAmount:
+                form.fixed_amount === "" ? null : Number(form.fixed_amount),
+            wageFloor:
+                form.wage_floor === "" ? null : Number(form.wage_floor),
+            wageCeiling:
+                form.wage_ceiling === "" ? null : Number(form.wage_ceiling),
+            calculationBase: form.calculation_base,
+            eligibilityRules: {},
+            calculationRules: {},
+            sourceReference: form.source_reference.trim() || null,
+            remarks: form.remarks.trim() || null
+        });
+
+        await loadStatutoryPolicies();
+        resetStatutoryPolicyForm();
+
+        setMessage(
+            "Statutory policy saved as a Draft. It has not been activated or connected to payroll calculations."
+        );
+    } catch (error) {
+        console.error("Unable to save statutory policy:", error);
+        setErrorMessage(error.message || "Unable to save statutory policy.");
+    } finally {
+        setStatutoryPolicySaving(false);
+    }
+}
+
+async function handleActivateStatutoryPolicy(policy) {
+    if (!currentCompanyId || !policy?.id) {
+        setErrorMessage("The selected company or policy is missing.");
+        return;
+    }
+
+    if (policy.is_active) {
+        setMessage("This policy is already active.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Activate "${policy.policy_name}" from ${policy.effective_from}? Verify the official statutory rate, wage ceiling, eligibility rules and calculation basis first.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        setStatutoryPolicySaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        await activateStatutoryPolicyVersion(
+            currentCompanyId,
+            policy.id
+        );
+
+        await loadStatutoryPolicies();
+
+        setMessage(
+            "Policy activated successfully. Payroll integration and legal validation remain separate steps."
+        );
+    } catch (error) {
+        console.error("Unable to activate statutory policy:", error);
+        setErrorMessage(error.message || "Unable to activate statutory policy.");
+    } finally {
+        setStatutoryPolicySaving(false);
+    }
+}
+    
     async function handleSaveSettings() {
         if (!currentCompanyId) {
             setErrorMessage("Please select a company first.");
@@ -923,6 +1158,123 @@ async function handleActivateTdsPolicy() {
 
                     {activeTab === "components" && (
                         <>
+                            <Section
+    title="Statutory Policy Version Manager"
+    description="Create company-specific, effective-dated statutory policy versions. Each saved policy starts as a draft."
+>
+    <div className="sc-grid">
+        <Field
+            label="Policy type"
+            name="policy_code"
+            value={statutoryPolicyForm.policy_code}
+            onChange={handleStatutoryPolicyChange}
+            options={statutoryPolicyTypes}
+        />
+
+        <Field
+            label="Policy name"
+            name="policy_name"
+            value={statutoryPolicyForm.policy_name}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <Field
+            label="Effective from"
+            name="effective_from"
+            type="date"
+            value={statutoryPolicyForm.effective_from}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <Field
+            label="Effective to (optional)"
+            name="effective_to"
+            type="date"
+            value={statutoryPolicyForm.effective_to}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <RateField
+            label="Contribution / calculation rate (%)"
+            name="rate_percent"
+            value={statutoryPolicyForm.rate_percent}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <AmountField
+            label="Fixed amount (₹)"
+            name="fixed_amount"
+            value={statutoryPolicyForm.fixed_amount}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <AmountField
+            label="Wage floor (₹ / month)"
+            name="wage_floor"
+            value={statutoryPolicyForm.wage_floor}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <AmountField
+            label="Wage ceiling (₹ / month)"
+            name="wage_ceiling"
+            value={statutoryPolicyForm.wage_ceiling}
+            onChange={handleStatutoryPolicyChange}
+        />
+
+        <Field
+            label="Calculation base"
+            name="calculation_base"
+            value={statutoryPolicyForm.calculation_base}
+            onChange={handleStatutoryPolicyChange}
+            options={statutoryCalculationBases}
+        />
+
+        <Field
+            label="Official source reference"
+            name="source_reference"
+            value={statutoryPolicyForm.source_reference}
+            onChange={handleStatutoryPolicyChange}
+            placeholder="Official notification / circular reference"
+        />
+
+        <Field
+            label="Remarks"
+            name="remarks"
+            value={statutoryPolicyForm.remarks}
+            onChange={handleStatutoryPolicyChange}
+            type="textarea"
+        />
+    </div>
+
+    <div className="sc-notice">
+        <strong>Draft and activation controls</strong>
+        <p>
+            Use verified statutory values only. Saving creates a draft;
+            activating a policy does not by itself enable or alter payroll calculations.
+        </p>
+    </div>
+
+    <div className="sc-actions">
+        <button
+            type="button"
+            className="sc-button secondary"
+            onClick={resetStatutoryPolicyForm}
+            disabled={statutoryPolicySaving}
+        >
+            Clear Form
+        </button>
+
+        <button
+            type="button"
+            className="sc-button primary"
+            onClick={handleSaveStatutoryPolicy}
+            disabled={statutoryPolicySaving}
+        >
+            {statutoryPolicySaving ? "Saving..." : "Save Policy Draft"}
+        </button>
+    </div>
+</Section>
                             <div className="sc-notice">
                                 <strong>Company-level policy editor</strong>
                                 <p>
@@ -1865,24 +2217,109 @@ async function handleActivateTdsPolicy() {
                     )}
 
                     {activeTab === "history" && (
-                        <Section
-                            title="Statutory Policy History"
-                            description="Effective-dated policy history will appear here after the service layer is connected."
-                        >
-                            <div className="sc-notice">
-                                <strong>Policy history UI placeholder</strong>
-                                <p>
-                                    This tab will show company policy versions, policy
-                                    codes, effective dates, active status and source
-                                    references from statutory_policy_versions.
-                                </p>
-                                <p>
-                                    Previous policy versions should be retained for
-                                    historical payroll calculations and payslip audits.
-                                </p>
-                            </div>
-                        </Section>
-                    )}
+    <>
+        <Section
+            title="Statutory Policy History"
+            description="Company-specific policy versions and their effective periods."
+        >
+            <div className="sc-actions">
+                <button
+                    type="button"
+                    className="sc-button secondary"
+                    onClick={loadStatutoryPolicies}
+                    disabled={statutoryPolicyLoading}
+                >
+                    {statutoryPolicyLoading ? "Refreshing..." : "Refresh History"}
+                </button>
+            </div>
+
+            {statutoryPolicyLoading ? (
+                <p className="sc-muted">Loading statutory policy history...</p>
+            ) : statutoryPolicies.length === 0 ? (
+                <p className="sc-muted">
+                    No statutory policy versions found for this company.
+                </p>
+            ) : (
+                <div className="sc-table-wrap">
+                    <table className="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Policy</th>
+                                <th>Effective From</th>
+                                <th>Effective To</th>
+                                <th>Rate (%)</th>
+                                <th>Fixed Amount (₹)</th>
+                                <th>Calculation Base</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {statutoryPolicies.map(policy => (
+                                <tr key={policy.id}>
+                                    <td>
+                                        <strong>{policy.policy_name}</strong>
+                                        <div>
+                                            <small>{policy.policy_code}</small>
+                                        </div>
+                                    </td>
+
+                                    <td>{policy.effective_from || "-"}</td>
+                                    <td>{policy.effective_to || "No end date"}</td>
+
+                                    <td>
+                                        {policy.rate_percent == null
+                                            ? "-"
+                                            : policy.rate_percent}
+                                    </td>
+
+                                    <td>
+                                        {policy.fixed_amount == null
+                                            ? "-"
+                                            : policy.fixed_amount}
+                                    </td>
+
+                                    <td>{policy.calculation_base || "-"}</td>
+
+                                    <td>
+                                        <span
+                                            className={
+                                                policy.is_active
+                                                    ? "sc-status active"
+                                                    : "sc-status inactive"
+                                            }
+                                        >
+                                            {policy.is_active ? "Active" : "Draft"}
+                                        </span>
+                                    </td>
+
+                                    <td>{policy.source_reference || "-"}</td>
+
+                                    <td>
+                                        {!policy.is_active && (
+                                            <button
+                                                type="button"
+                                                className="sc-link-button"
+                                                disabled={statutoryPolicySaving}
+                                                onClick={() =>
+                                                    handleActivateStatutoryPolicy(policy)
+                                                }
+                                            >
+                                                Activate
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </Section>
+    </>
+)}
                 </>
             )}
         </div>
