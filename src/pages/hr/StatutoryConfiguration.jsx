@@ -967,29 +967,83 @@ async function handleActivateStatutoryPolicy(policy) {
         setErrorMessage("");
     }
 
-    function handleSaveComponentDraft() {
-        setMessage("");
-        setErrorMessage("");
-
-        if (!components.effective_from) {
-            setErrorMessage(
-                "Enter the policy effective-from date before saving this draft."
-            );
-            return;
-        }
-
-        if (
-            components.effective_to &&
-            components.effective_to < components.effective_from
-        ) {
-            setErrorMessage("Effective-to date cannot precede effective-from date.");
-            return;
-        }
-
-        setMessage(
-            "UI draft validated. Database saving will be enabled in the service-code phase."
-        );
+const loadStatutoryPolicyPackages = async (companyId) => {
+    if (!companyId) {
+        setStatutoryPolicies([]);
+        return;
     }
+
+    try {
+        const packages =
+            await getStatutoryPolicyPackages(companyId);
+
+        setStatutoryPolicies(packages || []);
+    } catch (error) {
+        console.error(
+            "Unable to load statutory package history:",
+            error
+        );
+
+        throw error;
+    }
+};
+    
+    const handleSaveComponentDraft = async () => {
+    if (!currentCompanyId) {
+        alert("Please select a company first.");
+        return;
+    }
+
+    if (!components.effective_from) {
+        alert("Please select the package effective date.");
+        return;
+    }
+
+    if (
+        components.effective_to &&
+        components.effective_to < components.effective_from
+    ) {
+        alert(
+            "Effective To cannot be earlier than Effective From."
+        );
+        return;
+    }
+
+    const policyName =
+        String(components.policy_name || "").trim() ||
+        `Statutory Package - ${components.effective_from}`;
+
+    try {
+        setLoading(true);
+
+        const savedPackage =
+            await createStatutoryPolicyPackageDraft({
+                companyId: currentCompanyId,
+                policyName,
+                effectiveFrom: components.effective_from,
+                policyData: components,
+                remarks: components.remarks || null
+            });
+
+        await loadStatutoryPolicyPackages(currentCompanyId);
+
+        alert(
+            `Draft package Version ${savedPackage.version_number} saved successfully.`
+        );
+    } catch (error) {
+        console.error(
+            "Unable to save statutory policy package:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to save the statutory policy package."
+        );
+    } finally {
+        setLoading(false);
+    }
+};
 
     if (!currentCompanyId) {
         return (
