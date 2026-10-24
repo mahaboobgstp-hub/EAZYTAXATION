@@ -343,3 +343,211 @@ export async function activateStatutoryPolicyVersion(
     return data;
 }
 
+// ============================================================
+// COMPLETE STATUTORY POLICY PACKAGE SERVICE
+// File: src/services/hr/statutoryPolicyService.js
+// ============================================================
+
+function requirePackageCompanyId(companyId) {
+    if (!companyId) {
+        throw new Error("A current company is required.");
+    }
+}
+
+function requirePackageDate(date) {
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        throw new Error(
+            "A valid effective date in YYYY-MM-DD format is required."
+        );
+    }
+}
+
+const PACKAGE_COLUMNS = `
+    id,
+    company_id,
+    version_number,
+    policy_name,
+    effective_from,
+    effective_to,
+    status,
+    policy_data,
+    remarks,
+    created_at,
+    updated_at,
+    created_by,
+    updated_by
+`;
+
+// Get one row per complete package version.
+export async function getStatutoryPolicyPackages(companyId) {
+    requirePackageCompanyId(companyId);
+
+    const { data, error } = await supabase
+        .from("statutory_policy_packages")
+        .select(PACKAGE_COLUMNS)
+        .eq("company_id", companyId)
+        .order("version_number", { ascending: false });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+// Get the current active package, if one exists.
+export async function getActiveStatutoryPolicyPackage(companyId) {
+    requirePackageCompanyId(companyId);
+
+    const { data, error } = await supabase
+        .from("statutory_policy_packages")
+        .select(PACKAGE_COLUMNS)
+        .eq("company_id", companyId)
+        .eq("status", "ACTIVE")
+        .maybeSingle();
+
+    if (error) throw error;
+
+    return data || null;
+}
+
+// Resolve the package applicable to a payroll date.
+// Historical/superseded packages remain eligible for past payroll.
+export async function getStatutoryPolicyPackageForDate(
+    companyId,
+    payrollDate
+) {
+    requirePackageCompanyId(companyId);
+    requirePackageDate(payrollDate);
+
+    const { data, error } = await supabase
+        .from("statutory_policy_packages")
+        .select(PACKAGE_COLUMNS)
+        .eq("company_id", companyId)
+        .lte("effective_from", payrollDate)
+        .order("effective_from", { ascending: false })
+        .order("version_number", { ascending: false });
+
+    if (error) throw error;
+
+    const matches = (data || []).filter(packageVersion =>
+        !packageVersion.effective_to ||
+        packageVersion.effective_to >= payrollDate
+    );
+
+    if (matches.length > 1) {
+        throw new Error(
+            "Overlapping statutory package versions exist for this payroll date. Please review Policy History."
+        );
+    }
+
+    return matches[0] || null;
+}
+
+// Create a complete draft package.
+// If policyData is omitted, copy the most recent package as the
+// starting point. The caller can then edit the copied configuration.
+export async function createStatutoryPolicyPackageDraft({
+    companyId,
+    policyName,
+    effectiveFrom,
+    policyData,
+    remarks = null
+}) {
+    requirePackageCompanyId(companyId);
+    requirePackageDate(effectiveFrom);
+
+    const cleanName = String(policyName || "").trim();
+
+    if (!cleanName) {
+        throw new Error("Package name is required.");
+    }
+
+    let completePolicyData = policyData;
+
+    if (
+        completePolicyData === undefined ||
+        completePolicyData === null
+    ) {
+        const existingPackages =
+            await getStatutoryPolicyPackages(companyId);
+
+        completePolicyData =
+            existingPackages.length > 0
+                ? existingPackages[0].policy_data
+                : {};
+    }
+
+    if (
+        typeof completePolicyData !== "object" ||
+        Array.isArray(completePolicyData)
+    ) {
+        throw new Error(
+            "The statutory package configuration must be an object."
+        );
+    }
+
+    const existingPackages =
+        await getStatutoryPolicyPackages(companyId);
+
+    const nextVersion =
+        existingPackages.reduce(
+            (highest, item) =>
+                Math.max(highest, Number(item.version_number) || 0),
+            0
+        ) + 1;
+
+    const { data: authData } =
+        await supabase.auth.getUser();
+
+    const userId = authData?.user?.id || null;
+
+    const payload = {
+        company_id: companyId,
+        version_number: nextVersion,
+        policy_name: cleanName,
+        effective_from: effectiveFrom,
+        effective_to: null,
+        status: "DRAFT",
+        policy_data: completePolicyData,
+        remarks: remarks || null,
+        created_by: userId,
+        updated_by: userId
+    };
+
+    const { data, error } = await supabase
+        .from("statutory_policy_packages")
+        .insert(payload)
+        .select(PACKAGE_COLUMNS)
+        .single();
+
+    if (error) {
+        // The unique company/version constraint protects against
+        // duplicate version numbers if simultaneous saves occur.
+        throw error;
+    }
+
+    return data;
+}
+
+// Activate one complete package through the PostgreSQL function.
+export async function activateStatutoryPolicyPackage(
+    companyId,
+    packageId
+) {
+    requirePackageCompanyId(companyId);
+
+    if (!packageId) {
+        throw new Error("A package version is required.");
+    }
+
+    const { data, error } = await supabase.rpc(
+        "activate_statutory_policy_package",
+        {
+            p_company_id: companyId,
+            p_package_id: packageId
+        }
+    );
+
+    if (error) throw error;
+
+    return data;
+        }
