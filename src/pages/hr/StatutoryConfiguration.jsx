@@ -1034,11 +1034,16 @@ const loadStatutoryPolicyPackages = async (companyId) => {
                 remarks: components.remarks || null
             });
 
-        await loadStatutoryPolicyPackages(currentCompanyId);
+        
+await loadStatutoryPolicyPackages(currentCompanyId);
 
-        alert(
-            `Draft package Version ${savedPackage.version_number} saved successfully.`
-        );
+// Reset the package form only after the draft is saved.
+setComponents(initialComponents);
+
+alert(
+    `Draft package Version ${savedPackage.version_number} saved successfully.`
+);
+
     } catch (error) {
         console.error(
             "Unable to save statutory policy package:",
@@ -2304,7 +2309,7 @@ const loadStatutoryPolicyPackages = async (companyId) => {
 
             {statutoryPolicyLoading ? (
                 <p className="sc-muted">Loading statutory policy history...</p>
-            ) : statutoryPolicies.length === 0 ? (
+            ) : statutoryPolicyPackages.length === 0 ? (
                 <p className="sc-muted">
                     No statutory policy versions found for this company.
                 </p>
@@ -2326,7 +2331,7 @@ const loadStatutoryPolicyPackages = async (companyId) => {
                         </thead>
 
                         <tbody>
-                            {statutoryPolicies.map(policy => (
+                            {statutoryPolicyPackages.map(policy => (
                                 <tr key={policy.id}>
                                     <td>
                                         <strong>{policy.policy_name}</strong>
