@@ -395,6 +395,12 @@ const [statutoryPolicyForm, setStatutoryPolicyForm] = useState(
 );
 const [statutoryPolicySaving, setStatutoryPolicySaving] = useState(false);
 const [statutoryPolicyLoading, setStatutoryPolicyLoading] = useState(false);
+    const [historySearch, setHistorySearch] = useState("");
+const [historyStatus, setHistoryStatus] = useState("ALL");
+const [historyFromDate, setHistoryFromDate] = useState("");
+const [historyToDate, setHistoryToDate] = useState("");
+const [historyCategory, setHistoryCategory] = useState("STATUTORY");
+const [historyDetailsPolicy, setHistoryDetailsPolicy] = useState(null);
     
 
     useEffect(() => {
@@ -1277,6 +1283,48 @@ alert(
             </div>
         );
     }
+
+
+    const filteredStatutoryHistory = statutoryPolicyPackages.filter(
+    (policy) => {
+        const search = historySearch.trim().toLowerCase();
+
+        const matchesSearch =
+            !search ||
+            String(policy.policy_name || "").toLowerCase().includes(search) ||
+            String(policy.version_number || "").toLowerCase().includes(search) ||
+            String(policy.remarks || "").toLowerCase().includes(search) ||
+            String(policy.effective_from || "").includes(search) ||
+            String(policy.effective_to || "").includes(search);
+
+        const matchesStatus =
+            historyStatus === "ALL" ||
+            String(policy.status || "").toUpperCase() === historyStatus;
+
+        const matchesFromDate =
+            !historyFromDate ||
+            (
+                policy.effective_from &&
+                policy.effective_from >= historyFromDate
+            );
+
+        const matchesToDate =
+            !historyToDate ||
+            (
+                policy.effective_from &&
+                policy.effective_from <= historyToDate
+            );
+
+        return (
+            matchesSearch &&
+            matchesStatus &&
+            matchesFromDate &&
+            matchesToDate
+        );
+    }
+);
+
+    
 
     return (
         <div className="sc-page">
@@ -2773,89 +2821,351 @@ alert(
                         </>
                     )}
 
-                    {activeTab === "history" && (
+                    
+                                
+{activeTab === "history" && (
     <>
         <Section
             title="Statutory Policy History"
-            description="Company-specific policy versions and their effective periods."
+            description="Search, review and manage company-specific statutory policy versions and effective periods."
         >
-            
-<div className="sc-actions">
-    <button
-        type="button"
-        className="sc-button secondary"
-        onClick={() => loadStatutoryPolicyPackages(currentCompanyId)}
-        disabled={statutoryPolicyLoading}
-    >
-        {statutoryPolicyLoading ? "Refreshing..." : "Refresh History"}
-    </button>
-</div>
+            <div className="sc-history-toolbar">
+                <div className="sc-history-search">
+                    <label htmlFor="historySearch">
+                        Search policy history
+                    </label>
+                    <input
+                        id="historySearch"
+                        type="search"
+                        value={historySearch}
+                        onChange={(event) =>
+                            setHistorySearch(event.target.value)
+                        }
+                        placeholder="Search policy name, version, date or remarks..."
+                    />
+                </div>
 
-{statutoryPolicyLoading ? (
-    <p className="sc-muted">Loading statutory package history...</p>
-) : statutoryPolicyPackages.length === 0 ? (
-    <p className="sc-muted">
-        No statutory policy packages found for this company.
-    </p>
-) : (
-    <div className="sc-table-wrap">
-        <table className="sc-table">
-            <thead>
-                <tr>
-                    <th>Version</th>
-                    <th>Policy Name</th>
-                    <th>Effective From</th>
-                    <th>Effective To</th>
-                    <th>Status</th>
-                    <th>Remarks</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {statutoryPolicyPackages.map((policy) => (
-                    <tr key={policy.id}>
-                        <td>{policy.version_number}</td>
-                        <td>{policy.policy_name}</td>
-                        <td>{policy.effective_from || "-"}</td>
-                        <td>{policy.effective_to || "No end date"}</td>
-                        <td>
-                            <span
-                                className={
-                                    policy.status === "ACTIVE"
-                                        ? "sc-status active"
-                                        : "sc-status inactive"
-                                }
-                            >
-                                {policy.status}
-                            </span>
-                        </td>
-                        <td>{policy.remarks || "-"}</td>
-                        <td>
-                            {policy.status === "DRAFT" && (
+                <div className="sc-history-filter">
+                    <label htmlFor="historyStatus">
+                        Policy Status
+                    </label>
+                    <select
+                        id="historyStatus"
+                        value={historyStatus}
+                        onChange={(event) =>
+                            setHistoryStatus(event.target.value)
+                        }
+                    >
+                        <option value="ALL">All statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="DRAFT">Draft</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+
+                <div className="sc-history-filter">
+                    <label htmlFor="historyFromDate">
+                        Effective From
+                    </label>
+                    <input
+                        id="historyFromDate"
+                        type="date"
+                        value={historyFromDate}
+                        onChange={(event) =>
+                            setHistoryFromDate(event.target.value)
+                        }
+                    />
+                </div>
+
+                <div className="sc-history-filter">
+                    <label htmlFor="historyToDate">
+                        Effective From Until
+                    </label>
+                    <input
+                        id="historyToDate"
+                        type="date"
+                        value={historyToDate}
+                        onChange={(event) =>
+                            setHistoryToDate(event.target.value)
+                        }
+                    />
+                </div>
+
+                <button
+                    type="button"
+                    className="sc-button secondary"
+                    onClick={() => {
+                        setHistorySearch("");
+                        setHistoryStatus("ALL");
+                        setHistoryFromDate("");
+                        setHistoryToDate("");
+                    }}
+                >
+                    Clear Filters
+                </button>
+            </div>
+
+            <div className="sc-history-category">
+                <button
+                    type="button"
+                    className={
+                        historyCategory === "STATUTORY"
+                            ? "sc-button primary"
+                            : "sc-button secondary"
+                    }
+                    onClick={() => {
+                        setHistoryCategory("STATUTORY");
+                        setHistoryDetailsPolicy(null);
+                    }}
+                >
+                    Statutory Contributions
+                </button>
+
+                <button
+                    type="button"
+                    className={
+                        historyCategory === "PT"
+                            ? "sc-button primary"
+                            : "sc-button secondary"
+                    }
+                    onClick={() => {
+                        setHistoryCategory("PT");
+                        setHistoryDetailsPolicy(null);
+                    }}
+                >
+                    Professional Tax
+                </button>
+
+                <button
+                    type="button"
+                    className={
+                        historyCategory === "TDS"
+                            ? "sc-button primary"
+                            : "sc-button secondary"
+                    }
+                    onClick={() => {
+                        setHistoryCategory("TDS");
+                        setHistoryDetailsPolicy(null);
+                    }}
+                >
+                    Income Tax / TDS
+                </button>
+            </div>
+
+            {historyCategory === "STATUTORY" ? (
+                <>
+                    <div className="sc-history-results-heading">
+                        <div>
+                            <h4>Statutory Contribution Versions</h4>
+                            <p className="sc-muted">
+                                Company-level statutory policy packages.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="sc-button secondary"
+                            onClick={() =>
+                                loadStatutoryPolicyPackages(
+                                    currentCompanyId
+                                )
+                            }
+                            disabled={
+                                statutoryPolicyLoading ||
+                                !currentCompanyId
+                            }
+                        >
+                            {statutoryPolicyLoading
+                                ? "Refreshing..."
+                                : "Refresh History"}
+                        </button>
+                    </div>
+
+                    {statutoryPolicyLoading ? (
+                        <p className="sc-muted">
+                            Loading statutory package history...
+                        </p>
+                    ) : filteredStatutoryHistory.length === 0 ? (
+                        <p className="sc-muted">
+                            No statutory policy versions match your filters.
+                        </p>
+                    ) : (
+                        <div className="sc-table-wrap">
+                            <table className="sc-table">
+                                <thead>
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Policy Name</th>
+                                        <th>Effective From</th>
+                                        <th>Effective To</th>
+                                        <th>Status</th>
+                                        <th>Remarks</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {filteredStatutoryHistory.map(
+                                        (policy) => (
+                                            <tr key={policy.id}>
+                                                <td>
+                                                    {policy.version_number ?? "-"}
+                                                </td>
+                                                <td>
+                                                    {policy.policy_name || "-"}
+                                                </td>
+                                                <td>
+                                                    {policy.effective_from || "-"}
+                                                </td>
+                                                <td>
+                                                    {policy.effective_to ||
+                                                        "No end date"}
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        className={
+                                                            String(
+                                                                policy.status
+                                                            ).toUpperCase() ===
+                                                            "ACTIVE"
+                                                                ? "sc-status active"
+                                                                : "sc-status inactive"
+                                                        }
+                                                    >
+                                                        {policy.status || "UNKNOWN"}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {policy.remarks || "-"}
+                                                </td>
+                                                <td>
+                                                    <div className="sc-history-row-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="sc-link-button"
+                                                            onClick={() =>
+                                                                setHistoryDetailsPolicy(
+                                                                    policy
+                                                                )
+                                                            }
+                                                        >
+                                                            View
+                                                        </button>
+
+                                                        {policy.status ===
+                                                            "DRAFT" && (
+                                                            <button
+                                                                type="button"
+                                                                className="sc-link-button"
+                                                                disabled={
+                                                                    statutoryPolicySaving
+                                                                }
+                                                                onClick={() =>
+                                                                    handleActivateStatutoryPolicyPackage(
+                                                                        policy
+                                                                    )
+                                                                }
+                                                            >
+                                                                Activate
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {historyDetailsPolicy && (
+                        <div className="sc-history-detail">
+                            <div className="sc-history-results-heading">
+                                <h4>Policy Version Details</h4>
                                 <button
                                     type="button"
-                                    className="sc-link-button"
-                                    disabled={statutoryPolicySaving}
+                                    className="sc-button secondary"
                                     onClick={() =>
-                                        handleActivateStatutoryPolicyPackage(
-                                            policy
-                                        )
+                                        setHistoryDetailsPolicy(null)
                                     }
                                 >
-                                    Activate
+                                    Close Details
                                 </button>
-                            )}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)}
+                            </div>
 
+                            <div className="sc-history-detail-grid">
+                                <div>
+                                    <span>Policy Name</span>
+                                    <strong>
+                                        {historyDetailsPolicy.policy_name || "-"}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Version</span>
+                                    <strong>
+                                        {historyDetailsPolicy.version_number ?? "-"}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Effective From</span>
+                                    <strong>
+                                        {historyDetailsPolicy.effective_from || "-"}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Effective To</span>
+                                    <strong>
+                                        {historyDetailsPolicy.effective_to ||
+                                            "No end date"}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Status</span>
+                                    <strong>
+                                        {historyDetailsPolicy.status || "-"}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Remarks</span>
+                                    <strong>
+                                        {historyDetailsPolicy.remarks || "-"}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <div className="sc-history-placeholder">
+                    <h4>
+                        {historyCategory === "PT"
+                            ? "Professional Tax Policy History"
+                            : "Income Tax / TDS Policy History"}
+                    </h4>
+
+                    <p>
+                        This history view will display saved policy
+                        versions, effective periods, status and audit
+                        details after the corresponding policy service
+                        is connected.
+                    </p>
+
+                    <p className="sc-muted">
+                        No PT or TDS history records are being loaded
+                        from the statutory contribution package list.
+                    </p>
+                </div>
+            )}
         </Section>
     </>
 )}
+
                 </>
             )}
         </div>
