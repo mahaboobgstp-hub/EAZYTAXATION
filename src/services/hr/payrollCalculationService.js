@@ -315,174 +315,221 @@ export function calculateAttendanceDeduction(
 // only this calculation section needs to be changed.
 // =====================================================
 
+
+     
+function requirePolicyNumber(policyData, fieldName) {
+    const value = policyData?.[fieldName];
+
+    if (
+        value === null ||
+        value === undefined ||
+        String(value).trim() === "" ||
+        !Number.isFinite(Number(value)) ||
+        Number(value) < 0
+    ) {
+        throw new Error(
+            `Statutory policy setting "${fieldName}" is missing or invalid. ` +
+            "Review the company's statutory policy package."
+        );
+    }
+
+    return Number(value);
+}
+
+function requirePolicyBoolean(policyData, fieldName) {
+    if (typeof policyData?.[fieldName] !== "boolean") {
+        throw new Error(
+            `Statutory policy setting "${fieldName}" must be configured.`
+        );
+    }
+
+    return policyData[fieldName];
+}
+
+function applyWageCeiling(wages, ceiling) {
+    const amount = toNumber(wages);
+
+    // Null ceiling means no configured ceiling.
+    if (ceiling === null) {
+        return amount;
+    }
+
+    return Math.min(amount, ceiling);
+}
+
+// Package-aware PF calculation.
+// EPS/EDLI and administrative charges are deliberately handled
+// separately after their policy definitions are confirmed.
 export function calculatePF(
     basicAmount,
     isApplicable,
     options = {}
 ) {
+    const policy = options.statutory_policy_package;
 
-    if (
-        !isApplicable
-    ) {
-
-        return {
-
-            employee_pf:
-                0,
-
-            employer_pf:
-                0
-
-        };
-
+    if (!policy || typeof policy !== "object") {
+        throw new Error(
+            "A statutory policy package is required for PF calculation."
+        );
     }
 
+    const policyData = policy.policy_data || policy;
 
-    const employeeRate =
-        options.employee_pf_rate ??
-        12;
+    const employeeApplicable = requirePolicyBoolean(
+        policyData,
+        "epf_employee_applicable"
+    );
 
+    const employerApplicable = requirePolicyBoolean(
+        policyData,
+        "epf_employer_applicable"
+    );
 
-    const employerRate =
-        options.employer_pf_rate ??
-        12;
+    const employeeRate = requirePolicyNumber(
+        policyData,
+        "epf_employee_rate"
+    );
 
+    const employerRate = requirePolicyNumber(
+        policyData,
+        "epf_employer_total_rate"
+    );
 
-    const basic =
-        toNumber(
-            basicAmount
+    const employeeCeiling = requirePolicyNumber(
+        policyData,
+        "epf_employee_wage_ceiling"
+    );
+
+    const employerCeiling = requirePolicyNumber(
+        policyData,
+        "epf_employer_wage_ceiling"
+    );
+
+    const employeeBase = policyData.epf_employee_calculation_base;
+    const employerBase = policyData.epf_employer_calculation_base;
+
+    if (
+        !["BASIC", "BASIC_DA"].includes(employeeBase) ||
+        !["BASIC", "BASIC_DA"].includes(employerBase)
+    ) {
+        throw new Error(
+            "PF calculation currently supports BASIC or BASIC_DA only. " +
+            "Review the configured PF calculation bases."
         );
+    }
 
+    if (!isApplicable) {
+        return {
+            employee_pf: 0,
+            employer_pf: 0,
+            employee_pf_wage: 0,
+            employer_pf_wage: 0
+        };
+    }
 
-    const employeePF =
-        roundAmount(
+    const employeeWage = applyWageCeiling(
+        basicAmount,
+        employeeCeiling
+    );
 
-            basic *
-            (
-                toNumber(
-                    employeeRate
-                ) /
-                100
-            )
-
-        );
-
-
-    const employerPF =
-        roundAmount(
-
-            basic *
-            (
-                toNumber(
-                    employerRate
-                ) /
-                100
-            )
-
-        );
-
+    const employerWage = applyWageCeiling(
+        basicAmount,
+        employerCeiling
+    );
 
     return {
+        employee_pf: employeeApplicable
+            ? roundAmount(employeeWage * employeeRate / 100)
+            : 0,
 
-        employee_pf:
-            employeePF,
+        employer_pf: employerApplicable
+            ? roundAmount(employerWage * employerRate / 100)
+            : 0,
 
-        employer_pf:
-            employerPF
-
+        employee_pf_wage: employeeApplicable ? employeeWage : 0,
+        employer_pf_wage: employerApplicable ? employerWage : 0
     };
-
 }
 
-
-
-// =====================================================
-// ESI CALCULATION
-// =====================================================
-//
-// Rates are configurable.
-//
-// If the employee is not ESI applicable,
-// both employee and employer ESI are zero.
-// =====================================================
-
+// Package-aware ESI calculation.
+// This checks the configured wage ceiling; the applicable wage
+// definition and statutory eligibility must be validated separately.
 export function calculateESI(
     grossAmount,
     isApplicable,
     options = {}
 ) {
+    const policy = options.statutory_policy_package;
 
-    if (
-        !isApplicable
-    ) {
-
-        return {
-
-            employee_esi:
-                0,
-
-            employer_esi:
-                0
-
-        };
-
+    if (!policy || typeof policy !== "object") {
+        throw new Error(
+            "A statutory policy package is required for ESI calculation."
+        );
     }
 
+    const policyData = policy.policy_data || policy;
 
-    const employeeRate =
-        options.employee_esi_rate ??
-        0.75;
+    const employeeApplicable = requirePolicyBoolean(
+        policyData,
+        "esi_employee_applicable"
+    );
 
+    const employerApplicable = requirePolicyBoolean(
+        policyData,
+        "esi_employer_applicable"
+    );
 
-    const employerRate =
-        options.employer_esi_rate ??
-        3.25;
+    const employeeRate = requirePolicyNumber(
+        policyData,
+        "esi_employee_rate"
+    );
 
+    const employerRate = requirePolicyNumber(
+        policyData,
+        "esi_employer_rate"
+    );
 
-    const gross =
-        toNumber(
-            grossAmount
-        );
+    const employeeCeiling = requirePolicyNumber(
+        policyData,
+        "esi_employee_wage_ceiling"
+    );
 
+    const employerCeiling = requirePolicyNumber(
+        policyData,
+        "esi_employer_wage_ceiling"
+    );
 
-    const employeeESI =
-        roundAmount(
+    if (!isApplicable) {
+        return {
+            employee_esi: 0,
+            employer_esi: 0,
+            employee_esi_wage: 0,
+            employer_esi_wage: 0
+        };
+    }
 
-            gross *
-            (
-                toNumber(
-                    employeeRate
-                ) /
-                100
-            )
+    const employeeWage = applyWageCeiling(
+        grossAmount,
+        employeeCeiling
+    );
 
-        );
-
-
-    const employerESI =
-        roundAmount(
-
-            gross *
-            (
-                toNumber(
-                    employerRate
-                ) /
-                100
-            )
-
-        );
-
+    const employerWage = applyWageCeiling(
+        grossAmount,
+        employerCeiling
+    );
 
     return {
+        employee_esi: employeeApplicable
+            ? roundAmount(employeeWage * employeeRate / 100)
+            : 0,
 
-        employee_esi:
-            employeeESI,
+        employer_esi: employerApplicable
+            ? roundAmount(employerWage * employerRate / 100)
+            : 0,
 
-        employer_esi:
-            employerESI
-
+        employee_esi_wage: employeeApplicable ? employeeWage : 0,
+        employer_esi_wage: employerApplicable ? employerWage : 0
     };
-
 }
 
 
@@ -872,20 +919,18 @@ export function calculateEmployeePayroll(
 
 
 
+
     // =============================================
     // PF
     // =============================================
 
-    const pfCalculation =
-        calculatePF(
+    const pfCalculation = calculatePF(
+        earnedBasic,
+        salaryStructure.is_pf_applicable,
+        options
+    );
 
-            earnedBasic,
 
-            salaryStructure.is_pf_applicable,
-
-            options
-
-        );
 
 
 
@@ -893,16 +938,12 @@ export function calculateEmployeePayroll(
     // ESI
     // =============================================
 
-    const esiCalculation =
-        calculateESI(
+    const esiCalculation = calculateESI(
+        grossEarnings,
+        salaryStructure.is_esi_applicable,
+        options
+    );
 
-            grossEarnings,
-
-            salaryStructure.is_esi_applicable,
-
-            options
-
-        );
 
 
 
