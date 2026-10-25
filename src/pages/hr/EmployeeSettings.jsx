@@ -1089,8 +1089,17 @@ export default function EmployeeSettings() {
               Reset Form
             </button>
 
-            <button type="submit" className="es-button primary">
-              Save Settings
+                        <button
+              type="submit"
+              className="es-button primary"
+              disabled={
+                savingSettings ||
+                loadingSettings ||
+                companyLoading ||
+                !currentCompanyId
+              }
+            >
+              {savingSettings ? "Saving..." : "Save Settings"}
             </button>
           </div>
         </form>
