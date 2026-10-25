@@ -776,30 +776,6 @@ const employees =
 
 
 
-                    
-                    const payroll =
-                        calculateEmployeePayroll(
-                            employee,
-                            salaryStructure,
-                            attendance,
-                            payrollYear,
-                            payrollMonth,
-                            {
-                                overtime_rate: 0,
-                                professional_tax: 0,
-                                tds_deduction: 0,
-                                other_deductions: 0,
-                                reimbursement_amount: 0,
-                                additional_earnings: 0,
-
-                                // Company policy package selected
-                                // for this payroll period.
-                                statutory_policy_package:
-                                    statutoryPolicyPackage
-                            }
-                        );
-
-
 
                     const payroll =
                         calculateEmployeePayroll(
