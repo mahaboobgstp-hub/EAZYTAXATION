@@ -27,6 +27,12 @@ import {
     getSalaryComponents
 } from "../../services/hr/salaryComponentService";
 
+
+import {
+    getActiveStatutoryPolicyPackage,
+    getStatutoryPolicyPackageForDate
+} from "../../services/hr/statutoryPolicyService";
+
 const defaultFormData = {
     employee_code: "",
     employee_name: "",
@@ -213,6 +219,15 @@ const [tdsPolicyLoading, setTdsPolicyLoading] = useState(false);
 
 const [salaryComponents, setSalaryComponents] =
     useState([]);
+
+   
+const [activeStatutoryPackage, setActiveStatutoryPackage] =
+    useState(null);
+const [statutoryPackageLoading, setStatutoryPackageLoading] =
+    useState(false);
+const [statutoryPackageError, setStatutoryPackageError] =
+    useState("");
+ 
     const [
     activeTab,
     setActiveTab
@@ -1141,6 +1156,9 @@ setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
     }
 
 };
+
+
+    
     const handleCancelEdit = () => {
 
     setEditingId(
