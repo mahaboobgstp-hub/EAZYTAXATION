@@ -428,10 +428,16 @@ export async function getStatutoryPolicyPackageForDate(
 
     if (error) throw error;
 
+   
     const matches = (data || []).filter(packageVersion =>
-        !packageVersion.effective_to ||
-        packageVersion.effective_to >= payrollDate
+        ["ACTIVE", "SUPERSEDED"].includes(packageVersion.status) &&
+        packageVersion.effective_from <= payrollDate &&
+        (
+            !packageVersion.effective_to ||
+            packageVersion.effective_to >= payrollDate
+        )
     );
+
 
     if (matches.length > 1) {
         throw new Error(
