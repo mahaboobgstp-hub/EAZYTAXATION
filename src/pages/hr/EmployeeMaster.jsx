@@ -2674,7 +2674,11 @@ setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
         <div className="salary-summary-grid">
             <div className="salary-summary-item">
                 <span>Employee PF</span>
-                <strong>₹{employeePfAmount.toFixed(2)}</strong>
+                <strong>
+    {statutoryPolicyReady
+        ? `₹${employeePfAmount.toFixed(2)}`
+        : "Policy setup required"}
+</strong>
             </div>
 
             <div className="salary-summary-item">
