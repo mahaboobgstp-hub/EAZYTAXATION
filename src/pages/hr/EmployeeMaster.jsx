@@ -1930,6 +1930,47 @@ const annualCtc = monthlyCtc * 12;
                 {activeTab === "salary" && (
 
 <div className="salary-structure-layout">
+    
+<div
+    style={{
+        gridColumn: "1 / -1",
+        padding: "12px",
+        border: "1px solid #ddd",
+        borderRadius: "6px",
+        background: "#f8f9fa"
+    }}
+>
+    <h4>Company Statutory Policy</h4>
+
+    {statutoryPackageLoading ? (
+        <p>Loading statutory policy...</p>
+    ) : statutoryPackageError ? (
+        <p>{statutoryPackageError}</p>
+    ) : activeStatutoryPackage ? (
+        <>
+            <p>
+                <strong>
+                    {activeStatutoryPackage.policy_name}
+                </strong>
+            </p>
+            <p>
+                Version: {activeStatutoryPackage.version_number}
+            </p>
+            <p>
+                Effective from:{" "}
+                {activeStatutoryPackage.effective_from}
+            </p>
+            <p>Status: {activeStatutoryPackage.status}</p>
+        </>
+    ) : (
+        <p>
+            No active statutory package found for this company.
+            Employee statutory calculations are not yet connected
+            to the package.
+        </p>
+    )}
+</div>
+
 
         <h3
             style={{
