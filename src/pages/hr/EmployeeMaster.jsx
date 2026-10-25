@@ -1267,107 +1267,382 @@ setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
         }
 
     };
+    
     // =============================================
     // SALARY CONTRIBUTION & CTC CALCULATIONS
     // =============================================
 
-    
-const basicAmount =
-    Number(salaryStructure.basic_amount || 0);
+    const basicAmount =
+        Number(salaryStructure.basic_amount || 0);
 
-const daAmount =
-    Number(salaryStructure.da_amount || 0);
+    const hraAmount =
+        Number(salaryStructure.hra_amount || 0);
 
-const grossSalary =
-    basicAmount +
-    Number(salaryStructure.hra_amount || 0) +
-    daAmount +
-    Number(salaryStructure.special_allowance || 0) +
-    Number(salaryStructure.other_allowance || 0);
+    const daAmount =
+        Number(salaryStructure.da_amount || 0);
 
-// Additional earnings are included in gross salary.
-const additionalEarnings =
-    getComponentsByCategory("EARNING").reduce(
-        (total, component) => {
-            const assigned = getAssignedComponent(component);
-            return total + (
-                assigned ? getComponentAmount(assigned) : 0
+    const specialAllowanceAmount =
+        Number(salaryStructure.special_allowance || 0);
+
+    const otherAllowanceAmount =
+        Number(salaryStructure.other_allowance || 0);
+
+    const grossSalary =
+        basicAmount +
+        hraAmount +
+        daAmount +
+        specialAllowanceAmount +
+        otherAllowanceAmount;
+
+    const additionalEarnings =
+        getComponentsByCategory("EARNING").reduce(
+            (total, component) => {
+                const assigned = getAssignedComponent(component);
+                return total + (
+                    assigned ? getComponentAmount(assigned) : 0
+                );
+            },
+            0
+        );
+
+    const additionalReimbursements =
+        getComponentsByCategory("REIMBURSEMENT").reduce(
+            (total, component) => {
+                const assigned = getAssignedComponent(component);
+                return total + (
+                    assigned ? getComponentAmount(assigned) : 0
+                );
+            },
+            0
+        );
+
+    const totalGrossSalary =
+        grossSalary + additionalEarnings;
+
+    // ---------------------------------------------
+    // POLICY HELPERS
+    // ---------------------------------------------
+
+    const policyData =
+        activeStatutoryPackage?.policy_data || null;
+
+    const getPolicyNumber = (fieldName) => {
+        const value = policyData?.[fieldName];
+
+        if (
+            value === null ||
+            value === undefined ||
+            String(value).trim() === "" ||
+            !Number.isFinite(Number(value)) ||
+            Number(value) < 0
+        ) {
+            return null;
+        }
+
+        return Number(value);
+    };
+
+    const getPolicyBoolean = (fieldName) => {
+        const value = policyData?.[fieldName];
+
+        return typeof value === "boolean"
+            ? value
+            : null;
+    };
+
+    const roundContribution = (amount) =>
+        Math.round((amount + Number.EPSILON) * 100) / 100;
+
+    const capWage = (wage, ceiling) =>
+        ceiling === null
+            ? wage
+            : Math.min(wage, ceiling);
+
+    // ---------------------------------------------
+    // REQUIRED PACKAGE SETTINGS
+    // ---------------------------------------------
+
+    const requiredPolicyFields = [
+        "epf_employee_rate",
+        "epf_employer_total_rate",
+        "epf_employee_wage_ceiling",
+        "epf_employer_wage_ceiling",
+        "eps_employer_rate",
+        "eps_wage_ceiling",
+        "edli_employer_rate",
+        "edli_wage_ceiling",
+        "epf_admin_rate",
+        "epf_admin_minimum_amount",
+        "esi_employee_rate",
+        "esi_employer_rate",
+        "esi_employee_wage_ceiling",
+        "esi_employer_wage_ceiling"
+    ];
+
+    const missingPolicyFields = !policyData
+        ? ["Company statutory policy package"]
+        : requiredPolicyFields.filter(
+            fieldName => getPolicyNumber(fieldName) === null
+        );
+
+    const requiredPolicyBooleans = [
+        "epf_employee_applicable",
+        "epf_employer_applicable",
+        "eps_applicable",
+        "edli_applicable",
+        "epf_admin_applicable",
+        "esi_employee_applicable",
+        "esi_employer_applicable"
+    ];
+
+    if (policyData) {
+        requiredPolicyBooleans.forEach(fieldName => {
+            if (getPolicyBoolean(fieldName) === null) {
+                missingPolicyFields.push(fieldName);
+            }
+        });
+    }
+
+    const statutoryPolicyReady =
+        Boolean(activeStatutoryPackage) &&
+        missingPolicyFields.length === 0;
+
+    const statutoryCalculationWarning =
+        statutoryPackageLoading
+            ? "Loading company statutory policy..."
+            : statutoryPackageError
+                ? statutoryPackageError
+                : !activeStatutoryPackage
+                    ? "No active statutory policy package is available. Contributions cannot be calculated."
+                    : missingPolicyFields.length > 0
+                        ? "Missing policy settings: " +
+                          missingPolicyFields.join(", ")
+                        : "";
+
+    // ---------------------------------------------
+    // INITIALISE CONTRIBUTION AMOUNTS
+    // ---------------------------------------------
+
+    let employeePfAmount = 0;
+    let employerPfAmount = 0;
+    let employeeEsiAmount = 0;
+    let employerEsiAmount = 0;
+    let employerEpsAmount = 0;
+    let employerEdliAmount = 0;
+    let employerAdminCharges = 0;
+
+    let employeePfWage = 0;
+    let employerPfWage = 0;
+    let employeeEsiWage = 0;
+    let employerEsiWage = 0;
+
+    // ---------------------------------------------
+    // CALCULATE ONLY WHEN POLICY IS COMPLETE
+    // ---------------------------------------------
+
+    if (statutoryPolicyReady) {
+        const employeePfApplicable =
+            salaryStructure.is_pf_applicable &&
+            getPolicyBoolean("epf_employee_applicable");
+
+        const employerPfApplicable =
+            salaryStructure.is_pf_applicable &&
+            getPolicyBoolean("epf_employer_applicable");
+
+        const epsApplicable =
+            salaryStructure.is_pf_applicable &&
+            getPolicyBoolean("eps_applicable");
+
+        const edliApplicable =
+            salaryStructure.is_pf_applicable &&
+            getPolicyBoolean("edli_applicable");
+
+        const adminApplicable =
+            salaryStructure.is_pf_applicable &&
+            getPolicyBoolean("epf_admin_applicable");
+
+        // -----------------------------------------
+        // PF WAGE BASE
+        // -----------------------------------------
+
+        const employeePfBaseType =
+            policyData.epf_employee_calculation_base;
+
+        const employerPfBaseType =
+            policyData.epf_employer_calculation_base;
+
+        const getPfBase = (baseType) => {
+            if (baseType === "BASIC") {
+                return basicAmount;
+            }
+
+            if (baseType === "BASIC_DA") {
+                return basicAmount + daAmount;
+            }
+
+            throw new Error(
+                `Unsupported PF calculation base: ${baseType || "not configured"}`
             );
-        },
-        0
-    );
+        };
 
-// Reimbursements are tracked separately from gross salary
-// but included in CTC as requested.
-const additionalReimbursements =
-    getComponentsByCategory("REIMBURSEMENT").reduce(
-        (total, component) => {
-            const assigned = getAssignedComponent(component);
-            return total + (
-                assigned ? getComponentAmount(assigned) : 0
-            );
-        },
-        0
-    );
+        const employeePfBase =
+            getPfBase(employeePfBaseType);
 
-const totalGrossSalary =
-    grossSalary + additionalEarnings;
+        const employerPfBase =
+            getPfBase(employerPfBaseType);
 
-const employeePfRate =
-    Number(salaryStructure.employee_pf_rate || 0);
+        employeePfWage = employeePfApplicable
+            ? capWage(
+                employeePfBase,
+                getPolicyNumber("epf_employee_wage_ceiling")
+            )
+            : 0;
 
-const employerPfRate =
-    Number(salaryStructure.employer_pf_rate || 0);
+        employerPfWage = employerPfApplicable
+            ? capWage(
+                employerPfBase,
+                getPolicyNumber("epf_employer_wage_ceiling")
+            )
+            : 0;
 
-const employeeEsiRate =
-    Number(salaryStructure.employee_esi_rate || 0);
+        employeePfAmount = employeePfApplicable
+            ? roundContribution(
+                employeePfWage *
+                getPolicyNumber("epf_employee_rate") / 100
+            )
+            : 0;
 
-const employerEsiRate =
-    Number(salaryStructure.employer_esi_rate || 0);
+        employerPfAmount = employerPfApplicable
+            ? roundContribution(
+                employerPfWage *
+                getPolicyNumber("epf_employer_total_rate") / 100
+            )
+            : 0;
 
-// Temporary calculation bases.
-// These must ultimately come from the statutory rules engine.
-const pfWageBase = basicAmount + daAmount;
-const esiWageBase = totalGrossSalary;
+        // -----------------------------------------
+        // EPS
+        // -----------------------------------------
 
-const employeePfAmount =
-    salaryStructure.is_pf_applicable
-        ? (pfWageBase * employeePfRate) / 100
-        : 0;
+        const epsWage = epsApplicable
+            ? capWage(
+                employerPfBase,
+                getPolicyNumber("eps_wage_ceiling")
+            )
+            : 0;
 
-const employerPfAmount =
-    salaryStructure.is_pf_applicable
-        ? (pfWageBase * employerPfRate) / 100
-        : 0;
+        employerEpsAmount = epsApplicable
+            ? roundContribution(
+                epsWage *
+                getPolicyNumber("eps_employer_rate") / 100
+            )
+            : 0;
 
-const employeeEsiAmount =
-    salaryStructure.is_esi_applicable
-        ? (esiWageBase * employeeEsiRate) / 100
-        : 0;
+        // -----------------------------------------
+        // EDLI
+        // -----------------------------------------
 
-const employerEsiAmount =
-    salaryStructure.is_esi_applicable
-        ? (esiWageBase * employerEsiRate) / 100
-        : 0;
+        const edliWage = edliApplicable
+            ? capWage(
+                employerPfBase,
+                getPolicyNumber("edli_wage_ceiling")
+            )
+            : 0;
 
-const totalEmployeeContribution =
-    employeePfAmount + employeeEsiAmount;
+        employerEdliAmount = edliApplicable
+            ? roundContribution(
+                edliWage *
+                getPolicyNumber("edli_employer_rate") / 100
+            )
+            : 0;
 
-const totalEmployerContribution =
-    employerPfAmount + employerEsiAmount;
+        // -----------------------------------------
+        // EPF ADMINISTRATION CHARGES
+        // -----------------------------------------
 
-// EPS, EDLI and administration charges will be supplied
-// by the configurable statutory rules engine in a later step.
-const employerEpsAmount = null;
-const employerEdliAmount = null;
-const employerAdminCharges = null;
+        employerAdminCharges = adminApplicable
+            ? Math.max(
+                roundContribution(
+                    employerPfWage *
+                    getPolicyNumber("epf_admin_rate") / 100
+                ),
+                getPolicyNumber("epf_admin_minimum_amount")
+            )
+            : 0;
 
-const monthlyCtc =
-    totalGrossSalary +
-    totalEmployerContribution +
-    additionalReimbursements;
+        // -----------------------------------------
+        // ESI
+        // -----------------------------------------
 
-const annualCtc = monthlyCtc * 12;
+        const employeeEsiApplicable =
+            salaryStructure.is_esi_applicable &&
+            getPolicyBoolean("esi_employee_applicable");
+
+        const employerEsiApplicable =
+            salaryStructure.is_esi_applicable &&
+            getPolicyBoolean("esi_employer_applicable");
+
+        const employeeEsiCeiling =
+            getPolicyNumber("esi_employee_wage_ceiling");
+
+        const employerEsiCeiling =
+            getPolicyNumber("esi_employer_wage_ceiling");
+
+        // For this estimate, the configured ceiling is treated
+        // as an eligibility threshold, not as a wage cap.
+        // Verify contribution-period rules before production use.
+        const employeeEsiEligible =
+            totalGrossSalary <= employeeEsiCeiling;
+
+        const employerEsiEligible =
+            totalGrossSalary <= employerEsiCeiling;
+
+        employeeEsiWage =
+            employeeEsiApplicable && employeeEsiEligible
+                ? totalGrossSalary
+                : 0;
+
+        employerEsiWage =
+            employerEsiApplicable && employerEsiEligible
+                ? totalGrossSalary
+                : 0;
+
+        employeeEsiAmount =
+            employeeEsiWage > 0
+                ? roundContribution(
+                    employeeEsiWage *
+                    getPolicyNumber("esi_employee_rate") / 100
+                )
+                : 0;
+
+        employerEsiAmount =
+            employerEsiWage > 0
+                ? roundContribution(
+                    employerEsiWage *
+                    getPolicyNumber("esi_employer_rate") / 100
+                )
+                : 0;
+    }
+
+    // ---------------------------------------------
+    // TOTALS AND CTC
+    // ---------------------------------------------
+
+    const totalEmployeeContribution =
+        employeePfAmount + employeeEsiAmount;
+
+    const totalEmployerContribution =
+        employerPfAmount +
+        employerEpsAmount +
+        employerEdliAmount +
+        employerAdminCharges +
+        employerEsiAmount;
+
+    const monthlyCtc =
+        totalGrossSalary +
+        totalEmployerContribution +
+        additionalReimbursements;
+
+    const annualCtc = monthlyCtc * 12;
 
 
 
