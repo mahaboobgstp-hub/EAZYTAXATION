@@ -606,10 +606,66 @@ setMessage(
 
 
 export default function EmployeeSettings() {
+  export default function EmployeeSettings() {
+  const { currentCompanyId, loading: companyLoading } = useCompany();
+
   const [activeTab, setActiveTab] = useState("id");
   const [settings, setSettings] = useState(initialSettings);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
 
+      useEffect(() => {
+    let cancelled = false;
+
+    async function loadSettings() {
+      if (companyLoading) return;
+
+      if (!currentCompanyId) {
+        setSettings({ ...initialSettings });
+        setError("Please select a company.");
+        return;
+      }
+
+      setLoadingSettings(true);
+      setError("");
+      setMessage("");
+
+      try {
+        const savedSettings =
+          await getEmployeeIdSettings(currentCompanyId);
+
+        if (cancelled) return;
+
+        setSettings(
+          savedSettings || { ...initialSettings }
+        );
+
+        if (!savedSettings) {
+          setMessage(
+            "No Employee ID Settings exist for this company yet. Configure and save them."
+          );
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err.message || "Unable to load Employee ID Settings."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingSettings(false);
+        }
+      }
+    }
+
+    loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentCompanyId, companyLoading]);
   const updateSetting = (name, value) => {
     setSettings((previous) => ({
       ...previous,
@@ -666,14 +722,40 @@ export default function EmployeeSettings() {
     return true;
   };
 
-  const handleSave = (event) => {
+    const handleSave = async (event) => {
     event.preventDefault();
+    setMessage("");
+    setError("");
 
-    if (!validateSettings()) return;
+    if (companyLoading || !currentCompanyId) {
+      setError("Please select a company before saving.");
+      return;
+    }
 
-    setMessage(
-      "Validation successful. Permanent saving will be enabled after database integration."
-    );
+    if (!validateSettings()) {
+      setError(message);
+      setMessage("");
+      return;
+    }
+
+    setSavingSettings(true);
+
+    try {
+      const saved = await saveEmployeeIdSettings(
+        currentCompanyId,
+        settings
+      );
+
+      setSettings(saved);
+      setMessage("Employee ID Settings saved successfully.");
+      setError("");
+    } catch (err) {
+      setError(
+        err.message || "Unable to save Employee ID Settings."
+      );
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   return (
