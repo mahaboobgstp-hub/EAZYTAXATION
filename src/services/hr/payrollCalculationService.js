@@ -1211,6 +1211,19 @@ export function calculateEmployeePayroll(
 
         employer_esi:
             esiCalculation.employer_esi,
+        
+        pf_employee_wage:
+            pfCalculation.employee_pf_wage,
+
+        pf_employer_wage:
+            pfCalculation.employer_pf_wage,
+
+        esi_employee_wage:
+            esiCalculation.employee_esi_wage,
+
+        esi_employer_wage:
+            esiCalculation.employer_esi_wage,
+
 
         total_employer_contribution:
             totalEmployerContribution,
