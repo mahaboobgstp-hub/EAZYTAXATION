@@ -1057,18 +1057,25 @@ export default function EmployeeSettings() {
             </div>
           </div>
 
+          
+          {loadingSettings && (
+            <div className="es-message" role="status">
+              Loading Employee ID Settings...
+            </div>
+          )}
+
+          {error && (
+            <div className="es-message error" role="alert">
+              {error}
+            </div>
+          )}
+
           {message && (
-            <div
-              className={
-                message.startsWith("Validation successful")
-                  ? "es-message success"
-                  : "es-message error"
-              }
-              role="status"
-            >
+            <div className="es-message success" role="status">
               {message}
             </div>
           )}
+
 
           <div className="es-actions">
             <button
