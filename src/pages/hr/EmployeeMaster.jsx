@@ -2236,6 +2236,11 @@ setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
                 {activeStatutoryPackage.effective_from}
             </p>
             <p>Status: {activeStatutoryPackage.status}</p>
+            {statutoryCalculationWarning && (
+    <p style={{ color: "#b45309", marginTop: "8px" }}>
+        {statutoryCalculationWarning}
+    </p>
+)}
         </>
     ) : (
         <p>
