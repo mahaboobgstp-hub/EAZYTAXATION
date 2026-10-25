@@ -215,6 +215,12 @@ const [salaryStructure, setSalaryStructure] =
 const [availableTdsPolicies, setAvailableTdsPolicies] = useState([]);
 const [tdsPolicyId, setTdsPolicyId] = useState("");
 const [tdsPolicyLoading, setTdsPolicyLoading] = useState(false);
+    // Professional Tax policy UI state.
+// The PT catalogue will be connected after the UI is approved.
+const [availablePTPolicies, setAvailablePTPolicies] = useState([]);
+const [ptPolicyId, setPTPolicyId] = useState("");
+const [ptApplicable, setPTApplicable] = useState(false);
+const [tdsApplicable, setTdsApplicable] = useState(false);
 
 
 const [salaryComponents, setSalaryComponents] =
@@ -227,6 +233,7 @@ const [statutoryPackageLoading, setStatutoryPackageLoading] =
     useState(false);
 const [statutoryPackageError, setStatutoryPackageError] =
     useState("");
+    
  
     const [
     activeTab,
@@ -279,6 +286,10 @@ const [
        setActiveStatutoryPackage(null);
 setStatutoryPackageError("");
 setTdsPolicyId("");
+       setPTPolicyId("");
+setPTApplicable(false);
+setTdsApplicable(false);
+setAvailablePTPolicies([]);
     setFormData(
         defaultFormData
     );
@@ -1171,6 +1182,13 @@ const { data: tdsAssignments, error: tdsAssignmentError } =
 if (tdsAssignmentError) throw tdsAssignmentError;
 
 setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
+        setPTPolicyId("");
+setPTApplicable(
+    salaryData.structure?.is_pt_applicable ?? false
+);
+setTdsApplicable(
+    salaryData.structure?.is_tds_applicable ?? false
+);
 
         window.scrollTo({
 
@@ -2788,324 +2806,275 @@ setTdsPolicyId(tdsAssignments?.[0]?.policy_id || "");
 
 )}
 
-              {activeTab === "taxes" && (
+              
+{activeTab === "taxes" && (
+    <div className="employee-tax-layout">
 
-    <div
-        style={{
-            display: "grid",
-            gridTemplateColumns:
-                "repeat(2, minmax(250px, 1fr))",
-            gap: "15px"
-        }}
-    >
-
-        <h3
-            style={{
-                gridColumn: "1 / -1"
-            }}
-        >
-            Tax Configuration
-        </h3>
-
+        <div className="employee-tax-heading">
+            <h3>Tax Configuration</h3>
+            <p>
+                Assign company-configured statutory tax policies
+                and maintain employee-specific applicability.
+            </p>
+        </div>
 
         {/* PROFESSIONAL TAX */}
-
-        <h4
-            style={{
-                gridColumn: "1 / -1",
-                marginBottom: "0"
-            }}
-        >
-            Professional Tax
-        </h4>
-
-
-        <div>
-
-            <label>
-                Professional Tax State
-            </label>
-
-            <select
-                name="professional_tax_state"
-                value={
-                    salaryStructure.professional_tax_state
-                }
-                onChange={
-                    handleSalaryStructureChange
-                }
-            >
-
-                <option value="">
-                    Select State
-                </option>
-
-                <option value="Andhra Pradesh">
-                    Andhra Pradesh
-                </option>
-
-                <option value="Arunachal Pradesh">
-                    Arunachal Pradesh
-                </option>
-
-                <option value="Assam">
-                    Assam
-                </option>
-
-                <option value="Bihar">
-                    Bihar
-                </option>
-
-                <option value="Chhattisgarh">
-                    Chhattisgarh
-                </option>
-
-                <option value="Goa">
-                    Goa
-                </option>
-
-                <option value="Gujarat">
-                    Gujarat
-                </option>
-
-                <option value="Haryana">
-                    Haryana
-                </option>
-
-                <option value="Himachal Pradesh">
-                    Himachal Pradesh
-                </option>
-
-                <option value="Jharkhand">
-                    Jharkhand
-                </option>
-
-                <option value="Karnataka">
-                    Karnataka
-                </option>
-
-                <option value="Kerala">
-                    Kerala
-                </option>
-
-                <option value="Madhya Pradesh">
-                    Madhya Pradesh
-                </option>
-
-                <option value="Maharashtra">
-                    Maharashtra
-                </option>
-
-                <option value="Manipur">
-                    Manipur
-                </option>
-
-                <option value="Meghalaya">
-                    Meghalaya
-                </option>
-
-                <option value="Mizoram">
-                    Mizoram
-                </option>
-
-                <option value="Nagaland">
-                    Nagaland
-                </option>
-
-                <option value="Odisha">
-                    Odisha
-                </option>
-
-                <option value="Punjab">
-                    Punjab
-                </option>
-
-                <option value="Rajasthan">
-                    Rajasthan
-                </option>
-
-                <option value="Sikkim">
-                    Sikkim
-                </option>
-
-                <option value="Tamil Nadu">
-                    Tamil Nadu
-                </option>
-
-                <option value="Telangana">
-                    Telangana
-                </option>
-
-                <option value="Tripura">
-                    Tripura
-                </option>
-
-                <option value="Uttar Pradesh">
-                    Uttar Pradesh
-                </option>
-
-                <option value="Uttarakhand">
-                    Uttarakhand
-                </option>
-
-                <option value="West Bengal">
-                    West Bengal
-                </option>
-
-                <option value="Andaman and Nicobar Islands">
-                    Andaman and Nicobar Islands
-                </option>
-
-                <option value="Chandigarh">
-                    Chandigarh
-                </option>
-
-                <option value="Dadra and Nagar Haveli and Daman and Diu">
-                    Dadra and Nagar Haveli and Daman and Diu
-                </option>
-
-                <option value="Delhi">
-                    Delhi
-                </option>
-
-                <option value="Jammu and Kashmir">
-                    Jammu and Kashmir
-                </option>
-
-                <option value="Ladakh">
-                    Ladakh
-                </option>
-
-                <option value="Lakshadweep">
-                    Lakshadweep
-                </option>
-
-                <option value="Puducherry">
-                    Puducherry
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div
-            style={{
-                padding: "12px",
-                background: "#f8f9fa",
-                border: "1px solid #ddd",
-                borderRadius: "6px"
-            }}
-        >
-
-            <strong>
-                Professional Tax
-            </strong>
-
-            <div style={{ marginTop: "6px" }}>
-                Automatically calculated according
-                to the selected state and applicable
-                Professional Tax rules.
+        <section className="employee-tax-section">
+            <div className="employee-tax-section-heading">
+                <div>
+                    <h4>Professional Tax (PT)</h4>
+                    <p>
+                        Select the applicable state and PT policy
+                        for this employee.
+                    </p>
+                </div>
+                <label className="employee-tax-toggle">
+                    <input
+                        type="checkbox"
+                        checked={ptApplicable}
+                        onChange={(event) => {
+                            const checked = event.target.checked;
+                            setPTApplicable(checked);
+                            setSalaryStructure(previous => ({
+                                ...previous,
+                                is_pt_applicable: checked
+                            }));
+                        }}
+                    />
+                    PT Applicable
+                </label>
             </div>
 
+            <div className="employee-tax-grid">
+                <label className="employee-form-field">
+                    Professional Tax State
+                    <select
+                        name="professional_tax_state"
+                        value={salaryStructure.professional_tax_state || ""}
+                        onChange={(event) => {
+                            handleSalaryStructureChange(event);
+                            setPTPolicyId("");
+                        }}
+                        disabled={!ptApplicable}
+                    >
+                        <option value="">Select State / UT</option>
+                        {[
+                            "Andhra Pradesh",
+                            "Arunachal Pradesh",
+                            "Assam",
+                            "Bihar",
+                            "Chhattisgarh",
+                            "Goa",
+                            "Gujarat",
+                            "Haryana",
+                            "Himachal Pradesh",
+                            "Jharkhand",
+                            "Karnataka",
+                            "Kerala",
+                            "Madhya Pradesh",
+                            "Maharashtra",
+                            "Manipur",
+                            "Meghalaya",
+                            "Mizoram",
+                            "Nagaland",
+                            "Odisha",
+                            "Punjab",
+                            "Rajasthan",
+                            "Sikkim",
+                            "Tamil Nadu",
+                            "Telangana",
+                            "Tripura",
+                            "Uttar Pradesh",
+                            "Uttarakhand",
+                            "West Bengal",
+                            "Andaman and Nicobar Islands",
+                            "Chandigarh",
+                            "Dadra and Nagar Haveli and Daman and Diu",
+                            "Delhi",
+                            "Jammu and Kashmir",
+                            "Ladakh",
+                            "Lakshadweep",
+                            "Puducherry"
+                        ].map(state => (
+                            <option key={state} value={state}>
+                                {state}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="employee-form-field">
+                    Professional Tax Policy
+                    <select
+                        value={ptPolicyId}
+                        onChange={(event) =>
+                            setPTPolicyId(event.target.value)
+                        }
+                        disabled={
+                            !ptApplicable ||
+                            !salaryStructure.professional_tax_state
+                        }
+                    >
+                        <option value="">
+                            {ptApplicable
+                                ? "PT policy catalogue not connected yet"
+                                : "Enable PT applicability first"}
+                        </option>
+                        {availablePTPolicies
+                            .filter(policy =>
+                                policy.state_name ===
+                                salaryStructure.professional_tax_state
+                            )
+                            .map(policy => (
+                                <option
+                                    key={policy.id}
+                                    value={policy.id}
+                                >
+                                    {policy.policy_name}
+                                </option>
+                            ))}
+                    </select>
+                    <small>
+                        Policy selection becomes available when the PT
+                        catalogue is connected to saved policy records.
+                    </small>
+                </label>
+
+                <div className="employee-tax-info">
+                    <strong>Policy assignment status</strong>
+                    <p>
+                        {ptApplicable
+                            ? ptPolicyId
+                                ? "A PT policy is selected in this UI."
+                                : "No PT policy selected."
+                            : "Professional Tax is marked as not applicable."}
+                    </p>
+                    <small>
+                        This status is a UI preview, not a saved assignment.
+                    </small>
+                </div>
+            </div>
+        </section>
+
+        {/* INCOME TAX / TDS */}
+        <section className="employee-tax-section">
+            <div className="employee-tax-section-heading">
+                <div>
+                    <h4>Income Tax / TDS</h4>
+                    <p>
+                        Assign an active company TDS policy to the employee.
+                    </p>
+                </div>
+                <label className="employee-tax-toggle">
+                    <input
+                        type="checkbox"
+                        checked={tdsApplicable}
+                        onChange={(event) => {
+                            const checked = event.target.checked;
+                            setTdsApplicable(checked);
+                            setSalaryStructure(previous => ({
+                                ...previous,
+                                is_tds_applicable: checked
+                            }));
+
+                            if (!checked) {
+                                setTdsPolicyId("");
+                                setSalaryStructure(previous => ({
+                                    ...previous,
+                                    tds_regime: "NEW"
+                                }));
+                            }
+                        }}
+                    />
+                    TDS Applicable
+                </label>
+            </div>
+
+            <div className="employee-tax-grid">
+                <label className="employee-form-field">
+                    Salary TDS Policy
+                    <select
+                        id="employee_tds_policy_id"
+                        value={tdsPolicyId}
+                        onChange={(event) => {
+                            const policyId = event.target.value;
+                            setTdsPolicyId(policyId);
+
+                            const selectedPolicy =
+                                availableTdsPolicies.find(
+                                    policy => policy.id === policyId
+                                );
+
+                            if (selectedPolicy) {
+                                setSalaryStructure(previous => ({
+                                    ...previous,
+                                    tds_regime: selectedPolicy.tax_regime
+                                }));
+                            }
+                        }}
+                        disabled={
+                            !tdsApplicable || tdsPolicyLoading
+                        }
+                    >
+                        <option value="">
+                            {!tdsApplicable
+                                ? "Enable TDS applicability first"
+                                : tdsPolicyLoading
+                                    ? "Loading TDS policies..."
+                                    : "Select salary TDS policy"}
+                        </option>
+
+                        {availableTdsPolicies.map(policy => (
+                            <option key={policy.id} value={policy.id}>
+                                {policy.policy_code} — {policy.policy_name}
+                                {" ("}{policy.tax_year}{")"}
+                            </option>
+                        ))}
+                    </select>
+                    <small>
+                        Only active policies returned by the existing
+                        company-specific TDS service are displayed.
+                    </small>
+                </label>
+
+                <label className="employee-form-field">
+                    Assigned Tax Regime
+                    <input
+                        value={
+                            salaryStructure.tds_regime === "OLD"
+                                ? "Old Tax Regime"
+                                : "New Tax Regime"
+                        }
+                        readOnly
+                    />
+                </label>
+
+                <div className="employee-tax-info">
+                    <strong>TDS calculation information</strong>
+                    <p>
+                        The eventual payroll calculation will depend on
+                        annual taxable income, declarations, tax already
+                        deducted and remaining payroll periods.
+                    </p>
+                    <small>
+                        Selecting a policy here does not calculate final
+                        TDS or activate payroll calculations.
+                    </small>
+                </div>
+            </div>
+        </section>
+
+        <div className="employee-tax-note">
+            <strong>Important</strong>
+            <p>
+                These controls manage the Taxes tab UI. PT policy
+                persistence and employee PT assignment are not connected
+                yet. Existing TDS service integration remains separate.
+            </p>
         </div>
-
-
-        {/* TDS */}
-
-        <h4
-            style={{
-                gridColumn: "1 / -1",
-                marginTop: "20px",
-                marginBottom: "0"
-            }}
-        >
-            Income Tax / TDS
-        </h4>
-
-
-        
-<div>
-    <label htmlFor="employee_tds_policy_id">
-        Salary TDS Policy
-    </label>
-
-    <select
-        id="employee_tds_policy_id"
-        value={tdsPolicyId}
-        onChange={(event) => {
-            const policyId = event.target.value;
-            setTdsPolicyId(policyId);
-
-            const selectedPolicy = availableTdsPolicies.find(
-                policy => policy.id === policyId
-            );
-
-            if (selectedPolicy) {
-                setSalaryStructure(previous => ({
-                    ...previous,
-                    tds_regime: selectedPolicy.tax_regime
-                }));
-            }
-        }}
-        disabled={tdsPolicyLoading}
-    >
-        <option value="">
-            {tdsPolicyLoading
-                ? "Loading TDS policies..."
-                : "Select salary TDS policy"}
-        </option>
-
-        {availableTdsPolicies.map(policy => (
-            <option key={policy.id} value={policy.id}>
-                {policy.policy_code} — {policy.policy_name}
-                {" ("}{policy.tax_year}{")"}
-            </option>
-        ))}
-    </select>
-
-    <small>
-        Only active company policies are available. Create and activate
-        a policy in Statutory Configuration first.
-    </small>
-</div>
-
-<div>
-    <label>Assigned Tax Regime</label>
-
-    <input
-        value={
-            salaryStructure.tds_regime === "OLD"
-                ? "Old Tax Regime"
-                : "New Tax Regime"
-        }
-        readOnly
-    />
-</div>
-
-<div
-    style={{
-        gridColumn: "1 / -1",
-        padding: "12px",
-        background: "#f8f9fa",
-        border: "1px solid #ddd",
-        borderRadius: "6px"
-    }}
->
-    <strong>Salary TDS</strong>
-
-    <p>
-        The assigned policy will provide the tax slabs and policy settings
-        used by payroll. The final TDS amount depends on estimated annual
-        taxable income, declarations, tax already deducted and the
-        remaining payroll periods.
-    </p>
-</div>
-
-
     </div>
-
 )}
+
 
               {activeTab === "deductions" && (
 
