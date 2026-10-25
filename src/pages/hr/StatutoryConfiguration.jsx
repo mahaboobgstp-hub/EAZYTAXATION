@@ -57,6 +57,29 @@ const initialPTForm = {
     remarks: ""
 };
 
+
+const initialPTPolicyForm = {
+    policy_name: "",
+    state_id: "",
+    effective_from: "",
+    effective_to: "",
+    salary_basis: "GROSS_MONTHLY",
+    collection_frequency: "MONTHLY",
+    special_collection_month: "",
+    exemption_rules: "",
+    source_reference: "",
+    remarks: "",
+    is_enabled: true
+};
+
+const initialPTSlab = {
+    salary_from: "0",
+    salary_to: "",
+    pt_amount: "0",
+    remarks: ""
+};
+
+
 const initialComponents = {
     effective_from: "",
     effective_to: "",
@@ -345,6 +368,13 @@ function StatutoryConfiguration() {
     const [ptRegistrations, setPTRegistrations] = useState([]);
     const [ptForm, setPTForm] = useState(initialPTForm);
     const [editingPTId, setEditingPTId] = useState(null);
+    
+const [ptPolicyForm, setPTPolicyForm] = useState(initialPTPolicyForm);
+const [ptSlabs, setPTSlabs] = useState([
+    { ...initialPTSlab }
+]);
+const [ptPolicyEditing, setPTPolicyEditing] = useState(false);
+
     const [components, setComponents] = useState(initialComponents);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -453,6 +483,140 @@ setTdsPolicies(policyData || []);
         const { name, value } = event.target;
         setPTForm(previous => ({ ...previous, [name]: value }));
     }
+
+    
+function handlePTPolicyChange(event) {
+    const { name, value, type, checked } = event.target;
+
+    setPTPolicyForm(previous => ({
+        ...previous,
+        [name]: type === "checkbox" ? checked : value
+    }));
+}
+
+function handlePTSlabChange(index, field, value) {
+    setPTSlabs(previous =>
+        previous.map((slab, i) =>
+            i === index
+                ? { ...slab, [field]: value }
+                : slab
+        )
+    );
+}
+
+function addPTSlab() {
+    setPTSlabs(previous => {
+        const last = previous[previous.length - 1];
+
+        return [
+            ...previous.map((slab, index) =>
+                index === previous.length - 1 && !slab.salary_to
+                    ? { ...slab, salary_to: "" }
+                    : slab
+            ),
+            {
+                ...initialPTSlab,
+                salary_from: last?.salary_to || ""
+            }
+        ];
+    });
+}
+
+function removePTSlab(index) {
+    setPTSlabs(previous =>
+        previous.filter((_, i) => i !== index)
+    );
+}
+
+function resetPTPolicyForm() {
+    setPTPolicyForm(initialPTPolicyForm);
+    setPTSlabs([{ ...initialPTSlab }]);
+    setPTPolicyEditing(false);
+    setMessage("");
+    setErrorMessage("");
+}
+
+function handleSavePTPolicyDraft() {
+    if (!ptPolicyForm.state_id) {
+        setErrorMessage("Select a State/UT for the PT policy.");
+        return;
+    }
+
+    if (!ptPolicyForm.policy_name.trim()) {
+        setErrorMessage("Enter a PT policy name.");
+        return;
+    }
+
+    if (!ptPolicyForm.effective_from) {
+        setErrorMessage("Enter the policy effective-from date.");
+        return;
+    }
+
+    if (
+        ptPolicyForm.effective_to &&
+        ptPolicyForm.effective_to < ptPolicyForm.effective_from
+    ) {
+        setErrorMessage(
+            "Effective-to date cannot precede effective-from date."
+        );
+        return;
+    }
+
+    if (ptSlabs.length === 0) {
+        setErrorMessage("Add at least one salary slab.");
+        return;
+    }
+
+    for (let i = 0; i < ptSlabs.length; i++) {
+        const slab = ptSlabs[i];
+        const from = Number(slab.salary_from);
+        const to = slab.salary_to === "" ? null : Number(slab.salary_to);
+        const amount = Number(slab.pt_amount);
+
+        if (
+            slab.salary_from === "" ||
+            !Number.isFinite(from) ||
+            from < 0 ||
+            (to !== null && (!Number.isFinite(to) || to <= from)) ||
+            slab.pt_amount === "" ||
+            !Number.isFinite(amount) ||
+            amount < 0
+        ) {
+            setErrorMessage(
+                `Check the minimum salary, maximum salary and PT amount in slab ${i + 1}.`
+            );
+            return;
+        }
+
+        if (to === null && i !== ptSlabs.length - 1) {
+            setErrorMessage(
+                "Only the last salary slab can have no upper limit."
+            );
+            return;
+        }
+
+        if (i > 0) {
+            const previousTo = ptSlabs[i - 1].salary_to;
+
+            if (
+                previousTo === "" ||
+                from !== Number(previousTo)
+            ) {
+                setErrorMessage(
+                    `Slab ${i + 1} must start where the previous slab ends.`
+                );
+                return;
+            }
+        }
+    }
+
+    // UI phase only: no database write is performed here.
+    setMessage(
+        "PT policy form validated. Database saving and policy history will be connected after the PT policy table and service are confirmed."
+    );
+    setErrorMessage("");
+}
+
 
 function handleTdsPolicyChange(event) {
     const { name, value } = event.target;
@@ -2178,6 +2342,282 @@ alert(
 
                     {activeTab === "pt" && (
                         <>
+                            
+<Section
+    title="Professional Tax Policy Master"
+    description="Configure state-specific professional tax rules independently from employer registration details."
+>
+    <div className="sc-notice">
+        <strong>Policy configuration</strong>
+        <p>
+            Configure the applicable State/UT rules and salary slabs.
+            Leave legal values unverified until checked against the
+            relevant official state notification.
+        </p>
+    </div>
+
+    <div className="sc-grid">
+        <Field
+            label="State / UT"
+            name="state_id"
+            value={ptPolicyForm.state_id}
+            onChange={handlePTPolicyChange}
+            options={[
+                { value: "", label: "Select State / UT" },
+                ...states.map(state => ({
+                    value: state.id,
+                    label: state.state_name
+                }))
+            ]}
+        />
+
+        <Field
+            label="Policy Name"
+            name="policy_name"
+            value={ptPolicyForm.policy_name}
+            onChange={handlePTPolicyChange}
+            placeholder="e.g. Andhra Pradesh PT Policy"
+        />
+
+        <Field
+            label="Effective From"
+            name="effective_from"
+            type="date"
+            value={ptPolicyForm.effective_from}
+            onChange={handlePTPolicyChange}
+        />
+
+        <Field
+            label="Effective To (optional)"
+            name="effective_to"
+            type="date"
+            value={ptPolicyForm.effective_to}
+            onChange={handlePTPolicyChange}
+        />
+
+        <Field
+            label="Salary Basis"
+            name="salary_basis"
+            value={ptPolicyForm.salary_basis}
+            onChange={handlePTPolicyChange}
+            options={[
+                { value: "GROSS_MONTHLY", label: "Monthly gross salary" },
+                { value: "BASIC_DA", label: "Basic + DA" },
+                { value: "CONFIGURED_COMPONENTS", label: "Configured eligible components" },
+                { value: "OTHER", label: "Other / configured basis" }
+            ]}
+        />
+
+        <Field
+            label="Collection Frequency"
+            name="collection_frequency"
+            value={ptPolicyForm.collection_frequency}
+            onChange={handlePTPolicyChange}
+            options={[
+                { value: "MONTHLY", label: "Monthly" },
+                { value: "QUARTERLY", label: "Quarterly" },
+                { value: "HALF_YEARLY", label: "Half-yearly" },
+                { value: "ANNUALLY", label: "Annually" },
+                { value: "CONFIGURED", label: "Other / configured" }
+            ]}
+        />
+
+        <Field
+            label="Special Collection Month (optional)"
+            name="special_collection_month"
+            value={ptPolicyForm.special_collection_month}
+            onChange={handlePTPolicyChange}
+            options={[
+                { value: "", label: "No special month configured" },
+                { value: "1", label: "January" },
+                { value: "2", label: "February" },
+                { value: "3", label: "March" },
+                { value: "4", label: "April" },
+                { value: "5", label: "May" },
+                { value: "6", label: "June" },
+                { value: "7", label: "July" },
+                { value: "8", label: "August" },
+                { value: "9", label: "September" },
+                { value: "10", label: "October" },
+                { value: "11", label: "November" },
+                { value: "12", label: "December" }
+            ]}
+        />
+
+        <Field
+            label="Official Source Reference"
+            name="source_reference"
+            value={ptPolicyForm.source_reference}
+            onChange={handlePTPolicyChange}
+            placeholder="Notification / Act / official URL"
+        />
+
+        <Field
+            label="Exemption Rules / Notes"
+            name="exemption_rules"
+            value={ptPolicyForm.exemption_rules}
+            onChange={handlePTPolicyChange}
+            type="textarea"
+            placeholder="Describe verified exemptions or special conditions"
+        />
+
+        <Field
+            label="Policy Remarks"
+            name="remarks"
+            value={ptPolicyForm.remarks}
+            onChange={handlePTPolicyChange}
+            type="textarea"
+        />
+    </div>
+
+    <div className="sc-divider" />
+
+    <Section
+        title="Professional Tax Salary Slabs"
+        description="Each slab specifies the eligible salary range and the tax amount. Values are configurable, not hard-coded by state."
+    >
+        <div className="sc-table-wrap">
+            <table className="sc-table">
+                <thead>
+                    <tr>
+                        <th>Salary From (₹)</th>
+                        <th>Salary To (₹)</th>
+                        <th>PT Amount (₹)</th>
+                        <th>Slab Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {ptSlabs.map((slab, index) => (
+                        <tr key={index}>
+                            <td>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={slab.salary_from}
+                                    onChange={event =>
+                                        handlePTSlabChange(
+                                            index,
+                                            "salary_from",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </td>
+
+                            <td>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={slab.salary_to}
+                                    placeholder={
+                                        index === ptSlabs.length - 1
+                                            ? "No upper limit"
+                                            : "Enter maximum"
+                                    }
+                                    onChange={event =>
+                                        handlePTSlabChange(
+                                            index,
+                                            "salary_to",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </td>
+
+                            <td>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={slab.pt_amount}
+                                    onChange={event =>
+                                        handlePTSlabChange(
+                                            index,
+                                            "pt_amount",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </td>
+
+                            <td>
+                                <input
+                                    type="text"
+                                    value={slab.remarks}
+                                    placeholder="Optional"
+                                    onChange={event =>
+                                        handlePTSlabChange(
+                                            index,
+                                            "remarks",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </td>
+
+                            <td>
+                                <button
+                                    type="button"
+                                    className="sc-link-button danger"
+                                    disabled={ptSlabs.length <= 1}
+                                    onClick={() => removePTSlab(index)}
+                                >
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+
+        <div className="sc-actions">
+            <button
+                type="button"
+                className="sc-button secondary"
+                onClick={addPTSlab}
+            >
+                + Add Salary Slab
+            </button>
+        </div>
+    </Section>
+
+    <Section
+        title="Policy Status"
+        description="Status is a UI placeholder until policy persistence is implemented."
+    >
+        <Toggle
+            label="Enable this policy"
+            name="is_enabled"
+            checked={ptPolicyForm.is_enabled}
+            onChange={handlePTPolicyChange}
+            help="Does not activate or apply the policy to payroll in this UI-only phase."
+        />
+    </Section>
+
+    <div className="sc-actions">
+        <button
+            type="button"
+            className="sc-button secondary"
+            onClick={resetPTPolicyForm}
+        >
+            Clear Form
+        </button>
+
+        <button
+            type="button"
+            className="sc-button primary"
+            onClick={handleSavePTPolicyDraft}
+        >
+            Validate PT Policy Draft
+        </button>
+    </div>
+</Section>
+
                             <Section
                                 title="Professional Tax Registrations"
                                 description="Maintain the company's state-specific employer and enrolment registrations."
