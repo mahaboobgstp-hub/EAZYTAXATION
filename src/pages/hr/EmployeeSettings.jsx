@@ -605,7 +605,7 @@ setMessage(
 }
 
 
-export default function EmployeeSettings() {
+
   export default function EmployeeSettings() {
   const { currentCompanyId, loading: companyLoading } = useCompany();
 
