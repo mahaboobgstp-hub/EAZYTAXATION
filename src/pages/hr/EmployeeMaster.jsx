@@ -276,6 +276,8 @@ const [
     setLocations([]);
     setAvailableSalaryComponents([]);
        setAvailableTdsPolicies([]);
+       setActiveStatutoryPackage(null);
+setStatutoryPackageError("");
 setTdsPolicyId("");
     setFormData(
         defaultFormData
@@ -299,6 +301,7 @@ setTdsPolicyId("");
     loadLocations(currentCompanyId);
     loadAvailableSalaryComponents(currentCompanyId);    
         loadAvailableTdsPolicies(currentCompanyId);
+        loadActiveStatutoryPackage(currentCompanyId);
 
 }, [currentCompanyId]);
 
@@ -435,6 +438,47 @@ const loadAvailableTdsPolicies = async (companyId) => {
         alert(error.message || "Unable to load TDS policies.");
     } finally {
         setTdsPolicyLoading(false);
+    }
+};
+
+
+        
+const loadActiveStatutoryPackage = async (
+    companyId,
+    effectiveDate
+) => {
+    if (!companyId) {
+        setActiveStatutoryPackage(null);
+        setStatutoryPackageError("");
+        return;
+    }
+
+    setStatutoryPackageLoading(true);
+    setStatutoryPackageError("");
+
+    try {
+        const policy = effectiveDate
+            ? await getStatutoryPolicyPackageForDate(
+                  companyId,
+                  effectiveDate
+              )
+            : await getActiveStatutoryPolicyPackage(companyId);
+
+        setActiveStatutoryPackage(
+            policy?.status === "ACTIVE" ? policy : null
+        );
+    } catch (error) {
+        console.error(
+            "Unable to load active statutory package:",
+            error
+        );
+        setActiveStatutoryPackage(null);
+        setStatutoryPackageError(
+            error.message ||
+            "Unable to load statutory policy."
+        );
+    } finally {
+        setStatutoryPackageLoading(false);
     }
 };
 
