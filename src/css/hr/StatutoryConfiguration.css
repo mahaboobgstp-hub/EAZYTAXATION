@@ -434,3 +434,135 @@
     }
 }
 
+
+
+/* =========================================
+   STATUTORY POLICY HISTORY UI
+========================================= */
+
+.sc-history-toolbar {
+    display: grid;
+    grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(130px, 1fr));
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 20px;
+}
+
+.sc-history-search,
+.sc-history-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.sc-history-toolbar label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.sc-history-toolbar input,
+.sc-history-toolbar select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 9px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #1e293b;
+    font: inherit;
+}
+
+.sc-history-category {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sc-history-results-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.sc-history-results-heading h4 {
+    margin: 0 0 5px;
+}
+
+.sc-history-results-heading p {
+    margin: 0;
+}
+
+.sc-history-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.sc-history-detail,
+.sc-history-placeholder {
+    margin-top: 20px;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.sc-history-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.sc-history-detail-grid > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-wrap: anywhere;
+}
+
+.sc-history-detail-grid span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.sc-history-detail-grid strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.sc-history-placeholder p {
+    line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+    .sc-history-toolbar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sc-history-results-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .sc-history-detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sc-history-category {
+        flex-direction: column;
+    }
+
+    .sc-history-category .sc-button {
+        width: 100%;
+    }
+}
