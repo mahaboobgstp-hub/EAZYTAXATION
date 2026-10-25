@@ -9,6 +9,10 @@ import {
   activateSalaryComponent,
   deactivateSalaryComponent,
 } from "../../services/hr/salaryComponentService";
+import {
+  getEmployeeIdSettings,
+  saveEmployeeIdSettings,
+} from "../../services/hr/employeeIdSettingsService";
 
 
 const initialSettings = {
