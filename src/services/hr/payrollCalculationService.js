@@ -1107,6 +1107,16 @@ export function calculateEmployeePayroll(
 
 
         // -----------------------------------------
+        // STATUTORY POLICY AUDIT REFERENCE
+        // -----------------------------------------
+
+        statutory_policy_package_id:
+            options.statutory_policy_package?.id || null,
+
+        statutory_policy_package_version:
+            options.statutory_policy_package?.version_number ?? null,
+
+        // -----------------------------------------
         // ORIGINAL SALARY
         // -----------------------------------------
 
