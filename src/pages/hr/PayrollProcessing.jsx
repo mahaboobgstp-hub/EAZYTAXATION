@@ -28,6 +28,11 @@ import {
     calculatePayrollTotals
 } from "../../services/hr/payrollCalculationService";
 
+import {
+    getStatutoryPolicyPackageForDate
+} from "../../services/hr/statutoryPolicyService";
+
+
 
 
 function PayrollProcessing() {
@@ -527,6 +532,43 @@ const [designationId, setDesignationId] =
                 }
 
 
+                // ---------------------------------
+                // RESOLVE STATUTORY PACKAGE
+                // FOR THIS PAYROLL PERIOD
+                // ---------------------------------
+
+                const statutoryPolicyPackage =
+                    await getStatutoryPolicyPackageForDate(
+                        currentCompanyId,
+                        payrollPeriod.period_from
+                    );
+
+                if (!statutoryPolicyPackage) {
+                    throw new Error(
+                        `No statutory policy package covers ` +
+                        `${payrollPeriod.period_from} for the selected company. ` +
+                        `Create and activate a package before calculating payroll.`
+                    );
+                }
+
+                if (
+                    statutoryPolicyPackage.status !== "ACTIVE" &&
+                    statutoryPolicyPackage.status !== "SUPERSEDED"
+                ) {
+                    throw new Error(
+                        "The resolved statutory policy package is not eligible for payroll."
+                    );
+                }
+
+                if (
+                    !statutoryPolicyPackage.policy_data ||
+                    typeof statutoryPolicyPackage.policy_data !== "object"
+                ) {
+                    throw new Error(
+                        "The resolved statutory policy package has no valid configuration."
+                    );
+                }
+
 
                 // ---------------------------------
                 // GET ACTIVE EMPLOYEES
@@ -734,47 +776,52 @@ const employees =
 
 
 
-                    // -----------------------------
-                    // CALCULATE PAYROLL
-                    // -----------------------------
+                    
+                    const payroll =
+                        calculateEmployeePayroll(
+                            employee,
+                            salaryStructure,
+                            attendance,
+                            payrollYear,
+                            payrollMonth,
+                            {
+                                overtime_rate: 0,
+                                professional_tax: 0,
+                                tds_deduction: 0,
+                                other_deductions: 0,
+                                reimbursement_amount: 0,
+                                additional_earnings: 0,
+
+                                // Company policy package selected
+                                // for this payroll period.
+                                statutory_policy_package:
+                                    statutoryPolicyPackage
+                            }
+                        );
+
+
 
                     const payroll =
                         calculateEmployeePayroll(
-
                             employee,
-
                             salaryStructure,
-
                             attendance,
-
                             payrollYear,
-
                             payrollMonth,
-
                             {
+                                overtime_rate: 0,
+                                professional_tax: 0,
+                                tds_deduction: 0,
+                                other_deductions: 0,
+                                reimbursement_amount: 0,
+                                additional_earnings: 0,
 
-                                overtime_rate:
-                                    0,
-
-                                professional_tax:
-                                    0,
-
-                                tds_deduction:
-                                    0,
-
-                                other_deductions:
-                                    0,
-
-                                reimbursement_amount:
-                                    0,
-
-                                additional_earnings:
-                                    0
-
+                                // Company policy package selected
+                                // for this payroll period.
+                                statutory_policy_package:
+                                    statutoryPolicyPackage
                             }
-
                         );
-
 
 
                     // -----------------------------
