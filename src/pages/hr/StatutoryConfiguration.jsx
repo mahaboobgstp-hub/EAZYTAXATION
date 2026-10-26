@@ -46,7 +46,8 @@ import {
     createProfessionalTaxPolicyVersion,
     updateProfessionalTaxPolicyVersion,
     saveProfessionalTaxPolicySlabs,
-    activateProfessionalTaxPolicyVersion
+    activateProfessionalTaxPolicyVersion,
+    deactivateProfessionalTaxPolicyVersion
 } from "../../services/hr/professionalTaxPolicyService";
 
 
