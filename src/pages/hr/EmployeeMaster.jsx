@@ -477,6 +477,24 @@ const loadAvailableTdsPolicies = async (companyId) => {
 
         
 const policies = await getProfessionalTaxPolicies(companyId);
+        console.log("PT DIAGNOSTIC", {
+    companyId,
+    salaryEffectiveDate: salaryStructure.effective_from,
+    selectedState: salaryStructure.professional_tax_state,
+    policies: (policies || []).map((policy) => ({
+        policyName: policy.policy_name,
+        stateId: policy.state_id,
+        stateName: policy.state_name,
+        versions: (policy.versions || []).map((version) => ({
+            id: version.id,
+            status: version.status,
+            is_enabled: version.is_enabled,
+            effective_from: version.effective_from,
+            effective_to: version.effective_to,
+            version_number: version.version_number
+        }))
+    }))
+});
 
 const apPolicies = (policies || []).filter(
   (policy) =>
