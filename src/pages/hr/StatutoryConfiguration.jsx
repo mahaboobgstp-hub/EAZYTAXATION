@@ -3515,21 +3515,45 @@ alert(
                                             {policy.status || "UNKNOWN"}
                                         </span>
                                     </td>
-                                    <td>
-                                        <div className="sc-history-row-actions">
-                                            {policy.status === "DRAFT" && (
-                                                <button
-                                                    type="button"
-                                                    className="sc-link-button"
-                                                    onClick={() =>
-                                                        handleEditPTPolicyVersion(policy)
-                                                    }
-                                                >
-                                                    Edit Draft
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
+                                    
+<td>
+    <div className="sc-history-row-actions">
+        {policy.status === "DRAFT" && (
+            <button
+                type="button"
+                className="sc-link-button"
+                disabled={ptPolicySaving || ptPolicyLoading}
+                onClick={() =>
+                    handleActivatePTPolicyVersion(policy)
+                }
+            >
+                {ptPolicySaving ? "Processing..." : "Activate"}
+            </button>
+        )}
+
+        {policy.status === "ACTIVE" && (
+            <button
+                type="button"
+                className="sc-link-button danger"
+                disabled={ptPolicySaving || ptPolicyLoading}
+                onClick={() =>
+                    handleDeactivatePTPolicyVersion(policy)
+                }
+            >
+                {ptPolicySaving ? "Processing..." : "Deactivate"}
+            </button>
+        )}
+
+        {policy.status === "SUPERSEDED" && (
+            <span className="sc-muted">Replaced</span>
+        )}
+
+        {policy.status === "INACTIVE" && (
+            <span className="sc-muted">Inactive</span>
+        )}
+    </div>
+</td>
+
                                 </tr>
                             ))}
                     </tbody>
