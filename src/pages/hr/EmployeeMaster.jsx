@@ -33,6 +33,11 @@ import {
     getStatutoryPolicyPackageForDate
 } from "../../services/hr/statutoryPolicyService";
 
+import {
+    getProfessionalTaxPolicies,
+    getProfessionalTaxPolicyVersionById
+} from "../../services/hr/professionalTaxPolicyService";
+
 const defaultFormData = {
     employee_code: "",
     employee_name: "",
@@ -217,8 +222,11 @@ const [tdsPolicyId, setTdsPolicyId] = useState("");
 const [tdsPolicyLoading, setTdsPolicyLoading] = useState(false);
     // Professional Tax policy UI state.
 // The PT catalogue will be connected after the UI is approved.
+// Professional Tax policy assignment
 const [availablePTPolicies, setAvailablePTPolicies] = useState([]);
 const [ptPolicyId, setPTPolicyId] = useState("");
+const [ptPolicyLoading, setPTPolicyLoading] = useState(false);
+const [ptPolicyError, setPTPolicyError] = useState("");
 const [ptApplicable, setPTApplicable] = useState(false);
 const [tdsApplicable, setTdsApplicable] = useState(false);
 
@@ -283,6 +291,7 @@ const [
     setLocations([]);
     setAvailableSalaryComponents([]);
        setAvailableTdsPolicies([]);
+       loadAvailablePTPolicies(currentCompanyId);
        setActiveStatutoryPackage(null);
 setStatutoryPackageError("");
 setTdsPolicyId("");
@@ -290,6 +299,7 @@ setTdsPolicyId("");
 setPTApplicable(false);
 setTdsApplicable(false);
 setAvailablePTPolicies([]);
+       setPTPolicyError("");
     setFormData(
         defaultFormData
     );
@@ -453,7 +463,31 @@ const loadAvailableTdsPolicies = async (companyId) => {
 };
 
 
-        
+   const loadAvailablePTPolicies = async (companyId) => {
+    if (!companyId) {
+        setAvailablePTPolicies([]);
+        setPTPolicyId("");
+        setPTPolicyError("");
+        return;
+    }
+
+    try {
+        setPTPolicyLoading(true);
+        setPTPolicyError("");
+
+        const policies = await getProfessionalTaxPolicies(companyId);
+
+        setAvailablePTPolicies(policies || []);
+    } catch (error) {
+        console.error("Unable to load PT policies:", error);
+        setAvailablePTPolicies([]);
+        setPTPolicyError(
+            error.message || "Unable to load PT policies."
+        );
+    } finally {
+        setPTPolicyLoading(false);
+    }
+};     
 const loadActiveStatutoryPackage = async (
     companyId,
     effectiveDate
