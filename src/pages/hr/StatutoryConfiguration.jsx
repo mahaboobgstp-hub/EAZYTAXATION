@@ -1792,29 +1792,7 @@ alert(
     </div>
 
     
-<div className="sc-actions">
-    <button
-        type="button"
-        className="sc-button secondary"
-        onClick={resetPTPolicyForm}
-        disabled={ptPolicySaving}
-    >
-        New / Clear Form
-    </button>
 
-    <button
-        type="button"
-        className="sc-button primary"
-        onClick={handleSavePTPolicyDraft}
-        disabled={ptPolicySaving || ptPolicyLoading}
-    >
-        {ptPolicySaving
-            ? "Saving..."
-            : ptEditingVersionId
-                ? "Update PT Draft"
-                : "Save PT Policy Draft"}
-    </button>
-</div>
 
 </Section>
                             <div className="sc-notice">
