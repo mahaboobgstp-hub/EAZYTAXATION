@@ -806,11 +806,11 @@ async function handleSavePTPolicyDraft() {
         // Step D: Reload from Supabase to confirm persisted data.
         await loadPTPolicyData(currentCompanyId);
 
-        setPTPolicyEditing(true);
+resetPTPolicyForm();
 
-        setMessage(
-            "PT policy draft and salary slabs saved successfully. The policy has not been activated."
-        );
+setMessage(
+    "PT policy draft and salary slabs saved successfully. The policy has not been activated."
+);
     } catch (error) {
         console.error("Unable to save PT policy:", error);
 
