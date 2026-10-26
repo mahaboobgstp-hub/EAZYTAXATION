@@ -448,13 +448,6 @@ const [historyDetailsPolicy, setHistoryDetailsPolicy] = useState(null);
 
         setStatutoryPolicies([]);
         setStatutoryPolicyForm(initialStatutoryPolicyForm);
-        setPTPolicyRecords([]);
-setPTPolicyHistory([]);
-setPtEditingPolicyId(null);
-setPtEditingVersionId(null);
-setPTPolicyForm(initialPTPolicyForm);
-setPTSlabs([{ ...initialPTSlab }]);
-setPTPolicyEditing(false);
     }
 }, [currentCompanyId]);
 
@@ -508,8 +501,6 @@ setStates(stateResult.data || []);
 setPTRegistrations(ptData || []);
 
 await loadPTPolicyData(currentCompanyId);
-            const policyData = await getSalaryTdsPolicies(currentCompanyId);
-setTdsPolicies(policyData || []);
 
 
             if (stateResult.error) throw stateResult.error;
