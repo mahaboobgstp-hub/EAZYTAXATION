@@ -612,8 +612,8 @@ function resetPTPolicyForm() {
     setPTPolicyForm(initialPTPolicyForm);
     setPTSlabs([{ ...initialPTSlab }]);
     setPTPolicyEditing(false);
-    setPtEditingPolicyId(null);
-    setPtEditingVersionId(null);
+    setPTEditingPolicyId(null);
+    setPTEditingVersionId(null);
     setMessage("");
     setErrorMessage("");
 }
@@ -650,8 +650,8 @@ async function handleEditPTPolicyVersion(version) {
                 ? exemptionRules
                 : exemptionRules?.notes || "";
 
-        setPtEditingPolicyId(policy.id);
-        setPtEditingVersionId(savedVersion.id);
+        setPTEditingPolicyId(policy.id);
+        setPTEditingVersionId(savedVersion.id);
 
         setPTPolicyForm({
             ...initialPTPolicyForm,
@@ -753,7 +753,7 @@ async function handleSavePTPolicyDraft() {
             );
 
             policyId = policy.id;
-            setPtEditingPolicyId(policyId);
+            setPTEditingPolicyId(policyId);
         } else if (!versionId) {
             // A previous attempt may have created the master but failed
             // before creating the version. Reuse the existing master.
@@ -787,7 +787,7 @@ async function handleSavePTPolicyDraft() {
             );
 
             versionId = version.id;
-            setPtEditingVersionId(versionId);
+            setPTEditingVersionId(versionId);
         } else {
             await updateProfessionalTaxPolicyVersion(
                 versionId,
