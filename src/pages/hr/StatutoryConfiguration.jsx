@@ -547,6 +547,18 @@ await loadPTPolicyData(currentCompanyId);
         }));
     }
 
+
+async function getProfessionalTaxPolicyByIdForPT(policyId, companyId) {
+    const policies = await getProfessionalTaxPolicies(companyId);
+    return policies.find(policy => policy.id === policyId) || null;
+}
+
+async function getProfessionalTaxPolicyVersionForPT(versionId, companyId) {
+    const versions = await getProfessionalTaxPolicyHistory(companyId);
+    return versions.find(version => version.id === versionId) || null;
+}
+
+    
     function handlePTChange(event) {
         const { name, value } = event.target;
         setPTForm(previous => ({ ...previous, [name]: value }));
@@ -3335,25 +3347,130 @@ alert(
                     )}
                 </>
             ) : (
-                <div className="sc-history-placeholder">
-                    <h4>
-                        {historyCategory === "PT"
-                            ? "Professional Tax Policy History"
-                            : "Income Tax / TDS Policy History"}
-                    </h4>
+                
+{historyCategory === "PT" ? (
+    <div>
+        <div className="sc-history-results-heading">
+            <div>
+                <h4>Professional Tax Policy Versions</h4>
+                <p className="sc-muted">
+                    Drafts and saved versions for the selected company.
+                </p>
+            </div>
 
-                    <p>
-                        This history view will display saved policy
-                        versions, effective periods, status and audit
-                        details after the corresponding policy service
-                        is connected.
-                    </p>
+            <button
+                type="button"
+                className="sc-button secondary"
+                onClick={() => loadPTPolicyData(currentCompanyId)}
+                disabled={ptPolicyLoading}
+            >
+                {ptPolicyLoading ? "Refreshing..." : "Refresh PT History"}
+            </button>
+        </div>
 
-                    <p className="sc-muted">
-                        No PT or TDS history records are being loaded
-                        from the statutory contribution package list.
-                    </p>
-                </div>
+        {ptPolicyLoading ? (
+            <p className="sc-muted">Loading PT policy history...</p>
+        ) : ptPolicyHistory.length === 0 ? (
+            <p className="sc-muted">
+                No PT policy versions found for this company.
+            </p>
+        ) : (
+            <div className="sc-table-wrap">
+                <table className="sc-table">
+                    <thead>
+                        <tr>
+                            <th>Policy</th>
+                            <th>Version</th>
+                            <th>Effective From</th>
+                            <th>Effective To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {ptPolicyHistory
+                            .filter(policy => {
+                                const search = historySearch.trim().toLowerCase();
+
+                                const matchesSearch =
+                                    !search ||
+                                    String(policy.policy_name || "")
+                                        .toLowerCase().includes(search) ||
+                                    String(policy.version_number || "")
+                                        .toLowerCase().includes(search) ||
+                                    String(policy.source_reference || "")
+                                        .toLowerCase().includes(search);
+
+                                const matchesStatus =
+                                    historyStatus === "ALL" ||
+                                    String(policy.status || "").toUpperCase() ===
+                                        historyStatus;
+
+                                const matchesFrom =
+                                    !historyFromDate ||
+                                    policy.effective_from >= historyFromDate;
+
+                                const matchesTo =
+                                    !historyToDate ||
+                                    policy.effective_from <= historyToDate;
+
+                                return (
+                                    matchesSearch &&
+                                    matchesStatus &&
+                                    matchesFrom &&
+                                    matchesTo
+                                );
+                            })
+                            .map(policy => (
+                                <tr key={policy.id}>
+                                    <td>{policy.policy_name || "-"}</td>
+                                    <td>{policy.version_number ?? "-"}</td>
+                                    <td>{policy.effective_from || "-"}</td>
+                                    <td>{policy.effective_to || "No end date"}</td>
+                                    <td>
+                                        <span
+                                            className={
+                                                policy.status === "ACTIVE"
+                                                    ? "sc-status active"
+                                                    : "sc-status inactive"
+                                            }
+                                        >
+                                            {policy.status || "UNKNOWN"}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="sc-history-row-actions">
+                                            {policy.status === "DRAFT" && (
+                                                <button
+                                                    type="button"
+                                                    className="sc-link-button"
+                                                    onClick={() =>
+                                                        handleEditPTPolicyVersion(policy)
+                                                    }
+                                                >
+                                                    Edit Draft
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
+            </div>
+        )}
+    </div>
+) : (
+    <div className="sc-history-placeholder">
+        <h4>Income Tax / TDS Policy History</h4>
+        <p>
+            TDS policy history remains connected to its separate
+            service and will be handled in the TDS phase.
+        </p>
+    </div>
+
+
             )}
         </Section>
     </>
