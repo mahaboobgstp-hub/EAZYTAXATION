@@ -745,7 +745,7 @@ async function handleSavePTPolicyDraft() {
     }
 
     try {
-        setPtPolicySaving(true);
+        setPTPolicySaving(true);
         setErrorMessage("");
         setMessage("");
 
@@ -834,7 +834,7 @@ async function handleSavePTPolicyDraft() {
         // Retain the policy/version IDs so a retry does not automatically
         // create a second master or version if an earlier step succeeded.
     } finally {
-        setPtPolicySaving(false);
+        setPTPolicySaving(false);
     }
 }
 
