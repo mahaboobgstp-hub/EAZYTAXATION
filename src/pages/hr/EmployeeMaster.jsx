@@ -292,7 +292,7 @@ const [
     setLocations([]);
     setAvailableSalaryComponents([]);
        setAvailableTdsPolicies([]);
-       loadAvailablePTPolicies(currentCompanyId);
+       
        setActiveStatutoryPackage(null);
 setStatutoryPackageError("");
 setTdsPolicyId("");
@@ -323,6 +323,7 @@ setAvailablePTPolicies([]);
     loadLocations(currentCompanyId);
     loadAvailableSalaryComponents(currentCompanyId);    
         loadAvailableTdsPolicies(currentCompanyId);
+        loadAvailablePTPolicies(currentCompanyId);
         loadActiveStatutoryPackage(currentCompanyId);
 
 }, [currentCompanyId]);
