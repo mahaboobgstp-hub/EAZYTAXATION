@@ -3066,11 +3066,28 @@ setTdsApplicable(
 
     </select>
 
-    {ptPolicyError && (
-        <small style={{ color: "#b91c1c" }}>
-            {ptPolicyError}
-        </small>
-    )}
+    
+{ptPolicyError ? (
+    <small style={{ color: "#b91c1c", display: "block" }}>
+        {ptPolicyError}
+    </small>
+) : !ptApplicable ? (
+    <small>Enable PT applicability first.</small>
+) : !salaryStructure.professional_tax_state ? (
+    <small>Select the PT state first.</small>
+) : !salaryStructure.effective_from ? (
+    <small>Set the salary effective date first.</small>
+) : getEligiblePTPolicyVersions().length === 0 ? (
+    <small style={{ color: "#b91c1c", display: "block" }}>
+        No eligible PT version matches this state and effective date.
+        Check the policy state, version status, enabled flag and effective dates.
+    </small>
+) : (
+    <small style={{ color: "#166534", display: "block" }}>
+        {getEligiblePTPolicyVersions().length} eligible PT version(s) found.
+    </small>
+)}
+
 
     <small>
         Only active, enabled policy versions effective on the salary
