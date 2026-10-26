@@ -524,8 +524,7 @@ await loadPTPolicyData(currentCompanyId);
                 error.message || "Unable to load statutory configuration."
             );
             
-const policyData = await getSalaryTdsPolicies(currentCompanyId);
-setTdsPolicies(policyData || []);
+
 
         } finally {
             setLoading(false);
@@ -605,7 +604,13 @@ function resetPTPolicyForm() {
     setErrorMessage("");
 }
 
-function handleSavePTPolicyDraft() {
+
+async function handleSavePTPolicyDraft() {
+    if (!currentCompanyId) {
+        setErrorMessage("Please select a company first.");
+        return;
+    }
+
     if (!ptPolicyForm.state_id) {
         setErrorMessage("Select a State/UT for the PT policy.");
         return;
@@ -631,60 +636,105 @@ function handleSavePTPolicyDraft() {
         return;
     }
 
-    if (ptSlabs.length === 0) {
+    if (!ptSlabs.length) {
         setErrorMessage("Add at least one salary slab.");
         return;
     }
 
-    for (let i = 0; i < ptSlabs.length; i++) {
-        const slab = ptSlabs[i];
-        const from = Number(slab.salary_from);
-        const to = slab.salary_to === "" ? null : Number(slab.salary_to);
-        const amount = Number(slab.pt_amount);
+    try {
+        setPtPolicySaving(true);
+        setErrorMessage("");
+        setMessage("");
 
-        if (
-            slab.salary_from === "" ||
-            !Number.isFinite(from) ||
-            from < 0 ||
-            (to !== null && (!Number.isFinite(to) || to <= from)) ||
-            slab.pt_amount === "" ||
-            !Number.isFinite(amount) ||
-            amount < 0
-        ) {
-            setErrorMessage(
-                `Check the minimum salary, maximum salary and PT amount in slab ${i + 1}.`
+        const policyPayload = {
+            state_id: ptPolicyForm.state_id,
+            policy_name: ptPolicyForm.policy_name.trim()
+        };
+
+        let policyId = ptEditingPolicyId;
+        let versionId = ptEditingVersionId;
+
+        // Step A: Create the policy master if this is a new policy.
+        if (!policyId) {
+            const policy = await createProfessionalTaxPolicy(
+                policyPayload,
+                currentCompanyId
             );
-            return;
-        }
 
-        if (to === null && i !== ptSlabs.length - 1) {
-            setErrorMessage(
-                "Only the last salary slab can have no upper limit."
+            policyId = policy.id;
+            setPtEditingPolicyId(policyId);
+        } else if (!versionId) {
+            // A previous attempt may have created the master but failed
+            // before creating the version. Reuse the existing master.
+            await updateProfessionalTaxPolicy(
+                policyId,
+                policyPayload,
+                currentCompanyId
             );
-            return;
         }
 
-        if (i > 0) {
-            const previousTo = ptSlabs[i - 1].salary_to;
+        // Step B: Create a draft version, or update the existing draft.
+        const versionPayload = {
+            ...ptPolicyForm,
+            effective_to: ptPolicyForm.effective_to || null,
+            special_collection_month:
+                ptPolicyForm.special_collection_month === ""
+                    ? null
+                    : Number(ptPolicyForm.special_collection_month),
+            exemption_rules: ptPolicyForm.exemption_rules.trim()
+                ? { notes: ptPolicyForm.exemption_rules.trim() }
+                : {},
+            source_reference: ptPolicyForm.source_reference.trim() || null,
+            remarks: ptPolicyForm.remarks.trim() || null
+        };
 
-            if (
-                previousTo === "" ||
-                from !== Number(previousTo)
-            ) {
-                setErrorMessage(
-                    `Slab ${i + 1} must start where the previous slab ends.`
-                );
-                return;
-            }
+        if (!versionId) {
+            const version = await createProfessionalTaxPolicyVersion(
+                policyId,
+                versionPayload,
+                currentCompanyId
+            );
+
+            versionId = version.id;
+            setPtEditingVersionId(versionId);
+        } else {
+            await updateProfessionalTaxPolicyVersion(
+                versionId,
+                versionPayload,
+                currentCompanyId
+            );
         }
+
+        // Step C: Save the salary slabs for this draft version.
+        await saveProfessionalTaxPolicySlabs(
+            versionId,
+            ptSlabs,
+            currentCompanyId
+        );
+
+        // Step D: Reload from Supabase to confirm persisted data.
+        await loadPTPolicyData(currentCompanyId);
+
+        setPTPolicyEditing(true);
+
+        setMessage(
+            "PT policy draft and salary slabs saved successfully. The policy has not been activated."
+        );
+    } catch (error) {
+        console.error("Unable to save PT policy:", error);
+
+        setErrorMessage(
+            error.message ||
+            "Unable to save PT policy. Check the database response and try again."
+        );
+
+        // Retain the policy/version IDs so a retry does not automatically
+        // create a second master or version if an earlier step succeeded.
+    } finally {
+        setPtPolicySaving(false);
     }
-
-    // UI phase only: no database write is performed here.
-    setMessage(
-        "PT policy form validated. Database saving and policy history will be connected after the PT policy table and service are confirmed."
-    );
-    setErrorMessage("");
 }
+
 
 
 function handleTdsPolicyChange(event) {
