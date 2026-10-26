@@ -227,6 +227,7 @@ const [availablePTPolicies, setAvailablePTPolicies] = useState([]);
 const [ptPolicyId, setPTPolicyId] = useState("");
 const [ptPolicyLoading, setPTPolicyLoading] = useState(false);
 const [ptPolicyError, setPTPolicyError] = useState("");
+    const [ptDiagnostic, setPTDiagnostic] = useState(null);
 const [ptApplicable, setPTApplicable] = useState(false);
 const [tdsApplicable, setTdsApplicable] = useState(false);
 
@@ -477,6 +478,22 @@ const loadAvailableTdsPolicies = async (companyId) => {
 
         
 const policies = await getProfessionalTaxPolicies(companyId);
+        setPTDiagnostic({
+    companyId,
+    salaryEffectiveDate: salaryStructure.effective_from,
+    selectedState: salaryStructure.professional_tax_state,
+    policies: (policies || []).map((policy) => ({
+        name: policy.policy_name,
+        state: policy.state_name,
+        versions: (policy.versions || []).map((version) => ({
+            id: version.id,
+            status: version.status,
+            enabled: version.is_enabled,
+            effectiveFrom: version.effective_from,
+            effectiveTo: version.effective_to
+        }))
+    }))
+});
         setPTPolicyError(
     JSON.stringify({
         companyId,
@@ -3122,6 +3139,22 @@ setTdsApplicable(
     <small style={{ color: "#166534", display: "block" }}>
         {getEligiblePTPolicyVersions().length} eligible PT version(s) found.
     </small>
+)}
+
+                    {ptDiagnostic && (
+    <pre
+        style={{
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            padding: "12px",
+            background: "#f3f4f6",
+            border: "1px solid #d1d5db",
+            borderRadius: "6px",
+            fontSize: "12px"
+        }}
+    >
+        {JSON.stringify(ptDiagnostic, null, 2)}
+    </pre>
 )}
 
 
