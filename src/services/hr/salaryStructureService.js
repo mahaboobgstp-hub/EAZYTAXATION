@@ -267,14 +267,13 @@ employer_esi_rate:
     ) || 0,
 
 professional_tax_state:
+    professional_tax_state || null,
 
-    professional_tax_state ||
-    null,
+pt_policy_version_id:
+    pt_policy_version_id || null,
 
 tds_regime:
-
-    tds_regime ||
-    "NEW",
+    tds_regime || "NEW",
        
        // =============================================
     // OVERTIME CONFIGURATION
