@@ -521,6 +521,61 @@ if (apPolicies.length === 0) {
         setPTPolicyLoading(false);
     }
 };     
+
+    
+const getEligiblePTPolicyVersions = () => {
+    const selectedState = String(
+        salaryStructure.professional_tax_state || ""
+    ).trim().toLowerCase();
+
+    const effectiveDate = String(
+        salaryStructure.effective_from || ""
+    ).trim();
+
+    if (!selectedState || !effectiveDate) {
+        return [];
+    }
+
+    return (availablePTPolicies || [])
+        .filter((policy) => {
+            const policyState = String(
+                policy.state_name || ""
+            ).trim().toLowerCase();
+
+            return policyState === selectedState;
+        })
+        .flatMap((policy) =>
+            (policy.versions || [])
+                .filter((version) => {
+                    const startDate = String(
+                        version.effective_from || ""
+                    ).slice(0, 10);
+
+                    const endDate = version.effective_to
+                        ? String(version.effective_to).slice(0, 10)
+                        : "";
+
+                    return (
+                        version.status === "ACTIVE" &&
+                        version.is_enabled === true &&
+                        startDate !== "" &&
+                        startDate <= effectiveDate &&
+                        (!endDate || endDate >= effectiveDate)
+                    );
+                })
+                .map((version) => ({
+                    id: version.id,
+                    policy_id: policy.id,
+                    policy_name: policy.policy_name,
+                    policy_code: policy.policy_code,
+                    state_name: policy.state_name,
+                    version_number: version.version_number,
+                    effective_from: version.effective_from,
+                    effective_to: version.effective_to,
+                }))
+        );
+};
+
 const loadActiveStatutoryPackage = async (
     companyId,
     effectiveDate
