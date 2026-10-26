@@ -3051,32 +3051,18 @@ setTdsApplicable(
         </option>
 
         
-{availablePTPolicies
-  .filter(
-    (policy) =>
-      policy.state_name?.trim().toLowerCase() ===
-      salaryStructure.professional_tax_state?.trim().toLowerCase()
-  )
-  .flatMap((policy) =>
-    (policy.versions || [])
-      .filter((version) => {
-        const effectiveDate = salaryStructure.effective_from;
 
-        return (
-          version.status === "ACTIVE" &&
-          version.is_enabled === true &&
-          effectiveDate &&
-          version.effective_from <= effectiveDate &&
-          (!version.effective_to ||
-            version.effective_to >= effectiveDate)
-        );
-      })
-      .map((version) => (
-        <option key={version.id} value={version.id}>
-          {policy.policy_name} — Version {version.version_number}
-        </option>
-      ))
-  )}
+{getEligiblePTPolicyVersions().map((version) => (
+    <option
+        key={version.id}
+        value={version.id}
+    >
+        {version.policy_name} — Version {version.version_number}
+        {" | Effective from "}
+        {version.effective_from}
+    </option>
+))}
+
 
     </select>
 
