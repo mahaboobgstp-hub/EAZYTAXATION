@@ -3354,9 +3354,7 @@ alert(
                         </div>
                     )}
                 </>
-            ) : (
-                
-{historyCategory === "PT" ? (
+                        ) : historyCategory === "PT" ? (
     <div>
         <div className="sc-history-results-heading">
             <div>
