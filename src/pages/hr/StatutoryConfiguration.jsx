@@ -503,10 +503,7 @@ setPTRegistrations(ptData || []);
 await loadPTPolicyData(currentCompanyId);
 
 
-            if (stateResult.error) throw stateResult.error;
-
-            setStates(stateResult.data || []);
-            setPTRegistrations(ptData || []);
+            
 
             if (statutoryData) {
                 setSettingsId(statutoryData.id);
