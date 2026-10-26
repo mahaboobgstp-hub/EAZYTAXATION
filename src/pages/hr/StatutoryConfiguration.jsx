@@ -829,6 +829,92 @@ setMessage(
 
 
 
+async function handleActivatePTPolicyVersion(policy) {
+    if (!currentCompanyId || !policy?.id) {
+        setErrorMessage("Company or PT policy version is missing.");
+        return;
+    }
+
+    if (policy.status !== "DRAFT") {
+        setErrorMessage("Only draft PT policy versions can be activated.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Activate "${policy.policy_name}" version ${policy.version_number}, effective ${policy.effective_from}? Verify the state rules and salary slabs first.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        setPTPolicySaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        await activateProfessionalTaxPolicyVersion(
+            policy.id,
+            currentCompanyId
+        );
+
+        await loadPTPolicyData(currentCompanyId);
+
+        setMessage(
+            `PT policy version ${policy.version_number} activated successfully.`
+        );
+    } catch (error) {
+        console.error("PT activation failed:", error);
+        setErrorMessage(
+            error.message || "Unable to activate the PT policy."
+        );
+    } finally {
+        setPTPolicySaving(false);
+    }
+}
+
+async function handleDeactivatePTPolicyVersion(policy) {
+    if (!currentCompanyId || !policy?.id) {
+        setErrorMessage("Company or PT policy version is missing.");
+        return;
+    }
+
+    if (policy.status !== "ACTIVE") {
+        setErrorMessage("Only active PT policy versions can be deactivated.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Deactivate "${policy.policy_name}" version ${policy.version_number}? Check whether employees currently rely on this policy before continuing.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        setPTPolicySaving(true);
+        setErrorMessage("");
+        setMessage("");
+
+        await deactivateProfessionalTaxPolicyVersion(
+            policy.id,
+            currentCompanyId
+        );
+
+        await loadPTPolicyData(currentCompanyId);
+
+        setMessage(
+            `PT policy version ${policy.version_number} deactivated successfully.`
+        );
+    } catch (error) {
+        console.error("PT deactivation failed:", error);
+        setErrorMessage(
+            error.message || "Unable to deactivate the PT policy."
+        );
+    } finally {
+        setPTPolicySaving(false);
+    }
+}
+
+    
+
 function handleTdsPolicyChange(event) {
     const { name, value } = event.target;
 
