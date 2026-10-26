@@ -750,11 +750,13 @@ function validateProfessionalTaxSlabs(slabs) {
     );
   }
 
+  
   if (current.salary_to + 1 < next.salary_from) {
     throw new Error(
       `There is a salary range gap between slabs ${index + 1} and ${index + 2}.`
     );
   }
+
 }
   }
 
