@@ -33,6 +33,21 @@ import {
     activateStatutoryPolicyPackage
 } from "../../services/hr/statutoryPolicyService";
 
+
+import {
+    getProfessionalTaxPolicies,
+    getProfessionalTaxPolicyVersions,
+    getProfessionalTaxPolicySlabs,
+    getProfessionalTaxPolicyHistory,
+    createProfessionalTaxPolicy,
+    updateProfessionalTaxPolicy,
+    createProfessionalTaxPolicyVersion,
+    updateProfessionalTaxPolicyVersion,
+    saveProfessionalTaxPolicySlabs,
+    activateProfessionalTaxPolicyVersion
+} from "../../services/hr/professionalTaxPolicyService";
+
+
 const initialSettings = {
     pf_applicable: false,
     pf_establishment_id: "",
@@ -369,11 +384,22 @@ function StatutoryConfiguration() {
     const [ptForm, setPTForm] = useState(initialPTForm);
     const [editingPTId, setEditingPTId] = useState(null);
     
+
+
 const [ptPolicyForm, setPTPolicyForm] = useState(initialPTPolicyForm);
 const [ptSlabs, setPTSlabs] = useState([
     { ...initialPTSlab }
 ]);
 const [ptPolicyEditing, setPTPolicyEditing] = useState(false);
+
+const [ptPolicyRecords, setPTPolicyRecords] = useState([]);
+const [ptPolicyHistory, setPTPolicyHistory] = useState([]);
+const [ptEditingPolicyId, setPTEditingPolicyId] = useState(null);
+const [ptEditingVersionId, setPTEditingVersionId] = useState(null);
+const [ptPolicySaving, setPTPolicySaving] = useState(false);
+const [ptPolicyLoading, setPTPolicyLoading] = useState(false);
+
+
 
     const [components, setComponents] = useState(initialComponents);
     const [loading, setLoading] = useState(false);
@@ -423,20 +449,57 @@ const [historyDetailsPolicy, setHistoryDetailsPolicy] = useState(null);
     }
 }, [currentCompanyId]);
 
+
+    
+async function loadPTPolicyData(companyId = currentCompanyId) {
+    if (!companyId) {
+        setPTPolicyRecords([]);
+        setPTPolicyHistory([]);
+        return;
+    }
+
+    try {
+        setPTPolicyLoading(true);
+
+        const [policies, history] = await Promise.all([
+            getProfessionalTaxPolicies(companyId),
+            getProfessionalTaxPolicyHistory(companyId)
+        ]);
+
+        setPTPolicyRecords(policies || []);
+        setPTPolicyHistory(history || []);
+    } catch (error) {
+        console.error("Unable to load PT policies:", error);
+        throw error;
+    } finally {
+        setPTPolicyLoading(false);
+    }
+}
+
+
     async function loadConfiguration() {
         try {
             setLoading(true);
             setErrorMessage("");
             setMessage("");
 
-            const [statutoryData, ptData, stateResult] = await Promise.all([
-                getStatutorySettings(currentCompanyId),
-                getPTRegistrations(currentCompanyId),
-                supabase
-                    .from("states")
-                    .select("id, state_name, gst_code")
-                    .order("state_name", { ascending: true })
-            ]);
+            
+const [statutoryData, ptData, stateResult] = await Promise.all([
+    getStatutorySettings(currentCompanyId),
+    getPTRegistrations(currentCompanyId),
+    supabase
+        .from("states")
+        .select("id, state_name, gst_code")
+        .order("state_name", { ascending: true })
+]);
+
+if (stateResult.error) throw stateResult.error;
+
+setStates(stateResult.data || []);
+setPTRegistrations(ptData || []);
+
+await loadPTPolicyData(currentCompanyId);
+
 
             if (stateResult.error) throw stateResult.error;
 
