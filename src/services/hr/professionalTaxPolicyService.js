@@ -130,6 +130,34 @@ export async function getProfessionalTaxPolicies(
     return [];
   }
 
+
+  const stateIds = [
+    ...new Set(
+      policies
+        .map((policy) => policy.state_id)
+        .filter(Boolean)
+    ),
+  ];
+
+  let stateNameById = new Map();
+
+  if (stateIds.length > 0) {
+    const { data: states, error: statesError } = await supabase
+      .from("states")
+      .select("id, state_name")
+      .in("id", stateIds);
+
+    throwIfError(statesError);
+
+    stateNameById = new Map(
+      (states || []).map((state) => [
+        state.id,
+        state.state_name,
+      ])
+    );
+  }
+
+  
   const policyIds = policies.map((policy) => policy.id);
 
   const { data: versions, error: versionsError } = await supabase
@@ -157,9 +185,12 @@ export async function getProfessionalTaxPolicies(
     slabs = slabData || [];
   }
 
+  
   return policies.map((policy) => ({
     ...policy,
+    state_name: stateNameById.get(policy.state_id) || "",
     versions: (versions || [])
+
       .filter((version) => version.policy_id === policy.id)
       .map((version) => ({
         ...version,
