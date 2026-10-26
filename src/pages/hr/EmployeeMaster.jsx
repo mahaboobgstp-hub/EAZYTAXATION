@@ -475,9 +475,42 @@ const loadAvailableTdsPolicies = async (companyId) => {
         setPTPolicyLoading(true);
         setPTPolicyError("");
 
-        const policies = await getProfessionalTaxPolicies(companyId);
+        
+const policies = await getProfessionalTaxPolicies(companyId);
 
-        setAvailablePTPolicies(policies || []);
+const apPolicies = (policies || []).filter(
+  (policy) =>
+    policy.state_name?.trim().toLowerCase() ===
+    "andhra pradesh"
+);
+
+setAvailablePTPolicies(policies || []);
+
+if (apPolicies.length === 0) {
+  setPTPolicyError(
+    `No Andhra Pradesh PT policy returned for company ${companyId}.`
+  );
+} else {
+  const eligibleVersions = apPolicies.flatMap((policy) =>
+    (policy.versions || [])
+      .filter(
+        (version) =>
+          version.status === "ACTIVE" &&
+          version.is_enabled === true
+      )
+      .map(
+        (version) =>
+          `${policy.policy_name} - Version ${version.version_number}`
+      )
+  );
+
+  setPTPolicyError(
+    eligibleVersions.length
+      ? `PT policies loaded: ${eligibleVersions.join(", ")}`
+      : "Andhra Pradesh policies loaded, but no active enabled versions were returned."
+  );
+}
+
     } catch (error) {
         console.error("Unable to load PT policies:", error);
         setAvailablePTPolicies([]);
