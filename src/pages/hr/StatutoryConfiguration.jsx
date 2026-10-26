@@ -36,6 +36,8 @@ import {
 
 import {
     getProfessionalTaxPolicies,
+    getProfessionalTaxPolicyById,
+    getProfessionalTaxPolicyVersionById,
     getProfessionalTaxPolicyVersions,
     getProfessionalTaxPolicySlabs,
     getProfessionalTaxPolicyHistory,
@@ -1789,25 +1791,31 @@ alert(
         </p>
     </div>
 
-    <div className="sc-actions">
-        <button
-            type="button"
-            className="sc-button secondary"
-            onClick={resetStatutoryPolicyForm}
-            disabled={statutoryPolicySaving}
-        >
-            Clear Form
-        </button>
+    
+<div className="sc-actions">
+    <button
+        type="button"
+        className="sc-button secondary"
+        onClick={resetPTPolicyForm}
+        disabled={ptPolicySaving}
+    >
+        New / Clear Form
+    </button>
 
-        <button
-            type="button"
-            className="sc-button primary"
-            onClick={handleSaveStatutoryPolicy}
-            disabled={statutoryPolicySaving}
-        >
-            {statutoryPolicySaving ? "Saving..." : "Save Policy Draft"}
-        </button>
-    </div>
+    <button
+        type="button"
+        className="sc-button primary"
+        onClick={handleSavePTPolicyDraft}
+        disabled={ptPolicySaving || ptPolicyLoading}
+    >
+        {ptPolicySaving
+            ? "Saving..."
+            : ptEditingVersionId
+                ? "Update PT Draft"
+                : "Save PT Policy Draft"}
+    </button>
+</div>
+
 </Section>
                             <div className="sc-notice">
                                 <strong>Company-level policy editor</strong>
