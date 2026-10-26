@@ -966,3 +966,23 @@ export async function setProfessionalTaxPolicyVersionEnabled(
 
   return data;
 }
+export async function deactivateProfessionalTaxPolicyVersion(
+  versionId,
+  companyId
+) {
+  if (!versionId || !companyId) {
+    throw new Error("Policy version and company are required.");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "deactivate_professional_tax_policy_version",
+    {
+      p_company_id: companyId,
+      p_policy_version_id: versionId,
+    }
+  );
+
+  if (error) throw error;
+
+  return data;
+}
