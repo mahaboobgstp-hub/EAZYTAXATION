@@ -155,6 +155,7 @@ employee_esi_rate,
 employer_esi_rate,
 
     professional_tax_state,
+pt_policy_version_id,
 tds_regime,
 
 
