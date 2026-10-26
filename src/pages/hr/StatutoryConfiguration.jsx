@@ -596,13 +596,93 @@ function removePTSlab(index) {
     );
 }
 
+
 function resetPTPolicyForm() {
     setPTPolicyForm(initialPTPolicyForm);
     setPTSlabs([{ ...initialPTSlab }]);
     setPTPolicyEditing(false);
+    setPtEditingPolicyId(null);
+    setPtEditingVersionId(null);
     setMessage("");
     setErrorMessage("");
 }
+
+async function handleEditPTPolicyVersion(version) {
+    if (!version?.id || !currentCompanyId) return;
+
+    try {
+        setPtPolicyLoading(true);
+        setErrorMessage("");
+        setMessage("");
+
+        if (version.status !== "DRAFT") {
+            throw new Error(
+                "Only draft PT policy versions can be edited. Create a new version for changes to an active policy."
+            );
+        }
+
+        const policyId = version.policy_id;
+
+        const [policy, savedVersion, savedSlabs] = await Promise.all([
+            getProfessionalTaxPolicyByIdForPT(policyId, currentCompanyId),
+            getProfessionalTaxPolicyVersionForPT(version.id, currentCompanyId),
+            getProfessionalTaxPolicySlabs(version.id, currentCompanyId)
+        ]);
+
+        if (!policy || !savedVersion) {
+            throw new Error("The selected PT policy or version was not found.");
+        }
+
+        const exemptionRules = savedVersion.exemption_rules;
+        const exemptionText =
+            typeof exemptionRules === "string"
+                ? exemptionRules
+                : exemptionRules?.notes || "";
+
+        setPtEditingPolicyId(policy.id);
+        setPtEditingVersionId(savedVersion.id);
+
+        setPTPolicyForm({
+            ...initialPTPolicyForm,
+            policy_name: policy.policy_name || savedVersion.policy_name || "",
+            state_id: policy.state_id || "",
+            effective_from: savedVersion.effective_from || "",
+            effective_to: savedVersion.effective_to || "",
+            salary_basis: savedVersion.salary_basis || "GROSS_MONTHLY",
+            collection_frequency:
+                savedVersion.collection_frequency || "MONTHLY",
+            special_collection_month:
+                savedVersion.special_collection_month == null
+                    ? ""
+                    : String(savedVersion.special_collection_month),
+            exemption_rules: exemptionText,
+            source_reference: savedVersion.source_reference || "",
+            remarks: savedVersion.remarks || "",
+            is_enabled: savedVersion.is_enabled ?? true
+        });
+
+        setPTSlabs(
+            savedSlabs.length
+                ? savedSlabs.map(slab => ({
+                    salary_from: String(slab.salary_from),
+                    salary_to:
+                        slab.salary_to == null ? "" : String(slab.salary_to),
+                    pt_amount: String(slab.pt_amount),
+                    remarks: slab.remarks || ""
+                }))
+                : [{ ...initialPTSlab }]
+        );
+
+        setPTPolicyEditing(true);
+        setActiveTab("pt");
+    } catch (error) {
+        console.error("Unable to open PT draft:", error);
+        setErrorMessage(error.message || "Unable to load the PT draft.");
+    } finally {
+        setPtPolicyLoading(false);
+    }
+}
+
 
 
 async function handleSavePTPolicyDraft() {
