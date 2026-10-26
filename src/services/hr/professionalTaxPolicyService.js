@@ -709,22 +709,22 @@ function validateProfessionalTaxSlabs(slabs) {
     }
 
     if (next) {
-      if (current.salary_to === null) {
-        continue;
-      }
+  if (current.salary_to === null) {
+    continue;
+  }
 
-      if (current.salary_to > next.salary_from) {
-        throw new Error(
-          `Slabs ${index + 1} and ${index + 2} overlap.`
-        );
-      }
+  if (current.salary_to >= next.salary_from) {
+    throw new Error(
+      `Slabs ${index + 1} and ${index + 2} overlap.`
+    );
+  }
 
-      if (current.salary_to < next.salary_from) {
-        throw new Error(
-          `There is a salary range gap between slabs ${index + 1} and ${index + 2}.`
-        );
-      }
-    }
+  if (current.salary_to + 1 < next.salary_from) {
+    throw new Error(
+      `There is a salary range gap between slabs ${index + 1} and ${index + 2}.`
+    );
+  }
+}
   }
 
   return normalized;
