@@ -2938,41 +2938,77 @@ setTdsApplicable(
                 </label>
 
                 <label className="employee-form-field">
-                    Professional Tax Policy
-                    <select
-                        value={ptPolicyId}
-                        onChange={(event) =>
-                            setPTPolicyId(event.target.value)
-                        }
-                        disabled={
-                            !ptApplicable ||
-                            !salaryStructure.professional_tax_state
-                        }
-                    >
-                        <option value="">
-                            {ptApplicable
-                                ? "PT policy catalogue not connected yet"
-                                : "Enable PT applicability first"}
-                        </option>
-                        {availablePTPolicies
-                            .filter(policy =>
-                                policy.state_name ===
-                                salaryStructure.professional_tax_state
+    Professional Tax Policy Version
+
+    <select
+        value={ptPolicyId}
+        onChange={(event) => setPTPolicyId(event.target.value)}
+        disabled={
+            !ptApplicable ||
+            !salaryStructure.professional_tax_state ||
+            !salaryStructure.effective_from ||
+            ptPolicyLoading
+        }
+    >
+        <option value="">
+            {!ptApplicable
+                ? "Enable PT applicability first"
+                : ptPolicyLoading
+                    ? "Loading PT policies..."
+                    : !salaryStructure.professional_tax_state
+                        ? "Select PT state first"
+                        : !salaryStructure.effective_from
+                            ? "Set salary effective date first"
+                            : "Select active PT policy version"}
+        </option>
+
+        {availablePTPolicies
+            .filter(policy =>
+                policy.state_name ===
+                salaryStructure.professional_tax_state
+            )
+            .flatMap(policy =>
+                (policy.versions || [])
+                    .filter(version => {
+                        const effectiveDate =
+                            salaryStructure.effective_from;
+
+                        return (
+                            version.status === "ACTIVE" &&
+                            version.is_enabled === true &&
+                            version.effective_from <= effectiveDate &&
+                            (
+                                !version.effective_to ||
+                                version.effective_to >= effectiveDate
                             )
-                            .map(policy => (
-                                <option
-                                    key={policy.id}
-                                    value={policy.id}
-                                >
-                                    {policy.policy_name}
-                                </option>
-                            ))}
-                    </select>
-                    <small>
-                        Policy selection becomes available when the PT
-                        catalogue is connected to saved policy records.
-                    </small>
-                </label>
+                        );
+                    })
+                    .map(version => ({
+                        ...version,
+                        policy_name: policy.policy_name,
+                        state_name: policy.state_name
+                    }))
+            )
+            .map(version => (
+                <option key={version.id} value={version.id}>
+                    {version.policy_name} — Version {version.version_number}
+                    {" · Effective from "}
+                    {version.effective_from}
+                </option>
+            ))}
+    </select>
+
+    {ptPolicyError && (
+        <small style={{ color: "#b91c1c" }}>
+            {ptPolicyError}
+        </small>
+    )}
+
+    <small>
+        Only active, enabled policy versions effective on the salary
+        structure date should be assigned.
+    </small>
+</label>
 
                 <div className="employee-tax-info">
                     <strong>Policy assignment status</strong>
