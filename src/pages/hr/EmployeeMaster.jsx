@@ -3230,43 +3230,52 @@ setTdsApplicable(
                 <label className="employee-form-field">
                     Salary TDS Policy
                     <select
-                        id="employee_tds_policy_id"
-                        value={tdsPolicyId}
-                        onChange={(event) => {
-                            const policyId = event.target.value;
-                            setTdsPolicyId(policyId);
+    id="employee_tds_policy_id"
+    value={tdsPolicyId}
+    onChange={(event) => {
+        const policyId = event.target.value;
+        setTdsPolicyId(policyId);
 
-                            const selectedPolicy =
-                                availableTdsPolicies.find(
-                                    policy => policy.id === policyId
-                                );
+        const selectedPolicy = availableTdsPolicies.find(
+            (policy) => policy.id === policyId
+        );
 
-                            if (selectedPolicy) {
-                                setSalaryStructure(previous => ({
-                                    ...previous,
-                                    tds_regime: selectedPolicy.tax_regime
-                                }));
-                            }
-                        }}
-                        disabled={
-                            !tdsApplicable || tdsPolicyLoading
-                        }
-                    >
-                        <option value="">
-                            {!tdsApplicable
-                                ? "Enable TDS applicability first"
-                                : tdsPolicyLoading
-                                    ? "Loading TDS policies..."
-                                    : "Select salary TDS policy"}
-                        </option>
+        if (selectedPolicy) {
+            setSalaryStructure((previous) => ({
+                ...previous,
+                tds_regime: selectedPolicy.tax_regime
+            }));
+        }
+    }}
+    disabled={
+        !currentCompanyId ||
+        !tdsApplicable ||
+        tdsPolicyLoading
+    }
+>
+    <option value="">
+        {!currentCompanyId
+            ? "Select a company first"
+            : !tdsApplicable
+                ? "Enable TDS applicability first"
+                : tdsPolicyLoading
+                    ? "Loading TDS policies..."
+                    : availableTdsPolicies.length === 0
+                        ? "No active TDS policies available"
+                        : "Select salary TDS policy"}
+    </option>
 
-                        {availableTdsPolicies.map(policy => (
-                            <option key={policy.id} value={policy.id}>
-                                {policy.policy_code} — {policy.policy_name}
-                                {" ("}{policy.tax_year}{")"}
-                            </option>
-                        ))}
-                    </select>
+    {availableTdsPolicies.map((policy) => (
+        <option key={policy.id} value={policy.id}>
+            {policy.policy_code} — {policy.policy_name}
+            {" | Tax Year: "}{policy.tax_year}
+            {" | Regime: "}
+            {policy.tax_regime === "OLD"
+                ? "Old Regime"
+                : "New Regime"}
+        </option>
+    ))}
+</select>
                     <small>
                         Only active policies returned by the existing
                         company-specific TDS service are displayed.
