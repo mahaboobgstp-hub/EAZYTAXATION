@@ -1,276 +1,264 @@
-
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  FiCalendar,
-  FiChevronLeft,
-  FiChevronRight,
-  FiDownload,
-  FiPlus,
-  FiSearch,
-  FiX,
-} from "react-icons/fi";
+  getHolidays,
+  createHoliday,
+  updateHoliday,
+  deactivateHoliday,
+} from "../../services/hr/holidayService";
+import { getLeaveRecords } from "../../services/hr/leaveService";
+import { useCompany } from "../../context/CompanyContext";
 import "../../css/hr/HolidayCalendarLeaveLedger.css";
 
-const initialHolidays = [
-  {
-    id: 1,
-    name: "Republic Day",
-    date: "2026-01-26",
-    type: "National",
-    applicableTo: "All Employees",
-  },
-  {
-    id: 2,
-    name: "Independence Day",
-    date: "2026-08-15",
-    type: "National",
-    applicableTo: "All Employees",
-  },
-  {
-    id: 3,
-    name: "Gandhi Jayanti",
-    date: "2026-10-02",
-    type: "National",
-    applicableTo: "All Employees",
-  },
-  {
-    id: 4,
-    name: "Diwali",
-    date: "2026-11-08",
-    type: "Festival",
-    applicableTo: "All Employees",
-  },
-  {
-    id: 5,
-    name: "Christmas",
-    date: "2026-12-25",
-    type: "Festival",
-    applicableTo: "All Employees",
-  },
-];
-
-const initialLeaveLedger = [
-  {
-    id: 1,
-    employeeId: "EMP001",
-    employee: "Arun Kumar",
-    department: "Finance",
-    opening: 12,
-    credited: 12,
-    used: 6,
-    pending: 1,
-    leaveType: "Casual Leave",
-  },
-  {
-    id: 2,
-    employeeId: "EMP002",
-    employee: "Priya Sharma",
-    department: "HR",
-    opening: 10,
-    credited: 10,
-    used: 4,
-    pending: 0,
-    leaveType: "Casual Leave",
-  },
-  {
-    id: 3,
-    employeeId: "EMP003",
-    employee: "Rahul Nair",
-    department: "Operations",
-    opening: 15,
-    credited: 15,
-    used: 8,
-    pending: 2,
-    leaveType: "Earned Leave",
-  },
-  {
-    id: 4,
-    employeeId: "EMP004",
-    employee: "Meena Raj",
-    department: "Accounts",
-    opening: 8,
-    credited: 8,
-    used: 3,
-    pending: 0,
-    leaveType: "Sick Leave",
-  },
-];
-
-const formatDate = (value) =>
-  value
-    ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "—";
-
-const getBalance = (record) =>
-  Math.max(0, record.opening + record.credited - record.used);
-
-const downloadCSV = (filename, rows) => {
-  if (!rows.length) {
-    window.alert("There are no records to export.");
-    return;
-  }
-
-  const escapeCSV = (value) =>
-    `"${String(value ?? "").replace(/"/g, '""')}"`;
-
-  const csv = rows.map((row) => row.map(escapeCSV).join(",")).join("\n");
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = filename;
-  link.click();
-
-  URL.revokeObjectURL(url);
+const emptyForm = {
+  holiday_name: "",
+  holiday_date: "",
+  holiday_type: "National",
+  is_paid: true,
+  is_optional: false,
+  description: "",
 };
 
+const inputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: 10,
+  border: "1px solid #d1d5db",
+  borderRadius: 6,
+};
+
+const buttonStyle = {
+  padding: "8px 12px",
+  border: "1px solid #d1d5db",
+  borderRadius: 6,
+  background: "#fff",
+  cursor: "pointer",
+};
+
+function formatDate(value) {
+  if (!value) return "—";
+  return new Date(`${value}T00:00:00`).toLocaleDateString("en-IN");
+}
+
 export default function HolidayCalendarLeaveLedger() {
-  const [activeTab, setActiveTab] = useState("holidays");
-  const [holidays, setHolidays] = useState(initialHolidays);
-  const [ledger, setLedger] = useState(initialLeaveLedger);
-  const [year, setYear] = useState(2026);
+  const { currentCompanyId } = useCompany();
+
+  const [holidays, setHolidays] = useState([]);
+  const [leaveRecords, setLeaveRecords] = useState([]);
+  const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
   const [search, setSearch] = useState("");
-  const [department, setDepartment] = useState("All");
-  const [leaveType, setLeaveType] = useState("All");
+  const [activeTab, setActiveTab] = useState("holidays");
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [holidayForm, setHolidayForm] = useState({
-    name: "",
-    date: "",
-    type: "National",
-    applicableTo: "All Employees",
-  });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const loadData = useCallback(async () => {
+    if (!currentCompanyId) {
+      setHolidays([]);
+      setLeaveRecords([]);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const [holidayRows, leaveRows] = await Promise.all([
+        getHolidays(currentCompanyId, year),
+        getLeaveRecords(currentCompanyId),
+      ]);
+
+      setHolidays(
+        (holidayRows || []).filter((row) => row.is_active !== false)
+      );
+      setLeaveRecords(
+        (leaveRows || []).filter((row) => row.is_active !== false)
+      );
+    } catch (err) {
+      setError(err.message || "Unable to load holidays and leave records.");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentCompanyId, year]);
+
+  useEffect(() => {
+    setHolidays([]);
+    setLeaveRecords([]);
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(false);
+    setMessage("");
+    loadData();
+  }, [loadData]);
+
+  const monthHolidays = holidays
+    .filter((holiday) => {
+      const date = new Date(`${holiday.holiday_date}T00:00:00`);
+      return (
+        date.getFullYear() === year &&
+        date.getMonth() === month &&
+        `${holiday.holiday_name} ${holiday.holiday_type}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      );
+    })
+    .sort((a, b) => a.holiday_date.localeCompare(b.holiday_date));
 
   const monthName = new Date(year, month, 1).toLocaleDateString("en-IN", {
     month: "long",
     year: "numeric",
   });
 
-  const filteredHolidays = useMemo(() => {
-    return holidays
-      .filter((holiday) => {
-        const date = new Date(`${holiday.date}T00:00:00`);
-        return (
-          date.getFullYear() === year &&
-          date.getMonth() === month &&
-          `${holiday.name} ${holiday.type} ${holiday.applicableTo}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
-        );
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [holidays, year, month, search]);
+  const leaveSearch = search.trim().toLowerCase();
 
-  const filteredLedger = useMemo(() => {
-    return ledger.filter((record) => {
-      const matchesSearch =
-        `${record.employee} ${record.employeeId} ${record.department}`
-          .toLowerCase()
-          .includes(search.toLowerCase());
+  const filteredLeave = leaveRecords.filter((record) => {
+    const employeeText = String(record.employee_id || "").toLowerCase();
+    return (
+      !leaveSearch ||
+      employeeText.includes(leaveSearch) ||
+      String(record.leave_type || "").toLowerCase().includes(leaveSearch) ||
+      String(record.approval_status || "").toLowerCase().includes(leaveSearch)
+    );
+  });
 
-      const matchesDepartment =
-        department === "All" || record.department === department;
+  function startNew() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setError("");
+    setMessage("");
+    setShowForm(true);
+  }
 
-      const matchesType =
-        leaveType === "All" || record.leaveType === leaveType;
-
-      return matchesSearch && matchesDepartment && matchesType;
+  function startEdit(holiday) {
+    setEditingId(holiday.id);
+    setForm({
+      holiday_name: holiday.holiday_name || "",
+      holiday_date: holiday.holiday_date || "",
+      holiday_type: holiday.holiday_type || "National",
+      is_paid: holiday.is_paid ?? true,
+      is_optional: holiday.is_optional ?? false,
+      description: holiday.description || "",
     });
-  }, [ledger, search, department, leaveType]);
+    setError("");
+    setMessage("");
+    setShowForm(true);
+  }
 
-  const leaveTotals = useMemo(
-    () =>
-      ledger.reduce(
-        (totals, record) => ({
-          balance: totals.balance + getBalance(record),
-          used: totals.used + record.used,
-          pending: totals.pending + record.pending,
-        }),
-        { balance: 0, used: 0, pending: 0 }
-      ),
-    [ledger]
-  );
-
-  const moveMonth = (direction) => {
-    const next = new Date(year, month + direction, 1);
-    setYear(next.getFullYear());
-    setMonth(next.getMonth());
-  };
-
-  const saveHoliday = (event) => {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setError("");
+    setMessage("");
 
-    if (!holidayForm.name.trim() || !holidayForm.date) {
-      window.alert("Please enter the holiday name and date.");
+    if (!currentCompanyId) {
+      setError("Please select a company.");
       return;
     }
 
-    const newHoliday = {
-      ...holidayForm,
-      id: Date.now(),
-      name: holidayForm.name.trim(),
-    };
+    if (!form.holiday_name.trim() || !form.holiday_date) {
+      setError("Holiday name and date are required.");
+      return;
+    }
 
-    setHolidays((current) => [...current, newHoliday]);
-    const newDate = new Date(`${newHoliday.date}T00:00:00`);
-    setYear(newDate.getFullYear());
-    setMonth(newDate.getMonth());
-    setSearch("");
-    setShowForm(false);
-    setHolidayForm({
-      name: "",
-      date: "",
-      type: "National",
-      applicableTo: "All Employees",
-    });
-  };
+    setSaving(true);
 
-  const exportHolidays = () =>
-    downloadCSV(
-      `holidays-${year}-${String(month + 1).padStart(2, "0")}.csv`,
-      [
-        ["Holiday", "Date", "Type", "Applicable To"],
-        ...filteredHolidays.map((holiday) => [
-          holiday.name,
-          holiday.date,
-          holiday.type,
-          holiday.applicableTo,
-        ]),
-      ]
+    try {
+      const payload = {
+        holiday_name: form.holiday_name.trim(),
+        holiday_date: form.holiday_date,
+        holiday_type: form.holiday_type,
+        is_paid: form.is_paid,
+        is_optional: form.is_optional,
+        description: form.description.trim() || null,
+        work_location_id: null,
+        client_id: null,
+        is_active: true,
+      };
+
+      if (editingId) {
+        await updateHoliday(editingId, payload, currentCompanyId);
+        setMessage("Holiday updated successfully.");
+      } else {
+        await createHoliday(payload, currentCompanyId);
+        setMessage("Holiday created successfully.");
+      }
+
+      const selectedDate = new Date(`${form.holiday_date}T00:00:00`);
+      setYear(selectedDate.getFullYear());
+      setMonth(selectedDate.getMonth());
+      setSearch("");
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Unable to save holiday.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeactivate(holiday) {
+    if (!window.confirm(`Deactivate ${holiday.holiday_name}?`)) return;
+
+    setSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await deactivateHoliday(holiday.id, currentCompanyId);
+      setMessage("Holiday deactivated.");
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Unable to deactivate holiday.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function exportHolidays() {
+    if (!monthHolidays.length) {
+      window.alert("There are no holidays to export.");
+      return;
+    }
+
+    const rows = [
+      ["Holiday", "Date", "Type", "Paid", "Optional", "Description"],
+      ...monthHolidays.map((item) => [
+        item.holiday_name,
+        item.holiday_date,
+        item.holiday_type,
+        item.is_paid ? "Yes" : "No",
+        item.is_optional ? "Yes" : "No",
+        item.description || "",
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\r\n");
+
+    const url = URL.createObjectURL(
+      new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
     );
 
-  const exportLedger = () =>
-    downloadCSV("employee-leave-ledger.csv", [
-      [
-        "Employee ID",
-        "Employee",
-        "Department",
-        "Leave Type",
-        "Opening Balance",
-        "Credited",
-        "Used",
-        "Pending Requests",
-        "Available Balance",
-      ],
-      ...filteredLedger.map((record) => [
-        record.employeeId,
-        record.employee,
-        record.department,
-        record.leaveType,
-        record.opening,
-        record.credited,
-        record.used,
-        record.pending,
-        getBalance(record),
-      ]),
-    ]);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `holidays-${year}-${String(month + 1).padStart(2, "0")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (!currentCompanyId) {
+    return <div className="hcl-page">Please select a company first.</div>;
+  }
 
   return (
     <div className="hcl-page">
@@ -278,26 +266,18 @@ export default function HolidayCalendarLeaveLedger() {
         <div>
           <div className="hcl-eyebrow">HUMAN RESOURCES</div>
           <h1>Holiday Calendar & Leave Ledger</h1>
-          <p>
-            Manage company holidays and review employee leave balances.
-          </p>
+          <p>Manage company holidays and view actual leave applications.</p>
         </div>
-
-        <button
-          className="hcl-primary-btn"
-          onClick={() => setShowForm(true)}
-        >
-          <FiPlus /> Add Holiday
-        </button>
+        {activeTab === "holidays" && (
+          <button className="hcl-primary-btn" onClick={startNew}>
+            + Add Holiday
+          </button>
+        )}
       </div>
 
-      <div className="hcl-notice">
-        <FiCalendar />
-        <span>
-          Prototype mode: records currently remain in page memory and are not
-          saved permanently.
-        </span>
-      </div>
+      {error && <p role="alert" style={{ color: "#b91c1c" }}>{error}</p>}
+      {message && <p role="status">{message}</p>}
+      {loading && <p>Loading records...</p>}
 
       <div className="hcl-tabs">
         <button
@@ -305,6 +285,7 @@ export default function HolidayCalendarLeaveLedger() {
           onClick={() => {
             setActiveTab("holidays");
             setSearch("");
+            setError("");
           }}
         >
           Holiday Calendar
@@ -314,82 +295,170 @@ export default function HolidayCalendarLeaveLedger() {
           onClick={() => {
             setActiveTab("ledger");
             setSearch("");
+            setError("");
           }}
         >
           Leave Ledger
         </button>
       </div>
 
+      {showForm && activeTab === "holidays" && (
+        <section className="hcl-table-card" style={{ padding: 18, marginBottom: 18 }}>
+          <h2>{editingId ? "Edit Holiday" : "Add Holiday"}</h2>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14 }}>
+              <label>
+                Holiday Name *
+                <input
+                  style={inputStyle}
+                  required
+                  value={form.holiday_name}
+                  onChange={(e) => setForm({ ...form, holiday_name: e.target.value })}
+                />
+              </label>
+
+              <label>
+                Holiday Date *
+                <input
+                  style={inputStyle}
+                  type="date"
+                  required
+                  value={form.holiday_date}
+                  onChange={(e) => setForm({ ...form, holiday_date: e.target.value })}
+                />
+              </label>
+
+              <label>
+                Holiday Type *
+                <select
+                  style={inputStyle}
+                  value={form.holiday_type}
+                  onChange={(e) => setForm({ ...form, holiday_type: e.target.value })}
+                >
+                  <option>National</option>
+                  <option>Festival</option>
+                  <option>Regional</option>
+                  <option>Company</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={form.is_paid}
+                  onChange={(e) => setForm({ ...form, is_paid: e.target.checked })}
+                />{" "}
+                Paid holiday
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={form.is_optional}
+                  onChange={(e) => setForm({ ...form, is_optional: e.target.checked })}
+                />{" "}
+                Optional holiday
+              </label>
+
+              <label style={{ gridColumn: "1 / -1" }}>
+                Description
+                <textarea
+                  style={inputStyle}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <p style={{ color: "#6b7280", fontSize: 13 }}>
+              This form creates company-wide holidays. Location-specific holiday assignment is not included here.
+            </p>
+
+            <button className="hcl-primary-btn" disabled={saving}>
+              {saving ? "Saving..." : "Save Holiday"}
+            </button>
+            <button
+              type="button"
+              style={{ ...buttonStyle, marginLeft: 8 }}
+              onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setForm(emptyForm);
+              }}
+            >
+              Cancel
+            </button>
+          </form>
+        </section>
+      )}
+
       {activeTab === "holidays" ? (
         <>
           <div className="hcl-stats">
             <div className="hcl-stat-card">
               <span>Holidays this month</span>
-              <strong>{filteredHolidays.length}</strong>
+              <strong>{monthHolidays.length}</strong>
               <small>{monthName}</small>
             </div>
             <div className="hcl-stat-card">
-              <span>Holidays this year</span>
-              <strong>
-                {
-                  holidays.filter(
-                    (holiday) =>
-                      new Date(`${holiday.date}T00:00:00`).getFullYear() ===
-                      year
-                  ).length
-                }
-              </strong>
+              <span>Active holidays this year</span>
+              <strong>{holidays.length}</strong>
               <small>{year}</small>
             </div>
             <div className="hcl-stat-card">
-              <span>National holidays</span>
-              <strong>
-                {
-                  holidays.filter(
-                    (holiday) =>
-                      holiday.type === "National" &&
-                      new Date(`${holiday.date}T00:00:00`).getFullYear() ===
-                        year
-                  ).length
-                }
-              </strong>
-              <small>Selected year</small>
+              <span>Paid holidays this year</span>
+              <strong>{holidays.filter((item) => item.is_paid).length}</strong>
+              <small>{year}</small>
             </div>
           </div>
 
           <div className="hcl-toolbar">
             <div className="hcl-month-control">
               <button
-                aria-label="Previous month"
-                onClick={() => moveMonth(-1)}
+                style={buttonStyle}
+                onClick={() => {
+                  const next = new Date(year, month - 1, 1);
+                  setYear(next.getFullYear());
+                  setMonth(next.getMonth());
+                }}
               >
-                <FiChevronLeft />
+                Previous
               </button>
               <strong>{monthName}</strong>
-              <button aria-label="Next month" onClick={() => moveMonth(1)}>
-                <FiChevronRight />
+              <button
+                style={buttonStyle}
+                onClick={() => {
+                  const next = new Date(year, month + 1, 1);
+                  setYear(next.getFullYear());
+                  setMonth(next.getMonth());
+                }}
+              >
+                Next
               </button>
             </div>
 
             <div className="hcl-toolbar-actions">
-              <label className="hcl-search">
-                <FiSearch />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search holidays"
-                />
-              </label>
+              <input
+                style={inputStyle}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search holidays"
+              />
               <button className="hcl-secondary-btn" onClick={exportHolidays}>
-                <FiDownload /> Export CSV
+                Export CSV
+              </button>
+              <button className="hcl-secondary-btn" onClick={loadData}>
+                Refresh
               </button>
             </div>
           </div>
 
           <div className="hcl-table-card">
             <div className="hcl-table-heading">
-              <h2>Holiday schedule</h2>
-              <span>{filteredHolidays.length} records</span>
+              <h2>Holiday Schedule</h2>
+              <span>{monthHolidays.length} records</span>
             </div>
 
             <div className="hcl-table-wrap">
@@ -398,32 +467,33 @@ export default function HolidayCalendarLeaveLedger() {
                   <tr>
                     <th>Holiday</th>
                     <th>Date</th>
-                    <th>Day</th>
                     <th>Type</th>
-                    <th>Applicable to</th>
+                    <th>Paid</th>
+                    <th>Optional</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredHolidays.map((holiday) => (
+                  {monthHolidays.map((holiday) => (
                     <tr key={holiday.id}>
-                      <td className="hcl-name-cell">{holiday.name}</td>
-                      <td>{formatDate(holiday.date)}</td>
+                      <td>{holiday.holiday_name}</td>
+                      <td>{formatDate(holiday.holiday_date)}</td>
+                      <td>{holiday.holiday_type}</td>
+                      <td>{holiday.is_paid ? "Yes" : "No"}</td>
+                      <td>{holiday.is_optional ? "Yes" : "No"}</td>
                       <td>
-                        {new Date(
-                          `${holiday.date}T00:00:00`
-                        ).toLocaleDateString("en-IN", { weekday: "long" })}
+                        <button style={buttonStyle} disabled={saving} onClick={() => startEdit(holiday)}>
+                          Edit
+                        </button>{" "}
+                        <button style={buttonStyle} disabled={saving} onClick={() => handleDeactivate(holiday)}>
+                          Deactivate
+                        </button>
                       </td>
-                      <td>
-                        <span className="hcl-pill">{holiday.type}</span>
-                      </td>
-                      <td>{holiday.applicableTo}</td>
                     </tr>
                   ))}
-                  {filteredHolidays.length === 0 && (
+                  {!loading && monthHolidays.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="hcl-empty">
-                        No holidays found for this month.
-                      </td>
+                      <td colSpan="6">No active holidays found for this month.</td>
                     </tr>
                   )}
                 </tbody>
@@ -432,238 +502,52 @@ export default function HolidayCalendarLeaveLedger() {
           </div>
         </>
       ) : (
-        <>
-          <div className="hcl-stats">
-            <div className="hcl-stat-card">
-              <span>Available leave balance</span>
-              <strong>{leaveTotals.balance}</strong>
-              <small>Across sample records</small>
-            </div>
-            <div className="hcl-stat-card">
-              <span>Leave days used</span>
-              <strong>{leaveTotals.used}</strong>
-              <small>Across sample records</small>
-            </div>
-            <div className="hcl-stat-card">
-              <span>Pending leave requests</span>
-              <strong>{leaveTotals.pending}</strong>
-              <small>Requests, not days</small>
-            </div>
+        <section className="hcl-table-card">
+          <div className="hcl-table-heading">
+            <h2>Leave Application Ledger</h2>
+            <span>{filteredLeave.length} records</span>
           </div>
 
-          <div className="hcl-toolbar hcl-ledger-toolbar">
-            <label className="hcl-search">
-              <FiSearch />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search employee or ID"
-              />
-            </label>
+          <input
+            style={{ ...inputStyle, margin: "12px 0" }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search employee ID, leave type or status"
+          />
 
-            <div className="hcl-toolbar-actions">
-              <select
-                value={department}
-                onChange={(event) => setDepartment(event.target.value)}
-                aria-label="Filter department"
-              >
-                <option value="All">All departments</option>
-                {[...new Set(ledger.map((item) => item.department))].map(
-                  (item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  )
-                )}
-              </select>
-
-              <select
-                value={leaveType}
-                onChange={(event) => setLeaveType(event.target.value)}
-                aria-label="Filter leave type"
-              >
-                <option value="All">All leave types</option>
-                {[...new Set(ledger.map((item) => item.leaveType))].map(
-                  (item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  )
-                )}
-              </select>
-
-              <button className="hcl-secondary-btn" onClick={exportLedger}>
-                <FiDownload /> Export CSV
-              </button>
-            </div>
-          </div>
-
-          <div className="hcl-table-card">
-            <div className="hcl-table-heading">
-              <h2>Employee leave balances</h2>
-              <span>{filteredLedger.length} records</span>
-            </div>
-
-            <div className="hcl-table-wrap">
-              <table className="hcl-table">
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Department</th>
-                    <th>Leave type</th>
-                    <th>Opening</th>
-                    <th>Credited</th>
-                    <th>Used</th>
-                    <th>Pending requests</th>
-                    <th>Available</th>
+          <div className="hcl-table-wrap">
+            <table className="hcl-table">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Leave Type</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Days</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLeave.map((record) => (
+                  <tr key={record.id}>
+                    <td>{record.employee_id}</td>
+                    <td>{record.leave_type}</td>
+                    <td>{formatDate(record.from_date)}</td>
+                    <td>{formatDate(record.to_date)}</td>
+                    <td>{record.total_days}</td>
+                    <td>{record.approval_status || "Pending"}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredLedger.map((record) => (
-                    <tr key={record.id}>
-                      <td>
-                        <div className="hcl-employee">
-                          <strong>{record.employee}</strong>
-                          <small>{record.employeeId}</small>
-                        </div>
-                      </td>
-                      <td>{record.department}</td>
-                      <td>{record.leaveType}</td>
-                      <td>{record.opening}</td>
-                      <td>{record.credited}</td>
-                      <td>{record.used}</td>
-                      <td>{record.pending}</td>
-                      <td>
-                        <strong className="hcl-balance">
-                          {getBalance(record)}
-                        </strong>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredLedger.length === 0 && (
-                    <tr>
-                      <td colSpan="8" className="hcl-empty">
-                        No leave records match your filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+                {!loading && filteredLeave.length === 0 && (
+                  <tr>
+                    <td colSpan="6">No leave records found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          <p className="hcl-footnote">
-            Available balance = opening balance + credited leave − leave used.
-            Pending requests are displayed separately and are not deducted
-            from the balance in this prototype.
-          </p>
-        </>
-      )}
-
-      {showForm && (
-        <div
-          className="hcl-modal-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setShowForm(false);
-          }}
-        >
-          <div className="hcl-modal">
-            <div className="hcl-modal-heading">
-              <div>
-                <h2>Add company holiday</h2>
-                <p>Enter the holiday details below.</p>
-              </div>
-              <button
-                className="hcl-icon-btn"
-                onClick={() => setShowForm(false)}
-                aria-label="Close"
-              >
-                <FiX />
-              </button>
-            </div>
-
-            <form onSubmit={saveHoliday}>
-              <label className="hcl-field">
-                Holiday name *
-                <input
-                  required
-                  value={holidayForm.name}
-                  onChange={(event) =>
-                    setHolidayForm({
-                      ...holidayForm,
-                      name: event.target.value,
-                    })
-                  }
-                  placeholder="e.g. Pongal"
-                />
-              </label>
-
-              <label className="hcl-field">
-                Date *
-                <input
-                  required
-                  type="date"
-                  value={holidayForm.date}
-                  onChange={(event) =>
-                    setHolidayForm({
-                      ...holidayForm,
-                      date: event.target.value,
-                    })
-                  }
-                />
-              </label>
-
-              <label className="hcl-field">
-                Holiday type
-                <select
-                  value={holidayForm.type}
-                  onChange={(event) =>
-                    setHolidayForm({
-                      ...holidayForm,
-                      type: event.target.value,
-                    })
-                  }
-                >
-                  <option>National</option>
-                  <option>Festival</option>
-                  <option>Regional</option>
-                  <option>Company</option>
-                  <option>Optional</option>
-                </select>
-              </label>
-
-              <label className="hcl-field">
-                Applicable to
-                <select
-                  value={holidayForm.applicableTo}
-                  onChange={(event) =>
-                    setHolidayForm({
-                      ...holidayForm,
-                      applicableTo: event.target.value,
-                    })
-                  }
-                >
-                  <option>All Employees</option>
-                  <option>Selected Locations</option>
-                  <option>Selected Departments</option>
-                </select>
-              </label>
-
-              <div className="hcl-modal-actions">
-                <button
-                  type="button"
-                  className="hcl-secondary-btn"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="hcl-primary-btn">
-                  Save Holiday
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        </section>
       )}
     </div>
   );
-}
+            }
