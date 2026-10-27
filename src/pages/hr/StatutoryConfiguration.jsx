@@ -3589,13 +3589,148 @@ alert(
         )}
     </div>
 ) : (
-    <div className="sc-history-placeholder">
-        <h4>Income Tax / TDS Policy History</h4>
-        <p>
-            TDS policy history remains connected to its separate
-            service and will be handled in the TDS phase.
-        </p>
-    </div>
+    <>
+        <div className="sc-history-results-heading">
+            <div>
+                <h4>Income Tax / TDS Policy History</h4>
+                <p className="sc-muted">
+                    Saved TDS policies for the selected company,
+                    including drafts and active policies.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                className="sc-button secondary"
+                onClick={() => loadTdsPolicies(currentCompanyId)}
+                disabled={tdsHistoryLoading}
+            >
+                {tdsHistoryLoading ? "Refreshing..." : "Refresh TDS History"}
+            </button>
+        </div>
+
+        {tdsHistoryLoading ? (
+            <p className="sc-muted">Loading TDS policy history...</p>
+        ) : (
+            (() => {
+                const search = historySearch.trim().toLowerCase();
+
+                const filteredTdsPolicies = tdsPolicies.filter(policy => {
+                    const matchesSearch =
+                        !search ||
+                        String(policy.policy_code || "")
+                            .toLowerCase().includes(search) ||
+                        String(policy.policy_name || "")
+                            .toLowerCase().includes(search) ||
+                        String(policy.tax_year || "")
+                            .toLowerCase().includes(search) ||
+                        String(policy.tax_regime || "")
+                            .toLowerCase().includes(search) ||
+                        String(policy.effective_from || "").includes(search) ||
+                        String(policy.effective_to || "").includes(search);
+
+                    const matchesStatus =
+                        historyStatus === "ALL" ||
+                        String(policy.policy_status || "DRAFT")
+                            .toUpperCase() === historyStatus;
+
+                    const matchesFromDate =
+                        !historyFromDate ||
+                        (
+                            policy.effective_from &&
+                            policy.effective_from >= historyFromDate
+                        );
+
+                    const matchesToDate =
+                        !historyToDate ||
+                        (
+                            policy.effective_from &&
+                            policy.effective_from <= historyToDate
+                        );
+
+                    return (
+                        matchesSearch &&
+                        matchesStatus &&
+                        matchesFromDate &&
+                        matchesToDate
+                    );
+                });
+
+                return filteredTdsPolicies.length === 0 ? (
+                    <p className="sc-muted">
+                        No TDS policies match your filters.
+                    </p>
+                ) : (
+                    <div className="sc-table-wrap">
+                        <table className="sc-table">
+                            <thead>
+                                <tr>
+                                    <th>Policy Code</th>
+                                    <th>Policy Name</th>
+                                    <th>Tax Year</th>
+                                    <th>Regime</th>
+                                    <th>Effective From</th>
+                                    <th>Effective To</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {filteredTdsPolicies.map(policy => (
+                                    <tr key={policy.id}>
+                                        <td>{policy.policy_code || "-"}</td>
+                                        <td>{policy.policy_name || "-"}</td>
+                                        <td>{policy.tax_year || "-"}</td>
+                                        <td>
+                                            {policy.tax_regime === "NEW"
+                                                ? "New"
+                                                : policy.tax_regime === "OLD"
+                                                    ? "Old"
+                                                    : policy.tax_regime || "-"}
+                                        </td>
+                                        <td>{policy.effective_from || "-"}</td>
+                                        <td>
+                                            {policy.effective_to || "No end date"}
+                                        </td>
+                                        <td>
+                                            <span
+                                                className={
+                                                    String(policy.policy_status)
+                                                        .toUpperCase() === "ACTIVE"
+                                                        ? "sc-status active"
+                                                        : "sc-status inactive"
+                                                }
+                                            >
+                                                {policy.policy_status || "DRAFT"}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="sc-history-row-actions">
+                                                <button
+                                                    type="button"
+                                                    className="sc-link-button"
+                                                    onClick={async () => {
+                                                        setActiveTab("tds");
+                                                        await handleSelectTdsPolicy(
+                                                            policy.id
+                                                        );
+                                                    }}
+                                                >
+                                                    View / Edit
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            })()
+        )}
+    </>
+)}
 
 
             )}
