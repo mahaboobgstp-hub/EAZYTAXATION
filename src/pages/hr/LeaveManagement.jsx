@@ -1,169 +1,345 @@
-
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "../../css/hr/LeaveManagement.css";
-
-const initialRequests = [
-  {
-    id: 1,
-    employeeCode: "EMP001",
-    employeeName: "Vamsi Cherukuri",
-    department: "Administration",
-    leaveType: "Casual Leave",
-    fromDate: "2026-10-19",
-    toDate: "2026-10-20",
-    days: 2,
-    reason: "Personal work",
-    appliedOn: "2026-10-15",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    employeeCode: "EMP002",
-    employeeName: "Mahaboob Basha",
-    department: "Operations",
-    leaveType: "Sick Leave",
-    fromDate: "2026-10-12",
-    toDate: "2026-10-12",
-    days: 1,
-    reason: "Not feeling well",
-    appliedOn: "2026-10-11",
-    status: "Approved",
-  },
-  {
-    id: 3,
-    employeeCode: "EMP003",
-    employeeName: "Test Employee",
-    department: "Security",
-    leaveType: "Casual Leave",
-    fromDate: "2026-10-08",
-    toDate: "2026-10-09",
-    days: 2,
-    reason: "Family function",
-    appliedOn: "2026-10-06",
-    status: "Rejected",
-  },
-];
+import { useCompany } from "../../context/CompanyContext";
+import { supabase } from "../../supabase/supabaseClient";
+import {
+  getLeaveRecords,
+  createLeaveRecord,
+  updateLeaveRecord,
+} from "../../services/hr/leaveService";
 
 const emptyForm = {
-  employeeCode: "",
-  employeeName: "",
-  department: "",
-  leaveType: "Casual Leave",
-  fromDate: "",
-  toDate: "",
+  employee_id: "",
+  leave_type: "",
+  from_date: "",
+  to_date: "",
+  session_type: "Full Day",
   reason: "",
+  remarks: "",
 };
 
-function calculateDays(fromDate, toDate) {
-  if (!fromDate || !toDate || toDate < fromDate) return 0;
+const inputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "10px",
+  border: "1px solid #d1d5db",
+  borderRadius: "6px",
+};
 
-  const start = new Date(`${fromDate}T00:00:00`);
-  const end = new Date(`${toDate}T00:00:00`);
+const buttonStyle = {
+  padding: "9px 13px",
+  border: "1px solid #d1d5db",
+  borderRadius: "6px",
+  background: "#fff",
+  cursor: "pointer",
+};
 
-  return Math.floor((end - start) / 86400000) + 1;
+function calculateDays(from, to, session) {
+  if (!from || !to || to < from) return 0;
+
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+  const days = Math.round((end - start) / 86400000) + 1;
+
+  return session === "Half Day" ? 0.5 : days;
 }
 
 function formatDate(value) {
   if (!value) return "—";
-
-  return new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(value).toLocaleDateString("en-IN");
 }
 
 export default function LeaveManagement() {
-  const [requests, setRequests] = useState(initialRequests);
+  const { currentCompanyId } = useCompany();
+
+  const [records, setRecords] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [leaveTypeFilter, setLeaveTypeFilter] = useState("All");
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const filteredRequests = useMemo(() => {
-    return requests.filter((request) => {
-      const searchText = search.toLowerCase();
+  const loadData = useCallback(async () => {
+    if (!currentCompanyId) {
+      setRecords([]);
+      setEmployees([]);
+      return;
+    }
 
-      const matchesSearch =
-        request.employeeName.toLowerCase().includes(searchText) ||
-        request.employeeCode.toLowerCase().includes(searchText) ||
-        request.department.toLowerCase().includes(searchText);
+    setLoading(true);
+    setError("");
 
-      const matchesStatus =
-        statusFilter === "All" || request.status === statusFilter;
+    try {
+      const [leaveRows, employeeResult] = await Promise.all([
+        getLeaveRecords(currentCompanyId),
+        supabase
+          .from("employees")
+          .select("id, employee_code, employee_name, department_id, employee_status")
+          .eq("company_id", currentCompanyId)
+          .eq("is_active", true)
+          .order("employee_name"),
+      ]);
 
-      const matchesLeaveType =
-        leaveTypeFilter === "All" ||
-        request.leaveType === leaveTypeFilter;
+      if (employeeResult.error) throw employeeResult.error;
 
-      return matchesSearch && matchesStatus && matchesLeaveType;
-    });
-  }, [requests, search, statusFilter, leaveTypeFilter]);
+      setRecords(
+        (leaveRows || []).filter((row) => row.is_active !== false)
+      );
+      setEmployees(employeeResult.data || []);
+    } catch (err) {
+      setError(err.message || "Unable to load leave records.");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentCompanyId]);
 
-  const pendingCount = requests.filter(
-    (item) => item.status === "Pending"
+  useEffect(() => {
+    setRecords([]);
+    setEmployees([]);
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(false);
+    setMessage("");
+    loadData();
+  }, [loadData]);
+
+  const employeeMap = useMemo(
+    () => new Map(employees.map((employee) => [employee.id, employee])),
+    [employees]
+  );
+
+  const filteredRecords = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return [...records]
+      .filter((record) => {
+        const employee = employeeMap.get(record.employee_id);
+        const name = employee?.employee_name || "";
+        const code = employee?.employee_code || "";
+
+        const matchesSearch =
+          !query ||
+          name.toLowerCase().includes(query) ||
+          code.toLowerCase().includes(query) ||
+          String(record.leave_type || "").toLowerCase().includes(query);
+
+        const matchesStatus =
+          statusFilter === "All" ||
+          (record.approval_status || "Pending") === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) =>
+        String(b.applied_on || "").localeCompare(String(a.applied_on || ""))
+      );
+  }, [records, search, statusFilter, employeeMap]);
+
+  const pendingCount = records.filter(
+    (row) => (row.approval_status || "Pending") === "Pending"
   ).length;
 
-  const approvedCount = requests.filter(
-    (item) => item.status === "Approved"
+  const approvedCount = records.filter(
+    (row) => row.approval_status === "Approved"
   ).length;
 
-  const rejectedCount = requests.filter(
-    (item) => item.status === "Rejected"
-  ).length;
-
-  const approvedDays = requests
-    .filter((item) => item.status === "Approved")
-    .reduce((total, item) => total + item.days, 0);
-
-  function updateForm(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
+  function startNew() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setError("");
+    setMessage("");
+    setShowForm(true);
   }
 
-  function handleSubmit(event) {
+  function startEdit(record) {
+    if ((record.approval_status || "Pending") !== "Pending") {
+      setError("Only pending leave applications can be edited.");
+      return;
+    }
+
+    setEditingId(record.id);
+    setForm({
+      employee_id: record.employee_id || "",
+      leave_type: record.leave_type || "",
+      from_date: record.from_date || "",
+      to_date: record.to_date || "",
+      session_type: record.session_type || "Full Day",
+      reason: record.reason || "",
+      remarks: record.remarks || "",
+    });
+    setError("");
+    setMessage("");
+    setShowForm(true);
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
+    setError("");
     setMessage("");
 
-    if (
-      !form.employeeCode.trim() ||
-      !form.employeeName.trim() ||
-      !form.fromDate ||
-      !form.toDate ||
-      !form.reason.trim()
-    ) {
-      setMessage("Please complete all required fields.");
+    if (!currentCompanyId) {
+      setError("Please select a company.");
       return;
     }
 
-    if (form.toDate < form.fromDate) {
-      setMessage("The To Date cannot be earlier than the From Date.");
+    if (!form.employee_id || !employeeMap.has(form.employee_id)) {
+      setError("Select a valid employee from the selected company.");
       return;
     }
 
-    const newRequest = {
-      ...form,
-      id: Date.now(),
-      days: calculateDays(form.fromDate, form.toDate),
-      appliedOn: new Date().toISOString().slice(0, 10),
-      status: "Pending",
-    };
+    if (!form.leave_type.trim()) {
+      setError("Leave type is required.");
+      return;
+    }
 
-    setRequests((current) => [newRequest, ...current]);
-    setForm(emptyForm);
-    setShowForm(false);
-    setMessage("Leave request added to this screen.");
-  }
+    if (!form.from_date || !form.to_date || form.to_date < form.from_date) {
+      setError("Enter valid leave dates.");
+      return;
+    }
 
-  function updateStatus(id, status) {
-    setRequests((current) =>
-      current.map((request) =>
-        request.id === id ? { ...request, status } : request
-      )
+    const totalDays = calculateDays(
+      form.from_date,
+      form.to_date,
+      form.session_type
     );
 
-    setMessage(`Request marked as ${status.toLowerCase()}.`);
+    if (form.session_type === "Half Day" && form.from_date !== form.to_date) {
+      setError("Half-day leave must be for a single date.");
+      return;
+    }
+
+    const payload = {
+      employee_id: form.employee_id,
+      leave_type: form.leave_type.trim(),
+      from_date: form.from_date,
+      to_date: form.to_date,
+      total_days: totalDays,
+      session_type: form.session_type,
+      reason: form.reason.trim() || null,
+      remarks: form.remarks.trim() || null,
+    };
+
+    setSaving(true);
+
+    try {
+      if (editingId) {
+        await updateLeaveRecord(editingId, payload, currentCompanyId);
+        setMessage("Leave application updated.");
+      } else {
+        await createLeaveRecord(
+          {
+            ...payload,
+            applied_on: new Date().toISOString(),
+            approval_status: "Pending",
+            is_active: true,
+          },
+          currentCompanyId
+        );
+        setMessage("Leave application saved.");
+      }
+
+      setShowForm(false);
+      setForm(emptyForm);
+      setEditingId(null);
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Unable to save leave application.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function decideLeave(record, status) {
+    if (!currentCompanyId) return;
+
+    if ((record.approval_status || "Pending") !== "Pending") {
+      setError("Only pending applications can be approved or rejected.");
+      return;
+    }
+
+    let rejectionReason = null;
+
+    if (status === "Rejected") {
+      rejectionReason = window.prompt("Enter the rejection reason:");
+
+      if (rejectionReason === null) return;
+
+      if (!rejectionReason.trim()) {
+        setError("A rejection reason is required.");
+        return;
+      }
+    }
+
+    setSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) throw authError;
+
+      const { data, error: updateError } = await supabase
+        .from("leave_master")
+        .update({
+          approval_status: status,
+          approved_by: user?.id || null,
+          approved_on: new Date().toISOString(),
+          rejection_reason: rejectionReason,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", record.id)
+        .eq("company_id", currentCompanyId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      setMessage(`Leave application ${status.toLowerCase()}.`);
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Unable to update leave decision.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deactivateLeave(record) {
+    if (!window.confirm("Deactivate this leave record?")) return;
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const { error: updateError } = await supabase
+        .from("leave_master")
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", record.id)
+        .eq("company_id", currentCompanyId);
+
+      if (updateError) throw updateError;
+
+      setMessage("Leave record deactivated.");
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Unable to deactivate leave record.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!currentCompanyId) {
+    return <div className="leave-page">Please select a company first.</div>;
   }
 
   return (
@@ -171,300 +347,225 @@ export default function LeaveManagement() {
       <div className="leave-page-header">
         <div>
           <h1>Leave Management</h1>
-          <p>Manage employee leave requests, approvals and leave records.</p>
+          <p>Company leave applications and approval records.</p>
         </div>
-
-        <button
-          className="leave-primary-button"
-          onClick={() => {
-            setMessage("");
-            setShowForm((current) => !current);
-          }}
-        >
-          {showForm ? "Cancel" : "+ Apply Leave"}
+        <button className="leave-primary-button" onClick={startNew}>
+          + Apply Leave
         </button>
       </div>
 
-      <div className="leave-demo-notice">
-        UI preview: changes are temporary and will not be saved after refreshing.
-      </div>
-
-      {message && (
-        <div className="leave-message" role="status">
-          {message}
-        </div>
-      )}
+      {error && <p role="alert" style={{ color: "#b91c1c" }}>{error}</p>}
+      {message && <p role="status">{message}</p>}
+      {loading && <p>Loading leave records...</p>}
 
       <div className="leave-summary-grid">
         <div className="leave-summary-card">
-          <span className="leave-summary-label">Total Requests</span>
-          <strong>{requests.length}</strong>
-          <small>All leave applications</small>
+          <span className="leave-summary-label">Total Applications</span>
+          <strong>{records.length}</strong>
         </div>
-
         <div className="leave-summary-card pending-card">
-          <span className="leave-summary-label">Pending Approval</span>
+          <span className="leave-summary-label">Pending</span>
           <strong>{pendingCount}</strong>
-          <small>Awaiting a decision</small>
         </div>
-
         <div className="leave-summary-card approved-card">
-          <span className="leave-summary-label">Approved Requests</span>
+          <span className="leave-summary-label">Approved</span>
           <strong>{approvedCount}</strong>
-          <small>{approvedDays} approved calendar days</small>
-        </div>
-
-        <div className="leave-summary-card rejected-card">
-          <span className="leave-summary-label">Rejected Requests</span>
-          <strong>{rejectedCount}</strong>
-          <small>Not approved</small>
         </div>
       </div>
 
       {showForm && (
         <section className="leave-panel">
-          <div className="leave-panel-heading">
-            <div>
-              <h2>New Leave Request</h2>
-              <p>Enter the employee and leave details.</p>
-            </div>
-          </div>
+          <h2>{editingId ? "Edit Leave Application" : "New Leave Application"}</h2>
 
           <form onSubmit={handleSubmit}>
             <div className="leave-form-grid">
               <label>
-                Employee Code *
-                <input
-                  value={form.employeeCode}
-                  onChange={(event) =>
-                    updateForm("employeeCode", event.target.value)
-                  }
-                  placeholder="e.g. EMP004"
+                Employee *
+                <select
+                  style={inputStyle}
                   required
-                />
-              </label>
-
-              <label>
-                Employee Name *
-                <input
-                  value={form.employeeName}
-                  onChange={(event) =>
-                    updateForm("employeeName", event.target.value)
+                  value={form.employee_id}
+                  onChange={(e) =>
+                    setForm({ ...form, employee_id: e.target.value })
                   }
-                  placeholder="Enter employee name"
-                  required
-                />
-              </label>
-
-              <label>
-                Department
-                <input
-                  value={form.department}
-                  onChange={(event) =>
-                    updateForm("department", event.target.value)
-                  }
-                  placeholder="Enter department"
-                />
+                >
+                  <option value="">Select employee</option>
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.employee_code} — {employee.employee_name}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>
                 Leave Type *
+                <input
+                  style={inputStyle}
+                  required
+                  value={form.leave_type}
+                  onChange={(e) =>
+                    setForm({ ...form, leave_type: e.target.value })
+                  }
+                  placeholder="Enter configured leave type"
+                />
+              </label>
+
+              <label>
+                Session
                 <select
-                  value={form.leaveType}
-                  onChange={(event) =>
-                    updateForm("leaveType", event.target.value)
+                  style={inputStyle}
+                  value={form.session_type}
+                  onChange={(e) =>
+                    setForm({ ...form, session_type: e.target.value })
                   }
                 >
-                  <option>Casual Leave</option>
-                  <option>Sick Leave</option>
-                  <option>Earned Leave</option>
-                  <option>Unpaid Leave</option>
-                  <option>Compensatory Off</option>
-                  <option>Other</option>
+                  <option>Full Day</option>
+                  <option>Half Day</option>
                 </select>
               </label>
 
               <label>
                 From Date *
                 <input
+                  style={inputStyle}
                   type="date"
-                  value={form.fromDate}
-                  onChange={(event) =>
-                    updateForm("fromDate", event.target.value)
-                  }
                   required
+                  value={form.from_date}
+                  onChange={(e) =>
+                    setForm({ ...form, from_date: e.target.value })
+                  }
                 />
               </label>
 
               <label>
                 To Date *
                 <input
+                  style={inputStyle}
                   type="date"
-                  min={form.fromDate || undefined}
-                  value={form.toDate}
-                  onChange={(event) =>
-                    updateForm("toDate", event.target.value)
-                  }
                   required
+                  min={form.from_date || undefined}
+                  value={form.to_date}
+                  onChange={(e) =>
+                    setForm({ ...form, to_date: e.target.value })
+                  }
                 />
               </label>
 
-              <label className="leave-full-width">
-                Reason for Leave *
-                <textarea
-                  rows="3"
+              <label>
+                Reason
+                <input
+                  style={inputStyle}
                   value={form.reason}
-                  onChange={(event) =>
-                    updateForm("reason", event.target.value)
+                  onChange={(e) =>
+                    setForm({ ...form, reason: e.target.value })
                   }
-                  placeholder="Enter the reason for leave"
-                  required
+                />
+              </label>
+
+              <label style={{ gridColumn: "1 / -1" }}>
+                Remarks
+                <textarea
+                  style={inputStyle}
+                  value={form.remarks}
+                  onChange={(e) =>
+                    setForm({ ...form, remarks: e.target.value })
+                  }
                 />
               </label>
             </div>
 
-            <div className="leave-form-footer">
-              <span>
-                Requested duration:{" "}
-                <strong>
-                  {calculateDays(form.fromDate, form.toDate)} day(s)
-                </strong>
-              </span>
+            <p>
+              Calculated days:{" "}
+              {calculateDays(form.from_date, form.to_date, form.session_type)}
+            </p>
 
-              <button type="submit" className="leave-primary-button">
-                Submit Request
-              </button>
-            </div>
+            <button className="leave-primary-button" disabled={saving}>
+              {saving ? "Saving..." : "Save Application"}
+            </button>
+            <button
+              type="button"
+              style={{ ...buttonStyle, marginLeft: 8 }}
+              onClick={() => setShowForm(false)}
+            >
+              Cancel
+            </button>
           </form>
         </section>
       )}
 
       <section className="leave-panel">
-        <div className="leave-panel-heading">
-          <div>
-            <h2>Leave Applications</h2>
-            <p>Review requests and update their approval status.</p>
-          </div>
-          <span className="leave-record-count">
-            {filteredRequests.length} record(s)
-          </span>
-        </div>
+        <h2>Leave Applications</h2>
 
         <div className="leave-filter-bar">
           <input
-            className="leave-search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search employee, code or department..."
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search employee, code or leave type"
           />
-
           <select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            aria-label="Filter by status"
+            onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="All">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
+            <option>All</option>
+            <option>Pending</option>
+            <option>Approved</option>
+            <option>Rejected</option>
           </select>
-
-          <select
-            value={leaveTypeFilter}
-            onChange={(event) => setLeaveTypeFilter(event.target.value)}
-            aria-label="Filter by leave type"
-          >
-            <option value="All">All Leave Types</option>
-            <option value="Casual Leave">Casual Leave</option>
-            <option value="Sick Leave">Sick Leave</option>
-            <option value="Earned Leave">Earned Leave</option>
-            <option value="Unpaid Leave">Unpaid Leave</option>
-            <option value="Compensatory Off">Compensatory Off</option>
-            <option value="Other">Other</option>
-          </select>
+          <button style={buttonStyle} onClick={loadData} disabled={loading}>
+            Refresh
+          </button>
         </div>
 
-        <div className="leave-table-wrapper">
-          <table className="leave-table">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                <th>Employee</th>
-                <th>Leave Type</th>
-                <th>Leave Period</th>
-                <th>Days</th>
-                <th>Reason</th>
-                <th>Applied On</th>
-                <th>Status</th>
-                <th>Actions</th>
+                {["Employee", "Leave Type", "From", "To", "Days", "Status", "Actions"].map((title) => (
+                  <th key={title} style={{ padding: 10, textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                    {title}
+                  </th>
+                ))}
               </tr>
             </thead>
-
             <tbody>
-              {filteredRequests.map((request) => (
-                <tr key={request.id}>
-                  <td>
-                    <strong>{request.employeeName}</strong>
-                    <small>{request.employeeCode}</small>
-                    <small>{request.department || "—"}</small>
-                  </td>
+              {filteredRecords.map((record) => {
+                const employee = employeeMap.get(record.employee_id);
+                const status = record.approval_status || "Pending";
 
-                  <td>{request.leaveType}</td>
-
-                  <td>
-                    <div>{formatDate(request.fromDate)}</div>
-                    <small>to {formatDate(request.toDate)}</small>
-                  </td>
-
-                  <td>{request.days}</td>
-                  <td className="leave-reason-cell">{request.reason}</td>
-                  <td>{formatDate(request.appliedOn)}</td>
-
-                  <td>
-                    <span
-                      className={`leave-status leave-status-${request.status.toLowerCase()}`}
-                    >
-                      {request.status}
-                    </span>
-                  </td>
-
-                  <td>
-                    {request.status === "Pending" ? (
-                      <div className="leave-action-buttons">
-                        <button
-                          className="leave-approve-button"
-                          onClick={() =>
-                            updateStatus(request.id, "Approved")
-                          }
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="leave-reject-button"
-                          onClick={() =>
-                            updateStatus(request.id, "Rejected")
-                          }
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        className="leave-reset-button"
-                        onClick={() =>
-                          updateStatus(request.id, "Pending")
-                        }
-                      >
-                        Reopen
+                return (
+                  <tr key={record.id}>
+                    <td style={{ padding: 10 }}>
+                      {employee?.employee_name || "Employee unavailable"}
+                      <small style={{ display: "block" }}>
+                        {employee?.employee_code || record.employee_id}
+                      </small>
+                    </td>
+                    <td style={{ padding: 10 }}>{record.leave_type}</td>
+                    <td style={{ padding: 10 }}>{formatDate(record.from_date)}</td>
+                    <td style={{ padding: 10 }}>{formatDate(record.to_date)}</td>
+                    <td style={{ padding: 10 }}>{record.total_days}</td>
+                    <td style={{ padding: 10 }}>{status}</td>
+                    <td style={{ padding: 10 }}>
+                      {status === "Pending" && (
+                        <>
+                          <button style={buttonStyle} disabled={saving} onClick={() => startEdit(record)}>Edit</button>{" "}
+                          <button style={buttonStyle} disabled={saving} onClick={() => decideLeave(record, "Approved")}>Approve</button>{" "}
+                          <button style={buttonStyle} disabled={saving} onClick={() => decideLeave(record, "Rejected")}>Reject</button>
+                        </>
+                      )}
+                      <button style={buttonStyle} disabled={saving} onClick={() => deactivateLeave(record)}>
+                        Deactivate
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
 
-              {filteredRequests.length === 0 && (
+              {!loading && filteredRecords.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="leave-empty-state">
-                    No leave requests match your filters.
+                  <td colSpan="7" style={{ padding: 20, textAlign: "center" }}>
+                    No leave applications found.
                   </td>
                 </tr>
               )}
@@ -472,17 +573,6 @@ export default function LeaveManagement() {
           </table>
         </div>
       </section>
-
-      <section className="leave-panel leave-future-panel">
-        <div>
-          <h2>Next Integration</h2>
-          <p>
-            Connect this screen to employee records, assigned leave policies,
-            leave balances, approval history and payroll attendance deductions.
-          </p>
-        </div>
-        <span className="leave-coming-soon">Database integration pending</span>
-      </section>
     </div>
   );
-}
+      }
