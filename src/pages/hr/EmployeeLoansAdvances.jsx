@@ -307,12 +307,10 @@ export default function EmployeeLoansAdvances() {
 
   async function changeStatus(loan, status) {
     const messages = {
-      Approved: "Approve this loan application?",
-      Disbursed: "Mark this loan as disbursed?",
-      Rejected: "Reject this loan application?",
-      Closed: "Mark this loan as closed?",
-      Pending: "Return this loan to pending status?",
-    };
+  Completed: "Mark this loan as completed?",
+  Closed: "Close this loan record?",
+  Cancelled: "Cancel this loan record?",
+};
 
     if (!window.confirm(messages[status] || `Change status to ${status}?`)) {
       return;
@@ -613,24 +611,44 @@ export default function EmployeeLoansAdvances() {
                     <td style={{ padding: 10 }}>{money(loan.outstanding_amount)}</td>
                     <td style={{ padding: 10 }}>{loan.loan_status}</td>
                     <td style={{ padding: 10, minWidth: 220 }}>
-                      {["Pending", "Rejected"].includes(loan.loan_status) && (
+                                            {loan.loan_status === "Active" && (
                         <>
-                          <button style={buttonStyle} disabled={saving} onClick={() => startEdit(loan)}>Edit</button>{" "}
-                          <button style={buttonStyle} disabled={saving} onClick={() => changeStatus(loan, "Approved")}>Approve</button>{" "}
-                          <button style={buttonStyle} disabled={saving} onClick={() => changeStatus(loan, "Rejected")}>Reject</button>
+                          <button
+                            type="button"
+                            style={buttonStyle}
+                            disabled={saving}
+                            onClick={() => startEdit(loan)}
+                          >
+                            Edit
+                          </button>{" "}
+
+                          <button
+                            type="button"
+                            style={buttonStyle}
+                            disabled={saving}
+                            onClick={() => changeStatus(loan, "Completed")}
+                          >
+                            Mark Completed
+                          </button>{" "}
+
+                          <button
+                            type="button"
+                            style={buttonStyle}
+                            disabled={saving}
+                            onClick={() => changeStatus(loan, "Closed")}
+                          >
+                            Close
+                          </button>{" "}
+
+                          <button
+                            type="button"
+                            style={buttonStyle}
+                            disabled={saving}
+                            onClick={() => changeStatus(loan, "Cancelled")}
+                          >
+                            Cancel
+                          </button>
                         </>
-                      )}
-
-                      {loan.loan_status === "Approved" && (
-                        <button style={buttonStyle} disabled={saving} onClick={() => changeStatus(loan, "Disbursed")}>
-                          Mark Disbursed
-                        </button>
-                      )}
-
-                      {loan.loan_status === "Disbursed" && (
-                        <button style={buttonStyle} disabled={saving} onClick={() => changeStatus(loan, "Closed")}>
-                          Close
-                        </button>
                       )}
 
                       <button style={buttonStyle} disabled={saving} onClick={() => handleDeactivate(loan)}>
