@@ -3705,22 +3705,66 @@ alert(
                                                 {policy.policy_status || "DRAFT"}
                                             </span>
                                         </td>
-                                        <td>
-                                            <div className="sc-history-row-actions">
-                                                <button
-                                                    type="button"
-                                                    className="sc-link-button"
-                                                    onClick={async () => {
-                                                        setActiveTab("tds");
-                                                        await handleSelectTdsPolicy(
-                                                            policy.id
-                                                        );
-                                                    }}
-                                                >
-                                                    View / Edit
-                                                </button>
-                                            </div>
-                                        </td>
+                                        
+<td>
+    <div className="sc-history-row-actions">
+        <button
+            type="button"
+            className="sc-link-button"
+            onClick={async () => {
+                setActiveTab("tds");
+                await handleSelectTdsPolicy(policy.id);
+            }}
+        >
+            View / Edit
+        </button>
+
+        {String(policy.policy_status || "DRAFT").toUpperCase() === "DRAFT" && (
+            <button
+                type="button"
+                className="sc-link-button"
+                disabled={tdsSaving || tdsHistoryLoading}
+                onClick={async () => {
+                    setErrorMessage("");
+                    setMessage("");
+
+                    setSelectedTdsPolicyId(policy.id);
+
+                    const confirmed = window.confirm(
+                        `Activate TDS policy "${policy.policy_name}" for tax year ${policy.tax_year}, ${policy.tax_regime} regime? Verify all tax rules and slabs before activation.`
+                    );
+
+                    if (!confirmed) return;
+
+                    try {
+                        setTdsSaving(true);
+
+                        await activateSalaryTdsPolicy(
+                            policy.id,
+                            currentCompanyId
+                        );
+
+                        await loadTdsPolicies(currentCompanyId);
+
+                        setMessage(
+                            `TDS policy "${policy.policy_name}" activated successfully.`
+                        );
+                    } catch (error) {
+                        console.error("TDS policy activation failed:", error);
+                        setErrorMessage(
+                            error.message || "Unable to activate TDS policy."
+                        );
+                    } finally {
+                        setTdsSaving(false);
+                    }
+                }}
+            >
+                {tdsSaving ? "Activating..." : "Activate"}
+            </button>
+        )}
+    </div>
+</td>
+
                                     </tr>
                                 ))}
                             </tbody>
