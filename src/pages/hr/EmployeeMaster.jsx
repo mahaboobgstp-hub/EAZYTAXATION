@@ -357,6 +357,7 @@ setAvailablePTPolicies([]);
 
 }, [currentCompanyId]);
 
+
 useEffect(() => {
     let cancelled = false;
 
@@ -371,19 +372,36 @@ useEffect(() => {
         try {
             const [
                 leavePolicies,
-                latePolicies
+                latePolicies,
+                absenceResult
             ] = await Promise.all([
                 getLeavePolicies(currentCompanyId, true),
-                getLateDeductionPolicies(currentCompanyId)
+                getLateDeductionPolicies(currentCompanyId),
+                supabase
+                    .from("absence_deduction_policies")
+                    .select("id, policy_name, is_active")
+                    .eq("company_id", currentCompanyId)
+                    .eq("is_active", true)
+                    .order("policy_name", { ascending: true })
             ]);
 
+            if (absenceResult.error) {
+                throw absenceResult.error;
+            }
+
             if (!cancelled) {
-                setAvailableLeavePolicies(leavePolicies || []);
+                setAvailableLeavePolicies(
+                    leavePolicies || []
+                );
 
                 setAvailableLatePolicies(
                     (latePolicies || []).filter(
                         policy => policy.is_active === true
                     )
+                );
+
+                setAvailableAbsencePolicies(
+                    absenceResult.data || []
                 );
             }
         } catch (error) {
@@ -407,6 +425,7 @@ useEffect(() => {
         cancelled = true;
     };
 }, [currentCompanyId]);
+
     const loadEmployees = async (companyId) => {
 
         try {
@@ -3636,9 +3655,17 @@ setTdsApplicable(
                 }
             >
 
-                <option value="">
-                    Select Absence Policy
-                </option>
+                
+<option value="">
+    Select Absence Policy
+</option>
+
+{availableAbsencePolicies.map(policy => (
+    <option key={policy.id} value={policy.id}>
+        {policy.policy_name}
+    </option>
+))}
+
 
             </select>
 
