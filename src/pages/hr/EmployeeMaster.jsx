@@ -236,7 +236,7 @@ const [tdsPolicyLoading, setTdsPolicyLoading] = useState(false);
     // Professional Tax policy UI state.
 // The PT catalogue will be connected after the UI is approved.
 // Professional Tax policy assignment
-AvailablePTPoliciesconst [availablePTPolicies, set] = useState([]);
+const [availablePTPolicies, setAvailablePTPolicies] = useState([]);
 const [ptPolicyId, setPTPolicyId] = useState("");
 const [ptPolicyLoading, setPTPolicyLoading] = useState(false);
 const [ptPolicyError, setPTPolicyError] = useState("");
