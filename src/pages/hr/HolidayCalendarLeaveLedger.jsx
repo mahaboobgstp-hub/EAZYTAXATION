@@ -336,11 +336,13 @@ export default function HolidayCalendarLeaveLedger() {
                   value={form.holiday_type}
                   onChange={(e) => setForm({ ...form, holiday_type: e.target.value })}
                 >
-                  <option>National</option>
-                  <option>Festival</option>
-                  <option>Regional</option>
-                  <option>Company</option>
-                  <option>Other</option>
+                  <option>Public</option>
+<option>National</option>
+<option>Festival</option>
+<option>Company</option>
+<option>Client</option>
+<option>Location</option>
+<option>Optional</option>
                 </select>
               </label>
 
