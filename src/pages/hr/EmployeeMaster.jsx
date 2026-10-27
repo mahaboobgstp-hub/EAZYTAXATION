@@ -38,6 +38,19 @@ import {
     getProfessionalTaxPolicyVersionById
 } from "../../services/hr/professionalTaxPolicyService";
 
+import {
+    getEmployeeDeductionSettings,
+    saveEmployeeDeductionSettings
+} from "../../services/hr/employeeDeductionSettingsService";
+
+import {
+    getLeavePolicies
+} from "../../services/hr/leavePolicyService";
+
+import {
+    getLateDeductionPolicies
+} from "../../services/hr/lateDeductionPolicyService";
+
 const defaultFormData = {
     employee_code: "",
     employee_name: "",
