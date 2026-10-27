@@ -17,7 +17,11 @@ export async function getSalaryTdsPolicies(companyId) {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data ?? [];
+
+  return (data ?? []).map(policy => ({
+    ...policy,
+    policy_status: policy.policy_status || "DRAFT"
+  }));
 }
 
 export async function getSalaryTdsPolicy(policyId, companyId) {
