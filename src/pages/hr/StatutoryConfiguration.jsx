@@ -416,6 +416,7 @@ const [tdsSlabs, setTdsSlabs] = useState(initialTdsSlabs);
 const [selectedTdsPolicyId, setSelectedTdsPolicyId] = useState("");
 const [tdsLoading, setTdsLoading] = useState(false);
 const [tdsSaving, setTdsSaving] = useState(false);
+    const [tdsHistoryLoading, setTdsHistoryLoading] = useState(false);
 
     const [statutoryPolicies, setStatutoryPolicies] = useState([]);
     const [statutoryPolicyPackages, setStatutoryPolicyPackages] = useState([]);
@@ -436,11 +437,16 @@ const [historyDetailsPolicy, setHistoryDetailsPolicy] = useState(null);
     if (currentCompanyId) {
         loadConfiguration();
         loadStatutoryPolicies();
+        loadTdsPolicies(currentCompanyId);
+        loadStatutoryPolicyPackages(currentCompanyId);
     } else {
         setSettings(initialSettings);
         setSettingsId(null);
         setPTRegistrations([]);
         setStates([]);
+
+        setPTPolicyRecords([]);
+        setPTPolicyHistory([]);
 
         setTdsPolicies([]);
         setSelectedTdsPolicyId("");
@@ -448,7 +454,9 @@ const [historyDetailsPolicy, setHistoryDetailsPolicy] = useState(null);
         setTdsSlabs(initialTdsSlabs);
 
         setStatutoryPolicies([]);
+        setStatutoryPolicyPackages([]);
         setStatutoryPolicyForm(initialStatutoryPolicyForm);
+        setHistoryDetailsPolicy(null);
     }
 }, [currentCompanyId]);
 
@@ -914,7 +922,27 @@ async function handleDeactivatePTPolicyVersion(policy) {
 }
 
     
+async function loadTdsPolicies(companyId = currentCompanyId) {
+    if (!companyId) {
+        setTdsPolicies([]);
+        return;
+    }
 
+    try {
+        setTdsHistoryLoading(true);
+
+        const policies = await getSalaryTdsPolicies(companyId);
+
+        setTdsPolicies(policies || []);
+    } catch (error) {
+        console.error("Unable to load TDS policies:", error);
+        setErrorMessage(
+            error.message || "Unable to load TDS policy history."
+        );
+    } finally {
+        setTdsHistoryLoading(false);
+    }
+}
 function handleTdsPolicyChange(event) {
     const { name, value } = event.target;
 
@@ -1078,8 +1106,7 @@ async function handleSaveTdsPolicy() {
             currentCompanyId
         );
 
-        const refreshed = await getSalaryTdsPolicies(currentCompanyId);
-        setTdsPolicies(refreshed || []);
+        await loadTdsPolicies(currentCompanyId);
         setTdsPolicyForm(previous => ({ ...previous, id: saved.id }));
 
         setMessage(
@@ -1112,8 +1139,7 @@ async function handleActivateTdsPolicy() {
             currentCompanyId
         );
 
-        const refreshed = await getSalaryTdsPolicies(currentCompanyId);
-        setTdsPolicies(refreshed || []);
+        await loadTdsPolicies(currentCompanyId);
 
         setTdsPolicyForm(previous => ({
             ...previous,
