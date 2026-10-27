@@ -285,7 +285,7 @@ export default function EmployeeLoansAdvances() {
             loan_code: `LOAN-${Date.now()}`,
             recovered_amount: 0,
             outstanding_amount: amount,
-            loan_status: "Pending",
+            loan_status: "Active",
             approved_by: null,
             approved_date: null,
           },
@@ -421,9 +421,13 @@ export default function EmployeeLoansAdvances() {
                   onChange={(e) => setForm({ ...form, loan_type: e.target.value })}
                 >
                   <option>Salary Advance</option>
-                  <option>Employee Loan</option>
-                  <option>Emergency Advance</option>
-                  <option>Other</option>
+<option>Personal Loan</option>
+<option>Festival Advance</option>
+<option>Vehicle Loan</option>
+<option>Medical Loan</option>
+<option>Education Loan</option>
+<option>Emergency Loan</option>
+<option>Other</option>
                 </select>
               </label>
 
