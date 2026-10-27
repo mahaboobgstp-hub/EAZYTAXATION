@@ -210,7 +210,10 @@ export default function LeaveManagement() {
       form.session_type
     );
 
-    if (form.session_type === "Half Day" && form.from_date !== form.to_date) {
+    if (
+  form.session_type !== "Full Day" &&
+  form.from_date !== form.to_date
+) {
       setError("Half-day leave must be for a single date.");
       return;
     }
