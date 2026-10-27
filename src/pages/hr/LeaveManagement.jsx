@@ -37,11 +37,14 @@ const buttonStyle = {
 function calculateDays(from, to, session) {
   if (!from || !to || to < from) return 0;
 
+  if (session === "First Half" || session === "Second Half") {
+    return 0.5;
+  }
+
   const start = new Date(`${from}T00:00:00`);
   const end = new Date(`${to}T00:00:00`);
-  const days = Math.round((end - start) / 86400000) + 1;
 
-  return session === "Half Day" ? 0.5 : days;
+  return Math.round((end - start) / 86400000) + 1;
 }
 
 function formatDate(value) {
