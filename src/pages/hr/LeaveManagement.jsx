@@ -296,7 +296,7 @@ export default function LeaveManagement() {
         .from("leave_master")
         .update({
           approval_status: status,
-          approved_by: user?.id || null,
+          approved_by: null,
           approved_on: new Date().toISOString(),
           rejection_reason: rejectionReason,
           updated_at: new Date().toISOString(),
