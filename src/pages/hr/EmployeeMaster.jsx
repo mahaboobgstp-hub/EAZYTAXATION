@@ -236,7 +236,7 @@ const [tdsPolicyLoading, setTdsPolicyLoading] = useState(false);
     // Professional Tax policy UI state.
 // The PT catalogue will be connected after the UI is approved.
 // Professional Tax policy assignment
-const [availablePTPolicies, setAvailablePTPolicies] = useState([]);
+AvailablePTPoliciesconst [availablePTPolicies, set] = useState([]);
 const [ptPolicyId, setPTPolicyId] = useState("");
 const [ptPolicyLoading, setPTPolicyLoading] = useState(false);
 const [ptPolicyError, setPTPolicyError] = useState("");
@@ -285,6 +285,22 @@ const [
         deduction_override_enabled: false,
         remarks: ""
     });
+
+const [availableLeavePolicies, setAvailableLeavePolicies] =
+    useState([]);
+
+const [availableLatePolicies, setAvailableLatePolicies] =
+    useState([]);
+
+const [availableAbsencePolicies, setAvailableAbsencePolicies] =
+    useState([]);
+
+const [deductionSettingsLoading, setDeductionSettingsLoading] =
+    useState(false);
+
+const [deductionSettingsSaving, setDeductionSettingsSaving] =
+    useState(false);
+    
     const [editingId, setEditingId] =
         useState(null);
     const [documentType, setDocumentType] =
@@ -341,7 +357,56 @@ setAvailablePTPolicies([]);
 
 }, [currentCompanyId]);
 
+useEffect(() => {
+    let cancelled = false;
 
+    async function loadPolicyOptions() {
+        if (!currentCompanyId) {
+            setAvailableLeavePolicies([]);
+            setAvailableLatePolicies([]);
+            setAvailableAbsencePolicies([]);
+            return;
+        }
+
+        try {
+            const [
+                leavePolicies,
+                latePolicies
+            ] = await Promise.all([
+                getLeavePolicies(currentCompanyId, true),
+                getLateDeductionPolicies(currentCompanyId)
+            ]);
+
+            if (!cancelled) {
+                setAvailableLeavePolicies(leavePolicies || []);
+
+                setAvailableLatePolicies(
+                    (latePolicies || []).filter(
+                        policy => policy.is_active === true
+                    )
+                );
+            }
+        } catch (error) {
+            console.error(
+                "Unable to load deduction policy options:",
+                error
+            );
+
+            if (!cancelled) {
+                alert(
+                    error.message ||
+                    "Unable to load deduction policy options."
+                );
+            }
+        }
+    }
+
+    loadPolicyOptions();
+
+    return () => {
+        cancelled = true;
+    };
+}, [currentCompanyId]);
     const loadEmployees = async (companyId) => {
 
         try {
@@ -681,6 +746,107 @@ const loadActiveStatutoryPackage = async (
         setStatutoryPackageLoading(false);
     }
 };
+
+    const loadEmployeeDeductionSettings = async (
+    employeeId,
+    companyId
+) => {
+    if (!employeeId || !companyId) {
+        setDeductionSettings({
+            leave_policy_id: "",
+            late_deduction_policy_id: "",
+            absence_deduction_policy_id: "",
+            salary_advance_enabled: true,
+            loan_recovery_enabled: true,
+            other_deductions_enabled: true,
+            deduction_override_enabled: false,
+            remarks: ""
+        });
+        return;
+    }
+
+    try {
+        setDeductionSettingsLoading(true);
+
+        const settings = await getEmployeeDeductionSettings(
+            employeeId,
+            companyId
+        );
+
+        setDeductionSettings({
+            leave_policy_id: settings?.leave_policy_id || "",
+            late_deduction_policy_id:
+                settings?.late_deduction_policy_id || "",
+            absence_deduction_policy_id:
+                settings?.absence_deduction_policy_id || "",
+            salary_advance_enabled:
+                settings?.salary_advance_enabled ?? true,
+            loan_recovery_enabled:
+                settings?.loan_recovery_enabled ?? true,
+            other_deductions_enabled:
+                settings?.other_deductions_enabled ?? true,
+            deduction_override_enabled:
+                settings?.deduction_override_enabled ?? false,
+            remarks: settings?.remarks || ""
+        });
+    } catch (error) {
+        console.error(
+            "Unable to load employee deduction settings:",
+            error
+        );
+        alert(
+            error.message ||
+            "Unable to load employee deduction settings."
+        );
+    } finally {
+        setDeductionSettingsLoading(false);
+    }
+};
+
+            const saveEmployeeDeductions = async () => {
+    if (!currentCompanyId) {
+        alert("Please select a company.");
+        return;
+    }
+
+    if (!editingId) {
+        alert(
+            "Please save the employee first, then assign deduction policies."
+        );
+        return;
+    }
+
+    try {
+        setDeductionSettingsSaving(true);
+
+        await saveEmployeeDeductionSettings(
+            editingId,
+            currentCompanyId,
+            deductionSettings
+        );
+
+        alert("Employee deduction settings saved successfully.");
+
+        await loadEmployeeDeductionSettings(
+            editingId,
+            currentCompanyId
+        );
+    } catch (error) {
+        console.error(
+            "Unable to save employee deduction settings:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to save employee deduction settings."
+        );
+    } finally {
+        setDeductionSettingsSaving(false);
+    }
+};
+
+    
 
     const handleChange = (e) => {
 
@@ -1157,9 +1323,14 @@ setPhotoPreview("");
 
 
         setFormData(
-            editFormData
-        );
+    editFormData
+);
 
+await loadEmployeeDeductionSettings(
+    employee.id,
+    currentCompanyId
+);
+        
         if (employee.profile_photo_url) {
     const { data, error } = await supabase.storage
         .from("employee-photos")
@@ -3397,9 +3568,13 @@ setTdsApplicable(
                 }
             >
 
-                <option value="">
-                    Select Leave Policy
-                </option>
+                <option value="">Select Leave Policy</option>
+
+{availableLeavePolicies.map(policy => (
+    <option key={policy.id} value={policy.id}>
+        {policy.policy_name}
+    </option>
+))}
 
             </select>
 
@@ -3427,9 +3602,13 @@ setTdsApplicable(
                 }
             >
 
-                <option value="">
-                    Select Late Deduction Policy
-                </option>
+                <option value="">Select Late Deduction Policy</option>
+
+{availableLatePolicies.map(policy => (
+    <option key={policy.id} value={policy.id}>
+        {policy.policy_name}
+    </option>
+))}
 
             </select>
 
@@ -3583,6 +3762,32 @@ setTdsApplicable(
                 gridColumn: "1 / -1"
             }}
         />
+        <div style={{ gridColumn: "1 / -1", marginTop: "12px" }}>
+    {deductionSettingsLoading && (
+        <p>Loading employee deduction settings...</p>
+    )}
+
+    <button
+        type="button"
+        onClick={saveEmployeeDeductions}
+        disabled={
+            deductionSettingsSaving ||
+            deductionSettingsLoading ||
+            !editingId ||
+            !currentCompanyId
+        }
+    >
+        {deductionSettingsSaving
+            ? "Saving..."
+            : "Save Deduction Settings"}
+    </button>
+
+    {!editingId && (
+        <p>
+            Save the employee first before assigning deduction policies.
+        </p>
+    )}
+</div>
 
     </div>
 
