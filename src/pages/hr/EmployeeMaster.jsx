@@ -311,6 +311,21 @@ const [deductionSettingsSaving, setDeductionSettingsSaving] =
 
 
     useEffect(() => {
+           // Clear the previously edited employee on company change.
+   setEditingId(null);
+
+   setDeductionSettings({
+       leave_policy_id: "",
+       late_deduction_policy_id: "",
+       absence_deduction_policy_id: "",
+       salary_advance_enabled: true,
+       loan_recovery_enabled: true,
+       other_deductions_enabled: true,
+       deduction_override_enabled: false,
+       remarks: ""
+   });
+
+   setDeductionSettingsLoading(false);
 
    if (!currentCompanyId) {
 
