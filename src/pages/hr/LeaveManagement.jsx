@@ -405,17 +405,34 @@ export default function LeaveManagement() {
               </label>
 
               <label>
-                Leave Type *
-                <input
-                  style={inputStyle}
-                  required
-                  value={form.leave_type}
-                  onChange={(e) =>
-                    setForm({ ...form, leave_type: e.target.value })
-                  }
-                  placeholder="Enter configured leave type"
-                />
-              </label>
+  Leave Type *
+  <select
+    style={inputStyle}
+    required
+    value={form.leave_type}
+    onChange={(e) =>
+      setForm({ ...form, leave_type: e.target.value })
+    }
+  >
+    <option value="">Select leave type</option>
+    {[
+      "Casual",
+      "Sick",
+      "Earned",
+      "Maternity",
+      "Paternity",
+      "Loss of Pay",
+      "Comp Off",
+      "Work From Home",
+      "On Duty",
+      "Other",
+    ].map((type) => (
+      <option key={type} value={type}>
+        {type}
+      </option>
+    ))}
+  </select>
+</label>
 
               <label>
                 Session
@@ -427,7 +444,8 @@ export default function LeaveManagement() {
                   }
                 >
                   <option>Full Day</option>
-                  <option>Half Day</option>
+<option>First Half</option>
+<option>Second Half</option>
                 </select>
               </label>
 
