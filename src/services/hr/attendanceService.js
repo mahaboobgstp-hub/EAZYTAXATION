@@ -282,3 +282,42 @@ export async function getAttendanceRegister(
 
     return data || [];
 }
+
+/**
+ * Returns attendance rows for one employee and payroll period.
+ * This is input data for payroll validation, not a deduction calculation.
+ */
+export async function getEmployeeAttendanceForPeriod(
+    employeeId,
+    companyId,
+    periodFrom,
+    periodTo
+) {
+    if (!employeeId || !companyId || !periodFrom || !periodTo) {
+        throw new Error(
+            "Employee, company and payroll period are required."
+        );
+    }
+
+    if (periodFrom > periodTo) {
+        throw new Error(
+            "Payroll period start cannot be after its end."
+        );
+    }
+
+    const { data, error } = await supabase
+        .from("attendance")
+        .select(
+            "id, company_id, employee_id, attendance_date, attendance_status, attendance_day_value, late_minutes, early_out_minutes, is_late, working_hours, overtime_hours, location_id"
+        )
+        .eq("company_id", companyId)
+        .eq("employee_id", employeeId)
+        .gte("attendance_date", periodFrom)
+        .lte("attendance_date", periodTo)
+        .order("attendance_date", { ascending: true });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
