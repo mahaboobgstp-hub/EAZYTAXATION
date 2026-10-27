@@ -88,7 +88,7 @@ export async function createEmployeeLoan(loanData, companyId) {
     employee_id: loanData.employee_id,
     recovered_amount: 0,
     outstanding_amount: Number(loanData.sanctioned_amount),
-    loan_status: loanData.loan_status || "Pending",
+   loan_status: loanData.loan_status || "Active",
     is_active: true,
     updated_at: new Date().toISOString(),
   };
@@ -155,12 +155,11 @@ export async function updateEmployeeLoanStatus(
   requireIds(companyId);
 
   const allowedStatuses = [
-    "Pending",
-    "Approved",
-    "Disbursed",
-    "Rejected",
-    "Closed",
-  ];
+  "Active",
+  "Completed",
+  "Closed",
+  "Cancelled",
+];
 
   if (!allowedStatuses.includes(status)) {
     throw new Error("Invalid loan status.");
@@ -171,9 +170,7 @@ export async function updateEmployeeLoanStatus(
     updated_at: new Date().toISOString(),
   };
 
-  if (status === "Approved" || status === "Disbursed") {
-    payload.approved_date = new Date().toISOString().slice(0, 10);
-  }
+  
 
   const { data, error } = await supabase
     .from("employee_loans")
