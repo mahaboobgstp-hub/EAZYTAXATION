@@ -563,7 +563,16 @@ export default function EmployeeLoansAdvances() {
 
           <select style={inputStyle} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="All">All Loan Types</option>
-            {["Salary Advance", "Employee Loan", "Emergency Advance", "Other"].map((type) => (
+            {[
+  "Salary Advance",
+  "Personal Loan",
+  "Festival Advance",
+  "Vehicle Loan",
+  "Medical Loan",
+  "Education Loan",
+  "Emergency Loan",
+  "Other",
+].map((type) => (
               <option key={type}>{type}</option>
             ))}
           </select>
