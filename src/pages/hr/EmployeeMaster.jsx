@@ -1008,11 +1008,22 @@ if (editingId) {
 }
 
             
-if (tdsPolicyId) {
-    await saveEmployeeTdsAssignment({
+if (tdsApplicable && tdsPolicyId) {
+    const selectedPolicy = availableTdsPolicies.find(
+        (policy) => policy.id === tdsPolicyId
+    );
+
+    if (!selectedPolicy) {
+        throw new Error(
+            "The selected TDS policy is no longer available. Please refresh the policy list and select an active policy."
+        );
+    }
+
+    await assignSalaryTdsPolicy({
         companyId: currentCompanyId,
         employeeId: savedEmployee.id,
         policyId: tdsPolicyId,
+        taxRegime: selectedPolicy.tax_regime,
         effectiveFrom:
             salaryStructure.effective_from ||
             formData.date_of_joining
