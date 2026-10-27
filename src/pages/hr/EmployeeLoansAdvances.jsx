@@ -177,10 +177,10 @@ export default function EmployeeLoansAdvances() {
   }
 
   function startEdit(loan) {
-    if (!["Pending", "Rejected"].includes(loan.loan_status)) {
-      setError("Only pending or rejected loan applications can be edited.");
-      return;
-    }
+    if (loan.loan_status !== "Active") {
+  setError("Only active loan records can be edited.");
+  return;
+}
 
     setEditingId(loan.id);
     setForm({
@@ -556,7 +556,7 @@ export default function EmployeeLoansAdvances() {
 
           <select style={inputStyle} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="All">All Statuses</option>
-            {["Pending", "Approved", "Disbursed", "Rejected", "Closed"].map((status) => (
+            {["Active", "Completed", "Closed", "Cancelled"].map((status) => (
               <option key={status}>{status}</option>
             ))}
           </select>
