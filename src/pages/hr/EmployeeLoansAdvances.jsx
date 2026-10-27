@@ -153,9 +153,9 @@ export default function EmployeeLoansAdvances() {
     0
   );
 
-  const pendingCount = loans.filter(
-    (loan) => loan.loan_status === "Pending"
-  ).length;
+  const activeCount = loans.filter(
+  (loan) => loan.loan_status === "Active"
+).length;
 
   const totalRecovered = loans.reduce(
     (sum, loan) => sum + (Number(loan.recovered_amount) || 0),
