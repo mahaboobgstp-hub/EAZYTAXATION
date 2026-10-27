@@ -33,7 +33,8 @@ import PayrollPolicyMaster
     from "./pages/hr/PayrollPolicyMaster";
 import LeaveManagement from "./pages/hr/LeaveManagement";
 import FinalSettlement from "./pages/hr/FinalSettlement";
-
+import LeaveApplication from "./pages/hr/LeaveApplication";
+import LeaveApproval from "./pages/hr/LeaveApproval";
 import SalaryArrears from "./pages/hr/SalaryArrears";
 
 import ExpenseReimbursement from "./pages/hr/ExpenseReimbursement";
@@ -280,6 +281,15 @@ function App() {
 />
             <Route path="leave-management" element={<LeaveManagement />} />
             <Route path="final-settlement" element={<FinalSettlement />} />
+            <Route
+  path="leave-application"
+  element={<LeaveApplication />}
+/>
+
+<Route
+  path="leave-approval"
+  element={<LeaveApproval />}
+/>
             
 <Route
   path="employee-document-repository"
