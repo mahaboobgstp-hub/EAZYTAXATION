@@ -191,9 +191,10 @@ const MODULES = {
           ["Attendance Register", "/app/attendance-register"],
           ["Attendance Settings", "/app/attendance-settings"],
           ["Shift Master", "/app/shifts"],
-          ["Leave Management", "/app/leave-management"],
-          ["Holiday Calendar & Leave Ledger", "/app/holiday-calendar-leave-ledger"],
-        ],
+["Leave Management", "/app/leave-management"],
+["Leave Application", "/app/leave-application"],
+["Leave Approval", "/app/leave-approval"],
+["Holiday Calendar & Leave Ledger", "/app/holiday-calendar-leave-ledger"],
       },
       {
         title: "Salary Processing",
