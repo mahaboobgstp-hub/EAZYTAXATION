@@ -371,12 +371,13 @@ export default function EmployeeLoansAdvances() {
 
       <div className="ela-summary-grid">
         <div className="ela-summary-card">
-          <div className="ela-summary-label">Active Loan Records</div>
+                  <div className="ela-summary-card">
+          <div className="ela-summary-label">Total Loan Records</div>
           <div className="ela-summary-value">{loans.length}</div>
         </div>
         <div className="ela-summary-card">
-          <div className="ela-summary-label">Pending Applications</div>
-          <div className="ela-summary-value">{pendingCount}</div>
+          <div className="ela-summary-label">Active Loan Records</div>
+          <div className="ela-summary-value">{activeCount}</div>
         </div>
         <div className="ela-summary-card">
           <div className="ela-summary-label">Outstanding Amount</div>
