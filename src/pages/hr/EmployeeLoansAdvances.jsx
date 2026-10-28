@@ -369,23 +369,29 @@ export default function EmployeeLoansAdvances() {
       {message && <p role="status">{message}</p>}
       {loading && <p>Loading loans...</p>}
 
-      <div className="ela-summary-grid">
+            <div className="ela-summary-grid">
         <div className="ela-summary-card">
-                  <div className="ela-summary-card">
           <div className="ela-summary-label">Total Loan Records</div>
           <div className="ela-summary-value">{loans.length}</div>
         </div>
+
         <div className="ela-summary-card">
           <div className="ela-summary-label">Active Loan Records</div>
           <div className="ela-summary-value">{activeCount}</div>
         </div>
+
         <div className="ela-summary-card">
           <div className="ela-summary-label">Outstanding Amount</div>
-          <div className="ela-summary-value">{money(totalOutstanding)}</div>
+          <div className="ela-summary-value">
+            {money(totalOutstanding)}
+          </div>
         </div>
+
         <div className="ela-summary-card">
           <div className="ela-summary-label">Recorded Recoveries</div>
-          <div className="ela-summary-value">{money(totalRecovered)}</div>
+          <div className="ela-summary-value">
+            {money(totalRecovered)}
+          </div>
         </div>
       </div>
 
