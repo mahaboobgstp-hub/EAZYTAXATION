@@ -1,8 +1,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX, FiMenu } from "react-icons/fi";
 import { MODULES, useModule } from "../context/ModuleContext";
+import { isAndroidApp } from "../utils/platform";
 import "../css/Header.css";
 
 const PAGES = [
@@ -117,7 +118,28 @@ const PAGES = [
   { label: "Backup & Restore", path: "/app/backup", module: "billing" },
 ];
 
-function Header() {
+// Only expose implemented Billing & Accounting pages in Android search.
+const MOBILE_BILLING_SEARCH_ROUTES = new Set([
+  "/app/companies",
+  "/app/customers",
+  "/app/vendors",
+  "/app/items",
+  "/app/uom",
+  "/app/sales",
+  "/app/sales-register",
+  "/app/quotation",
+  "/app/delivery-challans",
+  "/app/purchases",
+  "/app/expenses",
+  "/app/expense-categories",
+  "/app/gst-rates",
+  "/app/invoice-settings",
+]);
+
+function Header({
+  onMenuClick = () => {},
+  mobileTitle = "Billing & Accounting",
+}) {
   const { activeModule, setActiveModule } = useModule();
   const navigate = useNavigate();
   const location = useLocation();
@@ -127,17 +149,32 @@ function Header() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchRef = useRef(null);
 
-  const results = useMemo(() => {
+    const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
+
     if (!normalized) return [];
 
     return PAGES
+      .filter((page) => {
+        if (isAndroidApp) {
+          return (
+            page.module === "billing" &&
+            MOBILE_BILLING_SEARCH_ROUTES.has(page.path)
+          );
+        }
+
+        return true;
+      })
       .filter((page) =>
         `${page.label} ${page.module}`.toLowerCase().includes(normalized)
       )
       .filter(
         (page, index, array) =>
-          array.findIndex((item) => item.path === page.path && item.label === page.label) === index
+          array.findIndex(
+            (item) =>
+              item.path === page.path &&
+              item.label === page.label
+          ) === index
       )
       .slice(0, 10);
   }, [query]);
@@ -167,8 +204,12 @@ function Header() {
     setSelectedIndex(0);
   }, [query]);
 
-  const openPage = (page) => {
-    setActiveModule(page.module);
+    const openPage = (page) => {
+    // Module switching remains available on the web only.
+    if (!isAndroidApp) {
+      setActiveModule(page.module);
+    }
+
     setSearchOpen(false);
     setQuery("");
     navigate(page.path);
@@ -193,8 +234,27 @@ function Header() {
   };
 
   return (
-    <header className="header">
-      <nav className="module-switcher" aria-label="ERP modules">
+        <header className="header">
+
+      {isAndroidApp && (
+        <div className="mobile-header-brand">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={onMenuClick}
+            aria-label="Open navigation menu"
+          >
+            <FiMenu />
+          </button>
+
+          <span className="mobile-header-title">
+            {mobileTitle}
+          </span>
+        </div>
+      )}
+
+      {!isAndroidApp && (
+        <nav className="module-switcher" aria-label="ERP modules">
         {MODULES.map((module) => (
           <button
             key={module.id}
@@ -209,6 +269,7 @@ function Header() {
           </button>
         ))}
       </nav>
+          )}
 
       <div className="global-page-search">
         <div className="page-search-input-wrap">
