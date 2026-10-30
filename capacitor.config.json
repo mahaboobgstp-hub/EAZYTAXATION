@@ -4,7 +4,7 @@
   "appName": "EAZYTAXATION",
   "webDir": "dist",
   "server": {
-    "url": "https://eazytaxation.vercel.app",
+    "url": "https://eazytaxation-mobile-test.vercel.app",
     "cleartext": false,
     "androidScheme": "https"
   }
