@@ -187,3 +187,102 @@
     width: 100%;
   }
 }
+
+
+
+/* =========================================
+   ANDROID APP HEADER
+   These styles do not affect the web app.
+========================================= */
+
+.app-native .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  min-height: auto;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.app-native .module-switcher {
+  display: none;
+}
+
+.app-native .mobile-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+}
+
+.app-native .mobile-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.app-native .mobile-menu-button:active {
+  background: #f1f5f9;
+}
+
+.app-native .mobile-header-title {
+  min-width: 0;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.app-native .global-page-search {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+
+.app-native .page-search-input-wrap {
+  min-height: 40px;
+}
+
+.app-native .page-search-input-wrap input {
+  font-size: 14px;
+}
+
+.app-native .search-shortcut {
+  display: none;
+}
+
+.app-native .page-search-results {
+  right: 0;
+  left: 0;
+  width: 100%;
+  max-height: 55vh;
+}
+
+@media (max-width: 1050px) {
+  .app-native .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
