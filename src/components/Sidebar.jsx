@@ -463,14 +463,15 @@ useEffect(() => {
   const [openMenu, setOpenMenu] = useState("");
   const [commonOpen, setCommonOpen] = useState(false);
 
-  const currentModule = isAndroidApp
-  ? MODULES.billing
-  : MODULES[activeModule] || MODULES.billing;
+  const currentModuleId = isAndroidApp ? "billing" : activeModule;
+
+const currentModule = MODULES[currentModuleId] || MODULES.billing;
 
 const visibleCommonGroups = isAndroidApp
   ? MOBILE_COMMON_GROUPS
   : COMMON_GROUPS;
-  const currentModuleLocked = LOCKED_MODULES.has(activeModule);
+
+const currentModuleLocked = LOCKED_MODULES.has(currentModuleId);
 
   const toggleMenu = (menuName) => {
     setOpenMenu((previous) => previous === menuName ? "" : menuName);
@@ -623,7 +624,7 @@ const visibleCommonGroups = isAndroidApp
       <nav className="sidebar-menu" aria-label="Main navigation">
         
        {!isAndroidApp && (
-        {!currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
+        !currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
           <NavLink
             to={currentModule.dashboard}
             className={({ isActive }) =>
@@ -663,13 +664,13 @@ const visibleCommonGroups = isAndroidApp
             </span>
             <FiLock className="sidebar-lock-icon" aria-hidden="true" />
           </div>
-        )}
+        )
   
 )}
 
         {currentModule.groups.map((group) =>
-          renderGroup(group, activeModule)
-        )}
+  renderGroup(group, currentModuleId)
+)}
 
         <div className="sidebar-section-label">COMMON WORKSPACE</div>
 
