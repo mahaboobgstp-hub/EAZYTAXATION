@@ -42,6 +42,67 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Configure Android OAuth Deep Link
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          manifest_path = Path(
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          content = manifest_path.read_text()
+
+          intent_filter = """
+                  <intent-filter>
+                      <action android:name="android.intent.action.VIEW" />
+                      <category android:name="android.intent.category.DEFAULT" />
+                      <category android:name="android.intent.category.BROWSABLE" />
+                      <data
+                          android:scheme="com.eazytaxation.mobile"
+                          android:host="auth"
+                          android:pathPrefix="/callback" />
+                  </intent-filter>
+          """
+
+          if "com.eazytaxation.mobile" in content:
+              print("OAuth deep link already configured.")
+          else:
+              activity_pattern = re.compile(
+                  r'<activity\b(?=[^>]*android:name="[^"]*MainActivity")[^>]*>'
+              )
+
+              match = activity_pattern.search(content)
+
+              if not match:
+                  raise RuntimeError(
+                      "MainActivity was not found in AndroidManifest.xml"
+                  )
+
+              closing_tag = content.find(
+                  "</activity>",
+                  match.end()
+              )
+
+              if closing_tag == -1:
+                  raise RuntimeError(
+                      "MainActivity closing tag was not found"
+                  )
+
+              content = (
+                  content[:closing_tag]
+                  + intent_filter
+                  + "\n        "
+                  + content[closing_tag:]
+              )
+
+              manifest_path.write_text(content)
+
+              print("OAuth deep link configured successfully.")
+
+          PY
+
       - name: Synchronize Capacitor
         run: npx cap sync android
 
