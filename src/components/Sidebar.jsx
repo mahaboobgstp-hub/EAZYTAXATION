@@ -621,6 +621,7 @@ const visibleCommonGroups = isAndroidApp
 
       <nav className="sidebar-menu" aria-label="Main navigation">
         
+       {!isAndroidApp && (
         {!currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
           <NavLink
             to={currentModule.dashboard}
@@ -662,7 +663,8 @@ const visibleCommonGroups = isAndroidApp
             <FiLock className="sidebar-lock-icon" aria-hidden="true" />
           </div>
         )}
-
+  
+)}
 
         {currentModule.groups.map((group) =>
           renderGroup(group, activeModule)
