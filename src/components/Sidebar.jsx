@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext";
 import { useModule } from "../context/ModuleContext";
+import { isAndroidApp } from "../utils/platform";
 
 import {
   FiHome,
@@ -325,6 +326,36 @@ const COMMON_GROUPS = [
   },
 ];
 
+// Common workspace items permitted in the Android Billing app.
+const MOBILE_COMMON_GROUPS = [
+  {
+    title: "Company",
+    icon: FiBriefcase,
+    links: [
+      ["Company Master", "/app/companies"],
+    ],
+  },
+  {
+    title: "Masters",
+    icon: FiDatabase,
+    links: [
+      ["Customers", "/app/customers"],
+      ["Vendors", "/app/vendors"],
+      ["Items", "/app/items"],
+      ["Units (UOM)", "/app/uom"],
+      ["Expense Categories", "/app/expense-categories"],
+      ["GST Rates", "/app/gst-rates"],
+    ],
+  },
+  {
+    title: "Administration",
+    icon: FiSettings,
+    links: [
+      ["Invoice Settings", "/app/invoice-settings"],
+    ],
+  },
+];
+
 
 /*
  * CENTRAL PAGE AVAILABILITY CONFIGURATION
@@ -405,15 +436,40 @@ const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
 
 
-function Sidebar() {
+function Sidebar({ isMobileOpen = false, onClose = () => {} }) {
   const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
+  useEffect(() => {
+  if (!isMobileOpen) return;
+
+  const handleEscape = (event) => {
+    if (event.key === "Escape") {
+      onClose();
+    }
+  };
+
+  window.addEventListener("keydown", handleEscape);
+
+  return () => {
+    window.removeEventListener("keydown", handleEscape);
+  };
+}, [isMobileOpen, onClose]);
+
+useEffect(() => {
+  onClose();
+}, [location.pathname]);
 
   const [openMenu, setOpenMenu] = useState("");
   const [commonOpen, setCommonOpen] = useState(false);
 
-  const currentModule = MODULES[activeModule] || MODULES.billing;
+  const currentModule = isAndroidApp
+  ? MODULES.billing
+  : MODULES[activeModule] || MODULES.billing;
+
+const visibleCommonGroups = isAndroidApp
+  ? MOBILE_COMMON_GROUPS
+  : COMMON_GROUPS;
   const currentModuleLocked = LOCKED_MODULES.has(activeModule);
 
   const toggleMenu = (menuName) => {
@@ -520,7 +576,13 @@ function Sidebar() {
 
 
   return (
-    <aside className="sidebar">
+    <aside
+  className={`sidebar ${
+    isAndroidApp ? "app-native-sidebar" : ""
+  } ${
+    isAndroidApp && isMobileOpen ? "mobile-open" : ""
+  }`}
+>
       <div className="sidebar-logo">
         <div className="logo-icon">ET</div>
         <div>
