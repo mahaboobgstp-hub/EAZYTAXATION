@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - mobile-app-development
     paths:
       - "package.json"
       - "capacitor.config.json"
