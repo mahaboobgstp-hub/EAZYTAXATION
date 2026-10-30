@@ -1,0 +1,11 @@
+
+{
+  "appId": "com.eazytaxation.mobile",
+  "appName": "EAZYTAXATION",
+  "webDir": "dist",
+  "server": {
+    "url": "https://eazytaxation.vercel.app",
+    "cleartext": false,
+    "androidScheme": "https"
+  }
+}
