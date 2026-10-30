@@ -558,12 +558,13 @@ const visibleCommonGroups = isAndroidApp
 
               return (
                 <NavLink
-                  key={`${label}-${path}`}
-                  to={path}
-                  className={({ isActive }) =>
-                    `submenu-link ${isActive ? "active" : ""}`
-                  }
-                >
+  key={`${label}-${path}`}
+  to={path}
+  onClick={onClose}
+  className={({ isActive }) =>
+    `submenu-link ${isActive ? "active" : ""}`
+  }
+>
                   <span>{label}</span>
                 </NavLink>
               );
@@ -688,9 +689,9 @@ const visibleCommonGroups = isAndroidApp
 
         {commonOpen && (
           <div className="common-workspace">
-            {COMMON_GROUPS.map((group) =>
-              renderGroup(group, "common")
-            )}
+            {visibleCommonGroups.map((group) =>
+  renderGroup(group, "common")
+)}
           </div>
         )}
       </nav>
