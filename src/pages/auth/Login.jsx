@@ -101,6 +101,7 @@ async function handleGoogleLogin() {
         <form onSubmit={handleSubmit}>
 
          <button
+    type="button"
     className="google-login-btn"
     onClick={handleGoogleLogin}
 >
