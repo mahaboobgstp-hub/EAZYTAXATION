@@ -165,10 +165,7 @@ function App() {
             ERP ROUTES
         =========================== */}
 
-        <Route
-          path="/app"
-          element={<Layout />}
-        >
+     
 
             <Route
   path="/app"
