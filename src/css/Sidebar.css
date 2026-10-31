@@ -783,17 +783,19 @@
 
 /* =========================================
    ANDROID APP — SLIDE-IN SIDEBAR DRAWER
-   Desktop web sidebar remains unchanged.
+   Sidebar is closed by default on Android.
 ========================================= */
 
 .app-native .sidebar.app-native-sidebar {
   position: fixed;
   top: 0;
   left: 0;
+  bottom: 0;
 
   width: min(84vw, 320px);
   min-width: 0;
   max-width: 320px;
+
   height: 100vh;
   height: 100dvh;
 
@@ -804,8 +806,10 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 
-  transform: translateX(-105%);
+  /* Hidden until hamburger click */
+  transform: translate3d(-110%, 0, 0);
   visibility: hidden;
+  pointer-events: none;
 
   transition:
     transform 0.25s ease,
@@ -814,12 +818,14 @@
   z-index: 1000;
 }
 
+/* Open state */
 .app-native .sidebar.app-native-sidebar.mobile-open {
-  transform: translateX(0);
+  transform: translate3d(0, 0, 0);
   visibility: visible;
+  pointer-events: auto;
 }
 
-/* Background overlay behind the open drawer */
+/* Backdrop behind the open drawer */
 .app-native .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -838,22 +844,21 @@
   cursor: pointer;
 }
 
-/* Prevent desktop hover movement inside the mobile drawer */
+/* Prevent hover movement in Android drawer */
 .app-native .sidebar .menu-link:hover,
 .app-native .sidebar .submenu-link:hover {
   transform: none;
 }
 
-/* Comfortable touch targets on Android */
+/* Touch-friendly menu items */
 .app-native .sidebar .menu-link,
 .app-native .sidebar .submenu-link {
   min-height: 42px;
 }
 
-/* Respect reduced-motion settings */
+/* Reduced-motion support */
 @media (prefers-reduced-motion: reduce) {
   .app-native .sidebar.app-native-sidebar {
     transition: none;
   }
 }
-
