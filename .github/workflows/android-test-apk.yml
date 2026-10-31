@@ -10,7 +10,7 @@ on:
       - "package.json"
       - "capacitor.config.json"
       - ".github/workflows/android-test-apk.yml"
-            - "src/**"
+      - "src/**"
       - "public/assets/icon.png"
       - "package-lock.json"
 
