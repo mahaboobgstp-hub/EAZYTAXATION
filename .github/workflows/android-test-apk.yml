@@ -10,6 +10,9 @@ on:
       - "package.json"
       - "capacitor.config.json"
       - ".github/workflows/android-test-apk.yml"
+            - "src/**"
+      - "public/assets/icon.png"
+      - "package-lock.json"
 
 permissions:
   contents: read
@@ -42,6 +45,12 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+            - name: Generate Android launcher icons
+        run: |
+          mkdir -p assets
+          cp public/assets/icon.png assets/icon.png
+          npx --yes @capacitor/assets generate --android
+          
       - name: Configure Android OAuth Deep Link
         run: |
           python - <<'PY'
