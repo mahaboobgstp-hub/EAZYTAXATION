@@ -10,13 +10,10 @@ import { isAndroidApp } from "../utils/platform";
 import "../css/Layout.css";
 
 function Layout() {
-  // Sidebar starts closed in the Android application.
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const openMobileMenu = () => {
-    if (isAndroidApp) {
-      setIsMobileMenuOpen(true);
-    }
+    setIsMobileMenuOpen(true);
   };
 
   const closeMobileMenu = () => {
@@ -26,13 +23,11 @@ function Layout() {
   return (
     <ModuleProvider>
       <div className={`layout ${isAndroidApp ? "app-native" : ""}`}>
-
         <Sidebar
           isMobileOpen={isAndroidApp && isMobileMenuOpen}
           onClose={closeMobileMenu}
         />
 
-        {/* Background overlay for the open mobile drawer */}
         {isAndroidApp && isMobileMenuOpen && (
           <button
             type="button"
@@ -43,7 +38,6 @@ function Layout() {
         )}
 
         <div className="main-container">
-
           <Header
             onMenuClick={openMobileMenu}
             mobileTitle="Billing & Accounting"
@@ -52,9 +46,7 @@ function Layout() {
           <div className="page-content">
             <Outlet />
           </div>
-
         </div>
-
       </div>
     </ModuleProvider>
   );
