@@ -12,6 +12,7 @@ import {
 }
 from
 '../../services/invoiceSettingsService';
+import { calculateSalesInvoiceTax } from "../../utils/salesInvoiceTaxCalculator";
 
 import {
   getCustomersForDropdown,
@@ -60,6 +61,14 @@ useState(null);
   customerDetails,
   setCustomerDetails
 ] = useState(null);
+  const [taxInclusive, setTaxInclusive] = useState(false);
+
+const [discountType, setDiscountType] = useState("AMOUNT");
+const [discountValue, setDiscountValue] = useState(0);
+
+const [otherAmount, setOtherAmount] = useState(0);
+const [roundOff, setRoundOff] = useState(0);
+  
   const [formData, setFormData] = useState({
 
   company_id: '',
@@ -97,7 +106,12 @@ eway_bill_no: '',
     gst_rate: 18,
     qty: 1,
     rate: 0,
-    amount: 0
+    amount: 0,
+    cess_rate: 0,
+cess_amount: 0,
+additional_cess_rate: 0,
+additional_cess_amount: 0,
+tax_inclusive: false
   }
 ]);
 
@@ -414,63 +428,27 @@ useState([]);
 setEditingInvoiceId] =
 useState(null);
   
-  const taxableValue = items.reduce(
-    (sum, item) =>
-      sum + Number(item.amount || 0),
-    0
-  );
+  const intraState =
+  Boolean(formData.company_state) &&
+  Boolean(formData.place_of_supply) &&
+  formData.company_state === formData.place_of_supply;
 
-  const totalGST = items.reduce(
-    (sum, item) =>
-      sum +
-      (
-        Number(item.amount || 0) *
-        Number(item.gst_rate || 0)
-      ) / 100,
-    0
-  );
+const { items: calculatedItems, totals } =
+  calculateSalesInvoiceTax({
+    items,
+    taxInclusive: taxInclusive,
+    discountType,
+    discountValue,
+    intraState,
+    otherAmount,
+    roundOff
+  });
 
- let cgst = 0;
-
-let sgst = 0;
-
-let igst = 0;
-  
-console.log(
-  "Company State:",
-  formData.company_state
-);
-
-console.log(
-  "Customer State:",
-  formData.customer_state
-);
-
-  console.log("Company State:", formData.company_state);
-console.log("Place of Supply:", formData.place_of_supply);
-if (
-
-  formData.company_state &&
-  formData.place_of_supply &&
-  formData.company_state ===
-  formData.place_of_supply
-
-) {
-
-  cgst = totalGST / 2;
-
-  sgst = totalGST / 2;
-
-} else {
-
-  igst = totalGST;
-
-}
-const grandTotal =
-  taxableValue +
-  cgst +
-  sgst +
-  igst;
+const taxableValue = totals.taxable;
+const cgst = totals.cgst;
+const sgst = totals.sgst;
+const igst = totals.igst;
+const grandTotal = totals.grandTotal;
 
   const handleSubmit = async (e) => {
 
@@ -889,6 +867,19 @@ setCustomerDetails(
           ))}
 
         </select>
+        <div className="form-group">
+  <label>Rate Type</label>
+
+  <select
+    value={taxInclusive ? "WITH_TAX" : "WITHOUT_TAX"}
+    onChange={(e) =>
+      setTaxInclusive(e.target.value === "WITH_TAX")
+    }
+  >
+    <option value="WITHOUT_TAX">Without Tax</option>
+    <option value="WITH_TAX">With Tax</option>
+  </select>
+</div>
         <textarea
   name="billing_address"
   placeholder="Billing Address"
@@ -1042,6 +1033,8 @@ onChange={handleChange}
             <th>HSN/SAC</th>
             <th>Rate</th>
             <th>GST %</th>
+            <th>Cess %</th>
+<th>Additional Cess / Unit</th>
             <th>Amount</th>
             <th>Action</th>
           </tr>
@@ -1150,6 +1143,33 @@ onChange={handleChange}
 />
 
               </td>
+              <td>
+  <input
+    type="number"
+    min="0"
+    step="0.01"
+    value={item.cess_rate || 0}
+    onChange={(e) =>
+      handleItemChange(index, "cess_rate", e.target.value)
+    }
+  />
+</td>
+
+<td>
+  <input
+    type="number"
+    min="0"
+    step="0.01"
+    value={item.additional_cess_rate || 0}
+    onChange={(e) =>
+      handleItemChange(
+        index,
+        "additional_cess_rate",
+        e.target.value
+      )
+    }
+  />
+</td>
 
               <td>
                 {formatAmount(item.amount)}
