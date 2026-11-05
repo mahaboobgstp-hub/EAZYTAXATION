@@ -79,34 +79,27 @@ export async function saveSalesInvoice(
     const invoiceId =
         headerData[0].id;
 
-    const itemsToInsert =
-        invoiceItems.map(
-            (item, index) => ({
+    const itemsToInsert = invoiceItems.map((item, index) => ({
+  invoice_id: invoiceId,
+  line_no: index + 1,
 
-                invoice_id: invoiceId,
+  item_id: item.item_id,
+  item_name: item.item_name,
+  particulars: item.item_name,
+  hsn_sac: item.hsn_sac,
+  unit: item.unit,
 
-                line_no: index + 1,
+  qty: Number(item.qty || 0),
+  rate: Number(item.rate || 0),
+  gst_rate: Number(item.gst_rate || 0),
+  amount: Number(item.amount || 0),
 
-                item_id: item.item_id,
-
-                item_name: item.item_name,
-
-                hsn_sac: item.hsn_sac,
-                unit: item.unit,
-                particulars: item.item_name,
-
-                qty: Number(item.qty),
-
-                rate: Number(item.rate),
-
-                gst_rate:
-                    Number(item.gst_rate),
-
-                amount:
-                    Number(item.amount)
-
-            })
-        );
+  cess_rate: Number(item.cess_rate || 0),
+  cess_amount: Number(item.cess_amount || 0),
+  additional_cess_rate: Number(item.additional_cess_rate || 0),
+  additional_cess_amount: Number(item.additional_cess_amount || 0),
+  tax_inclusive: Boolean(item.tax_inclusive)
+}));
 
     const { error: itemError } =
         await supabase
@@ -191,34 +184,27 @@ export async function updateSalesInvoice(
         throw deleteError;
     }
 
-    const itemsToInsert =
-        invoiceItems.map(
-            (item, index) => ({
+    const itemsToInsert = invoiceItems.map((item, index) => ({
+  invoice_id: invoiceId,
+  line_no: index + 1,
 
-                invoice_id: invoiceId,
+  item_id: item.item_id,
+  item_name: item.item_name,
+  particulars: item.item_name,
+  hsn_sac: item.hsn_sac,
+  unit: item.unit,
 
-                line_no: index + 1,
+  qty: Number(item.qty || 0),
+  rate: Number(item.rate || 0),
+  gst_rate: Number(item.gst_rate || 0),
+  amount: Number(item.amount || 0),
 
-                item_id: item.item_id,
-
-                item_name: item.item_name,
-
-                hsn_sac: item.hsn_sac,
-                unit: item.unit,
-
-                particulars: item.item_name,
-
-                qty: Number(item.qty),
-
-                rate: Number(item.rate),
-
-                gst_rate: Number(item.gst_rate),
-
-                amount: Number(item.amount),
-
-                updated_at: new Date()
-            })
-        );
+  cess_rate: Number(item.cess_rate || 0),
+  cess_amount: Number(item.cess_amount || 0),
+  additional_cess_rate: Number(item.additional_cess_rate || 0),
+  additional_cess_amount: Number(item.additional_cess_amount || 0),
+  tax_inclusive: Boolean(item.tax_inclusive)
+}));
 
     const { error: itemError } =
         await supabase
