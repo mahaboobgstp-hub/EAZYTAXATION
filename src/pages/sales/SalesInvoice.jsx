@@ -50,6 +50,10 @@ function SalesInvoice() {
   const [states, setStates] = useState([]);
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [printMode, setPrintMode] = useState(false);
+
+  const [saleType, setSaleType] = useState("CASH");
+const [paymentMode, setPaymentMode] = useState("CASH");
+const [amountReceived, setAmountReceived] = useState("");
  const [invoiceSettings,
 setInvoiceSettings] =
 useState(null);
@@ -865,6 +869,40 @@ setCustomerDetails(
             </option>
 
           ))}
+
+          <div className="sale-type-section">
+  <label className="sale-type-label">Sale Type</label>
+
+  <div className="sale-type-control">
+    <button
+      type="button"
+      className={`sale-type-option ${
+        saleType === "CASH" ? "active" : ""
+      }`}
+      onClick={() => {
+        setSaleType("CASH");
+        setAmountReceived("");
+      }}
+    >
+      Cash Sale
+    </button>
+
+    <button
+      type="button"
+      className={`sale-type-option ${
+        saleType === "CREDIT" ? "active" : ""
+      }`}
+      onClick={() => {
+        setSaleType("CREDIT");
+        setAmountReceived("");
+      }}
+    >
+      Credit Sale
+    </button>
+  </div>
+</div>
+
+          
 
         </select>
         <div className="form-group">
