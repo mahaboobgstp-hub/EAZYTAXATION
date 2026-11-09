@@ -9,6 +9,7 @@ export const MODULES = [
   { id: "payroll", label: "Payroll Management" },
   { id: "inventory", label: "Inventory Management" },
   { id: "supply-chain", label: "Supply Chain" },
+  { id: "gst-tax", label: "GST & Tax" },
 ];
 
 const VALID_MODULES = MODULES.map((module) => module.id);
