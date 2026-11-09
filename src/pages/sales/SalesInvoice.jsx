@@ -856,250 +856,175 @@ setCustomerDetails(
       <h2>Sales Invoice</h2>
 
       <form
+        id="sales-invoice-form"
         className="sales-form"
         onSubmit={handleSubmit}
       >
-     <div className="form-group">
-  <label>Company</label>
+        <div className="form-group company-field">
+          <label htmlFor="invoice-company">Company</label>
+          <input
+            id="invoice-company"
+            type="text"
+            value={companyLoading ? "Loading..." : currentCompany?.company_name || "Select Company from Sidebar"}
+            readOnly
+          />
+        </div>
 
-  <input
-    type="text"
-    value={
-      companyLoading
-        ? "Loading..."
-        : currentCompany?.company_name || "Select Company from Sidebar"
-    }
-    readOnly
-  />
-</div>
-        <input
-  type="text"
-  name="invoice_no"
-  value={formData.invoice_no}
-  onChange={handleChange}
-  readOnly={!invoiceSettings?.invoice_auto_numbering}
-  required
-/>
-        
+        <div className="form-group invoice-number-field">
+          <label htmlFor="invoice-number">Invoice number</label>
+          <input
+            id="invoice-number"
+            type="text"
+            name="invoice_no"
+            value={formData.invoice_no}
+            onChange={handleChange}
+            readOnly={!invoiceSettings?.invoice_auto_numbering}
+            required
+          />
+          {invoiceSettings?.invoice_auto_numbering && <span className="invoice-number-badge">AUTO</span>}
+        </div>
 
-        <input
-          type="date"
-          name="invoice_date"
-          value={formData.invoice_date}
-          onChange={handleChange}
-          required
-        />
+        <div className="form-group invoice-date-field">
+          <label htmlFor="invoice-date">Invoice date</label>
+          <input
+            id="invoice-date"
+            type="text"
+            name="invoice_date"
+            value={formData.invoice_date}
+            placeholder="Select invoice date"
+            title="Select invoice date"
+            onFocus={(event) => { event.target.type = "date"; }}
+            onBlur={(event) => { if (!event.target.value) event.target.type = "text"; }}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <select
-          name="customer_id"
-          value={formData.customer_id}
-          onChange={handleChange}
-          required
-        >
-
-          <option value="">
-            Select Customer
-          </option>
-
-          {customers.map(customer => (
-
-            <option
-              key={customer.id}
-              value={customer.id}
+        <div className="customer-rate-row">
+          <label className="customer-field">
+            <span>Customer</span>
+            <select
+              name="customer_id"
+              value={formData.customer_id}
+              onChange={handleChange}
+              required
             >
-              {customer.customer_name}
-            </option>
+              <option value="">Select customer</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.customer_name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="tax-inclusive-field">
+            <span className="visually-hidden">Tax price mode</span>
+            <select
+              aria-label="Tax price mode"
+              value={taxInclusive ? "WITH_TAX" : "WITHOUT_TAX"}
+              onChange={(event) => setTaxInclusive(event.target.value === "WITH_TAX")}
+            >
+              <option value="WITHOUT_TAX">Without tax</option>
+              <option value="WITH_TAX">With tax</option>
+            </select>
+          </label>
+        </div>
 
-          ))}
+        <section className="invoice-address-grid">
+          <div className="invoice-address-card">
+            <h3>Billing address</h3>
+            <textarea
+              name="billing_address"
+              placeholder="Billing address"
+              value={formData.billing_address}
+              onChange={handleChange}
+            />
+          </div>
 
-          <div className="sale-type-section">
-  <label className="sale-type-label">Sale Type</label>
+          <div className="invoice-address-card">
+            <div className="invoice-address-heading">
+              <h3>Shipping address</h3>
+              <label className="same-address-toggle">
+                <input
+                  type="checkbox"
+                  checked={sameAsBilling}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setSameAsBilling(checked);
+                    if (checked) {
+                      setFormData(prev => ({
+                        ...prev,
+                        shipping_name: prev.customer_name,
+                        shipping_gstin: customers.find(customer => customer.id === prev.customer_id)?.gstin || "",
+                        shipping_state: prev.customer_state,
+                        shipping_address: prev.billing_address,
+                        place_of_supply: prev.customer_state
+                      }));
+                    }
+                  }}
+                />
+                Same as billing
+              </label>
+            </div>
 
-  <div className="sale-type-control">
-    <button
-      type="button"
-      className={`sale-type-option ${
-        saleType === "CASH" ? "active" : ""
-      }`}
-      onClick={() => {
-        setSaleType("CASH");
-        setAmountReceived("");
-      }}
-    >
-      Cash Sale
-    </button>
+            {!sameAsBilling ? (
+              <div className="shipping-fields">
+                <input
+                  name="shipping_name"
+                  placeholder="Recipient name"
+                  value={formData.shipping_name}
+                  onChange={handleChange}
+                />
+                <input
+                  name="shipping_gstin"
+                  placeholder="Shipping GSTIN"
+                  value={formData.shipping_gstin}
+                  onChange={handleChange}
+                />
+                <select
+                  name="shipping_state"
+                  value={formData.shipping_state}
+                  onChange={handleChange}
+                >
+                  <option value="">Select shipping state</option>
+                  {states.map(state => (
+                    <option key={state.id} value={state.state_name}>{state.state_name}</option>
+                  ))}
+                </select>
+                <textarea
+                  name="shipping_address"
+                  placeholder="Shipping address"
+                  value={formData.shipping_address}
+                  onChange={handleChange}
+                />
+              </div>
+            ) : (
+              <p className="same-address-note">Shipping details will use the billing address.</p>
+            )}
+          </div>
+        </section>
 
-    <button
-      type="button"
-      className={`sale-type-option ${
-        saleType === "CREDIT" ? "active" : ""
-      }`}
-      onClick={() => {
-        setSaleType("CREDIT");
-        setAmountReceived("");
-      }}
-    >
-      Credit Sale
-    </button>
-  </div>
-</div>
-
-          
-
-        </select>
-        <div className="form-group">
-  <label>Rate Type</label>
-
-  <select
-    value={taxInclusive ? "WITH_TAX" : "WITHOUT_TAX"}
-    onChange={(e) =>
-      setTaxInclusive(e.target.value === "WITH_TAX")
-    }
-  >
-    <option value="WITHOUT_TAX">Without Tax</option>
-    <option value="WITH_TAX">With Tax</option>
-  </select>
-</div>
-        <textarea
-  name="billing_address"
-  placeholder="Billing Address"
-  value={formData.billing_address}
-  onChange={handleChange}
-/>
-<label>
-
-<input
-type="checkbox"
-checked={sameAsBilling}
-
-onChange={(e)=>{
-
-const checked =
-e.target.checked;
-
-setSameAsBilling(checked);
-
-if(checked){
-
-setFormData(prev=>({
-
-...prev,
-
-shipping_name:
-prev.customer_name,
-
-shipping_gstin:
-customers.find(
-c=>c.id===prev.customer_id
-)?.gstin || "",
-
-shipping_state:
-prev.customer_state,
-
-shipping_address:
-prev.billing_address,
-
-place_of_supply:
-prev.customer_state
-
-}));
-
-}
-
-}}
-/>
-
-Same as Billing Details
-
-</label>
-        {
-!sameAsBilling && (
-
-<>
-
-<input
-name="shipping_name"
-placeholder="Shipping Name"
-value={formData.shipping_name}
-onChange={handleChange}
-/>
-
-<input
-name="shipping_gstin"
-placeholder="Shipping GSTIN"
-value={formData.shipping_gstin}
-onChange={handleChange}
-/>
-
-<select
-name="shipping_state"
-value={formData.shipping_state}
-onChange={handleChange}
->
-
-<option value="">
-Select Shipping State
-</option>
-
-{states.map(state=>(
-
-<option
-key={state.id}
-value={state.state_name}
->
-
-{state.state_name}
-
-</option>
-
-))}
-
-</select>
-
-<textarea
-name="shipping_address"
-placeholder="Shipping Address"
-value={formData.shipping_address}
-onChange={handleChange}
-/>
-
-</>
-
-)
-}
-        
-
-<input
-  name="vehicle_no"
-  placeholder="Vehicle Number"
-  value={formData.vehicle_no}
-  onChange={handleChange}
-/>
-
-<input
-  name="eway_bill_no"
-  placeholder="E-Way Bill Number"
-  value={formData.eway_bill_no}
-  onChange={handleChange}
-/>
-
-  <textarea
-          name="remarks"
-          placeholder="Remarks"
-          value={formData.remarks}
-          onChange={handleChange}
-        />     
-
-       <button type="submit">
-
-  {editingInvoiceId
-    ? 'Update Invoice'
-    : 'Save Invoice'}
-
-</button>
-
+        <div className="invoice-extra-fields">
+          <input
+            name="vehicle_no"
+            placeholder="Vehicle number"
+            value={formData.vehicle_no}
+            onChange={handleChange}
+          />
+          <input
+            name="eway_bill_no"
+            placeholder="E-Way bill number"
+            value={formData.eway_bill_no}
+            onChange={handleChange}
+          />
+          <textarea
+            name="remarks"
+            placeholder="Remarks"
+            value={formData.remarks}
+            onChange={handleChange}
+          />
+        </div>
       </form>
-
       <h3>Invoice Items</h3>
 
       <table className="sales-grid">
@@ -1311,6 +1236,12 @@ onChange={handleChange}
           ₹ {formatAmount(grandTotal)}
         </h2>
 
+      </div>
+
+      <div className="invoice-save-actions">
+        <button type="submit" form="sales-invoice-form">
+          {editingInvoiceId ? 'Update Invoice' : 'Save Invoice'}
+        </button>
       </div>
 
       <h3>Previous Invoices</h3>
