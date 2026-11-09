@@ -19,6 +19,14 @@ from "../../supabase/supabaseClient";
 
 const defaultFormData = {
   company_id: "",
+  invoice_auto_numbering: true,
+  invoice_number_prefix: "ET",
+  invoice_number_year_format: "FY",
+  invoice_number_separator: "-",
+  invoice_number_padding: 5,
+  invoice_next_number: 1,
+  invoice_reset_each_year: true,
+  invoice_number_counters: {},
 
   logo_url: "",
 
@@ -322,6 +330,48 @@ function InvoiceSettings() {
 
         </div>
 
+
+        <section className="invoice-numbering-card">
+          <div>
+            <p className="invoice-settings-eyebrow">SALES INVOICES</p>
+            <h3>Automatic invoice numbering</h3>
+            <p>Configure a separate, sequential number series for this company.</p>
+          </div>
+          <label className="invoice-numbering-toggle">
+            <input
+              type="checkbox"
+              name="invoice_auto_numbering"
+              checked={Boolean(formData.invoice_auto_numbering)}
+              onChange={(e) => setFormData(prev => ({ ...prev, invoice_auto_numbering: e.target.checked }))}
+            />
+            Generate invoice numbers automatically
+          </label>
+          <div className="invoice-numbering-fields">
+            <label>Prefix<input name="invoice_number_prefix" value={formData.invoice_number_prefix || ""} onChange={handleChange} placeholder="ET" /></label>
+            <label>Year format
+              <select name="invoice_number_year_format" value={formData.invoice_number_year_format || "FY"} onChange={handleChange}>
+                <option value="FY">Financial year (26-27)</option>
+                <option value="YYYY">Calendar year (2026)</option>
+                <option value="NONE">No year</option>
+              </select>
+            </label>
+            <label>Separator<input name="invoice_number_separator" value={formData.invoice_number_separator ?? "-"} onChange={handleChange} maxLength={3} /></label>
+            <label>Digits<input type="number" min="1" max="12" name="invoice_number_padding" value={formData.invoice_number_padding ?? 5} onChange={handleChange} /></label>
+            <label>Next number<input type="number" min="1" name="invoice_next_number" value={formData.invoice_next_number ?? 1} onChange={handleChange} /></label>
+          </div>
+          <label className="invoice-numbering-toggle">
+            <input
+              type="checkbox"
+              name="invoice_reset_each_year"
+              checked={Boolean(formData.invoice_reset_each_year)}
+              onChange={(e) => setFormData(prev => ({ ...prev, invoice_reset_each_year: e.target.checked }))}
+            />
+            Reset sequence at the start of each financial year
+          </label>
+          <div className="invoice-number-preview">
+            Example format: <strong>{[formData.invoice_number_prefix || "ET", "26-27", String(formData.invoice_next_number || 1).padStart(Math.min(Number(formData.invoice_number_padding) || 5, 12), "0")].filter(Boolean).join(formData.invoice_number_separator ?? "-")}</strong>
+          </div>
+        </section>
 
         <label>
           Company Logo

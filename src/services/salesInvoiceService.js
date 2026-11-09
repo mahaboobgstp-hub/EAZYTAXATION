@@ -3,7 +3,7 @@ import { supabase } from "../supabase/supabaseClient";
 export async function getCustomersForDropdown(companyId) {
   const { data, error } = await supabase
     .from("customers")
-    .select("id, customer_name, state, address")
+    .select("id, customer_name, state, address, gstin")
     .eq("company_id", companyId)
     .order("customer_name, state");
 
@@ -33,30 +33,15 @@ export async function getItemsForDropdown(companyId) {
   return data;
 }
 
-export async function generateInvoiceNumber() {
-
-    const { data, error } = await supabase
-        .from("invoice_sequences")
-        .select("*")
-        .eq("document_type", "SALES")
-        .single();
-
-    if (error) throw error;
-
-    const nextNumber =
-        Number(data.last_number) + 1;
-
-    await supabase
-        .from("invoice_sequences")
-        .update({
-            last_number: nextNumber
-        })
-        .eq("id", data.id);
-
-    const invoiceNumber =
-        `ET-${new Date().getFullYear()}-${String(nextNumber).padStart(5, '0')}`;
-
-    return invoiceNumber;
+export async function generateInvoiceNumber(companyId, invoiceDate, reserve = false) {
+  if (!companyId) throw new Error("Select a company before generating an invoice number.");
+  const { data, error } = await supabase.rpc("sales_invoice_number", {
+    p_company_id: companyId,
+    p_invoice_date: invoiceDate || new Date().toISOString().slice(0, 10),
+    p_reserve: reserve
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function saveSalesInvoice(
@@ -83,7 +68,7 @@ export async function saveSalesInvoice(
   invoice_id: invoiceId,
   line_no: index + 1,
 
-  item_id: item.item_id,
+  item_id: item.item_id || null,
   item_name: item.item_name,
   particulars: item.item_name,
   hsn_sac: item.hsn_sac,
@@ -188,7 +173,7 @@ export async function updateSalesInvoice(
   invoice_id: invoiceId,
   line_no: index + 1,
 
-  item_id: item.item_id,
+  item_id: item.item_id || null,
   item_name: item.item_name,
   particulars: item.item_name,
   hsn_sac: item.hsn_sac,

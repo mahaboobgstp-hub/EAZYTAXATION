@@ -149,18 +149,28 @@ tax_inclusive: false
   loadCustomers();
   loadItemsMaster();
   loadInvoices();
-  loadInvoiceNumber();
+  loadInvoiceNumber(currentCompanyId);
+  loadInvoiceNumberSettings(currentCompanyId);
 }, [currentCompanyId]);
-  const loadInvoiceNumber = async () => {
+  const loadInvoiceNumberSettings = async (companyId) => {
+    try {
+      const settings = await getInvoiceSettingsByCompany(companyId);
+      setInvoiceSettings(settings || { invoice_auto_numbering: true });
+    } catch (error) {
+      console.error("Unable to load invoice numbering settings:", error);
+    }
+  };
+
+  const loadInvoiceNumber = async (companyId = currentCompanyId, invoiceDate = formData.invoice_date) => {
 
   try {
 
     const invoiceNumber =
-      await generateInvoiceNumber();
+      await generateInvoiceNumber(companyId, invoiceDate, false);
 
     setFormData(prev => ({
       ...prev,
-      invoice_no: invoiceNumber
+      invoice_no: invoiceNumber || ''
     }));
 
   } catch (error) {
@@ -269,6 +279,14 @@ tax_inclusive: false
   const handleChange = (e) => {
 
     const { name, value } = e.target;
+
+    if (name === 'invoice_date' && !editingInvoiceId) {
+      setFormData(prev => ({ ...prev, invoice_date: value }));
+      if (invoiceSettings?.invoice_auto_numbering !== false) {
+        loadInvoiceNumber(currentCompanyId, value);
+      }
+      return;
+    }
 
     if (name === 'company_id') {
 
@@ -401,6 +419,17 @@ selectedCustomer?.state || '',
             selectedItem.sales_rate
           )
       };
+    } else {
+      updated[index] = {
+        ...updated[index],
+        item_id: '',
+        item_name: value,
+        hsn_sac: '',
+        unit: '',
+        gst_rate: 18,
+        rate: 0,
+        amount: 0
+      };
     }
 
   } else {
@@ -466,9 +495,21 @@ const grandTotal = totals.grandTotal;
       return;
     }
 
+    if (!editingInvoiceId && !items.some(item => item.item_name?.trim())) {
+      alert('Add at least one item before saving.');
+      return;
+    }
+
+    let invoiceNumber = formData.invoice_no;
+    if (!editingInvoiceId && invoiceSettings?.invoice_auto_numbering !== false) {
+      invoiceNumber = await generateInvoiceNumber(currentCompanyId, formData.invoice_date, true);
+      setFormData(prev => ({ ...prev, invoice_no: invoiceNumber }));
+    }
+
     const invoiceHeader = {
 
       ...formData,
+      invoice_no: invoiceNumber,
 
       // Always use the company selected in CompanyContext
       company_id: currentCompanyId,
@@ -572,7 +613,7 @@ const grandTotal = totals.grandTotal;
         null
       );
 
-      loadInvoiceNumber();
+      loadInvoiceNumber(currentCompanyId);
 
       loadInvoices();
 
@@ -836,6 +877,7 @@ setCustomerDetails(
   name="invoice_no"
   value={formData.invoice_no}
   onChange={handleChange}
+  readOnly={!invoiceSettings?.invoice_auto_numbering}
   required
 />
         
@@ -1087,34 +1129,30 @@ onChange={handleChange}
 
               <td>
 
-  <select
-    value={item.item_id}
-    onChange={(e) =>
-      handleItemChange(
-        index,
-        'item_id',
-        e.target.value
-      )
-    }
-  >
-
-    <option value="">
-      Select Item
-    </option>
-
-    {itemsMaster.map(masterItem => (
-
-      <option
-        key={masterItem.id}
-        value={masterItem.id}
-      >
-        {masterItem.item_name}
-      </option>
-
-    ))}
-
-  </select>
-
+  <>
+    <input
+      className="item-picker-input"
+      list={`items-master-${index}`}
+      value={item.item_name || ''}
+      placeholder="Search saved items or type a one-off item"
+      autoComplete="off"
+      onChange={(e) => {
+        const typed = e.target.value;
+        const match = itemsMaster.find(
+          masterItem => masterItem.item_name?.toLowerCase() === typed.trim().toLowerCase()
+        );
+        handleItemChange(index, 'item_id', match?.id || typed);
+      }}
+    />
+    <datalist id={`items-master-${index}`}>
+      {itemsMaster.map(masterItem => (
+        <option key={masterItem.id} value={masterItem.item_name}>
+          {masterItem.hsn_sac || ''} · {masterItem.unit || ''}
+        </option>
+      ))}
+    </datalist>
+    <small className="item-picker-hint">Choose a saved item or type a custom description.</small>
+  </>
 </td>
 
               <td>
@@ -1145,7 +1183,12 @@ onChange={handleChange}
 </td>
               
              <td>
-  {item.hsn_sac}
+  <input
+    aria-label="HSN or SAC code"
+    value={item.hsn_sac || ''}
+    onChange={(e) => handleItemChange(index, 'hsn_sac', e.target.value)}
+    placeholder="HSN/SAC"
+  />
 </td>
               
     
