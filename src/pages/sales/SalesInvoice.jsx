@@ -66,6 +66,14 @@ function formatAmountInWords(value) {
     : `${rupeeWords} only`;
 }
 
+function todayISODate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function SalesInvoice() {
   const {
   currentCompany,
@@ -110,7 +118,7 @@ const [roundOff, setRoundOff] = useState(0);
   company_state: '',
 
   invoice_no: '',
-  invoice_date: '',
+  invoice_date: todayISODate(),
 
   customer_id: '',
   customer_name: '',
@@ -308,6 +316,11 @@ tax_inclusive: false
 
     const { name, value } = e.target;
 
+    if (name === 'shipping_state') {
+      setFormData(prev => ({ ...prev, shipping_state: value, place_of_supply: value }));
+      return;
+    }
+
     if (name === 'invoice_date' && !editingInvoiceId) {
       setFormData(prev => ({ ...prev, invoice_date: value }));
       if (invoiceSettings?.invoice_auto_numbering !== false) {
@@ -388,6 +401,7 @@ selectedCustomer?.state || '',
       hsn_sac: '',
       unit:'',
       gst_rate: '',
+      cess_rate: 0,
       qty: 0,
       rate: 0,
       amount: 0
@@ -436,6 +450,8 @@ selectedCustomer?.state || '',
 
         gst_rate:
           selectedItem.gst_rate,
+        cess_rate:
+          selectedItem.cess_rate || 0,
 
         rate:
           selectedItem.sales_rate,
@@ -455,6 +471,7 @@ selectedCustomer?.state || '',
         hsn_sac: '',
         unit: '',
         gst_rate: 18,
+        cess_rate: 0,
         rate: 0,
         amount: 0
       };
@@ -550,6 +567,14 @@ const grandTotal = totals.grandTotal;
           : 'INTER_STATE',
 
       sale_type: saleType,
+      tax_inclusive: taxInclusive,
+      discount_type: discountType,
+      discount_value: Number(discountValue) || 0,
+      discount_amount: totals.discount,
+      cess_amount: totals.cess,
+      additional_cess_amount: 0,
+      other_amount: totals.otherAmount,
+      round_off: totals.roundOff,
 
       taxable_value: taxableValue,
 
@@ -569,7 +594,7 @@ const grandTotal = totals.grandTotal;
       await updateSalesInvoice(
         editingInvoiceId,
         invoiceHeader,
-        items
+        calculatedItems
       );
 
       alert(
@@ -581,7 +606,7 @@ const grandTotal = totals.grandTotal;
       const savedInvoiceId =
         await saveSalesInvoice(
           invoiceHeader,
-          items
+          calculatedItems
         );
 
       alert(
@@ -600,7 +625,7 @@ const grandTotal = totals.grandTotal;
         company_state: '',
 
         invoice_no: '',
-        invoice_date: '',
+        invoice_date: todayISODate(),
 
         customer_id: '',
         customer_name: '',
@@ -643,8 +668,14 @@ const grandTotal = totals.grandTotal;
         null
       );
       setSaleType("CASH");
+      setSameAsBilling(true);
+      setTaxInclusive(false);
+      setDiscountType("AMOUNT");
+      setDiscountValue(0);
+      setOtherAmount(0);
+      setRoundOff(0);
 
-      loadInvoiceNumber(currentCompanyId);
+      loadInvoiceNumber(currentCompanyId, todayISODate());
 
       loadInvoices();
 
@@ -729,6 +760,12 @@ const editInvoice = async (
       invoiceId
     );
     setSaleType(invoice.sale_type || "CASH");
+    setSameAsBilling((invoice.billing_address || "") === (invoice.shipping_address || ""));
+    setTaxInclusive(Boolean(invoice.tax_inclusive));
+    setDiscountType(invoice.discount_type || "AMOUNT");
+    setDiscountValue(Number(invoice.discount_value) || 0);
+    setOtherAmount(Number(invoice.other_amount) || 0);
+    setRoundOff(Number(invoice.round_off) || 0);
 
     setFormData({
 
@@ -768,6 +805,7 @@ const editInvoice = async (
         hsn_sac: item.hsn_sac,
         unit: item.unit,
         gst_rate: item.gst_rate,
+        cess_rate: item.cess_rate || 0,
         qty: item.qty,
         rate: item.rate,
         amount: item.amount
@@ -883,94 +921,69 @@ setCustomerDetails(
 };
   
   return (
-    <div className="sales-page">
-
-      <div className="sales-page-heading">
-        <h2>Sales Invoice</h2>
-        <div className="invoice-type-toggle" role="group" aria-label="Invoice type">
-          <button type="button" className={saleType === "CASH" ? "active" : ""} onClick={() => setSaleType("CASH")}>Cash invoice</button>
-          <button type="button" className={saleType === "CREDIT" ? "active" : ""} onClick={() => setSaleType("CREDIT")}>Credit invoice</button>
+    <div className="sales-page invoice-page">
+      <div className="invoice-page-title">
+        <div>
+          <p className="invoice-breadcrumb">Billing &amp; Accounting / Sales / Add Sales Invoice</p>
+          <h2>Create Sales Invoice</h2>
         </div>
       </div>
 
-      <form
-        id="sales-invoice-form"
-        className="sales-form"
-        onSubmit={handleSubmit}
-      >
-        <div className="form-group company-field">
-          <label htmlFor="invoice-company">Company</label>
-          <input
-            id="invoice-company"
-            type="text"
-            value={companyLoading ? "Loading..." : currentCompany?.company_name || "Select Company from Sidebar"}
-            readOnly
-          />
-        </div>
+      <form id="sales-invoice-form" className="invoice-header-form" onSubmit={handleSubmit}>
+        <section className="invoice-details-card">
+          <h3>Invoice details</h3>
+          <div className="invoice-details-grid">
+            <label className="invoice-field company-field">
+              <span>Company</span>
+              <input type="text" value={companyLoading ? "Loading..." : currentCompany?.company_name || "Select Company from Sidebar"} readOnly />
+            </label>
+            <label className="invoice-field invoice-number-field">
+              <span>Invoice number</span>
+              <span className="invoice-number-control">
+                <input
+                  type="text"
+                  name="invoice_no"
+                  value={formData.invoice_no}
+                  onChange={handleChange}
+                  readOnly={invoiceSettings?.invoice_auto_numbering !== false}
+                  required
+                />
+                {invoiceSettings?.invoice_auto_numbering !== false && <span className="invoice-number-badge">AUTO</span>}
+              </span>
+            </label>
+            <label className="invoice-field invoice-date-field">
+              <span>Invoice date</span>
+              <input
+                type="date"
+                name="invoice_date"
+                value={formData.invoice_date || todayISODate()}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
 
-        <div className="form-group invoice-number-field">
-          <label htmlFor="invoice-number">Invoice number</label>
-          <input
-            id="invoice-number"
-            type="text"
-            name="invoice_no"
-            value={formData.invoice_no}
-            onChange={handleChange}
-            readOnly={!invoiceSettings?.invoice_auto_numbering}
-            required
-          />
-          {invoiceSettings?.invoice_auto_numbering && <span className="invoice-number-badge">AUTO</span>}
-        </div>
-
-        <div className="form-group invoice-date-field">
-          <label htmlFor="invoice-date">Invoice date</label>
-          <input
-            id="invoice-date"
-            type="text"
-            name="invoice_date"
-            value={formData.invoice_date}
-            placeholder="Select invoice date"
-            title="Select invoice date"
-            onFocus={(event) => { event.target.type = "date"; }}
-            onBlur={(event) => { if (!event.target.value) event.target.type = "text"; }}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="customer-rate-row">
-          <label className="customer-field">
-            <span>Customer</span>
-            <select
-              name="customer_id"
-              value={formData.customer_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select customer</option>
+          <label className="invoice-field invoice-customer-field">
+            <span>Customer <b aria-hidden="true">*</b></span>
+            <select name="customer_id" value={formData.customer_id} onChange={handleChange} required>
+              <option value="">Select from Customer Master</option>
               {customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.customer_name}
+                  {customer.customer_name}{customer.gstin ? ` · GSTIN ${customer.gstin}` : ""}
                 </option>
               ))}
             </select>
           </label>
-          <label className="tax-inclusive-field">
-            <span className="visually-hidden">Tax price mode</span>
-            <select
-              aria-label="Tax price mode"
-              value={taxInclusive ? "WITH_TAX" : "WITHOUT_TAX"}
-              onChange={(event) => setTaxInclusive(event.target.value === "WITH_TAX")}
-            >
-              <option value="WITHOUT_TAX">Without tax</option>
-              <option value="WITH_TAX">With tax</option>
-            </select>
-          </label>
-        </div>
+
+          <div className="invoice-type-toggle sales-cash-credit" role="group" aria-label="Invoice type">
+            <button type="button" className={saleType === "CASH" ? "active" : ""} aria-pressed={saleType === "CASH"} onClick={() => setSaleType("CASH")}>Cash Sale</button>
+            <button type="button" className={saleType === "CREDIT" ? "active" : ""} aria-pressed={saleType === "CREDIT"} onClick={() => setSaleType("CREDIT")}>Credit Sale</button>
+          </div>
+        </section>
 
         <section className="invoice-address-grid">
           <div className="invoice-address-card">
-            <h3>Billing address</h3>
+            <h3>Billing Address</h3>
             <textarea
               name="billing_address"
               placeholder="Billing address"
@@ -981,7 +994,7 @@ setCustomerDetails(
 
           <div className="invoice-address-card">
             <div className="invoice-address-heading">
-              <h3>Shipping address</h3>
+              <h3>Shipping Address</h3>
               <label className="same-address-toggle">
                 <input
                   type="checkbox"
@@ -1004,275 +1017,151 @@ setCustomerDetails(
                 Same as billing
               </label>
             </div>
-
             {!sameAsBilling ? (
               <div className="shipping-fields">
-                <input
-                  name="shipping_name"
-                  placeholder="Recipient name"
-                  value={formData.shipping_name}
-                  onChange={handleChange}
-                />
-                <input
-                  name="shipping_gstin"
-                  placeholder="Shipping GSTIN"
-                  value={formData.shipping_gstin}
-                  onChange={handleChange}
-                />
-                <select
-                  name="shipping_state"
-                  value={formData.shipping_state}
-                  onChange={handleChange}
-                >
-                  <option value="">Select shipping state</option>
-                  {states.map(state => (
-                    <option key={state.id} value={state.state_name}>{state.state_name}</option>
-                  ))}
+                <input name="shipping_name" placeholder="Recipient name" value={formData.shipping_name} onChange={handleChange} />
+                <input name="shipping_gstin" placeholder="Shipping GSTIN" value={formData.shipping_gstin} onChange={handleChange} />
+                <select name="shipping_state" value={formData.shipping_state} onChange={handleChange}>
+                  <option value="">Select shipping state / place of supply</option>
+                  {states.map(state => <option key={state.id} value={state.state_name}>{state.state_name}</option>)}
                 </select>
-                <textarea
-                  name="shipping_address"
-                  placeholder="Shipping address"
-                  value={formData.shipping_address}
-                  onChange={handleChange}
-                />
+                <textarea name="shipping_address" placeholder="Shipping address" value={formData.shipping_address} onChange={handleChange} />
               </div>
             ) : (
-              <p className="same-address-note">Shipping details will use the billing address.</p>
+              <p className="same-address-note">{formData.shipping_address || "Shipping details will use the billing address."}</p>
             )}
           </div>
         </section>
-
-        <div className="invoice-extra-fields">
-          <input
-            name="vehicle_no"
-            placeholder="Vehicle number"
-            value={formData.vehicle_no}
-            onChange={handleChange}
-          />
-          <input
-            name="eway_bill_no"
-            placeholder="E-Way bill number"
-            value={formData.eway_bill_no}
-            onChange={handleChange}
-          />
-          <textarea
-            name="remarks"
-            placeholder="Remarks"
-            value={formData.remarks}
-            onChange={handleChange}
-          />
-        </div>
       </form>
-      <h3>Invoice Items</h3>
 
-      <div className="invoice-items-table-wrap">
-<table className="sales-grid invoice-items-grid">
+      <div className="invoice-workspace-grid">
+        <section className="invoice-items-panel">
+          <div className="invoice-section-heading">
+            <h3>Invoice items</h3>
+            <span>{items.length} {items.length === 1 ? "item" : "items"}</span>
+          </div>
 
-        <thead>
+          <div className="invoice-items-table-wrap">
+            <table className="sales-grid invoice-items-grid">
+              <thead>
+                <tr>
+                  <th>Item / Description</th>
+                  <th>HSN/SAC</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Rate (₹)</th>
+                  <th>GST</th>
+                  <th>Amount (₹)</th>
+                  <th aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <input
+                        className="item-picker-input"
+                        list={`items-master-${index}`}
+                        value={item.item_name || ""}
+                        placeholder="Search or type an item"
+                        autoComplete="off"
+                        onChange={(event) => {
+                          const typed = event.target.value;
+                          const match = itemsMaster.find(masterItem => masterItem.item_name?.toLowerCase() === typed.trim().toLowerCase());
+                          handleItemChange(index, "item_id", match?.id || typed);
+                        }}
+                      />
+                      <datalist id={`items-master-${index}`}>
+                        {itemsMaster.map(masterItem => <option key={masterItem.id} value={masterItem.item_name} />)}
+                      </datalist>
+                    </td>
+                    <td><input aria-label="HSN or SAC code" value={item.hsn_sac || ""} onChange={(event) => handleItemChange(index, "hsn_sac", event.target.value)} placeholder="HSN/SAC" /></td>
+                    <td><input aria-label="Quantity" type="number" min="0" step="0.01" value={item.qty} onChange={(event) => handleItemChange(index, "qty", event.target.value)} /></td>
+                    <td><UomDropdown name="unit" value={item.unit} onChange={(event) => handleItemChange(index, "unit", event.target.value)} /></td>
+                    <td><input aria-label="Rate" type="number" min="0" step="0.01" value={item.rate} onChange={(event) => handleItemChange(index, "rate", event.target.value)} /></td>
+                    <td><GstRateDropdown name="gst_rate" value={item.gst_rate} onChange={(event) => handleItemChange(index, "gst_rate", event.target.value)} /></td>
+                    <td className="invoice-line-amount">₹ {formatAmount(item.amount)}</td>
+                    <td><button type="button" className="invoice-remove-item" aria-label={`Remove ${item.item_name || "item"}`} onClick={() => removeRow(index)}>×</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <tr>
-            <th>Particulars</th>
-            <th>Qty</th>
-            <th>UOM</th>
-            <th>HSN/SAC</th>
-            <th>Rate</th>
-            <th>GST %</th>
-            <th>Cess %</th>
-            <th>Amount</th>
-            <th>Action</th>
-          </tr>
+          <button type="button" className="invoice-add-item" onClick={addRow}>＋ Add item</button>
 
-        </thead>
+          <details className="invoice-accordion">
+            <summary>More item tax details</summary>
+            <div className="invoice-accordion-content">
+              <table className="invoice-tax-details-table">
+                <thead><tr><th>Item</th><th>Cess %</th><th>Cess amount</th></tr></thead>
+                <tbody>
+                  {items.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.item_name || `Item ${index + 1}`}</td>
+                      <td><input aria-label={`Cess percentage for ${item.item_name || `item ${index + 1}`}`} type="number" min="0" step="0.01" value={item.cess_rate || 0} onChange={(event) => handleItemChange(index, "cess_rate", event.target.value)} /></td>
+                      <td>₹ {formatAmount(calculatedItems[index]?.cess_amount || 0)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
 
-        <tbody>
+          <details className="invoice-accordion">
+            <summary>Transport / E-Way Bill / Remarks</summary>
+            <div className="invoice-accordion-content invoice-transport-fields">
+              <input name="vehicle_no" placeholder="Vehicle number" value={formData.vehicle_no} onChange={handleChange} />
+              <input name="eway_bill_no" placeholder="E-Way bill number" value={formData.eway_bill_no} onChange={handleChange} />
+              <label className="invoice-field">
+                <span>Other charges (₹)</span>
+                <input type="number" min="0" step="0.01" value={otherAmount} onChange={(event) => setOtherAmount(event.target.value)} />
+              </label>
+              <textarea className="invoice-remarks-field" name="remarks" placeholder="Remarks" value={formData.remarks} onChange={handleChange} />
+            </div>
+          </details>
 
-          {items.map((item, index) => (
-
-            <tr key={index}>
-
-              <td>
-
-  <>
-    <input
-      className="item-picker-input"
-      list={`items-master-${index}`}
-      value={item.item_name || ''}
-      placeholder="Search saved items or type a one-off item"
-      autoComplete="off"
-      onChange={(e) => {
-        const typed = e.target.value;
-        const match = itemsMaster.find(
-          masterItem => masterItem.item_name?.toLowerCase() === typed.trim().toLowerCase()
-        );
-        handleItemChange(index, 'item_id', match?.id || typed);
-      }}
-    />
-    <datalist id={`items-master-${index}`}>
-      {itemsMaster.map(masterItem => (
-        <option key={masterItem.id} value={masterItem.item_name}>
-          {masterItem.hsn_sac || ''} · {masterItem.unit || ''}
-        </option>
-      ))}
-    </datalist>
-    <small className="item-picker-hint">Choose a saved item or type a custom description.</small>
-  </>
-</td>
-
-              <td>
-
-                <input
-                  type="number"
-                  value={item.qty}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      'qty',
-                      e.target.value
-                    )
-                  }
-                />
-
-              </td>
-<td>
-
-<UomDropdown
-    name="unit"
-    value={item.unit}
-    onChange={(e) =>
-        handleItemChange(index, "unit", e.target.value)
-    }
-/>
-
-</td>
-              
-             <td>
-  <input
-    aria-label="HSN or SAC code"
-    value={item.hsn_sac || ''}
-    onChange={(e) => handleItemChange(index, 'hsn_sac', e.target.value)}
-    placeholder="HSN/SAC"
-  />
-</td>
-              
-    
-              <td>
-
-                <input
-                  type="number"
-                  value={item.rate}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      'rate',
-                      e.target.value
-                    )
-                  }
-                />
-
-              </td>
-              
-
-              <td>
-
-               <GstRateDropdown
-    name="gst_rate"
-    value={item.gst_rate}
-    onChange={(e) =>
-        handleItemChange(
-            index,
-            "gst_rate",
-            e.target.value
-        )
-    }
-/>
-
-              </td>
-              <td>
-  <input
-    type="number"
-    min="0"
-    step="0.01"
-    value={item.cess_rate || 0}
-    onChange={(e) =>
-      handleItemChange(index, "cess_rate", e.target.value)
-    }
-  />
-</td>
-
-
-
-              <td>
-                {formatAmount(item.amount)}
-              </td>
-
-              <td>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeRow(index)
-                  }
-                >
-                  Delete
-                </button>
-
-              </td>
-
-            </tr>
-
-          ))}
-
-        </tbody>
-
-      </table>
-      </div>
-
-      <button
-        type="button"
-        onClick={addRow}
-      >
-        Add Row
-      </button>
-
-      <div className="sales-summary-row">
-        <section className="amount-in-words">
-          <label>Amount in words</label>
-          <p>{formatAmountInWords(grandTotal)}</p>
+          <section className="amount-in-words">
+            <label>Amount in words</label>
+            <p>{formatAmountInWords(grandTotal)}</p>
+          </section>
         </section>
-        <div className="sales-totals">
 
-        <h3>
-          Taxable Value :
-          ₹ {formatAmount(taxableValue)}
-        </h3>
-
-       <h3>
-  CGST :
-  ₹ {formatAmount(cgst)}
-</h3>
-
-<h3>
-  SGST :
-  ₹ {formatAmount(sgst)}
-</h3>
-
-<h3>
-  IGST :
-  ₹ {formatAmount(igst)}
-</h3>
-
-        <h2>
-          Grand Total :
-          ₹ {formatAmount(grandTotal)}
-        </h2>
-
-      </div>
-      </div>
-
-      <div className="invoice-save-actions">
-        <button type="submit" form="sales-invoice-form">
-          {editingInvoiceId ? 'Update Invoice' : 'Save Invoice'}
-        </button>
+        <aside className="invoice-summary-panel" aria-label="Invoice totals">
+          <h3>Invoice summary</h3>
+          <div className="invoice-summary-line">
+            <span>Subtotal</span><strong>₹ {formatAmount(totals.subtotal)}</strong>
+          </div>
+          <div className="invoice-summary-line invoice-discount-line">
+            <span>Discount</span>
+            <div>
+              <select aria-label="Discount type" value={discountType} onChange={(event) => setDiscountType(event.target.value)}>
+                <option value="AMOUNT">₹</option>
+                <option value="PERCENT">%</option>
+              </select>
+              <input aria-label="Discount" type="number" min="0" step="0.01" value={discountValue} onChange={(event) => setDiscountValue(event.target.value)} />
+              <strong>− ₹ {formatAmount(totals.discount)}</strong>
+            </div>
+          </div>
+          {intraState ? (
+            <>
+              <div className="invoice-summary-line"><span>CGST</span><strong>₹ {formatAmount(cgst)}</strong></div>
+              <div className="invoice-summary-line"><span>SGST</span><strong>₹ {formatAmount(sgst)}</strong></div>
+            </>
+          ) : (
+            <div className="invoice-summary-line"><span>IGST</span><strong>₹ {formatAmount(igst)}</strong></div>
+          )}
+          {totals.cess > 0 && <div className="invoice-summary-line"><span>Cess</span><strong>₹ {formatAmount(totals.cess)}</strong></div>}
+          <div className="invoice-summary-line"><span>Other charges</span><strong>₹ {formatAmount(totals.otherAmount)}</strong></div>
+          <label className="invoice-summary-line invoice-roundoff-line">
+            <span>Round off</span>
+            <input aria-label="Round off" type="number" step="0.01" value={roundOff} onChange={(event) => setRoundOff(event.target.value)} />
+          </label>
+          <div className="invoice-summary-grand-total"><span>Grand Total</span><strong>₹ {formatAmount(grandTotal)}</strong></div>
+          <button type="submit" form="sales-invoice-form" className="invoice-save-button">
+            {editingInvoiceId ? "Update Invoice" : "Save & Print Invoice"}
+          </button>
+        </aside>
       </div>
 
       <h3>Previous Invoices</h3>

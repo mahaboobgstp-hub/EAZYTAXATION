@@ -125,6 +125,7 @@ export function calculateSalesInvoiceTax({
   return {
     items: calculatedItems,
     totals: {
+      subtotal: money(grossTaxable),
       taxable: money(totals.taxable),
       cgst: money(totals.cgst),
       sgst: money(totals.sgst),
