@@ -203,7 +203,10 @@ function Header() {
               activeModule === module.id ? "active" : ""
             }`}
             aria-pressed={activeModule === module.id}
-            onClick={() => setActiveModule(module.id)}
+            onClick={() => {
+              setActiveModule(module.id);
+              navigate("/app");
+            }}
           >
             {module.label}
           </button>
