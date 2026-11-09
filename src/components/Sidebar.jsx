@@ -31,7 +31,7 @@ import "../css/Sidebar.css";
 
 const MODULES = {
   billing: {
-    dashboard: "/app/billing-dashboard",
+    dashboard: "/app",
     groups: [
       {
         title: "Sales",
@@ -108,7 +108,7 @@ const MODULES = {
 
 
   hr: {
-    dashboard: "/app/hr-dashboard-reports",
+    dashboard: "/app",
     groups: [
       {
         title: "Employees",
@@ -181,7 +181,7 @@ const MODULES = {
   },
 
   payroll: {
-    dashboard: "/app/payroll-dashboard",
+    dashboard: "/app",
     groups: [
       {
                 title: "Attendance",
@@ -236,7 +236,7 @@ const MODULES = {
 
 
   inventory: {
-    dashboard: "/app/dashboard",
+    dashboard: "/app",
     groups: [
       {
         title: "Stock Management",
@@ -283,6 +283,24 @@ const MODULES = {
         icon: FiTruck,
         links: [
           ["Vendor Master", "/app/vendors"],
+        ],
+      },
+    ],
+  },
+
+  "gst-tax": {
+    dashboard: "/app",
+    groups: [
+      {
+        title: "GST & Tax",
+        icon: FiFileText,
+        links: [
+          ["GST Rates", "/app/gst-rates"],
+          ["GSTR-1", "/app/gstr1"],
+          ["GSTR-3B", "/app/gstr3b"],
+          ["GSTR-2B Reconciliation", "/app/gstr2b"],
+          ["E-Way Bills", "/app/eway-bills"],
+          ["E-Invoice", "/app/einvoice"],
         ],
       },
     ],
@@ -576,7 +594,9 @@ function Sidebar() {
                     ? "Inventory Dashboard"
                     : activeModule === "supply-chain"
                       ? "Supply Chain Dashboard"
-                      : "Dashboard"}
+                      : activeModule === "gst-tax"
+                        ? "GST & Tax Dashboard"
+                        : "Dashboard"}
             </span>
           </NavLink>
         ) : (
