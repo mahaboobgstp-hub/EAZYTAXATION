@@ -20,8 +20,6 @@ export function calculateSalesInvoiceTax({
     const enteredRate = number(item.rate);
     const gstRate = number(item.gst_rate);
     const cessRate = number(item.cess_rate);
-    const additionalCessRate = number(item.additional_cess_rate);
-
     // The entered rate includes GST and percentage-based cess
     // only when taxInclusive is selected.
     const percentageTaxRate = gstRate + cessRate;
@@ -36,16 +34,12 @@ export function calculateSalesInvoiceTax({
     const gstBeforeDiscount =
       taxableBeforeDiscount * gstRate / 100;
 
-    const additionalCess =
-      qty * additionalCessRate;
-
     return {
       ...item,
       qty,
       taxableBeforeDiscount,
       gstBeforeDiscount,
-      cessBeforeDiscount,
-      additionalCess
+      cessBeforeDiscount
     };
   });
 
@@ -91,9 +85,6 @@ export function calculateSalesInvoiceTax({
     const cessAmount =
       taxableAmount * number(item.cess_rate) / 100;
 
-    const additionalCessAmount =
-      item.additionalCess;
-
     return {
       ...item,
       discount_amount: money(lineDiscount),
@@ -102,7 +93,6 @@ export function calculateSalesInvoiceTax({
       sgst_amount: money(sgstAmount),
       igst_amount: money(igstAmount),
       cess_amount: money(cessAmount),
-      additional_cess_amount: money(additionalCessAmount),
       amount: money(taxableAmount)
     };
   });
@@ -114,16 +104,13 @@ export function calculateSalesInvoiceTax({
       sgst: sum.sgst + item.sgst_amount,
       igst: sum.igst + item.igst_amount,
       cess: sum.cess + item.cess_amount,
-      additionalCess:
-        sum.additionalCess + item.additional_cess_amount
     }),
     {
       taxable: 0,
       cgst: 0,
       sgst: 0,
       igst: 0,
-      cess: 0,
-      additionalCess: 0
+      cess: 0
     }
   );
 
@@ -133,7 +120,6 @@ export function calculateSalesInvoiceTax({
     totals.sgst +
     totals.igst +
     totals.cess +
-    totals.additionalCess +
     number(otherAmount);
 
   return {
@@ -144,7 +130,6 @@ export function calculateSalesInvoiceTax({
       sgst: money(totals.sgst),
       igst: money(totals.igst),
       cess: money(totals.cess),
-      additionalCess: money(totals.additionalCess),
       discount: money(actualDiscount),
       otherAmount: money(otherAmount),
       roundOff: money(roundOff),

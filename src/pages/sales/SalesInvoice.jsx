@@ -36,6 +36,36 @@ import {
 } from "../../services/stateService";
 import { formatAmount } from "../../utils/amountFormatter";
 
+const numberBelowTwenty = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const tensWords = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+function indianNumberWords(value) {
+  const number = Math.floor(Number(value) || 0);
+  if (number < 20) return numberBelowTwenty[number];
+  if (number < 100) return `${tensWords[Math.floor(number / 10)]}${number % 10 ? ` ${numberBelowTwenty[number % 10]}` : ""}`;
+  const groups = [[10000000, "crore"], [100000, "lakh"], [1000, "thousand"], [100, "hundred"]];
+  for (const [unit, label] of groups) {
+    if (number >= unit) {
+      const quotient = Math.floor(number / unit);
+      const remainder = number % unit;
+      return `${indianNumberWords(quotient)} ${label}${remainder ? ` ${indianNumberWords(remainder)}` : ""}`;
+    }
+  }
+  return "zero";
+}
+
+function formatAmountInWords(value) {
+  const numeric = Number(value) || 0;
+  const paiseTotal = Math.round(Math.abs(numeric) * 100);
+  const rupees = Math.floor(paiseTotal / 100);
+  const paise = paiseTotal % 100;
+  const prefix = numeric < 0 ? "Minus " : "";
+  const rupeeWords = `${prefix}Rupees ${indianNumberWords(rupees)}`;
+  return paise
+    ? `${rupeeWords} and ${indianNumberWords(paise)} paise only`
+    : `${rupeeWords} only`;
+}
+
 function SalesInvoice() {
   const {
   currentCompany,
@@ -113,8 +143,6 @@ eway_bill_no: '',
     amount: 0,
     cess_rate: 0,
 cess_amount: 0,
-additional_cess_rate: 0,
-additional_cess_amount: 0,
 tax_inclusive: false
   }
 ]);
@@ -521,6 +549,8 @@ const grandTotal = totals.grandTotal;
           ? 'INTRA_STATE'
           : 'INTER_STATE',
 
+      sale_type: saleType,
+
       taxable_value: taxableValue,
 
       cgst: cgst,
@@ -612,6 +642,7 @@ const grandTotal = totals.grandTotal;
       setEditingInvoiceId(
         null
       );
+      setSaleType("CASH");
 
       loadInvoiceNumber(currentCompanyId);
 
@@ -697,6 +728,7 @@ const editInvoice = async (
     setEditingInvoiceId(
       invoiceId
     );
+    setSaleType(invoice.sale_type || "CASH");
 
     setFormData({
 
@@ -853,7 +885,13 @@ setCustomerDetails(
   return (
     <div className="sales-page">
 
-      <h2>Sales Invoice</h2>
+      <div className="sales-page-heading">
+        <h2>Sales Invoice</h2>
+        <div className="invoice-type-toggle" role="group" aria-label="Invoice type">
+          <button type="button" className={saleType === "CASH" ? "active" : ""} onClick={() => setSaleType("CASH")}>Cash invoice</button>
+          <button type="button" className={saleType === "CREDIT" ? "active" : ""} onClick={() => setSaleType("CREDIT")}>Credit invoice</button>
+        </div>
+      </div>
 
       <form
         id="sales-invoice-form"
@@ -1027,7 +1065,8 @@ setCustomerDetails(
       </form>
       <h3>Invoice Items</h3>
 
-      <table className="sales-grid">
+      <div className="invoice-items-table-wrap">
+<table className="sales-grid invoice-items-grid">
 
         <thead>
 
@@ -1039,7 +1078,6 @@ setCustomerDetails(
             <th>Rate</th>
             <th>GST %</th>
             <th>Cess %</th>
-<th>Additional Cess / Unit</th>
             <th>Amount</th>
             <th>Action</th>
           </tr>
@@ -1161,21 +1199,7 @@ setCustomerDetails(
   />
 </td>
 
-<td>
-  <input
-    type="number"
-    min="0"
-    step="0.01"
-    value={item.additional_cess_rate || 0}
-    onChange={(e) =>
-      handleItemChange(
-        index,
-        "additional_cess_rate",
-        e.target.value
-      )
-    }
-  />
-</td>
+
 
               <td>
                 {formatAmount(item.amount)}
@@ -1201,6 +1225,7 @@ setCustomerDetails(
         </tbody>
 
       </table>
+      </div>
 
       <button
         type="button"
@@ -1209,7 +1234,12 @@ setCustomerDetails(
         Add Row
       </button>
 
-      <div className="sales-totals">
+      <div className="sales-summary-row">
+        <section className="amount-in-words">
+          <label>Amount in words</label>
+          <p>{formatAmountInWords(grandTotal)}</p>
+        </section>
+        <div className="sales-totals">
 
         <h3>
           Taxable Value :
@@ -1236,6 +1266,7 @@ setCustomerDetails(
           ₹ {formatAmount(grandTotal)}
         </h2>
 
+      </div>
       </div>
 
       <div className="invoice-save-actions">
