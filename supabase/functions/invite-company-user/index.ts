@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 
     const { data: company, error: companyError } = await admin
       .from("companies")
-      .select("id, owner_user_id")
+      .select("id, owner_user_id, company_name")
       .eq("id", companyId)
       .eq("owner_user_id", callerData.user.id)
       .maybeSingle();
