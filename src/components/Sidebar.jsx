@@ -94,7 +94,7 @@ const MODULES = {
         icon: FiBarChart2,
         links: [
           ["Sales Reports", "/app/sales-reports"],
-          ["Purchase Reports", "/purchase-reports"],
+          ["Purchase Reports", "/app/purchase-reports"],
           ["Expense Reports", "/app/expense-reports"],
           ["Customer Ledger", "/app/customer-ledger"],
           ["Vendor Ledger", "/app/vendor-ledger"],
@@ -402,6 +402,13 @@ const AVAILABLE_ROUTES = new Set([
   "/app/gst-rates",
   "/app/delivery-challans",
   "/app/quotation",
+  "/app/sales-reports",
+  "/app/purchase-reports",
+  "/app/expense-reports",
+  "/app/customer-ledger",
+  "/app/vendor-ledger",
+  "/app/item-ledger",
+  "/app/gst-reports",
   "/app/invoice-settings",
 ]);
 
