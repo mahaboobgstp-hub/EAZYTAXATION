@@ -109,7 +109,7 @@ begin
     where c.table_schema='public'
       and c.column_name='company_id'
       and tb.table_type='BASE TABLE'
-      and c.table_name not in ('company_user_access','ca_company_assignments')
+      and c.table_name not in ('company_user_access','ca_company_assignments','profiles')
   loop
     owner_policy := t.table_name || '_company_owner_access';
     ca_read_policy := t.table_name || '_ca_assigned_read';
