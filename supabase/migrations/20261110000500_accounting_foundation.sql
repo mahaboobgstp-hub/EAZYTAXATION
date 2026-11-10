@@ -192,7 +192,7 @@ returns trigger
 language plpgsql
 security invoker
 set search_path = public
-as $
+as $$
 declare
   v_status text;
 begin
@@ -221,7 +221,7 @@ begin
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists protect_posted_accounting_vouchers on public.accounting_vouchers;
 create trigger protect_posted_accounting_vouchers
