@@ -68,8 +68,11 @@ export function CompanyProvider({ children }) {
                 event === "SIGNED_OUT" ||
                 event === "USER_UPDATED"
             ) {
-                // Defer the Supabase query until the auth callback completes.
-                Promise.resolve().then(() => loadCompanies());
+                // Run the query after Supabase finishes its auth-state callback
+                // and releases its internal auth lock.
+                setTimeout(() => {
+                    loadCompanies();
+                }, 0);
             }
         });
 
