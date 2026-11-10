@@ -54,7 +54,7 @@ export default function SalesWorkspace({ kind }) {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
-  const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0" }]);
+  const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0" }]);
 
   const load = async () => {
     if (!currentCompanyId) { setRows([]); setLoading(false); return; }
@@ -70,7 +70,7 @@ export default function SalesWorkspace({ kind }) {
   useEffect(() => { load(); }, [currentCompanyId, kind]);
   useEffect(() => {
     if (!currentCompanyId) return;
-    supabase.from("customers").select("id, customer_name").eq("company_id", currentCompanyId).order("customer_name").then(({ data }) => setCustomers(data || []));
+    supabase.from("customers").select("id, customer_name, state").eq("company_id", currentCompanyId).order("customer_name").then(({ data }) => setCustomers(data || []));
     if (kind === "credits") supabase.from("sales_invoices").select("id, invoice_no, customer_id, customer_name, total_amount").eq("company_id", currentCompanyId).eq("is_deleted", false).order("invoice_date", { ascending: false }).then(({ data }) => setInvoices(data || []));
   }, [currentCompanyId, kind]);
 
@@ -100,7 +100,7 @@ export default function SalesWorkspace({ kind }) {
 
   const openCreate = () => {
     setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
-    setLines([{ description: "", qty: "1", rate: "0" }]);
+    setLines([{ description: "", qty: "1", rate: "0", gstRate: "0" }]);
     setMessage(""); setDialog(true);
   };
 
@@ -117,8 +117,14 @@ export default function SalesWorkspace({ kind }) {
       const documentNo = `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
       const validLines = lines.filter(line => line.description.trim());
       if (!validLines.length) throw new Error("Add at least one item or description.");
-      const amount = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)), 0) * 100) / 100;
-      const common = { company_id: currentCompanyId, customer_id: customer.id, customer_name: customer.customer_name, total_amount: amount, taxable_value: amount, created_at: new Date().toISOString() };
+      const taxableValue = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)), 0) * 100) / 100;
+      const taxAmount = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)) * Math.max(0, num(line.gstRate)) / 100, 0) * 100) / 100;
+      const intraState = Boolean(currentCompany?.state && customer.state && currentCompany.state.toLowerCase() === customer.state.toLowerCase());
+      const cgst = intraState ? Math.round(taxAmount / 2 * 100) / 100 : 0;
+      const sgst = intraState ? Math.round((taxAmount - cgst) * 100) / 100 : 0;
+      const igst = intraState ? 0 : taxAmount;
+      const amount = Math.round((taxableValue + taxAmount) * 100) / 100;
+      const common = { company_id: currentCompanyId, customer_id: customer.id, customer_name: customer.customer_name, taxable_value: taxableValue, cgst, sgst, igst, total_amount: amount, created_at: new Date().toISOString() };
       let table, header, itemTable, parentField, id;
       if (kind === "quotations") {
         table = "quotations"; itemTable = "quotation_items"; parentField = "invoice_id";
@@ -141,7 +147,8 @@ export default function SalesWorkspace({ kind }) {
         ...(kind === "quotations" ? { particulars: line.description.trim() } : { description: line.description.trim() }),
         qty: Math.max(0, num(line.qty)),
         rate: Math.max(0, num(line.rate)),
-        amount: Math.round(Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)) * 100) / 100
+        gst_rate: Math.max(0, num(line.gstRate)),
+        amount: Math.round((Math.max(0, num(line.qty)) * Math.max(0, num(line.rate))) * (1 + Math.max(0, num(line.gstRate)) / 100) * 100) / 100
       }));
       const { error: itemError } = await supabase.from(itemTable).insert(itemsToInsert);
       if (itemError) { await supabase.from(table).delete().eq("id", id); throw itemError; }
@@ -220,10 +227,10 @@ export default function SalesWorkspace({ kind }) {
       {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => { const invoice = invoices.find(i => i.id === e.target.value); setForm({ ...form, originalInvoiceId: e.target.value, customerId: invoice?.customer_id || form.customerId }); }}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
       <div className="sw-form-grid"><label>Customer<select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })}><option value="">Select customer</option>{customers.map(c => <option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></label><label>{kind === "orders" ? "Order date" : kind === "credits" ? "Credit note date" : "Quotation date"}<input required type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></label>{kind !== "credits" && <label>{kind === "orders" ? "Expected delivery" : "Valid until"}<input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} /></label>}</div>
       {kind === "credits" && <label>Reason<input required value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Reason for issuing credit" /></label>}
-      <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong><button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0" }])}>＋ Add line</button></div>{lines.map((line, index) => <div className="sw-line-row" key={index}><label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label><label>Quantity<input type="number" min="0" step="0.01" value={line.qty} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
-      <div className="sw-modal-total"><span>Document total</span><strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate), 0))}</strong></div>
+      <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong><button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0", gstRate: "0" }])}>＋ Add line</button></div>{lines.map((line, index) => <div className="sw-line-row" key={index}><label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label><label>Quantity<input type="number" min="0" step="0.01" value={line.qty} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><label>GST %<select value={line.gstRate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, gstRate: e.target.value } : item))}>{["0", "5", "12", "18", "28"].map(rate => <option key={rate} value={rate}>{rate}%</option>)}</select></label><strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
+      <div className="sw-modal-total"><span>Subtotal · GST · Grand total</span><strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100), 0))}</strong></div>
       <footer><button type="button" className="sw-secondary" onClick={() => setDialog(false)}>Cancel</button><button disabled={saving} className="sw-primary">{saving ? "Saving…" : `Save ${kind === "orders" ? "Sales Order" : kind === "credits" ? "Credit Note" : "Quotation"}`}</button></footer>
-      <p className="sw-note">This creates a draft commercial record. It does not post accounting entries, adjust invoice balances, or change stock.</p>
+      <p className="sw-note">GST is split using the company and customer state. Saving the document does not post ledger entries, change invoice balances, or update stock.</p>
     </form></section></div>}
     {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
   </main>;
