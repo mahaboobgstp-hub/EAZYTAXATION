@@ -103,7 +103,7 @@ function paginateItems(items) {
   return pages;
 }
 
-function loadImage(url) {
+async function loadImage(url) {
   if (!url) return null;
   try {
     if (String(url).startsWith("data:image/")) {
