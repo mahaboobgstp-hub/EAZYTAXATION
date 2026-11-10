@@ -214,7 +214,7 @@ function App() {
 />
 <Route
   path="delivery-challans/new"
-  element={<DeliveryChallan />
+  element={<DeliveryChallan />}
 />
           <Route
             path="quotation"
