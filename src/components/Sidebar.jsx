@@ -74,7 +74,7 @@ const MODULES = {
           ["Bank Overview", "/app/banking"],
           ["Import Statements", "/app/banking"],
           ["Classify & Post", "/app/banking"],
-          ["Bank Reconciliation", "/app/banking"],
+          ["Bank Reconciliation", "/app/banking?tab=reconciliation"],
           ["Bank Accounts", "/app/banking"],
           ["Settings", "/app/banking"],
         ],
@@ -652,15 +652,6 @@ function Sidebar() {
 
         {currentModule.groups.map((group) =>
           renderGroup(group, activeModule)
-        )}
-        {activeModule === "billing" && (
-          <div className="sidebar-group sidebar-group-locked">
-            <div className="menu-link menu-link-locked" aria-disabled="true" title="Coming soon — this page is not available yet">
-              <FiRefreshCw />
-              <span>Bank Reconciliation</span>
-              <FiLock className="sidebar-lock-icon" aria-hidden="true" />
-            </div>
-          </div>
         )}
 
         <div className="sidebar-section-label">COMMON WORKSPACE</div>
