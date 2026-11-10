@@ -46,17 +46,23 @@ function Login() {
 
       setLoading(true);
 
-      await loginUser(
-
+      const loginData = await loginUser(
         formData.email,
-
         formData.password
-
       );
 
-      alert("Login Successful");
+      const signedInUserId = loginData?.user?.id;
+      const { data: caAssignments, error: caError } = await (await import("../../supabase/supabaseClient")).supabase
+        .from("ca_company_assignments")
+        .select("id")
+        .eq("ca_user_id", signedInUserId)
+        .eq("status", "Active")
+        .limit(1);
 
-      navigate("/app/companies");
+      if (caError && caError.code !== "42P01") throw caError;
+
+      alert("Login Successful");
+      navigate(caAssignments?.length ? "/app/ca-workspace" : "/app/companies");
 
     }
 
