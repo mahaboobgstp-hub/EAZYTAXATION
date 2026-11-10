@@ -56,7 +56,6 @@ import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
 import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
-import Quotation from "./pages/quotations/Quotation";
 import Items from './pages/masters/Items';
 import Uom from './pages/masters/Uom';
 import InvoiceSettings
