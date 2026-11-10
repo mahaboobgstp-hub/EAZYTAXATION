@@ -68,6 +68,18 @@ const MODULES = {
         ],
       },
       {
+        title: "Banking",
+        icon: FiCreditCard,
+        links: [
+          ["Bank Overview", "/app/banking"],
+          ["Import Statements", "/app/banking"],
+          ["Classify & Post", "/app/banking"],
+          ["Bank Reconciliation", "/app/banking"],
+          ["Bank Accounts", "/app/banking"],
+          ["Settings", "/app/banking"],
+        ],
+      },
+      {
         title: "Accounting",
         icon: FiBookOpen,
         links: [
@@ -395,6 +407,7 @@ const AVAILABLE_ROUTES = new Set([
   "/app/expenses",
   "/app/expense-register",
   "/app/payments",
+  "/app/banking",
   "/app/items",
   "/app/uom",
   "/app/expense-categories",
