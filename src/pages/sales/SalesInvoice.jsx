@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
@@ -75,6 +76,8 @@ function todayISODate() {
 }
 
 function SalesInvoice() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
   currentCompany,
   currentCompanyId,  
@@ -920,12 +923,19 @@ setCustomerDetails(
   }
 };
   
+  useEffect(() => {
+    const invoiceId = location.state?.editInvoiceId;
+    if (!invoiceId || !currentCompanyId) return;
+    editInvoice(invoiceId).then(() => navigate("/app/sales", { replace: true, state: null }));
+  }, [currentCompanyId, location.state]);
+
   return (
     <div className="sales-page invoice-page">
       <div className="invoice-page-title">
         <div>
           <p className="invoice-breadcrumb">Billing &amp; Accounting / Sales / Add Sales Invoice</p>
-          <h2>Create Sales Invoice</h2>
+          <h2>{editingInvoiceId ? "Edit Sales Invoice" : "Create Sales Invoice"}</h2>
+          <a href="/app/sales-register" className="invoice-breadcrumb">View Sales Register</a>
         </div>
       </div>
 
