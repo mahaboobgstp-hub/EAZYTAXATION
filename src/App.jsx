@@ -68,6 +68,9 @@ import SalesRegister from "./pages/sales/SalesRegister";
 import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
 import GSTR1 from "./pages/gst/GSTR1";
+import GSTR3B from "./pages/gst/GSTR3B";
+import GSTR2B from "./pages/gst/GSTR2B";
+import EwayBills from "./pages/gst/EwayBills";
 import ReportsWorkspace from "./pages/reports.jsx";
 
 /* ===========================
@@ -216,6 +219,9 @@ function App() {
     path="gstr1"
     element={<GSTR1 />}
 />
+<Route path="gstr3b" element={<GSTR3B />} />
+<Route path="gstr2b" element={<GSTR2B />} />
+<Route path="eway-bills" element={<EwayBills />} />
 <Route
   path="delivery-challans"
   element={<SalesWorkspace kind="challans" />}
