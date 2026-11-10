@@ -71,12 +71,12 @@ const MODULES = {
         title: "Banking",
         icon: FiCreditCard,
         links: [
-          ["Bank Overview", "/app/banking"],
-          ["Import Statements", "/app/banking"],
-          ["Classify & Post", "/app/banking"],
+          ["Bank Overview", "/app/banking?tab=overview"],
+          ["Import Statements", "/app/banking?tab=import"],
+          ["Classify & Post", "/app/banking?tab=transactions"],
           ["Bank Reconciliation", "/app/banking?tab=reconciliation"],
-          ["Bank Accounts", "/app/banking"],
-          ["Settings", "/app/banking"],
+          ["Bank Accounts", "/app/banking?tab=accounts"],
+          ["Settings", "/app/banking?tab=settings"],
         ],
       },
       {
@@ -550,8 +550,8 @@ function Sidebar() {
                 <NavLink
                   key={`${label}-${path}`}
                   to={path}
-                  className={({ isActive }) =>
-                    `submenu-link ${isActive ? "active" : ""}`
+                  className={() =>
+                    `submenu-link ${location.pathname + location.search === path ? "active" : ""}`
                   }
                 >
                   <span>{label}</span>
