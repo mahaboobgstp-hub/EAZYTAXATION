@@ -8,10 +8,6 @@ export function CompanyProvider({ children }) {
     const [currentCompany, setCurrentCompany] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadCompanies();
-    }, []);
-
     const loadCompanies = async () => {
         try {
             setLoading(true);
@@ -26,6 +22,7 @@ export function CompanyProvider({ children }) {
             if (!user) {
                 setCompanies([]);
                 setCurrentCompany(null);
+                localStorage.removeItem("currentCompanyId");
                 return;
             }
 
@@ -37,22 +34,19 @@ export function CompanyProvider({ children }) {
 
             if (error) throw error;
 
-            setCompanies(data || []);
+            const userCompanies = data || [];
+            setCompanies(userCompanies);
 
-            const savedCompanyId =
-                localStorage.getItem("currentCompanyId");
-
-            const savedCompany = (data || []).find(
+            const savedCompanyId = localStorage.getItem("currentCompanyId");
+            const savedCompany = userCompanies.find(
                 company => company.id === savedCompanyId
             );
 
-            if (savedCompany) {
-                setCurrentCompany(savedCompany);
-            } else {
-                setCurrentCompany(null);
+            setCurrentCompany(savedCompany || null);
+
+            if (!savedCompany) {
                 localStorage.removeItem("currentCompanyId");
             }
-
         } catch (error) {
             console.error("Error loading companies:", error);
             setCompanies([]);
@@ -62,6 +56,26 @@ export function CompanyProvider({ children }) {
         }
     };
 
+    useEffect(() => {
+        // Load once on startup and again whenever authentication changes.
+        loadCompanies();
+
+        const {
+            data: { subscription }
+        } = supabase.auth.onAuthStateChange((event) => {
+            if (
+                event === "SIGNED_IN" ||
+                event === "SIGNED_OUT" ||
+                event === "USER_UPDATED"
+            ) {
+                // Defer the Supabase query until the auth callback completes.
+                Promise.resolve().then(() => loadCompanies());
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
     const changeCompany = (companyId) => {
         const selectedCompany = companies.find(
             company => company.id === companyId
@@ -70,11 +84,7 @@ export function CompanyProvider({ children }) {
         if (!selectedCompany) return;
 
         setCurrentCompany(selectedCompany);
-
-        localStorage.setItem(
-            "currentCompanyId",
-            selectedCompany.id
-        );
+        localStorage.setItem("currentCompanyId", selectedCompany.id);
     };
 
     return (
