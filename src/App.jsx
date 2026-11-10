@@ -67,6 +67,7 @@ import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
 import SalesRegister from "./pages/sales/SalesRegister";
 import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
+import GSTR1 from "./pages/gst/GSTR1";
 import ReportsWorkspace from "./pages/reports.jsx";
 
 /* ===========================
@@ -210,6 +211,10 @@ function App() {
           <Route
     path="gst-rates"
     element={<GSTRates />}
+/>
+<Route
+    path="gstr1"
+    element={<GSTR1 />}
 />
 <Route
   path="delivery-challans"
