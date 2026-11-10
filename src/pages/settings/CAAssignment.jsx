@@ -23,7 +23,7 @@ function CAAssignment() {
     try {
       const rows = await getCompanyCaAssignments(selectedCompanyId);
       setAssignments(rows.filter((row) => row.status === "Active"));
-      setSelectedAssignment((previous) => rows.find((row) => row.id === previous?.id) || null);
+      setSelectedAssignment((previous) => rows.find((row) => row.id === previous?.id) || rows.find((row) => row.status === "Active") || null);
     } catch (e) { setError(e.message); }
   }, [selectedCompanyId]);
 
