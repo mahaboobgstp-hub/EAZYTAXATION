@@ -151,10 +151,17 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const view = async row => {
-    if (kind === "register") {
-      const { data: items } = await supabase.from("sales_invoice_items").select("*").eq("invoice_id", row.id).order("line_no");
-      setSelected({ ...row, items: items || [] });
-    } else setSelected(row);
+    const itemConfig = {
+      register: ["sales_invoice_items", "invoice_id", "line_no"],
+      quotations: ["quotation_items", "invoice_id", "line_no"],
+      orders: ["sales_order_items", "order_id", "line_no"],
+      challans: ["delivery_challan_items", "challan_id", "created_at"],
+      credits: ["credit_note_items", "credit_note_id", "line_no"],
+    }[kind];
+    const [table, parent, orderBy] = itemConfig;
+    const { data: items, error } = await supabase.from(table).select("*").eq(parent, row.id).order(orderBy);
+    if (error) setMessage(errorText(error));
+    setSelected({ ...row, items: items || [] });
   };
 
   const printInvoice = async row => {
@@ -174,7 +181,7 @@ export default function SalesWorkspace({ kind }) {
 
   const createAction = kind === "register" ? () => navigate("/app/sales") : kind === "challans" ? () => navigate("/app/delivery-challans/new") : openCreate;
   const actionLabel = kind === "register" ? "New Sales Invoice" : kind === "quotations" ? "New Quotation" : kind === "orders" ? "New Sales Order" : kind === "challans" ? "New Delivery Challan" : "Create Credit Note";
-  const statuses = kind === "quotations" ? ["Draft", "Sent", "Accepted", "Rejected", "Expired"] : kind === "orders" ? ["Open", "Confirmed", "Partially Fulfilled", "Fulfilled", "Cancelled"] : kind === "challans" ? ["Draft", "Ready to Dispatch", "In Transit", "Delivered", "Cancelled"] : ["Draft", "Issued", "Applied", "Void"];
+  const statuses = kind === "register" ? [] : kind === "quotations" ? ["Draft", "Sent", "Accepted", "Rejected", "Expired"] : kind === "orders" ? ["Open", "Confirmed", "Partially Fulfilled", "Fulfilled", "Cancelled"] : kind === "challans" ? ["Draft", "Ready to Dispatch", "In Transit", "Delivered", "Cancelled"] : ["Draft", "Issued", "Applied", "Void"];
 
   return <main className="sales-workspace">
     <header className="sw-heading"><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p><h1>{config.title}</h1><p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p></div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
