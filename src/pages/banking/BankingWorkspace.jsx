@@ -35,11 +35,6 @@ export default function BankingWorkspace() {
       : "Overview"
   );
 
-  useEffect(() => {
-    const requestedTab = new URLSearchParams(location.search).get("tab");
-    if (requestedTab === "reconciliation") setTab("Reconciliation");
-    else if (!requestedTab) setTab("Overview");
-  }, [location.search]);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [selected, setSelected] = useState([1, 3]);
   const [search, setSearch] = useState("");
@@ -54,6 +49,28 @@ export default function BankingWorkspace() {
   const [reconMatched, setReconMatched] = useState(false);
   const [period, setPeriod] = useState("Apr 2025");
   const [settingsTab, setSettingsTab] = useState("Account Aggregator");
+
+  // Sidebar submenu links use query parameters to open the matching Banking workspace.
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(location.search).get("tab");
+    const tabMap = {
+      overview: "Overview",
+      transactions: "Transactions",
+      reconciliation: "Reconciliation",
+      accounts: "Bank Accounts",
+      settings: "Settings",
+    };
+
+    if (requestedTab === "import") {
+      setTab("Overview");
+      setShowImport(true);
+      setImportStep(1);
+      return;
+    }
+
+    setShowImport(false);
+    setTab(tabMap[requestedTab] || "Overview");
+  }, [location.search]);
 
   const visibleTransactions = useMemo(() => transactions.filter(row => {
     const matchesSearch = !search || [row.narration, row.ref, row.ledger].join(" ").toLowerCase().includes(search.toLowerCase());
