@@ -65,6 +65,7 @@ function UsersAccess() {
           ...(previous.permissions[moduleKey] || {}),
           [field]: checked,
           ...(field === "write" && checked ? { read: true } : {}),
+          ...(field === "read" && !checked ? { write: false } : {}),
         },
       },
     }));
