@@ -54,7 +54,7 @@ function paginateItems(items) {
   while (offset < source.length) {
     const isFirst = pages.length === 0;
     const remaining = source.slice(offset);
-    const finalCapacity = isFirst ? 92 : 135;
+    const finalCapacity = isFirst ? 88 : 135;
     const finalCountLimit = Math.min(MAX_ITEMS_PER_PAGE, remaining.length);
 
     if (remaining.length <= finalCountLimit && sumHeights(remaining) <= finalCapacity) {
