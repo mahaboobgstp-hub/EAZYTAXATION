@@ -95,10 +95,12 @@ function AccountingWorkspace() {
     const debit = postedLines.reduce((sum, row) => sum + Number(row.debit || 0), 0);
     const credit = postedLines.reduce((sum, row) => sum + Number(row.credit || 0), 0);
     const income = data.ledgers.filter((ledger) => data.groups.find((g) => g.id === ledger.group_id)?.account_nature === "Income")
-      .reduce((sum, ledger) => sum + ledgerBalance(ledger, postedLines, data.vouchers), 0);
+      .reduce((sum, ledger) => sum - ledgerBalance(ledger, postedLines, data.vouchers), 0);
     const expenses = data.ledgers.filter((ledger) => data.groups.find((g) => g.id === ledger.group_id)?.account_nature === "Expense")
       .reduce((sum, ledger) => sum + ledgerBalance(ledger, postedLines, data.vouchers), 0);
-    return { debit, credit, income, expenses, profit: income - expenses };
+    const assets = data.ledgers.filter((ledger) => data.groups.find((g) => g.id === ledger.group_id)?.account_nature === "Asset")
+      .reduce((sum, ledger) => sum + ledgerBalance(ledger, postedLines, data.vouchers), 0);
+    return { debit, credit, income, expenses, assets, profit: income - expenses };
   }, [postedLines, data.ledgers, data.groups, data.vouchers]);
 
   function ledgerBalance(ledger, lines = postedLines, vouchers = data.vouchers, startDate = null, endDate = null, includeOpening = true) {
@@ -295,10 +297,10 @@ function AccountingWorkspace() {
     <>
       {renderHeader("Accounting Dashboard", "Your company's financial position at a glance.", <><select className="accounting-filter"><option>FY 2026-27</option></select><select className="accounting-filter"><option>Current Period</option></select></>)}
       <div className="accounting-stat-grid">
-        <div className="accounting-stat"><span>Total Debits Posted</span><strong>{money(totals.debit)}</strong><small>Posted journal entries</small></div>
-        <div className="accounting-stat"><span>Total Credits Posted</span><strong>{money(totals.credit)}</strong><small>Posted journal entries</small></div>
-        <div className="accounting-stat stat-green"><span>Net Profit / (Loss)</span><strong>{money(totals.profit)}</strong><small>Based on classified ledger balances</small></div>
-        <div className="accounting-stat"><span>General Ledgers</span><strong>{data.ledgers.length}</strong><small>Active chart accounts</small></div>
+        <div className="accounting-stat"><span>Total Revenue</span><strong>{money(totals.income)}</strong><small>Posted income accounts</small></div>
+        <div className="accounting-stat"><span>Total Expenses</span><strong>{money(totals.expenses)}</strong><small>Posted expense accounts</small></div>
+        <div className="accounting-stat stat-green"><span>Net Profit / (Loss)</span><strong>{money(totals.profit)}</strong><small>Revenue less expenses</small></div>
+        <div className="accounting-stat"><span>Total Assets</span><strong>{money(totals.assets)}</strong><small>Posted asset account balances</small></div>
       </div>
       <div className="accounting-dashboard-grid">
         <section className="accounting-panel">
@@ -400,7 +402,7 @@ function AccountingWorkspace() {
 
   const renderLedger = () => {
     const ledger = data.ledgers.find((item)=>item.id===selectedLedger) || data.ledgers[0];
-    const ledgerLines = ledger ? postedLines.filter((line)=>line.ledger_id===ledger.id && data.vouchers.find((v)=>v.id===line.voucher_id)?.voucher_date>=fromDate && data.vouchers.find((v)=>v.id===line.voucher_id)?.voucher_date<=toDate) : [];
+    const ledgerLines = ledger ? postedLines.filter((line)=>line.ledger_id===ledger.id && data.vouchers.find((v)=>v.id===line.voucher_id)?.voucher_date>=fromDate && data.vouchers.find((v)=>v.id===line.voucher_id)?.voucher_date<=toDate).sort((a,b)=>String(data.vouchers.find((v)=>v.id===a.voucher_id)?.voucher_date||"").localeCompare(String(data.vouchers.find((v)=>v.id===b.voucher_id)?.voucher_date||""))) : [];
     const ledgerOpening = ledger ? Number(ledger.opening_balance||0) * (ledger.opening_balance_type==="Credit"?-1:1) : 0;
     const priorMovement = ledger ? postedLines.filter((line) => {
       if (line.ledger_id !== ledger.id) return false;
