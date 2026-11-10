@@ -55,7 +55,7 @@ export default function ReportsWorkspace({kind}){
     {kind==="sales"&&<FilterSelect label="Customer" value={filters.party} set={v=>set("party",v)} options={(db.customers||[]).map(r=>[r.id,r.customer_name])}/>}
     {kind==="purchases"&&<FilterSelect label="Supplier" value={filters.party} set={v=>set("party",v)} options={(db.vendors||[]).map(r=>[r.id,r.vendor_name])}/>}
     {kind==="expenses"&&<><FilterSelect label="Category" value={filters.category} set={v=>set("category",v)} options={(db.categories||[]).map(r=>[r.id,r.category_name])}/><FilterSelect label="Payment Status" value={filters.party} set={v=>set("party",v)} options={["Paid","Partially Paid","Unpaid"].map(v=>[v,v])}/></>}
-    {kind==="gst"&&<label className="br-control"><span>Financial Year</span><select value={fyLabel}><option>{fyLabel}</option></select></label>}
+    {kind==="gst"&&<label className="br-control"><span>Financial Year</span><select value={fyStart} onChange={e=>{const year=Number(e.target.value);const next={from:`${year}-04-01`,to:`${year+1}-03-31`};setFilters(p=>({...p,...next}));setRange(next)}}><option value={fyStart}>{fyLabel}</option><option value={fyStart-1}>{fyStart-1}-${String(fyStart%100).padStart(2,"0")}</option></select></label>}
     <button className="br-btn br-primary" onClick={apply}><FiFilter/> Apply Filters</button><button className="br-btn" onClick={exportCsv}><FiDownload/> Export Excel</button><button className="br-btn" onClick={exportPdf}><FiFileText/> Download PDF</button>
    </section>
    {report.tabs&&<nav className="br-tabs">{report.tabs.map(t=><button className={filters.tab===t?"active":""} onClick={()=>set("tab",t)} key={t}>{t}</button>)}</nav>}
