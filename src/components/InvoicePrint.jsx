@@ -8,7 +8,7 @@ const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
 const PAGE_MARGIN = 12;
 const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
-const MAX_ITEMS_PER_PAGE = 12;
+const MAX_ITEMS_PER_PAGE = 22;
 const NAVY = [13, 48, 98];
 const BLUE = [35, 92, 205];
 const LIGHT_BLUE = [235, 242, 253];
@@ -51,50 +51,59 @@ function paginateItems(items) {
 
   const pages = [];
   let offset = 0;
-
   while (offset < source.length) {
     const isFirst = pages.length === 0;
     const remaining = source.slice(offset);
-    const finalCapacity = isFirst ? 73 : 120;
-    const maxTail = Math.min(MAX_ITEMS_PER_PAGE, remaining.length);
+    const finalCapacity = isFirst ? 92 : 135;
+    const finalCountLimit = Math.min(MAX_ITEMS_PER_PAGE, remaining.length);
 
-    if (remaining.length <= MAX_ITEMS_PER_PAGE && sumHeights(remaining) <= finalCapacity) {
+    if (remaining.length <= finalCountLimit && sumHeights(remaining) <= finalCapacity) {
       pages.push(remaining);
       break;
     }
 
+    // If all remaining rows fit on one page by count but are too tall, reserve
+    // the largest tail that fits with the final-page totals and closing area.
     if (remaining.length <= MAX_ITEMS_PER_PAGE) {
       let tailCount = 0;
       let tailHeight = 0;
-      for (let index = remaining.length - 1; index >= 0 && tailCount < maxTail; index -= 1) {
-        const nextHeight = itemRowHeight(remaining[index]);
-        if (tailHeight + nextHeight > finalCapacity) break;
-        tailHeight += nextHeight;
+      for (let index = remaining.length - 1; index >= 0 && tailCount < finalCountLimit; index -= 1) {
+        const height = itemRowHeight(remaining[index]);
+        if (tailHeight + height > finalCapacity) break;
+        tailHeight += height;
         tailCount += 1;
       }
-
+      if (isFirst && remaining.length > 13) {
+        tailCount = Math.min(tailCount, remaining.length - 10);
+      }
       if (tailCount > 0 && tailCount < remaining.length) {
-        const leading = remaining.slice(0, remaining.length - tailCount);
-        pages.push(leading);
-        offset += leading.length;
+        let leadingCount = remaining.length - tailCount;
+        const nonFinalCapacity = isFirst ? 150 : 210;
+        while (leadingCount > 1 && sumHeights(remaining.slice(0, leadingCount)) > nonFinalCapacity) leadingCount -= 1;
+        pages.push(remaining.slice(0, leadingCount));
+        offset += leadingCount;
         continue;
       }
     }
 
     const nonFinalCapacity = isFirst ? 150 : 210;
     let count = Math.min(MAX_ITEMS_PER_PAGE, remaining.length);
-    while (count > 1 && sumHeights(remaining.slice(0, count)) > nonFinalCapacity) {
-      count -= 1;
+    while (count > 1 && sumHeights(remaining.slice(0, count)) > nonFinalCapacity) count -= 1;
+
+    // Preserve at least four rows for a compact final summary page when there is room.
+    if (remaining.length - count > MAX_ITEMS_PER_PAGE) {
+      const minTailCount = Math.min(MAX_ITEMS_PER_PAGE, Math.max(4, Math.ceil(remaining.length * 0.22)));
+      count = Math.min(count, remaining.length - minTailCount);
+      while (count > 1 && sumHeights(remaining.slice(0, count)) > nonFinalCapacity) count -= 1;
     }
     if (count < 1) count = 1;
     pages.push(remaining.slice(0, count));
     offset += count;
   }
-
   return pages;
 }
 
-async function loadImage(url) {
+function loadImage(url) {
   if (!url) return null;
   try {
     if (String(url).startsWith("data:image/")) {
@@ -137,7 +146,8 @@ function drawWrapped(pdf, value, x, y, width, options = {}) {
   pdf.setFontSize(fontSize);
   pdf.setTextColor(...(options.color || TEXT));
   const lines = pdf.splitTextToSize(text, width);
-  pdf.text(lines, x, y);
+  if (options.align === "right") pdf.text(lines, x + width, y, { align: "right" });
+  else pdf.text(lines, x, y);
   return y + lines.length * lineHeight;
 }
 
@@ -155,11 +165,13 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
     fontSize: first ? 11 : 9,
     lineHeight: 4.2,
     bold: true,
-    color: NAVY
+    color: NAVY,
+    align: "right"
   });
   y = drawWrapped(pdf, company?.address, companyX, y + 1, companyWidth, {
     fontSize: first ? 7 : 6.5,
-    lineHeight: 3
+    lineHeight: 3,
+    align: "right"
   });
 
   const contact = [
@@ -170,7 +182,7 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(first ? 6.5 : 6);
     pdf.setTextColor(...MUTED);
-    pdf.text(contact, companyX, y + 1);
+    pdf.text(contact, companyX + companyWidth, y + 1, { align: "right" });
     y += 3.5;
   }
 
@@ -179,7 +191,7 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(first ? 7 : 6.5);
     pdf.setTextColor(...TEXT);
-    pdf.text(gstin, companyX, y + 1);
+    pdf.text(gstin, companyX + companyWidth, y + 1, { align: "right" });
   }
 
   pdf.setDrawColor(...BLUE);
@@ -206,60 +218,64 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
 
 function drawFirstPageMeta(pdf, invoice, settings) {
   const y = 52;
+  const gap = 4;
   const leftX = PAGE_MARGIN;
-  const leftW = settings?.show_bank_details ? 88 : CONTENT_WIDTH;
+  const cardW = (CONTENT_WIDTH - gap) / 2;
+  const rightX = leftX + cardW + gap;
   const cardH = 26;
 
   pdf.setFillColor(...LIGHT_BLUE);
   pdf.setDrawColor(...BORDER);
-  pdf.roundedRect(leftX, y, leftW, cardH, 2, 2, "FD");
-  let textY = y + 7;
+  pdf.roundedRect(leftX, y, cardW, cardH, 2, 2, "FD");
   const metaRows = [
     ["Invoice No.", safeText(invoice?.invoice_no)],
     ["Invoice Date", invoiceDateLabel(invoice?.invoice_date)],
     ["Invoice Type", safeText(invoice?.sale_type).toUpperCase() === "CREDIT" ? "Credit Sale" : "Cash Sale"]
   ];
-  for (const row of metaRows) {
+  let rowY = y + 7;
+  for (const [label, value] of metaRows) {
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(7);
+    pdf.setFontSize(6.8);
     pdf.setTextColor(...MUTED);
-    pdf.text(row[0], leftX + 3, textY);
-    pdf.setTextColor(...TEXT);
+    pdf.text(label, leftX + 3, rowY);
     pdf.setFont("helvetica", "bold");
-    pdf.text(row[1] || "-", leftX + 27, textY);
-    textY += 7;
+    pdf.setTextColor(...TEXT);
+    pdf.text(value || "-", leftX + 28, rowY, { maxWidth: cardW - 31 });
+    rowY += 7;
   }
 
-  if (settings?.show_bank_details) {
-    const x = leftX + leftW + 4;
-    const w = CONTENT_WIDTH - leftW - 4;
-    pdf.setFillColor(255, 255, 255);
-    pdf.setDrawColor(...BORDER);
-    pdf.roundedRect(x, y, w, cardH, 2, 2, "FD");
-    pdf.setFillColor(...BLUE);
-    pdf.roundedRect(x + 3, y - 2, 30, 5, 1.2, 1.2, "F");
+  pdf.setFillColor(255, 255, 255);
+  pdf.setDrawColor(...BORDER);
+  pdf.roundedRect(rightX, y, cardW, cardH, 2, 2, "FD");
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(6.5);
+  pdf.setTextColor(...NAVY);
+  pdf.text("TRANSPORT & REMARKS", rightX + 3, y + 5);
+  const transportRows = [
+    ["Vehicle No.", invoice?.vehicle_number || invoice?.vehicle_no],
+    ["E-Way Bill", invoice?.eway_bill_number || invoice?.eway_bill_no]
+  ].filter(([, value]) => safeText(value));
+  let transportY = y + 9;
+  for (const [label, value] of transportRows) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(5.8);
+    pdf.setTextColor(...MUTED);
+    pdf.text(label, rightX + 3, transportY);
+    pdf.setTextColor(...TEXT);
+    pdf.text(safeText(value), rightX + 24, transportY, { maxWidth: cardW - 27 });
+    transportY += 3.6;
+  }
+  const remarks = safeText(invoice?.remarks);
+  if (remarks) {
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(6.5);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text("BANK DETAILS", x + 18, y + 1.5, { align: "center" });
-
-    const bankRows = [
-      ["Bank", settings?.bank_name],
-      ["A/C", settings?.account_number],
-      ["IFSC", settings?.ifsc_code],
-      ["UPI", settings?.upi_id]
-    ];
-    let bankY = y + 7;
-    for (const row of bankRows) {
-      if (!safeText(row[1])) continue;
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(6.3);
-      pdf.setTextColor(...MUTED);
-      pdf.text(row[0], x + 3, bankY);
-      pdf.setTextColor(...TEXT);
-      pdf.text(safeText(row[1]), x + 18, bankY, { maxWidth: w - 21 });
-      bankY += 4.4;
-    }
+    pdf.setFontSize(5.8);
+    pdf.setTextColor(...MUTED);
+    pdf.text("Remarks:", rightX + 3, transportY + .4);
+    drawWrapped(pdf, remarks, rightX + 19, transportY + .4, cardW - 22, {
+      fontSize: 5.6,
+      lineHeight: 2.5,
+      color: TEXT
+    });
   }
 }
 
@@ -389,11 +405,26 @@ function summaryRows(invoice, items) {
   ];
 }
 
-function drawTotals(pdf, invoice, items, y) {
+function drawTotals(pdf, invoice, items, y, amountWords) {
   const x = 104;
   const width = PAGE_WIDTH - PAGE_MARGIN - x;
+  const wordsX = PAGE_MARGIN;
+  const wordsW = 85;
   const rowHeight = 3.8;
   const rows = summaryRows(invoice, items);
+
+  pdf.setFillColor(247, 249, 253);
+  pdf.setDrawColor(...BORDER);
+  pdf.roundedRect(wordsX, y - 3, wordsW, 22, 2, 2, "FD");
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(6.5);
+  pdf.setTextColor(...NAVY);
+  pdf.text("AMOUNT IN WORDS", wordsX + 3, y + 1.2);
+  drawWrapped(pdf, amountWords, wordsX + 3, y + 5, wordsW - 6, {
+    fontSize: 6.1,
+    lineHeight: 2.8,
+    bold: true
+  });
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(6.8);
@@ -417,7 +448,7 @@ function drawTotals(pdf, invoice, items, y) {
   pdf.setTextColor(255, 255, 255);
   pdf.text("Grand Total", x + 2, grandY + 0.6);
   pdf.text("INR " + amount(invoice?.total_amount), x + width - 2, grandY + 0.6, { align: "right" });
-  return grandY + 3;
+  return Math.max(grandY + 3, y + 20);
 }
 
 function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
@@ -425,51 +456,46 @@ function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
   const leftW = 85;
   const rightX = 104;
   const rightW = PAGE_WIDTH - PAGE_MARGIN - rightX;
+  const cardY = y + 1;
 
-  pdf.setFillColor(247, 249, 253);
-  pdf.setDrawColor(...BORDER);
-  pdf.roundedRect(leftX, y, leftW, 15, 2, 2, "FD");
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(6.5);
-  pdf.setTextColor(...NAVY);
-  pdf.text("AMOUNT IN WORDS", leftX + 3, y + 4.2);
-  drawWrapped(pdf, amountWords, leftX + 3, y + 8, leftW - 6, {
-    fontSize: 6.1,
-    lineHeight: 2.8,
-    bold: true
-  });
-
-  const remarkY = y + 17;
-  const remarks = safeText(invoice?.remarks);
-  let remarkEnd = remarkY + 5;
-  if (remarks) {
-    pdf.setFillColor(255, 255, 255);
+  if (settings?.show_bank_details) {
+    pdf.setFillColor(247, 249, 253);
     pdf.setDrawColor(...BORDER);
-    pdf.roundedRect(leftX, remarkY, leftW, 20, 2, 2, "FD");
+    pdf.roundedRect(leftX, cardY, leftW, 24, 2, 2, "FD");
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(6.5);
     pdf.setTextColor(...NAVY);
-    pdf.text("REMARKS", leftX + 3, remarkY + 4.2);
-    remarkEnd = drawWrapped(pdf, remarks, leftX + 3, remarkY + 8, leftW - 6, {
-      fontSize: 6,
-      lineHeight: 2.7,
-      color: TEXT
-    });
+    pdf.text("BANK DETAILS", leftX + 3, cardY + 4.2);
+    const bankRows = [
+      ["Bank", settings?.bank_name],
+      ["A/C", settings?.account_number],
+      ["IFSC", settings?.ifsc_code],
+      ["UPI", settings?.upi_id]
+    ].filter(([, value]) => safeText(value));
+    let bankY = cardY + 8;
+    for (const [label, value] of bankRows) {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(5.8);
+      pdf.setTextColor(...MUTED);
+      pdf.text(label, leftX + 3, bankY);
+      pdf.setTextColor(...TEXT);
+      pdf.text(safeText(value), leftX + 19, bankY, { maxWidth: leftW - 22 });
+      bankY += 3.5;
+    }
   }
 
-  const signY = y + 15;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(6);
   pdf.setTextColor(...MUTED);
-  pdf.text("For " + safeText(settings?.company_name || invoice?.company_name), rightX + rightW - 2, signY + 3, { align: "right" });
-  addPdfImage(pdf, signature, rightX + 29, signY + 4, 34, 11);
+  pdf.text("For " + safeText(settings?.company_name || invoice?.company_name), rightX + rightW - 2, cardY + 4, { align: "right" });
+  addPdfImage(pdf, signature, rightX + 29, cardY + 5, 34, 11);
   pdf.setDrawColor(...TEXT);
   pdf.setLineWidth(0.25);
-  pdf.line(rightX + 20, signY + 18, rightX + rightW - 2, signY + 18);
+  pdf.line(rightX + 20, cardY + 19, rightX + rightW - 2, cardY + 19);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(6.6);
   pdf.setTextColor(...TEXT);
-  pdf.text("Authorized Signatory", rightX + rightW / 2, signY + 22, { align: "center" });
+  pdf.text("Authorized Signatory", rightX + rightW / 2, cardY + 23, { align: "center" });
 
   const terms = settings?.show_terms_conditions ? safeText(settings?.terms_conditions) : "";
   if (terms) {
@@ -478,7 +504,7 @@ function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
     pdf.setTextColor(...MUTED);
     pdf.text("Terms: " + terms, PAGE_MARGIN, 278, { maxWidth: CONTENT_WIDTH });
   }
-  return Math.max(remarkEnd, signY + 24);
+  return cardY + 25;
 }
 
 function drawPageFooter(pdf, pageNumber, pageCount, settings, continued) {
@@ -544,7 +570,7 @@ function drawPdfPage(pdf, pageItems, pageIndex, pageCount, allItems, invoice, se
   const rowStartIndex = allItems.indexOf(pageItems[0]);
   const tableEndY = drawItemTable(pdf, pageItems, tableStartY, Math.max(0, rowStartIndex));
   if (last) {
-    const totalsEnd = drawTotals(pdf, invoice, allItems, tableEndY + 3);
+    const totalsEnd = drawTotals(pdf, invoice, allItems, tableEndY + 3, amountWords);
     drawFinalDetails(pdf, invoice, settings, signature, amountWords, totalsEnd + 3);
   }
   drawPageFooter(pdf, pageIndex + 1, pageCount, settings, !last);
@@ -668,21 +694,18 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
 
                 {first && (
                   <>
-                    <div className={"invoice-pdf-meta-grid" + (settings?.show_bank_details ? "" : " compact-only")}>
+                    <div className="invoice-pdf-meta-grid">
                       <div className="invoice-pdf-meta-card">
                         <p><span>Invoice No.</span><strong>{invoice.invoice_no}</strong></p>
                         <p><span>Invoice Date</span><strong>{invoiceDateLabel(invoice.invoice_date)}</strong></p>
                         <p><span>Invoice Type</span><strong>{String(invoice.sale_type || "CASH").toUpperCase() === "CREDIT" ? "Credit Sale" : "Cash Sale"}</strong></p>
                       </div>
-                      {settings?.show_bank_details && (
-                        <div className="invoice-pdf-bank-card">
-                          <h3>Bank Details</h3>
-                          <p><span>Bank Name</span><strong>{settings.bank_name || "-"}</strong></p>
-                          <p><span>A/C Number</span><strong>{settings.account_number || "-"}</strong></p>
-                          <p><span>IFSC Code</span><strong>{settings.ifsc_code || "-"}</strong></p>
-                          <p><span>UPI ID</span><strong>{settings.upi_id || "-"}</strong></p>
-                        </div>
-                      )}
+                      <div className="invoice-pdf-transport-card">
+                        <h3>Transport &amp; Remarks</h3>
+                        <p><span>Vehicle No.</span><strong>{invoice.vehicle_number || invoice.vehicle_no || "-"}</strong></p>
+                        <p><span>E-Way Bill</span><strong>{invoice.eway_bill_number || invoice.eway_bill_no || "-"}</strong></p>
+                        <p className="transport-remarks"><span>Remarks</span><strong>{invoice.remarks || "-"}</strong></p>
+                      </div>
                     </div>
                     <div className="invoice-pdf-party-grid">
                       <PartyCard title="Bill To" name={invoice.customer_name} address={invoice.billing_address || customer?.address} gstin={customer?.gstin || invoice.customer_gstin} state={invoice.customer_state || customer?.state || invoice.place_of_supply} place={invoice.place_of_supply} />
@@ -725,10 +748,15 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
                     </div>
 
                     <div className="invoice-pdf-closing-grid">
-                      <div className="invoice-pdf-remarks">
-                        <h3>Remarks</h3>
-                        <p>{invoice.remarks || "-"}</p>
-                      </div>
+                      {settings?.show_bank_details && (
+                        <div className="invoice-pdf-bank-card">
+                          <h3>Bank Details</h3>
+                          <p><span>Bank Name</span><strong>{settings.bank_name || "-"}</strong></p>
+                          <p><span>A/C Number</span><strong>{settings.account_number || "-"}</strong></p>
+                          <p><span>IFSC Code</span><strong>{settings.ifsc_code || "-"}</strong></p>
+                          <p><span>UPI ID</span><strong>{settings.upi_id || "-"}</strong></p>
+                        </div>
+                      )}
                       <div className="invoice-pdf-signature">
                         <p>For {settings?.company_name || company?.company_name}</p>
                         {settings?.show_signature && settings?.signature_url && <img src={settings.signature_url} alt="" />}
