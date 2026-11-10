@@ -67,6 +67,7 @@ import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
 import SalesRegister from "./pages/sales/SalesRegister";
 import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
+import ReportsWorkspace from "./pages/reports.jsx";
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -238,6 +239,13 @@ function App() {
           />
 <Route path="expense-register" element={<ExpenseRegister />} />
 <Route path="payments" element={<ExpensePayments />} />
+          <Route path="sales-reports" element={<ReportsWorkspace kind="sales" />} />
+          <Route path="purchase-reports" element={<ReportsWorkspace kind="purchases" />} />
+          <Route path="expense-reports" element={<ReportsWorkspace kind="expenses" />} />
+          <Route path="customer-ledger" element={<ReportsWorkspace kind="customer" />} />
+          <Route path="vendor-ledger" element={<ReportsWorkspace kind="vendor" />} />
+          <Route path="item-ledger" element={<ReportsWorkspace kind="item" />} />
+          <Route path="gst-reports" element={<ReportsWorkspace kind="gst" />} />
 <Route
     path="attendance-settings"
     element={<AttendanceSettings />}
