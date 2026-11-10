@@ -29,13 +29,9 @@ function UsersAccess() {
       setLoading(true);
       const rows = await getCompanyUsers(currentCompanyId);
       setUsers(rows);
-      if (selectedId) {
-        const selected = rows.find((row) => row.id === selectedId);
-        if (selected) setForm({ ...emptyForm(), ...selected, fullName: selected.full_name, permissions: { ...defaultPermissions, ...(selected.permissions || {}) } });
-      }
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
-  }, [currentCompanyId, selectedId]);
+  }, [currentCompanyId]);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
