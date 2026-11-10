@@ -81,3 +81,14 @@
 @media(max-width:1100px){.accounting-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.report-shortcuts{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.accounting-page-heading{align-items:flex-start;flex-direction:column}.accounting-page-heading h1{font-size:22px}.accounting-heading-actions{width:100%}.accounting-heading-actions>*{flex:1}.accounting-dashboard-grid{grid-template-columns:1fr}.accounting-stat strong{font-size:18px}.accounting-panel{padding:13px}.quick-actions{grid-template-columns:1fr 1fr}.accounting-form-grid{grid-template-columns:1fr}.full-field{grid-column:auto}.balance-sheet-grid{grid-template-columns:1fr}.journal-footer{align-items:flex-start;flex-direction:column}.journal-footer>div{width:100%}.journal-footer>div>*{flex:1}.coa-toolbar{flex-direction:column}.coa-toolbar input{width:100%}.financial-statement{padding:14px}.report-shortcuts{grid-template-columns:1fr 1fr}}
 @media print{.sidebar,.header,.accounting-heading-actions,.report-filters,.accounting-alert{display:none!important}.main-container{margin:0!important;width:100%!important}.page-content{padding:0!important}.accounting-panel{box-shadow:none;border:0}.accounting-workspace{max-width:none}}
+
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap;color:#718096;font-size:10px}
+.chart-legend span{display:inline-flex;align-items:center;gap:5px}
+.chart-legend i{display:inline-block;width:8px;height:8px;border-radius:2px}
+.legend-income,.income-bar{background:#4169df}.legend-expense,.expense-bar{background:#7a48d6}
+.accounting-bar-chart{height:205px;display:flex;align-items:stretch;gap:12px;padding:14px 8px 0;border-bottom:1px solid #e8edf4;background:repeating-linear-gradient(to bottom,transparent 0,transparent 49px,#edf1f6 50px)}
+.chart-month{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
+.chart-bars{height:174px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px}
+.chart-bar{display:block;width:min(17px,35%);min-height:0;border-radius:4px 4px 0 0;transition:height .2s ease}
+.chart-month small{font-size:10px;color:#8995a7;padding:7px 0 9px}
+.chart-footnote{font-size:10px;color:#94a3b8;margin-top:10px}
