@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryChallanPrint from "./DeliveryChallanPrint";
 import {
     getCompanyById
@@ -34,6 +35,8 @@ import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
 
 function DeliveryChallan() {
 
+    const location = useLocation();
+    const navigate = useNavigate();
     const {
         currentCompany,
         currentCompanyId,
@@ -936,6 +939,12 @@ const viewChallan = async (challanId) => {
     // =====================================================
     // RENDER
     // =====================================================
+
+    useEffect(() => {
+        const challanId = location.state?.editChallanId;
+        if (!challanId || !currentCompanyId) return;
+        handleEdit(challanId).then(() => navigate("/app/delivery-challans/new", { replace: true, state: null }));
+    }, [currentCompanyId, location.state]);
 
     return (
 
