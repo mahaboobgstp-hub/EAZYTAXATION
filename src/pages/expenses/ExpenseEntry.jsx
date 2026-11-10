@@ -83,6 +83,7 @@ export default function ExpenseEntry(){
       let id=expenseId;
       if(id) await updateExpense(id,header,calc.normalized,currentCompanyId);
       else id=await saveExpense(header,calc.normalized,currentCompanyId);
+      setExpenseId(id);
       let path=form.attachment_url||null;
       if(file){path=await uploadExpenseAttachment(currentCompanyId,number,file);const {error:attachError}=await supabase.from("expenses").update({attachment_url:path,updated_at:new Date().toISOString()}).eq("id",id).eq("company_id",currentCompanyId);if(attachError)throw attachError;header.attachment_url=path;}
       const saved={...header,id,vendor_name:form.payee_name.trim()||vendor?.vendor_name||"",vendor_gstin:vendor?.gstin||"",category_name:categories.find(c=>c.id===form.category_id)?.category_name||""};
