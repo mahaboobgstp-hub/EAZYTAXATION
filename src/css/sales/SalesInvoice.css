@@ -274,3 +274,7 @@
   .invoice-workspace-grid { grid-template-columns: 1fr; }
   .invoice-summary-panel { padding: 12px; }
 }
+
+/* Add visual separation between the unit selector and rate input. */
+.invoice-items-grid td:nth-child(4) { padding-right: 9px !important; }
+.invoice-items-grid td:nth-child(5) { padding-left: 9px !important; }
