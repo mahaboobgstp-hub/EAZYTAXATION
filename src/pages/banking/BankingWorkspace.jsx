@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   FiArrowDownLeft, FiArrowUpRight, FiUploadCloud,
   FiPlus, FiRefreshCw, FiSearch, FiDownload, FiCheck, FiX, FiLink,
@@ -27,7 +28,18 @@ const categories = ["Purchase / Supplier Payment", "Receipt from Customer", "Exp
 
 export default function BankingWorkspace() {
   const { currentCompany } = useCompany();
-  const [tab, setTab] = useState("Overview");
+  const location = useLocation();
+  const [tab, setTab] = useState(() =>
+    new URLSearchParams(location.search).get("tab") === "reconciliation"
+      ? "Reconciliation"
+      : "Overview"
+  );
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(location.search).get("tab");
+    if (requestedTab === "reconciliation") setTab("Reconciliation");
+    else if (!requestedTab) setTab("Overview");
+  }, [location.search]);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [selected, setSelected] = useState([1, 3]);
   const [search, setSearch] = useState("");
