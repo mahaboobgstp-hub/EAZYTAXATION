@@ -3,6 +3,7 @@ import { FiBarChart2, FiCalendar, FiDownload, FiFileText, FiFilter, FiSearch, Fi
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/BillingReports.css";
+import { jsPDF } from "jspdf";
 
 const titles={sales:"Sales Reports",purchases:"Purchase Reports",expenses:"Expense Reports",customer:"Customer Ledger",vendor:"Vendor Ledger",item:"Item Ledger",gst:"GST Reports"};
 const today=new Date();
@@ -43,7 +44,37 @@ export default function ReportsWorkspace({kind}){
  const report=useMemo(()=>build(kind,db,range,filters),[kind,db,range,filters]);
  const apply=()=>setRange({from:filters.from,to:filters.to});
  const exportCsv=()=>{const content=[report.columns.map(c=>c.label),...report.rows.map(r=>report.columns.map(c=>r[c.key]??""))].map(row=>row.map(csvCell).join(",")).join("\r\n");const url=URL.createObjectURL(new Blob(["\uFEFF"+content],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download=`${kind}-report-${range.from}-to-${range.to}.csv`;a.click();URL.revokeObjectURL(url)};
- const exportPdf=()=>window.print();
+ const exportPdf=()=>{
+  const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+  const margin=12,pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight(),usable=pageWidth-margin*2;
+  const pdfCols=report.taxRows?[["rate","Rate"],["taxable","Taxable Value"],["cgst","CGST"],["sgst","SGST"],["igst","IGST"],["cess","Cess"],["tax","Total Tax"]]:report.columns.map(c=>[c.key,c.label]);
+  const pdfRows=report.taxRows?report.taxRows.map(r=>({rate:r.rate+"%",taxable:money(r.taxable),cgst:money(r.cgst),sgst:money(r.sgst),igst:money(r.igst),cess:money(r.cess),tax:money(r.tax)})):report.rows;
+  const colWidth=usable/Math.max(pdfCols.length,1);
+  const drawHeader=(continued=false)=>{
+   doc.setFont("helvetica","bold");doc.setFontSize(17);doc.setTextColor(20,37,68);doc.text(titles[kind]+(continued?" (Continued)":""),margin,14);
+   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(70,88,114);doc.text(currentCompany?.company_name||"",margin,21);
+   doc.text(`Period: ${range.from} to ${range.to}`,pageWidth-margin,21,{align:"right"});
+   let y=29;
+   if(!continued&&report.cards?.length){const cardWidth=usable/report.cards.length;report.cards.forEach((card,index)=>{const x=margin+index*cardWidth;doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text(card.label,x,y);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(String(card.value),x,y+5)});y+=13;}
+   doc.setFillColor(7,88,234);doc.rect(margin,y,usable,9,"F");doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(7.5);
+   pdfCols.forEach(([key,label],index)=>doc.text(doc.splitTextToSize(label,colWidth-2)[0],margin+index*colWidth+1,y+5.8,{maxWidth:colWidth-2}));
+   doc.setTextColor(30,45,65);return y+9;
+  };
+  let y=drawHeader(false);
+  if(!pdfRows.length){doc.setFont("helvetica","normal");doc.setFontSize(10);doc.text("No records for the selected date range.",margin,y+8);}
+  pdfRows.forEach(row=>{
+   const cells=pdfCols.map(([key])=>String(row[key]??"—"));
+   const wrapped=cells.map(value=>doc.splitTextToSize(value,colWidth-2));
+   const height=Math.max(7,...wrapped.map(lines=>Math.min(lines.length,3)*3.2+2));
+   if(y+height>pageHeight-15){doc.addPage();y=drawHeader(true);}
+   if(Math.floor((y-38)/7)%2===0){doc.setFillColor(246,249,253);doc.rect(margin,y,usable,height,"F");}
+   doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(30,45,65);
+   wrapped.forEach((lines,index)=>doc.text(lines.slice(0,3),margin+index*colWidth+1,y+4,{maxWidth:colWidth-2}));
+   y+=height;doc.setDrawColor(225,232,241);doc.line(margin,y,margin+usable,y);
+  });
+  for(let page=1;page<=doc.getNumberOfPages();page++){doc.setPage(page);doc.setFontSize(8);doc.setTextColor(100,116,139);doc.text(`Page ${page} of ${doc.getNumberOfPages()}`,pageWidth-margin,pageHeight-7,{align:"right"});}
+  doc.save(`${kind}-report-${range.from}-to-${range.to}.pdf`);
+ };
  return <main className="billing-reports">
   <header className="br-heading"><div><p>Billing &amp; Accounting <i>/</i> Reports <i>/</i> {titles[kind]}</p><h1>{titles[kind]}</h1></div><span className="br-company">{currentCompany?.company_name||"Select company"}</span></header>
   {error&&<div className="br-error" role="alert">{error}</div>}
