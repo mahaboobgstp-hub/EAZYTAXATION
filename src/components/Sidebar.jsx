@@ -25,6 +25,7 @@ import {
   FiUserCheck,
   FiDatabase,
   FiLock,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -43,6 +44,7 @@ const MODULES = {
           ["Sales Orders", "/app/sales-orders"],
           ["Delivery Challans", "/app/delivery-challans"],
           ["Credit Notes", "/app/credit-notes"],
+          ["Receipts", "/app/receipts"],
         ],
       },
       {
@@ -62,10 +64,7 @@ const MODULES = {
         links: [
           ["Add Expense", "/app/expenses"],
           ["Expense Register", "/app/expense-register"],
-          ["Receipts", "/receipts"],
           ["Payments", "/app/payments"],
-          ["Contra", "/app/contra"],
-          ["Bank Reconciliation", "/app/bank-reconciliation"],
         ],
       },
       {
@@ -394,6 +393,8 @@ const AVAILABLE_ROUTES = new Set([
   "/app/purchase-returns",
   "/app/debit-notes",
   "/app/expenses",
+  "/app/expense-register",
+  "/app/payments",
   "/app/items",
   "/app/uom",
   "/app/expense-categories",
@@ -630,6 +631,15 @@ function Sidebar() {
 
         {currentModule.groups.map((group) =>
           renderGroup(group, activeModule)
+        )}
+        {activeModule === "billing" && (
+          <div className="sidebar-group sidebar-group-locked">
+            <div className="menu-link menu-link-locked" aria-disabled="true" title="Coming soon — this page is not available yet">
+              <FiRefreshCw />
+              <span>Bank Reconciliation</span>
+              <FiLock className="sidebar-lock-icon" aria-hidden="true" />
+            </div>
+          </div>
         )}
 
         <div className="sidebar-section-label">COMMON WORKSPACE</div>
