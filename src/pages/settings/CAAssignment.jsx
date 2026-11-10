@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FiBriefcase, FiSearch, FiUserCheck, FiPlus, FiTrash2, FiCheckCircle } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
-import { assignCaToCompany, getCompanyCaAssignments, revokeCaAssignment, updateCaAccess } from "../../services/userAccessService";
+import { assignCaToCompany, getCompanyCaAssignments, getAllCompanyCaAssignments, revokeCaAssignment, updateCaAccess } from "../../services/userAccessService";
 import "../../css/settings/CAAssignment.css";
 
 function CAAssignment() {
   const { companies, currentCompany, currentCompanyId, loading: companyLoading } = useCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState(currentCompanyId || "");
   const [assignments, setAssignments] = useState([]);
+  const [allAssignments, setAllAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [form, setForm] = useState({ caName: "", email: "", accessLevel: "read_only" });
   const [search, setSearch] = useState("");
@@ -18,6 +19,14 @@ function CAAssignment() {
   useEffect(() => { if (currentCompanyId && !selectedCompanyId) setSelectedCompanyId(currentCompanyId); }, [currentCompanyId, selectedCompanyId]);
 
   const selectedCompany = companies.find((company) => company.id === selectedCompanyId);
+
+  useEffect(() => {
+    let active = true;
+    getAllCompanyCaAssignments()
+      .then((rows) => { if (active) setAllAssignments(rows); })
+      .catch((e) => { if (active) setError(e.message); });
+    return () => { active = false; };
+  }, [companies.length]);
   const loadAssignments = useCallback(async () => {
     if (!selectedCompanyId) { setAssignments([]); return; }
     try {
@@ -79,7 +88,7 @@ function CAAssignment() {
       <section className="ca-panel ca-companies">
         <div className="ca-panel-heading"><div><h2>Companies ({companies.length})</h2><p>Select a company to manage its CA assignment.</p></div></div>
         <div className="ca-search"><FiSearch /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search company..." /></div>
-        <div className="ca-company-list">{filteredCompanies.map((company) => <button key={company.id} className={`ca-company-row ${selectedCompanyId === company.id ? "selected" : ""}`} onClick={() => { setSelectedCompanyId(company.id); setSelectedAssignment(null); setMessage(""); setError(""); }}><span className="ca-company-icon"><FiBriefcase /></span><span className="ca-company-name">{company.company_name || "Unnamed Company"}</span><span className="ca-company-chevron">›</span></button>)}</div>
+        <div className="ca-company-list">{filteredCompanies.map((company) => <button key={company.id} className={`ca-company-row ${selectedCompanyId === company.id ? "selected" : ""}`} onClick={() => { setSelectedCompanyId(company.id); setSelectedAssignment(null); setMessage(""); setError(""); }}><span className="ca-company-icon"><FiBriefcase /></span><span className="ca-company-main"><span className="ca-company-name">{company.company_name || "Unnamed Company"}</span><small>{allAssignments.find((row) => row.company_id === company.id)?.ca_name || "No CA assigned"}</small></span><span className="ca-company-access">{allAssignments.find((row) => row.company_id === company.id)?.access_level === "read_write" ? "Read & Write" : allAssignments.find((row) => row.company_id === company.id) ? "Read Only" : "—"}</span><span className="ca-company-chevron">›</span></button>)}</div>
       </section>
       <div className="ca-right">
         <section className="ca-panel ca-selected-company"><div className="ca-selected-title"><span className="ca-company-icon large"><FiBriefcase /></span><div><h2>{selectedCompany?.company_name || "Selected company"}</h2><p>{selectedCompany?.gstin || selectedCompany?.gst_number || "Company CA access settings"}</p></div></div>
