@@ -53,6 +53,13 @@ function Login() {
       );
 
       const signedInUserId = loginData?.user?.id;
+      const { data: ownedCompanies, error: ownedError } = await supabase
+        .from("companies")
+        .select("id")
+        .eq("owner_user_id", signedInUserId)
+        .limit(1);
+      if (ownedError) throw ownedError;
+
       const { data: caAssignments, error: caError } = await supabase
         .from("ca_company_assignments")
         .select("id")
@@ -63,7 +70,7 @@ function Login() {
       if (caError && caError.code !== "42P01") throw caError;
 
       alert("Login Successful");
-      navigate(caAssignments?.length ? "/app/ca-workspace" : "/app/companies");
+      navigate(caAssignments?.length ? "/app/ca-workspace" : ownedCompanies?.length ? "/app/companies" : "/app");
 
     }
 
