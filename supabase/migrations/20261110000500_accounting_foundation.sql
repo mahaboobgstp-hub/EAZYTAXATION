@@ -177,4 +177,60 @@ begin
 end;
 $$;
 
+
+-- Authenticated company owners need table privileges; RLS remains the
+-- authoritative company-isolation boundary.
+grant select, insert, update, delete on public.account_groups to authenticated;
+grant select, insert, update, delete on public.chart_of_accounts to authenticated;
+grant select, insert, update, delete on public.accounting_vouchers to authenticated;
+grant select, insert, update, delete on public.accounting_voucher_lines to authenticated;
+
+-- Posted financial history is immutable. Corrections must use a separate
+-- reversal workflow rather than editing or deleting historical journal lines.
+create or replace function public.prevent_posted_accounting_mutation()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $
+declare
+  v_status text;
+begin
+  if tg_table_name = 'accounting_vouchers' then
+    if old.status in ('Posted','Reversed') then
+      raise exception 'Posted accounting vouchers are immutable. Create a reversal voucher instead.';
+    end if;
+    if tg_op = 'DELETE' then return old; end if;
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    select status into v_status
+    from public.accounting_vouchers
+    where id = new.voucher_id and company_id = new.company_id;
+  else
+    select status into v_status
+    from public.accounting_vouchers
+    where id = old.voucher_id and company_id = old.company_id;
+  end if;
+
+  if v_status is distinct from 'Draft' then
+    raise exception 'Journal lines can only be changed while the voucher is Draft.';
+  end if;
+
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$;
+
+drop trigger if exists protect_posted_accounting_vouchers on public.accounting_vouchers;
+create trigger protect_posted_accounting_vouchers
+before update or delete on public.accounting_vouchers
+for each row execute function public.prevent_posted_accounting_mutation();
+
+drop trigger if exists protect_accounting_voucher_lines on public.accounting_voucher_lines;
+create trigger protect_accounting_voucher_lines
+before insert or update or delete on public.accounting_voucher_lines
+for each row execute function public.prevent_posted_accounting_mutation();
+
 grant execute on function public.post_accounting_voucher(uuid, uuid) to authenticated;
