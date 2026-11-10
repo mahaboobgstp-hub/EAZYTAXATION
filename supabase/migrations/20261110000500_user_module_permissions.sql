@@ -23,7 +23,7 @@ begin
       when t.table_name like '%sales%' or t.table_name like '%quotation%' or t.table_name like '%delivery_challan%' or t.table_name like '%credit_note%' then 'sales'
       when t.table_name like '%bank%' or t.table_name like '%reconcil%' then 'banking'
       when t.table_name like '%gst%' or t.table_name like '%eway%' or t.table_name like '%einvoice%' then 'gst'
-      when t.table_name like '%employee%' or t.table_name like '%payroll%' or t.table_name like '%attendance%' or t.table_name like '%leave%' then 'hr_payroll'
+      when t.table_name like '%employee%' or t.table_name like '%payroll%' or t.table_name like '%attendance%' or t.table_name like '%leave%' or t.table_name like '%statutory%' or t.table_name like '%professional_tax%' or t.table_name like '%salary_tds%' or t.table_name like '%salary_component%' or t.table_name like '%company_pt%' then 'hr_payroll'
       when t.table_name like '%stock%' or t.table_name like '%inventory%' then 'inventory'
       when t.table_name like '%report%' then 'reports'
       when t.table_name like '%expense%' or t.table_name like '%payment%' then 'expenses'
