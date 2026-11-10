@@ -49,7 +49,7 @@ export default function ReportsWorkspace({kind}){
   {!currentCompanyId?<section className="br-card br-empty">Select a current company from the sidebar to view its reports.</section>:<>
    <section className="br-card br-filters">
     {(kind==="customer"||kind==="vendor"||kind==="item")&&<FilterSelect label={kind==="customer"?"Customer":kind==="vendor"?"Vendor":"Item"} value={filters.party} set={v=>set("party",v)} options={(db[kind==="customer"?"customers":kind==="vendor"?"vendors":"items"]||[]).map(r=>[r.id,r.customer_name||r.vendor_name||r.item_name])}/>}
-    {kind!=="gst"&&<DateInput label="From Date" value={filters.from} set={v=>set("from",v)}/>}
+    <DateInput label="From Date" value={filters.from} set={v=>set("from",v)}/>
     <DateInput label="To Date" value={filters.to} set={v=>set("to",v)}/>
     {kind==="sales"&&<FilterSelect label="Customer" value={filters.party} set={v=>set("party",v)} options={(db.customers||[]).map(r=>[r.id,r.customer_name])}/>}
     {kind==="purchases"&&<FilterSelect label="Supplier" value={filters.party} set={v=>set("party",v)} options={(db.vendors||[]).map(r=>[r.id,r.vendor_name])}/>}
@@ -109,7 +109,22 @@ function build(kind,d,range,f){
  }
  const sales=rowsFor(d.sales,"invoice_date"),purchases=rowsFor(d.purchases,"invoice_date"),expenses=rowsFor(d.expenses,"expense_date");
  const taxable=sum(sales,r=>r.taxable_value),output=sum(sales,gst),input=sum(purchases,gst)+sum(expenses,gst);
- const groups=new Map();[...(d.saleLines||[]).map(l=>({rate:n(l.gst_rate),base:n(l.amount),tax:n(l.amount)*n(l.gst_rate)/100})),...(d.purchaseLines||[]).map(l=>({rate:n(l.gst_rate),base:n(l.taxable_value),tax:n(l.taxable_value)*n(l.gst_rate)/100}))].forEach(x=>{const g=groups.get(x.rate)||{rate:x.rate,taxable:0,cgst:0,sgst:0,igst:0,cess:0,tax:0};g.taxable+=x.base;g.cgst+=x.tax/2;g.sgst+=x.tax/2;g.tax+=x.tax;groups.set(x.rate,g)});
+ const tab=f.tab||"GSTR-3B";
+ const parentMap=new Map([...(d.sales||[]),...(d.purchases||[])].map(r=>[r.id,r]));
+ const lineRows=[
+  ...(tab==="Input Tax Credit"?[]:(d.saleLines||[]).map(l=>({line:l,parent:parentMap.get(l.invoice_id),source:"sales"}))),
+  ...(tab==="GSTR-1"||tab==="Output GST"?[]:(d.purchaseLines||[]).map(l=>({line:l,parent:parentMap.get(l.invoice_id),source:"purchase"})))
+ ].filter(x=>x.parent&&inRange(x.parent.invoice_date,range.from,range.to));
+ const groups=new Map();
+ lineRows.forEach(({line,parent,source})=>{
+  const rate=n(line.gst_rate),base=n(source==="sales"?line.amount:line.taxable_value);
+  const tax=source==="sales"?base*rate/100:n(line.cgst_amount)+n(line.sgst_amount)+n(line.igst_amount);
+  const g=groups.get(rate)||{rate,taxable:0,cgst:0,sgst:0,igst:0,cess:0,tax:0};
+  g.taxable+=base;
+  if(source==="purchase"){g.cgst+=n(line.cgst_amount);g.sgst+=n(line.sgst_amount);g.igst+=n(line.igst_amount);}
+  else if(n(parent.igst)>0)g.igst+=tax;else{g.cgst+=tax/2;g.sgst+=tax/2;}
+  g.cess+=n(line.cess_amount);g.tax+=tax;groups.set(rate,g);
+ });
  const taxRows=Array.from(groups.values()).sort((a,b)=>a.rate-b.rate),taxTotals=[sum(taxRows,r=>r.taxable),sum(taxRows,r=>r.cgst),sum(taxRows,r=>r.sgst),sum(taxRows,r=>r.igst),sum(taxRows,r=>r.cess),sum(taxRows,r=>r.tax)];
- return{tabs:["GSTR-1","GSTR-3B","Input Tax Credit","Output GST"],cards:[["Taxable Turnover",money(taxable)],["Output Tax",money(output)],["Input Tax Credit",money(input)],["Net GST Payable",money(output-input)]].map(([label,value])=>({label,value})),tableTitle:f.tab==="Input Tax Credit"?"Input Tax Credit Summary":f.tab==="Output GST"?"Output GST Summary":"GST Summary by Tax Rate",columns:cols([["rate","Rate"],["taxable","Taxable Value (₹)",true],["cgst","CGST (₹)",true],["sgst","SGST (₹)",true],["igst","IGST (₹)",true],["cess","Cess (₹)",true],["tax","Total Tax (₹)",true]]),rows:[],taxRows,taxTotals,note:"GST amounts use saved invoice and expense tax totals. Rate-wise figures are estimated from saved line-item rates and taxable values; review them against source vouchers before filing."};
+ return{tabs:["GSTR-1","GSTR-3B","Input Tax Credit","Output GST"],cards:[["Taxable Turnover",money(taxable)],["Output Tax",money(output)],["Input Tax Credit",money(input)],["Net GST Payable",money(output-input)]].map(([label,value])=>({label,value})),tableTitle:tab==="Input Tax Credit"?"Input Tax Credit Summary":tab==="Output GST"||tab==="GSTR-1"?"Output GST Summary":"GST Summary by Tax Rate",columns:cols([["rate","Rate"],["taxable","Taxable Value (₹)",true],["cgst","CGST (₹)",true],["sgst","SGST (₹)",true],["igst","IGST (₹)",true],["cess","Cess (₹)",true],["tax","Total Tax (₹)",true]]),rows:[],taxRows,taxTotals,note:"Saved invoice and expense tax totals drive the headline figures. Rate-wise rows use invoice item tax fields; expense item details are not currently stored in the reporting source. Review figures against source vouchers before filing."};
 }
