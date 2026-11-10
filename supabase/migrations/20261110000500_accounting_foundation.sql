@@ -6,7 +6,7 @@ create table if not exists public.account_groups (
   company_id uuid not null references public.companies(id) on delete cascade,
   group_name text not null,
   group_code text not null,
-  parent_group_id uuid references public.account_groups(id) on delete restrict,
+  parent_group_id uuid,
   account_nature text not null check (account_nature in ('Asset','Liability','Equity','Income','Expense')),
   normal_balance text not null check (normal_balance in ('Debit','Credit')),
   statement_classification text not null check (statement_classification in ('Balance Sheet','Profit & Loss')),
@@ -16,7 +16,9 @@ create table if not exists public.account_groups (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(company_id, group_code),
-  unique(company_id, id)
+  unique(company_id, id),
+  constraint account_groups_parent_company_fk
+    foreign key(company_id, parent_group_id) references public.account_groups(company_id, id) on delete restrict
 );
 
 create table if not exists public.chart_of_accounts (
