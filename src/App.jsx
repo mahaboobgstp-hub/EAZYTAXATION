@@ -61,6 +61,7 @@ import Uom from './pages/masters/Uom';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
+import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
 import SalesRegister from "./pages/sales/SalesRegister";
 import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
@@ -224,6 +225,10 @@ function App() {
             path="purchases"
             element={<PurchaseInvoice />}
           />
+          <Route path="purchase-register" element={<PurchaseWorkspace kind="register" />} />
+          <Route path="purchase-orders" element={<PurchaseWorkspace kind="orders" />} />
+          <Route path="purchase-returns" element={<PurchaseWorkspace kind="returns" />} />
+          <Route path="debit-notes" element={<PurchaseWorkspace kind="debits" />} />
 
           <Route
             path="expenses"
