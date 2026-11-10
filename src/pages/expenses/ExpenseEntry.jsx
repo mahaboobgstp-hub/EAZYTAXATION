@@ -52,7 +52,8 @@ export default function ExpenseEntry(){
       const share= gross?headerDiscount*((lineGross-lineDiscount)/Math.max(1,gross-lines.reduce((s,x)=>s+Math.max(0,n(x.qty))*Math.max(0,n(x.rate))*n(x.discount_percent)/100,0))):0;
       const discount=lineDiscount+share;
       const base=Math.max(0,lineGross-discount);
-      const taxRate=form.gst_treatment==="No GST"?0:n(l.gst_percent);\n      const tax=Math.round(base*taxRate)/100;
+      const taxRate=form.gst_treatment==="No GST"?0:n(l.gst_percent);
+      const tax=Math.round(base*taxRate)/100;
       const c=isSameState?Math.round(tax/2*100)/100:0,s=isSameState?Math.round((tax-c)*100)/100:0,ig=isSameState?0:tax;
       taxable+=base;cgst+=c;sgst+=s;igst+=ig;
       return {...l,qty:n(l.qty),rate:n(l.rate),gst_percent:taxRate,discount_percent:n(l.discount_percent),discount_amount:discount,taxable_amount:base,cgst_amount:c,sgst_amount:s,igst_amount:ig,total_amount:base+c+s+ig};
