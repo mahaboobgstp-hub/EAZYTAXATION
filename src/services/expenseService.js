@@ -68,7 +68,7 @@ export async function getExpenseById(id, companyId) {
   if (companyId) query = query.eq("company_id", companyId);
   const { data, error } = await query.single();
   if (error) throw error;
-  const [lines, vendors, categories] = await Promise.all([
+  const [linesFromItems, vendors, categories] = await Promise.all([
     getExpenseItems(id),
     data.vendor_id ? supabase.from("vendors").select("id,vendor_name,gstin,state,address").eq("id", data.vendor_id).maybeSingle() : Promise.resolve({ data: null }),
     data.category_id ? supabase.from("expense_categories").select("id,category_name").eq("id", data.category_id).maybeSingle() : Promise.resolve({ data: null })
