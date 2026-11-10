@@ -445,7 +445,7 @@ const LOCKED_MODULES = new Set([
 ]);
 
 const isRouteAvailable = (path) =>
-  AVAILABLE_ROUTES.has(path);
+  AVAILABLE_ROUTES.has(path.split("?")[0]);
 
 const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
