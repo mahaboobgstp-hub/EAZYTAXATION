@@ -63,6 +63,7 @@ import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import SalesRegister from "./pages/sales/SalesRegister";
+import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
 
 /* ===========================
@@ -209,11 +210,15 @@ function App() {
 />
 <Route
   path="delivery-challans"
-  element={<DeliveryChallan />}
+  element={<SalesWorkspace kind="challans" />}
+/>
+<Route
+  path="delivery-challans/new"
+  element={<DeliveryChallan />
 />
           <Route
             path="quotation"
-            element={<Quotation />}
+            element={<SalesWorkspace kind="quotations" />}
           />
 
           <Route
@@ -231,7 +236,10 @@ function App() {
 />
           <Route
             path="sales-register"
-            element={<SalesRegister />}
+            element={<SalesWorkspace kind="register" />}
+          />
+          <Route path="sales-orders" element={<SalesWorkspace kind="orders" />} />
+          <Route path="credit-notes" element={<SalesWorkspace kind="credits" />}
           />
 
           <Route
