@@ -15,7 +15,6 @@ export function CompanyProvider({ children }) {
     const loadCompanies = async () => {
         try {
             setLoading(true);
-
             const {
                 data: { user },
                 error: userError
@@ -29,32 +28,46 @@ export function CompanyProvider({ children }) {
                 return;
             }
 
-            const { data, error } = await supabase
-                .from("companies")
-                .select("*")
-                .eq("owner_user_id", user.id)
-                .order("company_name");
+            const [ownedResult, caResult, userResult] = await Promise.all([
+                supabase.from("companies").select("*")
+                    .eq("owner_user_id", user.id).order("company_name"),
+                supabase.from("ca_company_assignments")
+                    .select("company_id, access_level, company:companies(*)")
+                    .eq("ca_user_id", user.id).eq("status", "Active"),
+                supabase.from("company_user_access")
+                    .select("company_id, permissions, company:companies(*)")
+                    .eq("user_id", user.id).eq("status", "Active")
+            ]);
 
-            if (error) throw error;
+            if (ownedResult.error) throw ownedResult.error;
+            if (caResult.error && caResult.error.code !== "42P01") throw caResult.error;
+            if (userResult.error && userResult.error.code !== "42P01") throw userResult.error;
 
-            setCompanies(data || []);
+            const combined = new Map();
+            (ownedResult.data || []).forEach(company => combined.set(company.id, company));
+            (caResult.data || []).forEach(row => {
+                if (row.company) combined.set(row.company.id, row.company);
+            });
+            (userResult.data || []).forEach(row => {
+                if (row.company) combined.set(row.company.id, row.company);
+            });
 
-            const savedCompanyId =
-                localStorage.getItem("currentCompanyId");
+            const availableCompanies = Array.from(combined.values())
+                .sort((a, b) => (a.company_name || "").localeCompare(b.company_name || ""));
+            setCompanies(availableCompanies);
 
-            const savedCompany = (data || []).find(
-                company => company.id === savedCompanyId
-            );
+            const savedCompanyId = localStorage.getItem("currentCompanyId");
+            const savedCompany = availableCompanies.find(company => company.id === savedCompanyId);
+            const nextCompany = savedCompany || availableCompanies[0] || null;
+            setCurrentCompany(nextCompany);
 
-            if (savedCompany) {
-                setCurrentCompany(savedCompany);
+            if (nextCompany) {
+                localStorage.setItem("currentCompanyId", nextCompany.id);
             } else {
-                setCurrentCompany(null);
                 localStorage.removeItem("currentCompanyId");
             }
-
         } catch (error) {
-            console.error("Error loading companies:", error);
+            console.error("Error loading accessible companies:", error);
             setCompanies([]);
             setCurrentCompany(null);
         } finally {
@@ -63,31 +76,21 @@ export function CompanyProvider({ children }) {
     };
 
     const changeCompany = (companyId) => {
-        const selectedCompany = companies.find(
-            company => company.id === companyId
-        );
-
+        const selectedCompany = companies.find(company => company.id === companyId);
         if (!selectedCompany) return;
-
         setCurrentCompany(selectedCompany);
-
-        localStorage.setItem(
-            "currentCompanyId",
-            selectedCompany.id
-        );
+        localStorage.setItem("currentCompanyId", selectedCompany.id);
     };
 
     return (
-        <CompanyContext.Provider
-            value={{
-                companies,
-                currentCompany,
-                currentCompanyId: currentCompany?.id || null,
-                changeCompany,
-                loading,
-                reloadCompanies: loadCompanies
-            }}
-        >
+        <CompanyContext.Provider value={{
+            companies,
+            currentCompany,
+            currentCompanyId: currentCompany?.id || null,
+            changeCompany,
+            loading,
+            reloadCompanies: loadCompanies
+        }}>
             {children}
         </CompanyContext.Provider>
     );
@@ -95,12 +98,8 @@ export function CompanyProvider({ children }) {
 
 export function useCompany() {
     const context = useContext(CompanyContext);
-
     if (!context) {
-        throw new Error(
-            "useCompany must be used inside CompanyProvider"
-        );
+        throw new Error("useCompany must be used inside CompanyProvider");
     }
-
     return context;
 }
