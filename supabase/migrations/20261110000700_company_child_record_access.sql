@@ -63,7 +63,7 @@ begin
       when t.parent_table like '%sales%' or t.parent_table like '%quotation%' or t.parent_table like '%delivery_challan%' or t.parent_table like '%credit_note%' then 'sales'
       when t.parent_table like '%bank%' or t.parent_table like '%reconcil%' then 'banking'
       when t.parent_table like '%gst%' or t.parent_table like '%eway%' or t.parent_table like '%einvoice%' then 'gst'
-      when t.parent_table like '%employee%' or t.parent_table like '%payroll%' or t.parent_table like '%attendance%' or t.parent_table like '%leave%' then 'hr_payroll'
+      when t.parent_table like '%employee%' or t.parent_table like '%payroll%' or t.parent_table like '%attendance%' or t.parent_table like '%leave%' or t.parent_table like '%statutory%' or t.parent_table like '%professional_tax%' or t.parent_table like '%salary_tds%' or t.parent_table like '%salary_component%' or t.parent_table like '%company_pt%' then 'hr_payroll'
       when t.parent_table like '%stock%' or t.parent_table like '%inventory%' then 'inventory'
       when t.parent_table like '%report%' then 'reports'
       when t.parent_table like '%expense%' or t.parent_table like '%payment%' then 'expenses'
