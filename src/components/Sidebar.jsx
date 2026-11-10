@@ -400,6 +400,7 @@ const AVAILABLE_ROUTES = new Set([
   "/app/expense-categories",
   "/app/asset-categories",
   "/app/gst-rates",
+  "/app/gstr1",
   "/app/delivery-challans",
   "/app/quotation",
   "/app/sales-reports",
