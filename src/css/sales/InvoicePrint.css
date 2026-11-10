@@ -470,3 +470,37 @@
   margin-top: 3mm;
 }
 .invoice-pdf-closing-grid .invoice-pdf-bank-card { min-height: 24mm; }
+
+/* Readability and spacing refinements for A4 invoice preview. */
+.invoice-pdf-brand > div {
+  flex: 0 0 112mm;
+  width: 112mm;
+  max-width: 112mm;
+  margin-left: auto;
+  text-align: right;
+}
+.invoice-pdf-brand h2 { font-size: 13pt; }
+.invoice-pdf-brand p { font-size: 8pt; line-height: 1.3; }
+.invoice-pdf-brand strong { font-size: 8pt; }
+.invoice-pdf-title { font-size: 14pt; }
+.invoice-pdf-meta-card p,
+.invoice-pdf-transport-card p,
+.invoice-pdf-bank-card p { font-size: 7.5pt; }
+.invoice-pdf-transport-card h3,
+.invoice-pdf-bank-card h3,
+.invoice-pdf-party-card h3 { font-size: 8pt; }
+.invoice-pdf-party-card > strong { font-size: 8pt; }
+.invoice-pdf-party-card p { font-size: 7.2pt; line-height: 1.3; }
+.invoice-pdf-party-card div { font-size: 6.8pt; }
+.invoice-pdf-items-table { font-size: 7.2pt; }
+.invoice-pdf-items-table th { font-size: 6.8pt; }
+.invoice-pdf-final-summary { margin-top: 5mm; }
+.invoice-pdf-amount-words h3 { font-size: 8pt; }
+.invoice-pdf-amount-words p { font-size: 7.4pt; }
+.invoice-pdf-summary-line,
+.invoice-pdf-summary-line strong { font-size: 7.4pt; }
+.invoice-pdf-grand-total { font-size: 9pt; }
+.invoice-pdf-closing-grid { margin-top: 4mm; }
+.invoice-pdf-signature p { font-size: 6.8pt; }
+.invoice-pdf-signature strong { font-size: 7.2pt; }
+.invoice-pdf-footer { font-size: 6.8pt; }
