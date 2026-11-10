@@ -90,3 +90,13 @@ export async function revokeCaAssignment(assignmentId, companyId) {
     .eq("company_id", companyId);
   if (error) throw error;
 }
+
+export async function getAllCompanyCaAssignments() {
+  const { data, error } = await supabase
+    .from("ca_company_assignments")
+    .select("*")
+    .eq("status", "Active")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
