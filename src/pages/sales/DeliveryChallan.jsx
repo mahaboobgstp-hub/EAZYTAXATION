@@ -943,11 +943,11 @@ const viewChallan = async (challanId) => {
             padding: "20px"
         }}>
 
-            <h2>
+            <div className="delivery-challan-page-heading"><h2>
                 {editingChallanId
                     ? "Edit Delivery Challan"
-                    : "Delivery Challan"}
-            </h2>
+                    : "New Delivery Challan"}
+            </h2><a href="/app/delivery-challans">Back to Delivery Challans</a></div>
 
 
             {/* ============================================
@@ -1639,154 +1639,6 @@ const viewChallan = async (challanId) => {
             )}
 
 
-            {/* ============================================
-                PREVIOUS CHALLANS
-            ============================================ */}
-
-            {currentCompanyId && (
-
-                <div style={{
-                    marginTop: "40px"
-                }}>
-
-                    <h3>
-                        Previous Delivery Challans
-                    </h3>
-
-
-                    {challans.length === 0 ? (
-
-                        <p>
-                            No Delivery Challans found
-                            for this company.
-                        </p>
-
-                    ) : (
-
-                        <table style={{
-                            width: "100%",
-                            borderCollapse:
-                                "collapse"
-                        }}>
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>
-                                        Challan No.
-                                    </th>
-
-                                    <th>
-                                        Date
-                                    </th>
-
-                                    <th>
-                                        Customer
-                                    </th>
-
-                                    <th>
-                                        Total
-                                    </th>
-
-                                    <th>
-                                        Actions
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-
-                            <tbody>
-
-                                {challans.map(
-                                    challan => (
-
-                                        <tr
-                                            key={
-                                                challan.id
-                                            }
-                                        >
-
-                                            <td>
-                                                {
-                                                    challan.challan_no
-                                                }
-                                            </td>
-
-                                            <td>
-                                                {
-                                                    challan.challan_date
-                                                }
-                                            </td>
-
-                                            <td>
-                                                {
-                                                    challan.customer_name
-                                                }
-                                            </td>
-
-                                            <td>
-                                                ₹
-                                                {Number(
-                                                    challan.total_amount ||
-                                                    0
-                                                ).toFixed(2)}
-                                            </td>
-
-                                            <td>
-
-                                               
-
-    <button
-        type="button"
-        onClick={() =>
-            viewChallan(challan.id)
-        }
-        className="delivery-challan-list-action"
-    >
-        View
-    </button>
-
-
-    <button
-        type="button"
-        onClick={() =>
-            handleEdit(challan.id)
-        }
-        className="delivery-challan-list-action"
-    >
-        Edit
-    </button>
-
-
-    <button
-        type="button"
-        onClick={() =>
-            handleDelete(challan.id)
-        }
-        className="delivery-challan-list-action"
-    >
-        Delete
-    </button>
-
-</td>
-
-                                        </tr>
-
-                                    )
-                                )}
-
-                            </tbody>
-
-                        </table>
-
-                    )}
-
-                </div>
-
-            )}
 {printMode && selectedChallan && (
 
     <DeliveryChallanPrint
