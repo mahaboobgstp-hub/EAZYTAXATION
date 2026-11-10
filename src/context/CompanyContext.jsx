@@ -10,6 +10,13 @@ export function CompanyProvider({ children }) {
 
     useEffect(() => {
         loadCompanies();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+            // Defer the reload until the auth event callback has completed.
+            setTimeout(() => loadCompanies(), 0);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const loadCompanies = async () => {
