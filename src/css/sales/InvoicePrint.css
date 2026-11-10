@@ -413,3 +413,60 @@
   }
   .invoice-pdf-page:last-child { break-after: auto; page-break-after: auto; }
 }
+/* Invoice refinements: align company details opposite the logo and keep closing details paired. */
+.invoice-pdf-brand > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  text-align: right;
+}
+.invoice-pdf-meta-grid {
+  grid-template-columns: 1fr 1fr;
+  min-height: 26mm;
+}
+.invoice-pdf-transport-card,
+.invoice-pdf-bank-card {
+  box-sizing: border-box;
+  padding: 2.5mm 3mm;
+  border: 1px solid #cdd8e8;
+  border-radius: 2mm;
+  background: #f7f9fd;
+}
+.invoice-pdf-transport-card h3,
+.invoice-pdf-bank-card h3 {
+  margin: 0 0 1mm;
+  color: #194a99;
+  font-size: 7pt;
+}
+.invoice-pdf-transport-card p,
+.invoice-pdf-bank-card p {
+  display: grid;
+  grid-template-columns: 22mm 1fr;
+  gap: 2mm;
+  margin: .7mm 0;
+  font-size: 6.2pt;
+}
+.invoice-pdf-transport-card p span,
+.invoice-pdf-bank-card p span { color: #68758a; }
+.invoice-pdf-transport-card p strong,
+.invoice-pdf-bank-card p strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #25334c;
+}
+.invoice-pdf-transport-card .transport-remarks {
+  margin-top: 1mm;
+  line-height: 1.15;
+}
+.invoice-pdf-transport-card .transport-remarks strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.invoice-pdf-closing-grid {
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  margin-top: 3mm;
+}
+.invoice-pdf-closing-grid .invoice-pdf-bank-card { min-height: 24mm; }
