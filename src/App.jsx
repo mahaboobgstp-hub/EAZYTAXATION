@@ -58,6 +58,7 @@ import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
 import ExpenseRegister from "./pages/expenses/ExpenseRegister";
 import ExpensePayments from "./pages/expenses/ExpensePayments";
+import BankingWorkspace from "./pages/banking/BankingWorkspace";
 import Items from './pages/masters/Items';
 import Uom from './pages/masters/Uom';
 import InvoiceSettings
@@ -244,6 +245,7 @@ function App() {
           />
 <Route path="expense-register" element={<ExpenseRegister />} />
 <Route path="payments" element={<ExpensePayments />} />
+<Route path="banking" element={<BankingWorkspace />} />
           <Route path="sales-reports" element={<ReportsWorkspace kind="sales" />} />
           <Route path="purchase-reports" element={<ReportsWorkspace kind="purchases" />} />
           <Route path="expense-reports" element={<ReportsWorkspace kind="expenses" />} />
