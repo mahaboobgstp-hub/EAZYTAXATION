@@ -51,33 +51,40 @@ function paginateItems(items) {
 
   const maxRows = MAX_ITEMS_PER_PAGE;
   const firstFinalCapacity = 76;
-  const continuationFinalCapacity = 136;
+  const continuationFinalCapacity = 142;
 
   if (source.length <= maxRows && sumHeights(source) <= firstFinalCapacity) return [source];
 
+  // Fill the available item pages. Keep at least four rows with the final
+  // summary when possible, instead of splitting every invoice evenly.
   let pageCount = Math.max(2, Math.ceil(source.length / maxRows));
   while (pageCount <= source.length) {
-    const baseCount = Math.floor(source.length / pageCount);
-    const extraRows = source.length % pageCount;
+    const finalCount = Math.max(4, source.length - (pageCount - 1) * maxRows);
+    if (finalCount > maxRows) {
+      pageCount += 1;
+      continue;
+    }
+
+    const prefixCount = source.length - finalCount;
+    const prefixPages = pageCount - 1;
+    const baseCount = Math.floor(prefixCount / prefixPages);
+    const extraRows = prefixCount % prefixPages;
     const chunks = [];
     let offset = 0;
     let fits = true;
 
-    for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    for (let pageIndex = 0; pageIndex < prefixPages; pageIndex += 1) {
       const count = baseCount + (pageIndex < extraRows ? 1 : 0);
       const rows = source.slice(offset, offset + count);
       offset += count;
-      const isFirst = pageIndex === 0;
-      const isLast = pageIndex === pageCount - 1;
-      const capacity = isLast
-        ? continuationFinalCapacity
-        : isFirst
-          ? 150
-          : 210;
-
-      if (count > maxRows || sumHeights(rows) > capacity) fits = false;
+      const capacity = pageIndex === 0 ? 150 : 210;
+      if (!count || count > maxRows || sumHeights(rows) > capacity) fits = false;
       chunks.push(rows);
     }
+
+    const finalRows = source.slice(offset);
+    if (finalRows.length > maxRows || sumHeights(finalRows) > continuationFinalCapacity) fits = false;
+    chunks.push(finalRows);
 
     if (fits) return chunks;
     pageCount += 1;
