@@ -101,14 +101,22 @@ function AccountingWorkspace() {
     return { debit, credit, income, expenses, profit: income - expenses };
   }, [postedLines, data.ledgers, data.groups, data.vouchers]);
 
-  function ledgerBalance(ledger, lines = postedLines, vouchers = data.vouchers) {
-    const postedIds = new Set(vouchers.filter((item) => item.status === "Posted").map((item) => item.id));
-    const activity = lines.filter((line) => line.ledger_id === ledger.id && postedIds.has(line.voucher_id));
+  function ledgerBalance(ledger, lines = postedLines, vouchers = data.vouchers, startDate = null, endDate = null, includeOpening = true) {
+    const voucherMap = new Map(vouchers.filter((item) => item.status === "Posted").map((item) => [item.id, item]));
+    const activity = lines.filter((line) => {
+      if (line.ledger_id !== ledger.id) return false;
+      const linkedVoucher = voucherMap.get(line.voucher_id);
+      if (!linkedVoucher) return false;
+      if (startDate && linkedVoucher.voucher_date < startDate) return false;
+      if (endDate && linkedVoucher.voucher_date > endDate) return false;
+      return true;
+    });
     const debit = activity.reduce((sum, row) => sum + Number(row.debit || 0), 0);
     const credit = activity.reduce((sum, row) => sum + Number(row.credit || 0), 0);
-    const opening = Number(ledger.opening_balance || 0) * (ledger.opening_balance_type === "Credit" ? -1 : 1);
-    const signed = opening + debit - credit;
-    return signed;
+    const opening = includeOpening
+      ? Number(ledger.opening_balance || 0) * (ledger.opening_balance_type === "Credit" ? -1 : 1)
+      : 0;
+    return opening + debit - credit;
   }
 
   const groupChildren = (parentId) => data.groups.filter((group) => (group.parent_group_id || null) === (parentId || null));
@@ -203,9 +211,14 @@ function AccountingWorkspace() {
   };
 
   const reportRows = useMemo(() => data.ledgers.map((ledger) => {
-    const signed = ledgerBalance(ledger);
+    const signed = ledgerBalance(ledger, postedLines, data.vouchers, null, toDate, true);
     return { ...ledger, balance:Math.abs(signed), side:signed >= 0 ? "Dr" : "Cr", groupName:getGroupPath(ledger.group_id) };
-  }), [data.ledgers, postedLines, data.vouchers, data.groups]);
+  }), [data.ledgers, postedLines, data.vouchers, data.groups, toDate]);
+
+  const periodRows = useMemo(() => data.ledgers.map((ledger) => {
+    const signed = ledgerBalance(ledger, postedLines, data.vouchers, fromDate, toDate, false);
+    return { ...ledger, balance:Math.abs(signed), side:signed >= 0 ? "Dr" : "Cr", groupName:getGroupPath(ledger.group_id) };
+  }), [data.ledgers, postedLines, data.vouchers, data.groups, fromDate, toDate]);
 
   const visibleLines = selectedLedger
     ? postedLines.filter((line) => line.ledger_id === selectedLedger)
@@ -357,7 +370,12 @@ function AccountingWorkspace() {
     const ledger = data.ledgers.find((item)=>item.id===selectedLedger) || data.ledgers[0];
     const ledgerLines = ledger ? postedLines.filter((line)=>line.ledger_id===ledger.id && data.vouchers.find((v)=>v.id===line.voucher_id)?.voucher_date>=fromDate && data.vouchers.find((v)=>v.id===line.voucher_id)?.voucher_date<=toDate) : [];
     const ledgerOpening = ledger ? Number(ledger.opening_balance||0) * (ledger.opening_balance_type==="Credit"?-1:1) : 0;
-    let running = ledgerOpening;
+    const priorMovement = ledger ? postedLines.filter((line) => {
+      if (line.ledger_id !== ledger.id) return false;
+      const linked = data.vouchers.find((item) => item.id === line.voucher_id);
+      return linked && linked.voucher_date < fromDate;
+    }).reduce((sum, line) => sum + Number(line.debit||0) - Number(line.credit||0), 0) : 0;
+    let running = ledgerOpening + priorMovement;
     return <>
       {renderHeader("General Ledger", "Account-wise transaction statement with running balance.", <button className="btn-secondary" onClick={()=>window.print()}>Export / Print</button>)}
       <section className="accounting-panel">
@@ -394,8 +412,8 @@ function AccountingWorkspace() {
   };
 
   const renderProfitLoss = () => {
-    const incomeRows=reportRows.filter((row)=>data.groups.find((g)=>g.id===row.group_id)?.account_nature==="Income");
-    const expenseRows=reportRows.filter((row)=>data.groups.find((g)=>g.id===row.group_id)?.account_nature==="Expense");
+    const incomeRows=periodRows.filter((row)=>data.groups.find((g)=>g.id===row.group_id)?.account_nature==="Income");
+    const expenseRows=periodRows.filter((row)=>data.groups.find((g)=>g.id===row.group_id)?.account_nature==="Expense");
     const income=incomeRows.reduce((sum,row)=>sum+(row.side==="Cr"?row.balance:-row.balance),0);
     const expenses=expenseRows.reduce((sum,row)=>sum+(row.side==="Dr"?row.balance:-row.balance),0);
     return <>
@@ -415,7 +433,8 @@ function AccountingWorkspace() {
     const assets=sections.find((s)=>s.nature==="Asset").rows.reduce((sum,row)=>sum+(row.side==="Dr"?row.balance:-row.balance),0);
     const liabilities=sections.find((s)=>s.nature==="Liability").rows.reduce((sum,row)=>sum+(row.side==="Cr"?row.balance:-row.balance),0);
     const equity=sections.find((s)=>s.nature==="Equity").rows.reduce((sum,row)=>sum+(row.side==="Cr"?row.balance:-row.balance),0);
-    const currentProfit=totals.profit;
+    const currentProfit=periodRows.filter((row)=>data.groups.find((g)=>g.id===row.group_id)?.account_nature==="Income").reduce((sum,row)=>sum+(row.side==="Cr"?row.balance:-row.balance),0)
+      - periodRows.filter((row)=>data.groups.find((g)=>g.id===row.group_id)?.account_nature==="Expense").reduce((sum,row)=>sum+(row.side==="Dr"?row.balance:-row.balance),0);
     return <>
       {renderHeader("Balance Sheet", "Assets, liabilities and equity as at the selected date.", <button className="btn-secondary" onClick={()=>window.print()}>Export / Print</button>)}
       <section className="accounting-panel financial-statement">
