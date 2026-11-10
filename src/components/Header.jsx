@@ -41,7 +41,7 @@ const PAGES = [
   { label: "E-Way Bills", path: "/app/eway-bills", module: "billing" },
   { label: "E-Invoice", path: "/app/einvoice", module: "billing" },
   { label: "Sales Reports", path: "/app/sales-reports", module: "billing" },
-  { label: "Purchase Reports", path: "/purchase-reports", module: "billing" },
+  { label: "Purchase Reports", path: "/app/purchase-reports", module: "billing" },
   { label: "Expense Reports", path: "/app/expense-reports", module: "billing" },
   { label: "Customer Ledger", path: "/app/customer-ledger", module: "billing" },
   { label: "Vendor Ledger", path: "/app/vendor-ledger", module: "billing" },
