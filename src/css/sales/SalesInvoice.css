@@ -237,3 +237,40 @@
   .sales-cash-credit { width: 100%; }
   .sales-cash-credit button { min-width: 0; flex: 1; }
 }
+
+/* Give the invoice editor fields priority over the totals summary. */
+.invoice-workspace-grid {
+  grid-template-columns: minmax(0, 4fr) minmax(240px, 1fr);
+  gap: 12px;
+}
+.invoice-items-panel { min-width: 0; }
+.invoice-summary-panel { padding: 9px; }
+.invoice-items-grid th:nth-child(1), .invoice-items-grid td:nth-child(1) { width: 22%; }
+.invoice-items-grid th:nth-child(2), .invoice-items-grid td:nth-child(2) { width: 10%; }
+.invoice-items-grid th:nth-child(3), .invoice-items-grid td:nth-child(3) { width: 13%; }
+.invoice-items-grid th:nth-child(4), .invoice-items-grid td:nth-child(4) { width: 14%; }
+.invoice-items-grid th:nth-child(5), .invoice-items-grid td:nth-child(5) { width: 12%; }
+.invoice-items-grid th:nth-child(6), .invoice-items-grid td:nth-child(6) { width: 12%; }
+.invoice-items-grid th:nth-child(7), .invoice-items-grid td:nth-child(7) { width: 12%; }
+.invoice-items-grid th:nth-child(8), .invoice-items-grid td:nth-child(8) { width: 5%; }
+.invoice-items-grid td:nth-child(3) input { min-width: 68px !important; text-align: right; }
+.invoice-items-grid td:nth-child(4) select { min-width: 88px !important; }
+.invoice-items-grid td:nth-child(6) select { min-width: 70px !important; }
+.invoice-summary-line { gap: 4px; font-size: 10px; }
+.invoice-summary-line strong { font-size: 10px; white-space: nowrap; }
+.invoice-discount-line > div { gap: 3px; }
+.invoice-discount-line select { width: 32px; padding: 4px 2px; }
+.invoice-discount-line input { width: 52px; padding: 5px 3px; }
+.invoice-discount-line strong { min-width: 72px; font-size: 9px; }
+.invoice-roundoff-line input { width: 66px; }
+.invoice-summary-grand-total { padding: 9px 7px; font-size: 11px; }
+.invoice-summary-grand-total strong { font-size: 14px; }
+.invoice-save-button { padding: 9px 8px; font-size: 11px; }
+@media (max-width: 1000px) and (min-width: 821px) {
+  .invoice-workspace-grid { grid-template-columns: minmax(0, 3fr) minmax(225px, .85fr); }
+  .invoice-summary-panel { padding: 8px; }
+}
+@media (max-width: 820px) {
+  .invoice-workspace-grid { grid-template-columns: 1fr; }
+  .invoice-summary-panel { padding: 12px; }
+}
