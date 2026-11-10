@@ -37,7 +37,7 @@ function amount(value) {
 
 function itemRowHeight(item) {
   const description = safeText(item?.item_name || item?.particulars);
-  const estimatedLines = Math.max(1, Math.ceil(description.length / 44));
+  const estimatedLines = Math.min(4, Math.max(1, Math.ceil(description.length / 44)));
   return Math.max(5.5, estimatedLines * 3.2 + 2.4);
 }
 
