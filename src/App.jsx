@@ -56,6 +56,8 @@ import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
 import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
+import ExpenseRegister from "./pages/expenses/ExpenseRegister";
+import ExpensePayments from "./pages/expenses/ExpensePayments";
 import Items from './pages/masters/Items';
 import Uom from './pages/masters/Uom';
 import InvoiceSettings
@@ -234,6 +236,8 @@ function App() {
             path="expenses"
             element={<ExpenseEntry />}
           />
+<Route path="expense-register" element={<ExpenseRegister />} />
+<Route path="payments" element={<ExpensePayments />} />
 <Route
     path="attendance-settings"
     element={<AttendanceSettings />}
