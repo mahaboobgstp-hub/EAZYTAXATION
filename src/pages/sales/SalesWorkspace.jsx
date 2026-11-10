@@ -89,7 +89,7 @@ export default function SalesWorkspace({ kind }) {
       return [rows.length, currency(rows.reduce((s, r) => s + num(r.total_amount), 0)), currency(paid), currency(outstanding)];
     }
     if (kind === "quotations") return [rows.length, rows.filter(r => !["accepted", "rejected", "expired"].includes((r.status || "draft").toLowerCase())).length, rows.filter(r => (r.status || "").toLowerCase() === "accepted").length];
-    if (kind === "orders") return [rows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(rows.reduce((s, r) => s + num(r.total_amount), 0)), rows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length];
+    if (kind === "orders") return [rows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(rows.reduce((s, r) => s + num(r.total_amount), 0)), rows.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
     if (kind === "challans") return [
       rows.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
       rows.filter(r => (r.status || "").toLowerCase().includes("transit")).length,
