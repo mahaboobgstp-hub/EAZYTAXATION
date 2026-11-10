@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/auth/Login.css";
+import { supabase } from "../../supabase/supabaseClient";
 
 import {
 
@@ -52,7 +53,7 @@ function Login() {
       );
 
       const signedInUserId = loginData?.user?.id;
-      const { data: caAssignments, error: caError } = await (await import("../../supabase/supabaseClient")).supabase
+      const { data: caAssignments, error: caError } = await supabase
         .from("ca_company_assignments")
         .select("id")
         .eq("ca_user_id", signedInUserId)
