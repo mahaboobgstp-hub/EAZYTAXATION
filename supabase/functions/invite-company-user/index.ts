@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     const profile = {
       id: invitedUser.id,
       full_name: fullName,
-      business_name: null,
+      business_name: company.company_name || (kind === "ca" ? "Chartered Accountant" : "Company User"),
     };
     const { error: profileError } = await admin
       .from("profiles")
