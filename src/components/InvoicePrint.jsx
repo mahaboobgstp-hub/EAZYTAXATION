@@ -38,7 +38,7 @@ function amount(value) {
 function itemRowHeight(item) {
   const description = safeText(item?.item_name || item?.particulars);
   const estimatedLines = Math.min(4, Math.max(1, Math.ceil(description.length / 44)));
-  return Math.max(5.5, estimatedLines * 3.2 + 2.4);
+  return Math.max(6.3, estimatedLines * 3.5 + 2.8);
 }
 
 function sumHeights(items) {
@@ -49,58 +49,41 @@ function paginateItems(items) {
   const source = Array.isArray(items) ? items : [];
   if (!source.length) return [[]];
 
-  const pages = [];
-  let offset = 0;
-  while (offset < source.length) {
-    const isFirst = pages.length === 0;
-    const remaining = source.slice(offset);
-    const finalCapacity = isFirst ? 88 : 135;
-    const finalCountLimit = Math.min(MAX_ITEMS_PER_PAGE, remaining.length);
+  const maxRows = MAX_ITEMS_PER_PAGE;
+  const firstFinalCapacity = 76;
+  const continuationFinalCapacity = 136;
 
-    if (remaining.length <= finalCountLimit && sumHeights(remaining) <= finalCapacity) {
-      pages.push(remaining);
-      break;
+  if (source.length <= maxRows && sumHeights(source) <= firstFinalCapacity) return [source];
+
+  let pageCount = Math.max(2, Math.ceil(source.length / maxRows));
+  while (pageCount <= source.length) {
+    const baseCount = Math.floor(source.length / pageCount);
+    const extraRows = source.length % pageCount;
+    const chunks = [];
+    let offset = 0;
+    let fits = true;
+
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+      const count = baseCount + (pageIndex < extraRows ? 1 : 0);
+      const rows = source.slice(offset, offset + count);
+      offset += count;
+      const isFirst = pageIndex === 0;
+      const isLast = pageIndex === pageCount - 1;
+      const capacity = isLast
+        ? continuationFinalCapacity
+        : isFirst
+          ? 150
+          : 210;
+
+      if (count > maxRows || sumHeights(rows) > capacity) fits = false;
+      chunks.push(rows);
     }
 
-    // If all remaining rows fit on one page by count but are too tall, reserve
-    // the largest tail that fits with the final-page totals and closing area.
-    if (remaining.length <= MAX_ITEMS_PER_PAGE) {
-      let tailCount = 0;
-      let tailHeight = 0;
-      for (let index = remaining.length - 1; index >= 0 && tailCount < finalCountLimit; index -= 1) {
-        const height = itemRowHeight(remaining[index]);
-        if (tailHeight + height > finalCapacity) break;
-        tailHeight += height;
-        tailCount += 1;
-      }
-      if (isFirst && remaining.length > 13) {
-        tailCount = Math.min(tailCount, remaining.length - 10);
-      }
-      if (tailCount > 0 && tailCount < remaining.length) {
-        let leadingCount = remaining.length - tailCount;
-        const nonFinalCapacity = isFirst ? 150 : 210;
-        while (leadingCount > 1 && sumHeights(remaining.slice(0, leadingCount)) > nonFinalCapacity) leadingCount -= 1;
-        pages.push(remaining.slice(0, leadingCount));
-        offset += leadingCount;
-        continue;
-      }
-    }
-
-    const nonFinalCapacity = isFirst ? 150 : 210;
-    let count = Math.min(MAX_ITEMS_PER_PAGE, remaining.length);
-    while (count > 1 && sumHeights(remaining.slice(0, count)) > nonFinalCapacity) count -= 1;
-
-    // Preserve at least four rows for a compact final summary page when there is room.
-    if (remaining.length - count > MAX_ITEMS_PER_PAGE) {
-      const minTailCount = Math.min(MAX_ITEMS_PER_PAGE, Math.max(4, Math.ceil(remaining.length * 0.22)));
-      count = Math.min(count, remaining.length - minTailCount);
-      while (count > 1 && sumHeights(remaining.slice(0, count)) > nonFinalCapacity) count -= 1;
-    }
-    if (count < 1) count = 1;
-    pages.push(remaining.slice(0, count));
-    offset += count;
+    if (fits) return chunks;
+    pageCount += 1;
   }
-  return pages;
+
+  return source.map(item => [item]);
 }
 
 async function loadImage(url) {
@@ -158,19 +141,20 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
   const logoSize = first ? 23 : 18;
   addPdfImage(pdf, logo, logoX, logoY, logoSize, logoSize);
 
-  const companyX = logo ? PAGE_MARGIN + logoSize + 5 : PAGE_MARGIN;
-  const companyWidth = PAGE_WIDTH - PAGE_MARGIN - companyX;
+  const availableCompanyWidth = PAGE_WIDTH - PAGE_MARGIN - (logo ? PAGE_MARGIN + logoSize + 5 : PAGE_MARGIN);
+  const companyWidth = Math.min(first ? 112 : 124, availableCompanyWidth);
+  const companyX = PAGE_WIDTH - PAGE_MARGIN - companyWidth;
   let y = first ? 14 : 13;
   y = drawWrapped(pdf, company?.company_name || "Company", companyX, y, companyWidth, {
-    fontSize: first ? 11 : 9,
+    fontSize: first ? 12 : 10,
     lineHeight: 4.2,
     bold: true,
     color: NAVY,
     align: "right"
   });
   y = drawWrapped(pdf, company?.address, companyX, y + 1, companyWidth, {
-    fontSize: first ? 7 : 6.5,
-    lineHeight: 3,
+    fontSize: first ? 8 : 7.2,
+    lineHeight: 3.4,
     align: "right"
   });
 
@@ -180,7 +164,7 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
   ].filter(Boolean).join("   |   ");
   if (contact) {
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(first ? 6.5 : 6);
+    pdf.setFontSize(first ? 7.2 : 6.8);
     pdf.setTextColor(...MUTED);
     pdf.text(contact, companyX + companyWidth, y + 1, { align: "right" });
     y += 3.5;
@@ -189,7 +173,7 @@ function drawBrandHeader(pdf, company, logo, pageIndex, invoice) {
   const gstin = company?.gstin ? "GSTIN: " + company.gstin : "";
   if (gstin) {
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(first ? 7 : 6.5);
+    pdf.setFontSize(first ? 7.8 : 7);
     pdf.setTextColor(...TEXT);
     pdf.text(gstin, companyX + companyWidth, y + 1, { align: "right" });
   }
@@ -235,7 +219,7 @@ function drawFirstPageMeta(pdf, invoice, settings) {
   let rowY = y + 7;
   for (const [label, value] of metaRows) {
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(6.8);
+    pdf.setFontSize(7.4);
     pdf.setTextColor(...MUTED);
     pdf.text(label, leftX + 3, rowY);
     pdf.setFont("helvetica", "bold");
@@ -248,7 +232,7 @@ function drawFirstPageMeta(pdf, invoice, settings) {
   pdf.setDrawColor(...BORDER);
   pdf.roundedRect(rightX, y, cardW, cardH, 2, 2, "FD");
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7.4);
   pdf.setTextColor(...NAVY);
   pdf.text("TRANSPORT & REMARKS", rightX + 3, y + 5);
   const transportRows = [
@@ -258,7 +242,7 @@ function drawFirstPageMeta(pdf, invoice, settings) {
   let transportY = y + 9;
   for (const [label, value] of transportRows) {
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(5.8);
+    pdf.setFontSize(6.6);
     pdf.setTextColor(...MUTED);
     pdf.text(label, rightX + 3, transportY);
     pdf.setTextColor(...TEXT);
@@ -272,8 +256,8 @@ function drawFirstPageMeta(pdf, invoice, settings) {
     pdf.setTextColor(...MUTED);
     pdf.text("Remarks:", rightX + 3, transportY + .4);
     drawWrapped(pdf, remarks, rightX + 19, transportY + .4, cardW - 22, {
-      fontSize: 5.6,
-      lineHeight: 2.5,
+      fontSize: 6.4,
+      lineHeight: 2.8,
       color: TEXT
     });
   }
@@ -286,25 +270,25 @@ function drawPartyCard(pdf, title, name, address, gstin, state, x, y, width, hei
   pdf.setFillColor(...LIGHT_BLUE);
   pdf.roundedRect(x, y, width, 6, 2, 2, "F");
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(7);
+  pdf.setFontSize(8);
   pdf.setTextColor(...NAVY);
   pdf.text(title, x + 3, y + 4.2);
 
   let textY = y + 10;
   textY = drawWrapped(pdf, name || "-", x + 3, textY, width - 6, {
-    fontSize: 7,
-    lineHeight: 3.2,
+    fontSize: 7.8,
+    lineHeight: 3.5,
     bold: true
   });
   textY = drawWrapped(pdf, address || "-", x + 3, textY + 0.5, width - 6, {
-    fontSize: 6.2,
-    lineHeight: 2.7,
+    fontSize: 7,
+    lineHeight: 3,
     color: MUTED
   });
   const taxLine = [gstin ? "GSTIN: " + gstin : "", state ? "State: " + state : ""].filter(Boolean).join("   |   ");
   drawWrapped(pdf, taxLine, x + 3, Math.min(y + height - 3, textY + 0.6), width - 6, {
-    fontSize: 5.9,
-    lineHeight: 2.5,
+    fontSize: 6.6,
+    lineHeight: 2.8,
     bold: true,
     color: MUTED
   });
@@ -322,7 +306,7 @@ function drawItemTable(pdf, pageItems, startY, startingIndex) {
   pdf.rect(tableX, y, CONTENT_WIDTH, headerH, "F");
   let x = tableX;
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(5.8);
+  pdf.setFontSize(6.4);
   pdf.setTextColor(255, 255, 255);
   headers.forEach((header, index) => {
     pdf.text(header, x + widths[index] / 2, y + 4.6, { align: "center", maxWidth: widths[index] - 1 });
@@ -333,7 +317,7 @@ function drawItemTable(pdf, pageItems, startY, startingIndex) {
   pageItems.forEach((item, rowIndex) => {
     const itemName = safeText(item?.item_name || item?.particulars) || "-";
     const lines = pdf.splitTextToSize(itemName, widths[1] - 3);
-    const rowH = Math.max(itemRowHeight(item), Math.min(lines.length, 4) * 3 + 2.2);
+    const rowH = Math.max(itemRowHeight(item), Math.min(lines.length, 4) * 3.5 + 2.8);
     const xPositions = [tableX];
     for (let index = 0; index < widths.length; index += 1) {
       xPositions.push(xPositions[index] + widths[index]);
@@ -363,7 +347,7 @@ function drawItemTable(pdf, pageItems, startY, startingIndex) {
     ];
 
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(6.4);
+    pdf.setFontSize(7);
     pdf.setTextColor(...TEXT);
     values.forEach((value, index) => {
       const cellX = xPositions[index];
@@ -417,17 +401,17 @@ function drawTotals(pdf, invoice, items, y, amountWords) {
   pdf.setDrawColor(...BORDER);
   pdf.roundedRect(wordsX, y - 3, wordsW, 22, 2, 2, "FD");
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7.4);
   pdf.setTextColor(...NAVY);
   pdf.text("AMOUNT IN WORDS", wordsX + 3, y + 1.2);
   drawWrapped(pdf, amountWords, wordsX + 3, y + 5, wordsW - 6, {
-    fontSize: 6.1,
-    lineHeight: 2.8,
+    fontSize: 6.8,
+    lineHeight: 3,
     bold: true
   });
 
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(6.8);
+  pdf.setFontSize(7.4);
   rows.forEach((row, index) => {
     const rowY = y + index * rowHeight;
     if (index % 2 === 0) {
@@ -444,7 +428,7 @@ function drawTotals(pdf, invoice, items, y, amountWords) {
   pdf.setFillColor(...NAVY);
   pdf.roundedRect(x, grandY - 3.8, width, 6.5, 1.2, 1.2, "F");
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8.3);
+  pdf.setFontSize(9.2);
   pdf.setTextColor(255, 255, 255);
   pdf.text("Grand Total", x + 2, grandY + 0.6);
   pdf.text("INR " + amount(invoice?.total_amount), x + width - 2, grandY + 0.6, { align: "right" });
@@ -463,7 +447,7 @@ function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
     pdf.setDrawColor(...BORDER);
     pdf.roundedRect(leftX, cardY, leftW, 24, 2, 2, "FD");
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(6.5);
+    pdf.setFontSize(7.4);
     pdf.setTextColor(...NAVY);
     pdf.text("BANK DETAILS", leftX + 3, cardY + 4.2);
     const bankRows = [
@@ -475,7 +459,7 @@ function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
     let bankY = cardY + 8;
     for (const [label, value] of bankRows) {
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(5.8);
+      pdf.setFontSize(6.6);
       pdf.setTextColor(...MUTED);
       pdf.text(label, leftX + 3, bankY);
       pdf.setTextColor(...TEXT);
@@ -485,7 +469,7 @@ function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
   }
 
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(6);
+  pdf.setFontSize(6.8);
   pdf.setTextColor(...MUTED);
   pdf.text("For " + safeText(settings?.company_name || invoice?.company_name), rightX + rightW - 2, cardY + 4, { align: "right" });
   addPdfImage(pdf, signature, rightX + 29, cardY + 5, 34, 11);
@@ -493,7 +477,7 @@ function drawFinalDetails(pdf, invoice, settings, signature, amountWords, y) {
   pdf.setLineWidth(0.25);
   pdf.line(rightX + 20, cardY + 19, rightX + rightW - 2, cardY + 19);
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(6.6);
+  pdf.setFontSize(7.2);
   pdf.setTextColor(...TEXT);
   pdf.text("Authorized Signatory", rightX + rightW / 2, cardY + 23, { align: "center" });
 
@@ -527,7 +511,7 @@ function drawPageFooter(pdf, pageNumber, pageCount, settings, continued) {
   }
 
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7);
   pdf.setTextColor(...MUTED);
   pdf.text("Page " + pageNumber + " of " + pageCount, PAGE_WIDTH / 2, 293, { align: "center" });
 }
@@ -570,7 +554,7 @@ function drawPdfPage(pdf, pageItems, pageIndex, pageCount, allItems, invoice, se
   const rowStartIndex = allItems.indexOf(pageItems[0]);
   const tableEndY = drawItemTable(pdf, pageItems, tableStartY, Math.max(0, rowStartIndex));
   if (last) {
-    const totalsEnd = drawTotals(pdf, invoice, allItems, tableEndY + 3, amountWords);
+    const totalsEnd = drawTotals(pdf, invoice, allItems, tableEndY + 7, amountWords);
     drawFinalDetails(pdf, invoice, settings, signature, amountWords, totalsEnd + 3);
   }
   drawPageFooter(pdf, pageIndex + 1, pageCount, settings, !last);
