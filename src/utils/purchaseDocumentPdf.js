@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 
 const n = value => Number(value) || 0;
-const inr = value => `INR ${n(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })};
+const inr = value => `INR ${n(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const clean = value => String(value || "—").replace(/[\r\n]+/g, " ");
 
 export function downloadPurchasePdf({ kind, document, items = [], company = {} }) {
@@ -10,7 +10,7 @@ export function downloadPurchasePdf({ kind, document, items = [], company = {} }
   const height = pdf.internal.pageSize.getHeight();
   const margin = 14;
   const usable = width - margin * 2;
-  const title = kind === "register" ? "TAX PURCHASE INVOICE" : kind === "orders" ? "PURCHASE ORDER" : kind === "returns" ? "PURCHASE RETURN" : "DEBIT NOTE";
+  const title = kind === "register" ? "TAX INVOICE" : kind === "orders" ? "PURCHASE ORDER" : kind === "returns" ? "PURCHASE RETURN" : "DEBIT NOTE";
   const number = document.invoice_no || document.order_no || document.return_no || document.debit_note_no || "Purchase Document";
   const date = document.invoice_date || document.order_date || document.return_date || document.debit_note_date || "";
   let y = 17;
