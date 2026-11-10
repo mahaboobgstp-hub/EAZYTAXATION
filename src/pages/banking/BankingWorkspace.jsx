@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
-  FiArrowDownLeft, FiArrowUpRight, FiArrowLeftRight, FiUploadCloud,
+  FiArrowDownLeft, FiArrowUpRight, FiUploadCloud,
   FiPlus, FiRefreshCw, FiSearch, FiDownload, FiCheck, FiX, FiLink,
   FiMoreVertical, FiCalendar, FiChevronDown, FiSliders, FiCheckCircle,
   FiAlertCircle, FiClock, FiCreditCard, FiFileText, FiSettings,
