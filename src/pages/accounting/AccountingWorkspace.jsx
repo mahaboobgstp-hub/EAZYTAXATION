@@ -269,6 +269,28 @@ function AccountingWorkspace() {
     </div>
   );
 
+  const monthlySummary = useMemo(() => {
+    const months = [];
+    const now = new Date();
+    for (let offset = 7; offset >= 0; offset -= 1) {
+      const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      const key = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+      const monthVouchers = postedVouchers.filter((item) => String(item.voucher_date || "").slice(0, 7) === key);
+      let income = 0;
+      let expense = 0;
+      monthVouchers.forEach((item) => {
+        postedLines.filter((line) => line.voucher_id === item.id).forEach((line) => {
+          const nature = data.groups.find((group) => group.id === data.ledgers.find((ledger) => ledger.id === line.ledger_id)?.group_id)?.account_nature;
+          if (nature === "Income") income += Number(line.credit || 0) - Number(line.debit || 0);
+          if (nature === "Expense") expense += Number(line.debit || 0) - Number(line.credit || 0);
+        });
+      });
+      months.push({ label:date.toLocaleDateString("en-IN", { month:"short" }), income:Math.max(0,income), expense:Math.max(0,expense) });
+    }
+    return months;
+  }, [postedVouchers, postedLines, data.groups, data.ledgers]);
+  const monthlyMax = Math.max(1, ...monthlySummary.flatMap((item) => [item.income, item.expense]));
+
   const renderDashboard = () => (
     <>
       {renderHeader("Accounting Dashboard", "Your company's financial position at a glance.", <><select className="accounting-filter"><option>FY 2026-27</option></select><select className="accounting-filter"><option>Current Period</option></select></>)}
@@ -280,11 +302,14 @@ function AccountingWorkspace() {
       </div>
       <div className="accounting-dashboard-grid">
         <section className="accounting-panel">
-          <div className="panel-heading"><div><h3>Recent Journal Vouchers</h3><p>Latest accounting activity</p></div><button className="text-action" onClick={() => navigate("/app/journal-voucher")}>View all</button></div>
-          <div className="table-scroll"><table className="accounting-table"><thead><tr><th>Voucher No.</th><th>Date</th><th>Type</th><th>Status</th><th className="align-right">Amount</th></tr></thead><tbody>
-            {data.vouchers.slice(0,6).map((item) => <tr key={item.id}><td className="strong-cell">{item.voucher_number}</td><td>{item.voucher_date}</td><td>{item.voucher_type}</td><td><span className={"status-pill " + item.status.toLowerCase()}>{item.status}</span></td><td className="align-right">{money(item.total_debit)}</td></tr>)}
-            {!data.vouchers.length && <tr><td colSpan="5" className="empty-cell">No vouchers created yet.</td></tr>}
-          </tbody></table></div>
+          <div className="panel-heading"><div><h3>Income vs Expense</h3><p>Monthly posted accounting activity</p></div><div className="chart-legend"><span><i className="legend-income"/> Income</span><span><i className="legend-expense"/> Expense</span></div></div>
+          <div className="accounting-bar-chart">
+            {monthlySummary.map((item) => <div className="chart-month" key={item.label}>
+              <div className="chart-bars"><span className="chart-bar income-bar" title={"Income "+money(item.income)} style={{height:(item.income/monthlyMax*100)+"%"}}/><span className="chart-bar expense-bar" title={"Expense "+money(item.expense)} style={{height:(item.expense/monthlyMax*100)+"%"}}/></div>
+              <small>{item.label}</small>
+            </div>)}
+          </div>
+          <div className="chart-footnote">Only posted vouchers are included. Draft entries are excluded.</div>
         </section>
         <section className="accounting-panel">
           <div className="panel-heading"><div><h3>Quick Actions</h3><p>Common accounting tasks</p></div></div>
@@ -296,6 +321,13 @@ function AccountingWorkspace() {
           </div>
         </section>
       </div>
+      <section className="accounting-panel">
+        <div className="panel-heading"><div><h3>Recent Journal Vouchers</h3><p>Latest accounting activity</p></div><button className="text-action" onClick={() => navigate("/app/journal-voucher")}>View all</button></div>
+        <div className="table-scroll"><table className="accounting-table"><thead><tr><th>Voucher No.</th><th>Date</th><th>Type</th><th>Status</th><th className="align-right">Amount</th></tr></thead><tbody>
+          {data.vouchers.slice(0,6).map((item) => <tr key={item.id}><td className="strong-cell">{item.voucher_number}</td><td>{item.voucher_date}</td><td>{item.voucher_type}</td><td><span className={"status-pill " + item.status.toLowerCase()}>{item.status}</span></td><td className="align-right">{money(item.total_debit)}</td></tr>)}
+          {!data.vouchers.length && <tr><td colSpan="5" className="empty-cell">No vouchers created yet.</td></tr>}
+        </tbody></table></div>
+      </section>
       <section className="accounting-panel accounting-shortcuts">
         <div className="panel-heading"><div><h3>Financial Reports</h3><p>Open live reports generated from posted accounting entries.</p></div></div>
         <div className="report-shortcuts">
