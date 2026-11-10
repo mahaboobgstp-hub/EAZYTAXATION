@@ -53,7 +53,8 @@ export default function SalesWorkspace({ kind }) {
   const [dialog, setDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", description: "", qty: "1", rate: "0" });
+  const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
+  const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0" }]);
 
   const load = async () => {
     if (!currentCompanyId) { setRows([]); setLoading(false); return; }
@@ -98,7 +99,8 @@ export default function SalesWorkspace({ kind }) {
   }, [rows, kind]);
 
   const openCreate = () => {
-    setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", description: "", qty: "1", rate: "0" });
+    setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
+    setLines([{ description: "", qty: "1", rate: "0" }]);
     setMessage(""); setDialog(true);
   };
 
@@ -113,9 +115,9 @@ export default function SalesWorkspace({ kind }) {
       const existing = await supabase.from(config.table).select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId);
       if (existing.error) throw existing.error;
       const documentNo = `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
-      const qty = Math.max(0, num(form.qty));
-      const rate = Math.max(0, num(form.rate));
-      const amount = Math.round(qty * rate * 100) / 100;
+      const validLines = lines.filter(line => line.description.trim());
+      if (!validLines.length) throw new Error("Add at least one item or description.");
+      const amount = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)), 0) * 100) / 100;
       const common = { company_id: currentCompanyId, customer_id: customer.id, customer_name: customer.customer_name, total_amount: amount, taxable_value: amount, created_at: new Date().toISOString() };
       let table, header, itemTable, parentField, id;
       if (kind === "quotations") {
@@ -132,13 +134,17 @@ export default function SalesWorkspace({ kind }) {
       const { data, error } = await supabase.from(table).insert(header).select("id").single();
       if (error) throw error;
       id = data.id;
-      if (form.description.trim()) {
-        const item = kind === "quotations" ? { [parentField]: id, line_no: 1, item_name: form.description.trim(), particulars: form.description.trim(), qty, rate, amount } :
-          kind === "orders" ? { [parentField]: id, line_no: 1, item_name: form.description.trim(), description: form.description.trim(), qty, rate, amount } :
-          { [parentField]: id, line_no: 1, item_name: form.description.trim(), description: form.description.trim(), qty, rate, amount };
-        const { error: itemError } = await supabase.from(itemTable).insert(item);
-        if (itemError) { await supabase.from(table).delete().eq("id", id); throw itemError; }
-      }
+      const itemsToInsert = validLines.map((line, index) => ({
+        [parentField]: id,
+        line_no: index + 1,
+        item_name: line.description.trim(),
+        ...(kind === "quotations" ? { particulars: line.description.trim() } : { description: line.description.trim() }),
+        qty: Math.max(0, num(line.qty)),
+        rate: Math.max(0, num(line.rate)),
+        amount: Math.round(Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)) * 100) / 100
+      }));
+      const { error: itemError } = await supabase.from(itemTable).insert(itemsToInsert);
+      if (itemError) { await supabase.from(table).delete().eq("id", id); throw itemError; }
       setDialog(false); await load();
     } catch (error) { setMessage(errorText(error)); }
     finally { setSaving(false); }
@@ -214,8 +220,8 @@ export default function SalesWorkspace({ kind }) {
       {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => { const invoice = invoices.find(i => i.id === e.target.value); setForm({ ...form, originalInvoiceId: e.target.value, customerId: invoice?.customer_id || form.customerId }); }}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
       <div className="sw-form-grid"><label>Customer<select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })}><option value="">Select customer</option>{customers.map(c => <option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></label><label>{kind === "orders" ? "Order date" : kind === "credits" ? "Credit note date" : "Quotation date"}<input required type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></label>{kind !== "credits" && <label>{kind === "orders" ? "Expected delivery" : "Valid until"}<input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} /></label>}</div>
       {kind === "credits" && <label>Reason<input required value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Reason for issuing credit" /></label>}
-      <div className="sw-form-grid"><label>Item / description<input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Optional line description" /></label><label>Quantity<input type="number" min="0" step="0.01" value={form.qty} onChange={e => setForm({ ...form, qty: e.target.value })} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={form.rate} onChange={e => setForm({ ...form, rate: e.target.value })} /></label></div>
-      <div className="sw-modal-total"><span>Document total</span><strong>{currency(num(form.qty) * num(form.rate))}</strong></div>
+      <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong><button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0" }])}>＋ Add line</button></div>{lines.map((line, index) => <div className="sw-line-row" key={index}><label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label><label>Quantity<input type="number" min="0" step="0.01" value={line.qty} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
+      <div className="sw-modal-total"><span>Document total</span><strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate), 0))}</strong></div>
       <footer><button type="button" className="sw-secondary" onClick={() => setDialog(false)}>Cancel</button><button disabled={saving} className="sw-primary">{saving ? "Saving…" : `Save ${kind === "orders" ? "Sales Order" : kind === "credits" ? "Credit Note" : "Quotation"}`}</button></footer>
       <p className="sw-note">This creates a draft commercial record. It does not post accounting entries, adjust invoice balances, or change stock.</p>
     </form></section></div>}
