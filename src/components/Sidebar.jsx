@@ -386,6 +386,8 @@ const AVAILABLE_ROUTES = new Set([
   "/app/vendors",
   "/app/sales",
   "/app/sales-register",
+  "/app/sales-orders",
+  "/app/credit-notes",
   "/app/purchases",
   "/app/expenses",
   "/app/items",
