@@ -15,7 +15,7 @@ begin
     where c.table_schema='public'
       and c.column_name='company_id'
       and tb.table_type='BASE TABLE'
-      and c.table_name not in ('company_user_access','ca_company_assignments')
+      and c.table_name not in ('company_user_access','ca_company_assignments','profiles')
   loop
     module_key := case
       when t.table_name in ('customers','vendors','items','units_of_measure','uom','expense_categories','asset_categories','gst_rates') then 'masters'
