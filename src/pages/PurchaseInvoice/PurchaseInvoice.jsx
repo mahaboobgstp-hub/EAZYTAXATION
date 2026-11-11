@@ -7,6 +7,7 @@ import { getVendorsForDropdown, getItemsForDropdown, generatePurchaseInvoiceNumb
 import PurchaseDocumentPreview from "../purchases/PurchaseDocumentPreview";
 import "./PurchaseInvoice.css";
 import "../purchases/PurchaseWorkspace.css";
+import "../../css/AndroidWorkflow.css";
 
 const n = v => Number(v) || 0;
 const money = v => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n(v));
