@@ -517,3 +517,8 @@
   .delivery-challan-list-table-wrapper{overflow-x:auto}
   .delivery-challan-list-table{min-width:680px}
 }
+
+.dc-mobile-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;margin:0 0 16px;background:#f4f7fc;border:1px solid #e1e8f2;border-radius:12px;color:#77869a;font-size:12px;font-weight:700}
+.dc-mobile-steps span{padding:9px 4px;text-align:center;border-radius:8px}
+.dc-mobile-steps span.active{background:#e4edff;color:#155eef}
+.dc-mobile-steps span.complete{background:#e8f7ef;color:#177245}
