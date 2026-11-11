@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX, FiMenu } from "react-icons/fi";
 import { MODULES, useModule } from "../context/ModuleContext";
 import "../css/Header.css";
 
@@ -117,7 +117,7 @@ const PAGES = [
   { label: "Backup & Restore", path: "/app/backup", module: "billing" },
 ];
 
-function Header() {
+function Header({ onToggleSidebar }) {
   const { activeModule, setActiveModule } = useModule();
   const navigate = useNavigate();
   const location = useLocation();
