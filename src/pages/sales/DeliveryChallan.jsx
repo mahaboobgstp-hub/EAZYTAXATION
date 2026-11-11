@@ -1143,8 +1143,17 @@ const viewChallan = async (challanId) => {
 
     useEffect(() => {
         const challanId = location.state?.editChallanId;
-        if (!challanId || !currentCompanyId) return;
-        handleEdit(challanId).then(() => navigate("/app/delivery-challans/new", { replace: true, state: null }));
+        const salesOrderId = location.state?.salesOrderId;
+        if (!currentCompanyId) return;
+        if (challanId) {
+            handleEdit(challanId).then(() => navigate("/app/delivery-challans/new", { replace: true, state: null }));
+            return;
+        }
+        if (salesOrderId) {
+            setMobileStep(1);
+            handleSalesOrderChange({ target: { value: salesOrderId } })
+                .then(() => navigate("/app/delivery-challans/new", { replace: true, state: null }));
+        }
     }, [currentCompanyId, location.state]);
 
     return (
