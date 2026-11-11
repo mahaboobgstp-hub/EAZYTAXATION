@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
@@ -16,6 +17,8 @@ export default function PurchaseInvoice() {
   const { currentCompany, currentCompanyId } = useCompany();
   const location = useLocation();
   const navigate = useNavigate();
+  const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+  const [step,setStep] = useState(1);
   const [vendors,setVendors] = useState([]);
   const [itemsMaster,setItemsMaster] = useState([]);
   const [editingInvoiceId,setEditingInvoiceId] = useState(null);
@@ -121,11 +124,14 @@ export default function PurchaseInvoice() {
   const setField=(key,value)=>setFormData(f=>({...f,[key]:value}));
   const companyName=currentCompany?.company_name||"";
 
-  return <main className="purchase-page">
+  const goNext = () => { if (step === 1 && !formData.supplier_invoice_no.trim()) { setMessage("Enter the supplier invoice number to continue."); return; } if (step === 2 && !formData.vendor_id) { setMessage("Select a supplier to continue."); return; } if (step === 3 && !normalized.length) { setMessage("Add at least one invoice item to continue."); return; } setMessage(""); setStep(s=>Math.min(5,s+1)); };
+
+  return <main className={isAndroid ? "purchase-page android-workflow" : "purchase-page"}>
     <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><button className="pw-secondary" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></header>
     {message&&<div className="pi-error">{message}</div>}
+    {isAndroid && <nav className="android-stepper">{["Invoice","Supplier","Items","Transport","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step)setStep(i+1);}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
     {!currentCompanyId?<div className="pi-card">Choose a current company from the sidebar to create a purchase invoice.</div>:<>
-      <section className="pi-card"><h2>Purchase Invoice Details</h2><div className="pi-grid">
+      <section className="pi-card" style={isAndroid&&step!==1?{display:"none"}:{}}><h2>Purchase Invoice Details</h2><div className="pi-grid">
         <Field label="Company" value={companyName} readOnly/>
         <Field label="Purchase Invoice No." value={formData.invoice_no} readOnly/>
         <Field label="Purchase Date" type="date" value={formData.invoice_date} onChange={v=>setField("invoice_date",v)}/>
@@ -133,7 +139,7 @@ export default function PurchaseInvoice() {
         <Field label="Supplier Invoice Date" type="date" value={formData.supplier_invoice_date} onChange={v=>setField("supplier_invoice_date",v)}/>
         <label className="pi-field">GST Treatment<select value={formData.gst_treatment} onChange={e=>setField("gst_treatment",e.target.value)}>{["Regular Supplier (Registered)","Composition Supplier","Unregistered Supplier","SEZ / Import"].map(x=><option key={x}>{x}</option>)}</select></label>
       </div></section>
-      <section className="pi-card"><h2>Supplier Details</h2><div className="pi-grid">
+      <section className="pi-card" style={isAndroid&&step!==2?{display:"none"}:{}}><h2>Supplier Details</h2><div className="pi-grid">
         <label className="pi-field">Vendor (Supplier) *<select required value={formData.vendor_id} onChange={e=>chooseVendor(e.target.value)}><option value="">Select supplier from Vendor Master</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.vendor_name}{v.gstin?" · "+v.gstin:""}</option>)}</select></label>
         <Field label="GSTIN" value={formData.gstin} onChange={v=>setField("gstin",v)}/>
         <Field label="Supplier State" value={formData.vendor_state} onChange={v=>setField("vendor_state",v)}/>
@@ -141,13 +147,14 @@ export default function PurchaseInvoice() {
         <label className="pi-field pi-wide">Billing Address<textarea rows="2" value={formData.billing_address} onChange={e=>setField("billing_address",e.target.value)}/></label>
         <label className="pi-field pi-wide">Shipping Address<textarea rows="2" value={formData.shipping_address} onChange={e=>setField("shipping_address",e.target.value)}/></label>
       </div><p className="pi-tax-note">{selectedVendor?.state||formData.place_of_supply||"Supplier state"} · {sameState?"Intra-State (CGST + SGST)":"Inter-State (IGST)"}</p></section>
-      <section className="pi-items-summary"><div className="pi-card"><h2>Invoice Items</h2><div className="pi-items-scroll"><table className="pi-items-table"><thead><tr><th>#</th><th>Item / Product</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>Disc %</th><th>GST %</th><th>Taxable</th><th>Total</th><th></th></tr></thead><tbody>{lines.map((line,index)=>{
+      <section className="pi-items-summary" style={isAndroid&&step!==3?{display:"none"}:{}}><div className="pi-card"><h2>Invoice Items</h2><div className="pi-items-scroll"><table className="pi-items-table"><thead><tr><th>#</th><th>Item / Product</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>Disc %</th><th>GST %</th><th>Taxable</th><th>Total</th><th></th></tr></thead><tbody>{lines.map((line,index)=>{
         const c=normalized[index]||{taxable_value:0,line_total:0};
         return <tr key={index}><td>{index+1}</td><td><select value={line.item_id} onChange={e=>chooseItem(index,e.target.value)}><option value="">Select item</option>{itemsMaster.map(item=><option key={item.id} value={item.id}>{item.item_name}</option>)}</select>{!line.item_id&&<input className="pi-custom-item" value={line.item_name} placeholder="Or type a custom item" onChange={e=>updateLine(index,"item_name",e.target.value)}/>}</td><td><input value={line.hsn_sac} onChange={e=>updateLine(index,"hsn_sac",e.target.value)} placeholder="HSN"/></td><td><input type="number" min="0" step="0.001" value={line.qty} onChange={e=>updateLine(index,"qty",e.target.value)}/></td><td><input value={line.uom} onChange={e=>updateLine(index,"uom",e.target.value)} placeholder="Unit"/></td><td><input type="number" min="0" step="0.01" value={line.rate} onChange={e=>updateLine(index,"rate",e.target.value)}/></td><td><input type="number" min="0" max="100" step="0.01" value={line.discount_percent} onChange={e=>updateLine(index,"discount_percent",e.target.value)}/></td><td><select value={line.gst_rate} onChange={e=>updateLine(index,"gst_rate",e.target.value)}>{["0","5","12","18","28"].map(x=><option key={x} value={x}>{x}%</option>)}</select></td><td>{money(c.taxable_value)}</td><td><strong>{money(c.line_total)}</strong></td><td><button className="pi-delete" type="button" onClick={()=>setLines(p=>p.length>1?p.filter((_,i)=>i!==index):p)} aria-label="Remove item">×</button></td></tr>;
       })}</tbody></table></div><button className="pi-add" type="button" onClick={()=>setLines(p=>[...p,emptyLine()])}>＋ Add Another Item</button></div>
         <aside className="pi-summary"><h2>GST &amp; Amount Summary</h2><SummaryRow label="Subtotal (Taxable Amount)" value={money(summary.taxable)}/><SummaryRow label="CGST" value={money(summary.cgst)}/><SummaryRow label="SGST" value={money(summary.sgst)}/><SummaryRow label="IGST" value={money(summary.igst)}/><SummaryRow label="Round-off" value={money(summary.roundOff)}/><div className="pi-summary-grand"><span>Grand Total</span><strong>{money(summary.grandTotal)}</strong></div></aside></section>
-      <section className="pi-card"><h2>Transport &amp; Remarks</h2><div className="pi-grid two"><Field label="Vehicle Number" value={formData.vehicle_no} onChange={v=>setField("vehicle_no",v)}/><Field label="E-Way Bill Number" value={formData.eway_bill_no} onChange={v=>setField("eway_bill_no",v)}/><label className="pi-field pi-wide">Remarks / Narration<textarea rows="2" value={formData.remarks} onChange={e=>setField("remarks",e.target.value)}/></label></div></section>
-      <section className="pi-actions"><button className="pi-btn secondary" type="button" onClick={reset}>Clear Form</button><button className="pi-btn outline" type="button" onClick={()=>save(true)} disabled={saving}>{saving?"Saving…":"Save & Print"}</button><button className="pi-btn primary" type="button" onClick={()=>save(false)} disabled={saving}>{saving?"Saving…":editingInvoiceId?"Update Purchase Invoice":"Save Purchase Invoice"}</button></section>
+      <section className="pi-card" style={isAndroid&&step!==4?{display:"none"}:{}}><h2>Transport &amp; Remarks</h2><div className="pi-grid two"><Field label="Vehicle Number" value={formData.vehicle_no} onChange={v=>setField("vehicle_no",v)}/><Field label="E-Way Bill Number" value={formData.eway_bill_no} onChange={v=>setField("eway_bill_no",v)}/><label className="pi-field pi-wide">Remarks / Narration<textarea rows="2" value={formData.remarks} onChange={e=>setField("remarks",e.target.value)}/></label></div></section>
+      {isAndroid && step===5 && <section className="pi-card android-review"><h2>Review Purchase Invoice</h2><p><b>Supplier:</b> {selectedVendor?.vendor_name||"—"}</p><p><b>Supplier Invoice:</b> {formData.supplier_invoice_no||"—"}</p><p><b>Items:</b> {normalized.length}</p><SummaryRow label="Taxable Amount" value={money(summary.taxable)}/><SummaryRow label="CGST" value={money(summary.cgst)}/><SummaryRow label="SGST" value={money(summary.sgst)}/><SummaryRow label="IGST" value={money(summary.igst)}/><div className="pi-summary-grand"><span>Grand Total</span><strong>{money(summary.grandTotal)}</strong></div></section>}
+      <section className={isAndroid?"pi-actions android-workflow-actions":"pi-actions"}>{isAndroid ? <><button className="pi-btn secondary" type="button" onClick={()=>step===1?navigate("/app/purchase-register"):setStep(s=>s-1)}>{step===1?"Cancel":"Back"}</button>{step<5?<button className="pi-btn primary" type="button" onClick={goNext}>Continue →</button>:<><button className="pi-btn outline" type="button" onClick={()=>save(true)} disabled={saving}>{saving?"Saving…":"Save & Print"}</button><button className="pi-btn primary" type="button" onClick={()=>save(false)} disabled={saving}>{saving?"Saving…":editingInvoiceId?"Update Invoice":"Save Invoice"}</button></>}</> : <><button className="pi-btn secondary" type="button" onClick={reset}>Clear Form</button><button className="pi-btn outline" type="button" onClick={()=>save(true)} disabled={saving}>{saving?"Saving…":"Save & Print"}</button><button className="pi-btn primary" type="button" onClick={()=>save(false)} disabled={saving}>{saving?"Saving…":editingInvoiceId?"Update Purchase Invoice":"Save Purchase Invoice"}</button></>}</section>
     </>}
     {preview&&<PurchaseDocumentPreview {...preview} onClose={()=>setPreview(null)}/>}
   </main>;
