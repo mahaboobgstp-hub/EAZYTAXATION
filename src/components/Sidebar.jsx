@@ -488,6 +488,8 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
   const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+  const effectiveModuleId = isNativeAndroid ? "billing" : activeModule;
 
   const [openMenu, setOpenMenu] = useState("");
   const [isCaUser, setIsCaUser] = useState(false);
@@ -524,8 +526,15 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
     };
   }, []);
 
-  const currentModule = MODULES[activeModule] || MODULES.billing;
-  const currentModuleLocked = LOCKED_MODULES.has(activeModule);
+  const currentModule = MODULES[effectiveModuleId] || MODULES.billing;
+  const currentModuleLocked = LOCKED_MODULES.has(effectiveModuleId);
+  const visibleModuleGroups = isNativeAndroid
+    ? currentModule.groups.filter(group => group.title === "Sales").map(group => ({
+        ...group,
+        links: group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
+      }))
+    : currentModule.groups;
+  const visibleCommonGroups = isNativeAndroid ? ANDROID_COMMON_GROUPS : COMMON_GROUPS;
 
   const toggleMenu = (menuName) => {
     setOpenMenu((previous) => previous === menuName ? "" : menuName);
@@ -705,13 +714,13 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
           >
             <FiHome />
             <span>
-              {activeModule === "hr"
+              {effectiveModuleId === "hr"
                 ? "HR Dashboard"
-                : activeModule === "payroll"
+                : effectiveModuleId === "payroll"
                   ? "Payroll Dashboard"
-                  : activeModule === "inventory"
+                  : effectiveModuleId === "inventory"
                     ? "Inventory Dashboard"
-                    : activeModule === "supply-chain"
+                    : effectiveModuleId === "supply-chain"
                       ? "Supply Chain Dashboard"
                       : "Dashboard"}
             </span>
@@ -720,14 +729,14 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
         )}
 
 
-        {currentModule.groups.map((group) =>
-          renderGroup(group, activeModule)
+        {visibleModuleGroups.map((group) =>
+          renderGroup(group, effectiveModuleId)
         )}
 
         <div className="sidebar-section-label">ORGANIZATION &amp; SETTINGS</div>
 
         <div className="common-workspace">
-          {COMMON_GROUPS.map((group) =>
+          {visibleCommonGroups.map((group) =>
             renderGroup(group, "common")
           )}
         </div>
