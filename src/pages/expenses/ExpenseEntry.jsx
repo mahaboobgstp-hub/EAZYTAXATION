@@ -9,6 +9,7 @@ import {
 } from "../../services/expenseService";
 import ExpenseDocumentPreview from "./ExpenseDocumentPreview";
 import "../../css/expenses/ExpenseWorkspace.css";
+import "../../css/AndroidWorkflow.css";
 
 const today = () => { const d = new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
 const n = value => Number(value) || 0;
