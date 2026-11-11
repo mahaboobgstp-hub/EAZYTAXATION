@@ -49,3 +49,5 @@
 .mobile-sales-success h1{font-size:22px;margin:0}.mobile-sales-success p{margin:0;color:#64748b}.mobile-sales-success strong{font-size:25px;color:#15803d}.mobile-sales-success span{color:#64748b;font-size:13px}
 .mobile-sales-success .mobile-sales-primary,.mobile-sales-success .mobile-sales-secondary{width:100%}
 @media(min-width:700px){.mobile-sales-page{padding:24px}.mobile-sales-card{padding:22px}}
+
+.mobile-sales-amount-words{display:grid;gap:5px;padding:12px;margin-top:12px;background:#f7f9fc;border:1px solid #e5ebf4;border-radius:11px;color:#64748b;font-size:11px}.mobile-sales-amount-words strong{color:#253650;font-size:12px;line-height:1.5;font-weight:600}
