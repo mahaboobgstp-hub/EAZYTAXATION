@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import {
@@ -342,6 +343,7 @@ function AccountingWorkspace() {
   const renderChart = () => (
     <>
       {renderHeader("Chart of Accounts", "Manage account groups, subgroups and general ledgers.", <><button className="btn-secondary" onClick={loadDefaultGroups} disabled={busy || data.groups.length > 0}>Load Standard Groups</button><button className="btn-secondary" onClick={() => setShowGroupForm(true)}>＋ New Group</button><button className="btn-primary" onClick={() => setShowLedgerForm(true)}>＋ New Ledger</button></>)}
+      <BulkTransactionImport kind="accounts" />
       <section className="accounting-panel">
         <div className="coa-toolbar"><input placeholder="⌕  Search group or ledger..." onChange={(e) => { const value=e.target.value.toLowerCase(); setExpanded(Object.fromEntries(data.groups.map((g)=>[g.id, !value || g.group_name.toLowerCase().includes(value)]))); }} /><div className="view-toggle"><button className="selected">Tree View</button><button onClick={() => setExpanded(Object.fromEntries(data.groups.map((g)=>[g.id,true])))}>Expand All</button></div></div>
         <div className="table-scroll"><table className="accounting-table coa-table"><thead><tr><th>Account / Ledger</th><th>Type</th><th>Code</th><th>Nature</th><th className="align-right">Balance (₹)</th></tr></thead><tbody>
