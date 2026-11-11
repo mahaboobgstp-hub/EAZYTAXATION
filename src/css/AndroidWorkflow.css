@@ -1,0 +1,28 @@
+/* Native Android multi-screen form layout. Web layouts remain untouched. */
+.android-workflow { padding-bottom: 92px !important; }
+.android-stepper { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; margin:12px 0 16px; padding:8px; background:#f4f6fa; border-radius:14px; }
+.android-stepper button { min-width:0; border:0; background:transparent; color:#667085; padding:7px 2px; display:flex; flex-direction:column; align-items:center; gap:5px; font-size:10px; font-weight:600; }
+.android-stepper button b { width:25px; height:25px; display:grid; place-items:center; border-radius:50%; background:#e4e7ec; color:#475467; font-size:12px; }
+.android-stepper button.active b,.android-stepper button.complete b { background:#175cd3; color:#fff; }
+.android-stepper button.active { color:#175cd3; }
+.android-workflow .pi-card,.android-workflow .ew-card { border-radius:14px; margin-bottom:12px; padding:15px; }
+.android-workflow .pi-grid,.android-workflow .ew-grid,.android-workflow .ew-top-fields { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+.android-workflow .pi-wide,.android-workflow .ew-wide { grid-column:1; }
+.android-workflow .pi-items-summary { display:block; }
+.android-workflow .pi-items-scroll,.android-workflow .ew-item-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.android-workflow .pi-items-table,.android-workflow .ew-item-table { min-width:760px; }
+.android-workflow input,.android-workflow select,.android-workflow textarea { min-height:44px; font-size:16px; }
+.android-workflow textarea { min-height:82px; }
+.android-workflow .pi-field,.android-workflow .ew-field { width:100%; }
+.android-workflow-actions { position:fixed; z-index:30; left:0; right:0; bottom:0; margin:0 !important; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:#fff; box-shadow:0 -5px 20px rgba(16,24,40,.12); display:flex; gap:9px; }
+.android-workflow-actions button { flex:1; min-height:46px; margin:0 !important; }
+.android-review .pi-summary-grand { margin-top:12px; }
+@media(max-width:700px) {
+ .android-workflow .ew-heading,.android-workflow .pw-heading { align-items:flex-start; gap:8px; }
+ .android-workflow .ew-heading h1,.android-workflow .pw-heading h1 { font-size:21px; }
+ .android-workflow .ew-two-cards { display:block; }
+ .android-workflow .ew-two-cards>.ew-card { margin-bottom:12px; }
+ .android-workflow .ew-bottom-grid { display:block; }
+ .android-workflow .ew-summary { margin-top:12px; }
+ .android-workflow .pi-actions { flex-wrap:nowrap; }
+}
