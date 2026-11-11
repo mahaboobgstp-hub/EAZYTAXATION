@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
@@ -97,6 +98,7 @@ export default function ExpenseEntry(){
 
   return <main className="expense-page">
     <header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Add Expense</p><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></header>
+    <BulkTransactionImport kind="expenses" />
     {message&&<div className="ew-alert">{message}<button type="button" onClick={()=>setMessage("")}>×</button></div>}
     {!currentCompanyId?<section className="ew-card">Choose a current company from the sidebar to record expenses.</section>:<>
       <form onSubmit={e=>save(e,false)}>
