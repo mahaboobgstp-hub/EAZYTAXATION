@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/auth/Login.css";
+import { supabase } from "../../supabase/supabaseClient";
 
 import {
 
@@ -46,17 +47,30 @@ function Login() {
 
       setLoading(true);
 
-      await loginUser(
-
+      const loginData = await loginUser(
         formData.email,
-
         formData.password
-
       );
 
-      alert("Login Successful");
+      const signedInUserId = loginData?.user?.id;
+      const { data: ownedCompanies, error: ownedError } = await supabase
+        .from("companies")
+        .select("id")
+        .eq("owner_user_id", signedInUserId)
+        .limit(1);
+      if (ownedError) throw ownedError;
 
-      navigate("/app/companies");
+      const { data: caAssignments, error: caError } = await supabase
+        .from("ca_company_assignments")
+        .select("id")
+        .eq("ca_user_id", signedInUserId)
+        .eq("status", "Active")
+        .limit(1);
+
+      if (caError && caError.code !== "42P01") throw caError;
+
+      alert("Login Successful");
+      navigate(caAssignments?.length ? "/app/ca-workspace" : ownedCompanies?.length ? "/app/companies" : "/app");
 
     }
 
