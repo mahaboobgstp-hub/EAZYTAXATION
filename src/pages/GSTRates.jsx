@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BulkTransactionImport from "../components/BulkTransactionImport";
 import {
     FiSearch,
     FiUpload,
@@ -275,6 +276,8 @@ function GSTRates() {
                     <h1>
                         GST Rates
                     </h1>
+
+                    <BulkTransactionImport kind="tax-rates" />
 
                     <p>
                         HSN & SAC master with GST rate information
