@@ -420,6 +420,7 @@ const AVAILABLE_ROUTES = new Set([
   "/app/expenses",
   "/app/expense-register",
   "/app/payments",
+  "/app/receipts",
   "/app/banking",
   "/app/items",
   "/app/uom",
