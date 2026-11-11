@@ -182,7 +182,8 @@ function App() {
           path="/app"
           element={<Layout />}
         >
-          <Route index element={<Dashboard />} />\n          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
 
           <Route
             path="/app/companies"
