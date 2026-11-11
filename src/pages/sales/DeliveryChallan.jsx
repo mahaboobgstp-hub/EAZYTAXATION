@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryChallanPrint from "./DeliveryChallanPrint";
 import {
@@ -33,6 +34,8 @@ import {
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
 
+const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+
 function DeliveryChallan() {
 
     const location = useLocation();
@@ -60,6 +63,7 @@ const [challanSettings, setChallanSettings] = useState(null);
 const [printMode, setPrintMode] = useState(false);
 
     const [editingChallanId, setEditingChallanId] = useState(null);
+    const [mobileStep, setMobileStep] = useState(1);
 
     const [formData, setFormData] = useState({
         company_id: "",
@@ -996,9 +1000,11 @@ const viewChallan = async (challanId) => {
             ) : (
 
                 <form onSubmit={handleSubmit}>
+                    {isNativeAndroid && <nav className="dc-mobile-steps" aria-label="Delivery challan steps"><span className={mobileStep === 1 ? "active" : mobileStep > 1 ? "complete" : ""}>1. Details</span><span className={mobileStep === 2 ? "active" : mobileStep > 2 ? "complete" : ""}>2. Items</span><span className={mobileStep === 3 ? "active" : ""}>3. Review</span></nav>}
 
 
-                    {/* ====================================
+
+                    {(!isNativeAndroid || mobileStep === 1) && <>\n                    {/* ====================================
                         BASIC DETAILS
                     ==================================== */}
 
@@ -1297,7 +1303,7 @@ const viewChallan = async (challanId) => {
                     </div>
 
 
-                    {/* ====================================
+                    </>}\n\n                    {(!isNativeAndroid || mobileStep === 2) && <>\n                    {/* ====================================
                         ITEMS
                     ==================================== */}
 
@@ -1521,7 +1527,7 @@ const viewChallan = async (challanId) => {
                     </button>
 
 
-                    {/* ====================================
+                    </>}\n\n                    {/* ====================================
                         REMARKS
                     ==================================== */}
 
@@ -1550,7 +1556,7 @@ const viewChallan = async (challanId) => {
                     </div>
 
 
-                    {/* ====================================
+                    {(!isNativeAndroid || mobileStep === 3) && <>\n                    {/* ====================================
                         TOTALS
                     ==================================== */}
 
@@ -1610,37 +1616,24 @@ const viewChallan = async (challanId) => {
                     </div>
 
 
-                    {/* ====================================
+                    </>}\n\n                    {/* ====================================
                         BUTTONS
                     ==================================== */}
 
-                    <div style={{
-                        marginTop: "25px"
-                    }}>
-
-                        <button
-                            type="submit"
-                        >
-                            {editingChallanId
-                                ? "Update Delivery Challan"
-                                : "Save Delivery Challan"}
-                        </button>
-
-
-                        {editingChallanId && (
-
-                            <button
-                                type="button"
-                                onClick={resetForm}
-                                style={{
-                                    marginLeft: "10px"
-                                }}
-                            >
-                                Cancel Edit
-                            </button>
-
-                        )}
-
+                    <div className="delivery-challan-actions">
+                        {isNativeAndroid ? <>
+                            <button type="button" className="delivery-challan-secondary-btn" onClick={() => mobileStep === 1 ? navigate("/app/delivery-challans") : setMobileStep(step => step - 1)}>{mobileStep === 1 ? "Cancel" : "Back"}</button>
+                            {mobileStep < 3
+                                ? <button type="button" className="delivery-challan-primary-btn" onClick={() => {
+                                    if (mobileStep === 1 && (!formData.challan_no || !formData.challan_date || !formData.customer_id)) { alert("Complete challan number, date and customer first."); return; }
+                                    if (mobileStep === 2 && !items.some(item => item.item_id && Number(item.qty) > 0)) { alert("Add at least one item with a valid delivery quantity."); return; }
+                                    setMobileStep(step => step + 1);
+                                }}>Next: {mobileStep === 1 ? "Add Items" : "Review"} →</button>
+                                : <button type="submit" className="delivery-challan-primary-btn">{editingChallanId ? "Update Delivery Challan" : "Save Delivery Challan"}</button>}
+                        </> : <>
+                            <button type="submit" className="delivery-challan-primary-btn">{editingChallanId ? "Update Delivery Challan" : "Save Delivery Challan"}</button>
+                            {editingChallanId && <button type="button" className="delivery-challan-secondary-btn" onClick={resetForm}>Cancel Edit</button>}
+                        </>}
                     </div>
 
                 </form>
