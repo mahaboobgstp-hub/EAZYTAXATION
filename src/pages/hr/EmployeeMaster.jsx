@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useCompany } from "../../context/CompanyContext";
 import "../../css/hr/EmployeeMaster.css";
 import { supabase } from "../../supabase/supabaseClient";
@@ -2087,6 +2088,8 @@ setTdsApplicable(
             <h2>
                 Employee Master
             </h2>
+
+            <BulkTransactionImport kind="employees" />
 
 
             {!companyLoading &&
