@@ -4,6 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext";
 import { useModule } from "../context/ModuleContext";
 import { supabase } from "../supabase/supabaseClient";
+import { Capacitor } from "@capacitor/core";
 
 import {
   FiHome,
@@ -465,6 +466,12 @@ const LOCKED_HR_GROUPS = new Set([
 ]);
 
 
+const ANDROID_COMMON_GROUPS = [
+  { title: "Company Setup", icon: FiBriefcase, links: [["Company Creation", "/app/companies"]] },
+  { title: "Sales Masters", icon: FiDatabase, links: [["Customers", "/app/customers"], ["Items", "/app/items"], ["Units (UOM)", "/app/uom"]] },
+  { title: "Invoice Settings", icon: FiSettings, links: [["Invoice Settings", "/app/invoice-settings"]] },
+];
+
 const LOCKED_MODULES = new Set([
   "inventory",
   "supply-chain",
@@ -677,15 +684,15 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
           >
             <FiHome />
             <span>
-              {activeModule === "hr"
+              {effectiveModuleId === "hr"
                 ? "HR Dashboard"
-                : activeModule === "payroll"
+                : effectiveModuleId === "payroll"
                   ? "Payroll Dashboard"
-                  : activeModule === "inventory"
+                  : effectiveModuleId === "inventory"
                     ? "Inventory Dashboard"
-                    : activeModule === "supply-chain"
+                    : effectiveModuleId === "supply-chain"
                       ? "Supply Chain Dashboard"
-                      : activeModule === "gst-tax"
+                      : effectiveModuleId === "gst-tax"
                         ? "GST & Tax Dashboard"
                         : "Dashboard"}
             </span>
