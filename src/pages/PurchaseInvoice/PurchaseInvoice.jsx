@@ -38,7 +38,7 @@ export default function PurchaseInvoice() {
 
   useEffect(()=>{
     if(!currentCompanyId || editingInvoiceId || formData.invoice_no)return;
-    generatePurchaseInvoiceNumber().then(no=>setFormData(f=>({...f,invoice_no:no}))).catch(async()=>{
+    generatePurchaseInvoiceNumber(currentCompanyId).then(no=>setFormData(f=>({...f,invoice_no:no}))).catch(async()=>{
       const {data:client}=await import("../../supabase/supabaseClient");
       const {count}=await client.supabase.from("purchase_invoices").select("id",{count:"exact",head:true}).eq("company_id",currentCompanyId);
       setFormData(f=>({...f,invoice_no:"PI-"+new Date().getFullYear()+"-"+String((count||0)+1).padStart(5,"0")}));
