@@ -37,3 +37,70 @@
  .android-workflow .pw-table-scroll,.android-workflow .ew-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
  .android-workflow .pw-table-scroll table,.android-workflow .ew-table-scroll table { min-width:760px; }
 }
+
+
+/* Purchase invoice stepper: keep the native step design above global button resets. */
+.purchase-page.android-workflow .android-stepper {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 5px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 12px 0 16px !important;
+  padding: 8px !important;
+  border: 1px solid #e1e8f0 !important;
+  border-radius: 14px !important;
+  background: #f4f7fb !important;
+}
+.purchase-page.android-workflow .android-stepper button {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 58px !important;
+  padding: 6px 1px !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #66758a !important;
+  font-family: inherit !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+.purchase-page.android-workflow .android-stepper button b {
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 25px !important;
+  width: 25px !important;
+  height: 25px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #e1e7ef !important;
+  color: #526176 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+.purchase-page.android-workflow .android-stepper button.active {
+  border-color: #c8dcff !important;
+  background: #ffffff !important;
+  color: #155eef !important;
+}
+.purchase-page.android-workflow .android-stepper button.active b,
+.purchase-page.android-workflow .android-stepper button.complete b {
+  background: #155eef !important;
+  color: #ffffff !important;
+}
+.purchase-page.android-workflow .android-stepper button.complete {
+  color: #175cd3 !important;
+}
+.purchase-page.android-workflow .android-stepper button:focus-visible {
+  outline: 2px solid #155eef !important;
+  outline-offset: 2px !important;
+}
