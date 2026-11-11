@@ -62,6 +62,9 @@ import Items from './pages/masters/Items';
 import Uom from './pages/masters/Uom';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
+import UsersAccess from "./pages/settings/UsersAccess";
+import CAAssignment from "./pages/settings/CAAssignment";
+import CAWorkspace from "./pages/settings/CAWorkspace";
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
 import SalesRegister from "./pages/sales/SalesRegister";
@@ -267,6 +270,9 @@ function App() {
             path="invoice-settings"
             element={<InvoiceSettings />}
           />
+          <Route path="users-access" element={<UsersAccess />} />
+          <Route path="ca-assignment" element={<CAAssignment />} />
+          <Route path="ca-workspace" element={<CAWorkspace />} />
 
           <Route
             path="items"

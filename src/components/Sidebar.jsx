@@ -334,7 +334,9 @@ const COMMON_GROUPS = [
     icon: FiSettings,
     links: [
       ["Company Settings", "/app/company-settings"],
-      ["Users", "/app/users"],
+      ["Users & Access", "/app/users-access"],
+      ["CA Assignment", "/app/ca-assignment"],
+      ["My CA Companies", "/app/ca-workspace"],
       ["Roles & Permissions", "/app/roles"],
       ["Backup & Restore", "/app/backup"],
       ["Invoice Settings", "/app/invoice-settings"],
@@ -411,6 +413,9 @@ const AVAILABLE_ROUTES = new Set([
   "/app/item-ledger",
   "/app/gst-reports",
   "/app/invoice-settings",
+  "/app/users-access",
+  "/app/ca-assignment",
+  "/app/ca-workspace",
 ]);
 
 /*
@@ -443,8 +448,13 @@ function Sidebar() {
   const { activeModule } = useModule();
   const location = useLocation();
 
-  const [openMenu, setOpenMenu] = useState("");
-  const [commonOpen, setCommonOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState(() =>
+    ["/app/users-access", "/app/ca-assignment", "/app/ca-workspace"].includes(location.pathname)
+      ? "common-Administration" : ""
+  );
+  const [commonOpen, setCommonOpen] = useState(() =>
+    ["/app/users-access", "/app/ca-assignment", "/app/ca-workspace"].includes(location.pathname)
+  );
 
   const currentModule = MODULES[activeModule] || MODULES.billing;
   const currentModuleLocked = LOCKED_MODULES.has(activeModule);
