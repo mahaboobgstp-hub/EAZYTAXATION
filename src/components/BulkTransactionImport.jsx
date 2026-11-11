@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import "./BulkTransactionImport.css";
+import "../css/BulkTransactionImport.css";
 
 const TEMPLATES = {
   sales: {
