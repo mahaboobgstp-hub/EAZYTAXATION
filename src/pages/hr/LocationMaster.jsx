@@ -392,6 +392,8 @@ export default function LocationMaster() {
                 Location Master
             </h1>
 
+            <BulkTransactionImport kind="locations" />
+
 
             <p>
 
