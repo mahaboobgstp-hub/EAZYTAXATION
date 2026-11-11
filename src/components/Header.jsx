@@ -194,6 +194,7 @@ function Header({ onToggleSidebar }) {
 
   return (
     <header className="header">
+      <button type="button" className="sidebar-toggle-button" onClick={onToggleSidebar} aria-label="Toggle sidebar" title="Show or hide sidebar"><FiMenu /></button>
       <nav className="module-switcher" aria-label="ERP modules">
         {MODULES.map((module) => (
           <button
