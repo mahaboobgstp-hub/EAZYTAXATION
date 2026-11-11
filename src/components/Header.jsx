@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiSearch, FiX, FiMenu } from "react-icons/fi";
 import { MODULES, useModule } from "../context/ModuleContext";
+import { useCompany } from "../context/CompanyContext";
 import "../css/Header.css";
 
 const PAGES = [
@@ -119,6 +120,7 @@ const PAGES = [
 
 function Header({ onToggleSidebar }) {
   const { activeModule, setActiveModule } = useModule();
+  const { companies, currentCompany, changeCompany, loading: companiesLoading } = useCompany();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -193,7 +195,19 @@ function Header({ onToggleSidebar }) {
   };
 
   return (
-    <header className="header">
+    <header className="header">\n      <style>{`
+        /* Company identity belongs in the top application bar, not the sidebar. */
+        .sidebar-logo, .sidebar > .company-card { display: none !important; }
+        .header-company-switcher { display:flex; flex:0 1 230px; flex-direction:column; justify-content:center; min-width:150px; max-width:260px; gap:3px; padding:0 10px; }
+        .header-company-label { color:#64748b; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+        .header-company-select { width:100%; min-width:0; height:34px; padding:0 28px 0 10px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; color:#0f172a; font-size:12px; font-weight:600; text-overflow:ellipsis; }
+        .header-company-select:disabled { color:#64748b; background:#f8fafc; }
+        @media(max-width:1050px) {
+          .header-company-switcher { grid-column:1 / -1; grid-row:3; width:100%; max-width:none; padding:0; }
+          .header .global-page-search { grid-column:1 / -1; grid-row:4; }
+        }
+      `}</style>
+
       <button type="button" className="sidebar-toggle-button" onClick={onToggleSidebar} aria-label="Toggle sidebar" title="Show or hide sidebar"><FiMenu /></button>
       <nav className="module-switcher" aria-label="ERP modules">
         {MODULES.map((module) => (
@@ -213,6 +227,26 @@ function Header({ onToggleSidebar }) {
           </button>
         ))}
       </nav>
+
+      <div className="header-company-switcher">
+        <span className="header-company-label">Current Company</span>
+        <select
+          className="header-company-select"
+          value={currentCompany?.id || ""}
+          onChange={(event) => changeCompany(event.target.value)}
+          disabled={companiesLoading || companies.length === 0}
+          aria-label="Select current company"
+        >
+          <option value="">
+            {companiesLoading ? "Loading companies..." : "Select Company"}
+          </option>
+          {!companiesLoading && companies.map((company) => (
+            <option key={company.id} value={company.id}>
+              {company.company_name?.trim() || "Unnamed Company"}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="global-page-search">
         <div className="page-search-input-wrap">
