@@ -791,7 +791,10 @@ const [printMode, setPrintMode] = useState(false);
                     items,
                     currentCompanyId
                 );
-                if (formData.sales_order_id) await refreshSalesOrderFulfillment(formData.sales_order_id);
+                if (formData.sales_order_id) {
+                    try { await refreshSalesOrderFulfillment(formData.sales_order_id); }
+                    catch (statusError) { console.error("Challan saved, but order status refresh failed:", statusError); }
+                }
 
                 alert(
                     "Delivery Challan Updated Successfully"
