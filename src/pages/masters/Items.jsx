@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
@@ -149,6 +150,8 @@ if (!currentCompanyId) {
     <div className="items-page">
 
       <h2>Items Master</h2>
+
+      <BulkTransactionImport kind="items" />
 
       <form
         className="item-form"
