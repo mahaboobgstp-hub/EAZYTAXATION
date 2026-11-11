@@ -128,6 +128,9 @@ export async function saveDeliveryChallan(
     challan_no: challanData.challan_no,
     challan_date: challanData.challan_date,
 
+    sales_order_id: challanData.sales_order_id || null,
+    sales_order_no: challanData.sales_order_no || null,
+
     customer_id: challanData.customer_id,
     customer_name: challanData.customer_name,
 
@@ -248,6 +251,9 @@ export async function updateDeliveryChallan(
 
             challan_no: challanData.challan_no,
             challan_date: challanData.challan_date,
+
+            sales_order_id: challanData.sales_order_id || null,
+            sales_order_no: challanData.sales_order_no || null,
 
             customer_id: challanData.customer_id,
             customer_name: challanData.customer_name,
