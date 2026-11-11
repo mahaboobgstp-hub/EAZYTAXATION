@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiActivity, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiActivity, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiActivity } from "react-icons/fi";
+import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiDollarSign, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiDollarSign } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/Dashboard.css";
@@ -136,9 +136,9 @@ export default function Dashboard() {
       <section className="dashboard-kpis">
         <Kpi icon={<FiTrendingUp/>} label="Sales (Invoice Value)" value={money(totals.sales)} note={`${number(data.sales.length)} invoices`} tone="green"/>
         <Kpi icon={<FiShoppingCart/>} label="Purchases" value={money(totals.purchases)} note={`${number(data.purchases.length)} invoices`} tone="blue"/>
-        <Kpi icon={<FiActivity/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
+        <Kpi icon={<FiDollarSign/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
         <Kpi icon={<FiFileText/>} label="GST Output" value={money(totals.gst)} note="From sales invoices" tone="purple"/>
-        <Kpi icon={<FiActivity/>} label="Bank Balance" value="Not connected" note="Bank account integration pending" tone="rose"/>
+        <Kpi icon={<FiDollarSign/>} label="Bank Balance" value="Not connected" note="Bank account integration pending" tone="rose"/>
       </section>
 
       <section className="dashboard-middle-grid">
@@ -166,7 +166,7 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard-bottom-grid">
-        <article className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiActivity/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
+        <article className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiDollarSign/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
         <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
         <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section>
