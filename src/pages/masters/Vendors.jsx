@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { getStates }
 from '../../services/stateService';
 
@@ -146,6 +147,8 @@ const handleEdit = (vendor) => {
     <div className="vendors-page">
 
       <h2>Vendors Master</h2>
+
+      <BulkTransactionImport kind="vendors" />
 
       <form
         className="vendor-form"
