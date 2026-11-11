@@ -21,7 +21,7 @@ export default function Dashboard() {
   const { currentCompany, currentCompanyId, loading: companyLoading } = useCompany();
   const [period, setPeriod] = useState("year");
   const [refreshing, setRefreshing] = useState(false);
-  const [data, setData] = useState({ sales: [], purchases: [], expenses: [], customers: 0, vendors: 0, items: 0, error: "" });
+  const [data, setData] = useState({ sales: [], purchases: [], expenses: [], itemSales: [], customers: 0, vendors: 0, items: 0, error: "" });
 
   const range = useMemo(() => {
     const now = new Date();
@@ -53,8 +53,14 @@ export default function Dashboard() {
       ]);
       const firstError = [sales, purchases, expenses, customers, vendors, items].find(result => result.error);
       if (firstError) throw firstError.error;
+      const invoiceIds = (sales.data || []).map(row => row.id).filter(Boolean);
+      const itemResult = invoiceIds.length
+        ? await supabase.from("sales_invoice_items").select("*").in("invoice_id", invoiceIds)
+        : { data: [], error: null };
+      if (itemResult.error) throw itemResult.error;
       setData({
         sales: sales.data || [], purchases: purchases.data || [], expenses: expenses.data || [],
+        itemSales: itemResult.data || [],
         customers: customers.count || 0, vendors: vendors.count || 0, items: items.count || 0, error: ""
       });
     } catch (error) {
@@ -98,13 +104,16 @@ export default function Dashboard() {
 
   const topItems = useMemo(() => {
     const map = new Map();
-    // Item-level values are fetched only for invoices in this company and period.
-    return map;
-  }, [data.sales]);
+    (data.itemSales || []).forEach(row => {
+      const name = row.item_name || row.particulars || "Unspecified item";
+      map.set(name, (map.get(name) || 0) + amount(row, ["amount", "line_total", "taxable_value"]));
+    });
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [data.itemSales]);
 
   const maxTrend = Math.max(1, ...monthly.flatMap(row => [row.sales, row.purchases]));
   const maxCustomer = Math.max(1, ...topCustomers.map(row => row[1]));
-  const maxItem = Math.max(1, ...[...topItems.values()]);
+  const maxItem = Math.max(1, ...topItems.map(row => row[1]));
   const fyLabel = range.label;
 
   return <main className="erp-dashboard">
@@ -159,7 +168,7 @@ export default function Dashboard() {
       <section className="dashboard-bottom-grid">
         <article className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiWallet/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
         <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
-        <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div><Empty>Item-level sales ranking will appear when invoice item records are available.</Empty></article>
+        <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section>
     </>}
   </main>;
