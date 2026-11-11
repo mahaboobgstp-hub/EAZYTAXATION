@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
+import { supabase } from "../../supabase/supabaseClient";
 import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryChallanPrint from "./DeliveryChallanPrint";
 import {
@@ -55,6 +56,8 @@ function DeliveryChallan() {
     const [itemsMaster, setItemsMaster] = useState([]);
     const [states, setStates] = useState([]);
     const [challans, setChallans] = useState([]);
+    const [salesOrders, setSalesOrders] = useState([]);
+    const [deliveryType, setDeliveryType] = useState("WITHOUT_ORDER");
     const [selectedChallan, setSelectedChallan] = useState(null);
 const [selectedChallanItems, setSelectedChallanItems] = useState([]);
 const [companyDetails, setCompanyDetails] = useState(null);
@@ -72,6 +75,8 @@ const [printMode, setPrintMode] = useState(false);
 
         challan_no: "",
         challan_date: "",
+        sales_order_id: "",
+        sales_order_no: "",
 
         customer_id: "",
         customer_name: "",
@@ -173,6 +178,7 @@ const [printMode, setPrintMode] = useState(false);
         loadCustomers();
         loadItemsMaster();
         loadChallans();
+        loadSalesOrders();
 
     }, [currentCompanyId]);
 
@@ -257,6 +263,24 @@ const [printMode, setPrintMode] = useState(false);
     // LOAD CHALLANS
     // =====================================================
 
+    const loadSalesOrders = async () => {
+        if (!currentCompanyId) return;
+        try {
+            const { data, error } = await supabase
+                .from("sales_orders")
+                .select("id, order_no, order_date, expected_delivery_date, customer_id, customer_name, fulfillment_status, status")
+                .eq("company_id", currentCompanyId)
+                .eq("is_deleted", false)
+                .order("order_date", { ascending: false });
+            if (error) throw error;
+            setSalesOrders((data || []).filter(order => String(order.status || "").toLowerCase() !== "cancelled"));
+        } catch (error) {
+            console.error("Error loading sales orders:", error);
+            setSalesOrders([]);
+        }
+    };
+
+
     const loadChallans = async () => {
 
         if (!currentCompanyId) return;
@@ -304,6 +328,105 @@ const [printMode, setPrintMode] = useState(false);
     // CUSTOMER CHANGE
     // =====================================================
 
+    const handleSalesOrderChange = async (e) => {
+        const orderId = e.target.value;
+        if (!orderId) {
+            setDeliveryType("WITHOUT_ORDER");
+            setFormData(prev => ({ ...prev, sales_order_id: "", sales_order_no: "" }));
+            setItems([{
+                item_id: "", item_name: "", hsn_sac: "", unit: "",
+                gst_rate: 18, qty: 1, rate: 0, amount: 0
+            }]);
+            calculateTotals([{
+                item_id: "", item_name: "", hsn_sac: "", unit: "",
+                gst_rate: 18, qty: 1, rate: 0, amount: 0
+            }]);
+            return;
+        }
+        try {
+            const { data: order, error: orderError } = await supabase
+                .from("sales_orders")
+                .select("id, order_no, customer_id, customer_name, company_id")
+                .eq("id", orderId)
+                .eq("company_id", currentCompanyId)
+                .eq("is_deleted", false)
+                .single();
+            if (orderError) throw orderError;
+
+            const { data: orderItems, error: itemError } = await supabase
+                .from("sales_order_items")
+                .select("item_id, item_name, hsn_sac, unit, qty, rate, gst_rate")
+                .eq("order_id", orderId)
+                .order("line_no", { ascending: true });
+            if (itemError) throw itemError;
+
+            const { data: previousChallans, error: challanError } = await supabase
+                .from("delivery_challans")
+                .select("id, status")
+                .eq("company_id", currentCompanyId)
+                .eq("sales_order_id", orderId)
+                .eq("is_deleted", false);
+            if (challanError) throw challanError;
+
+            const activeChallanIds = (previousChallans || [])
+                .filter(challan => String(challan.status || "").toLowerCase() !== "cancelled")
+                .map(challan => challan.id);
+            let previousItems = [];
+            if (activeChallanIds.length) {
+                const { data, error } = await supabase
+                    .from("delivery_challan_items")
+                    .select("item_id, qty")
+                    .in("challan_id", activeChallanIds);
+                if (error) throw error;
+                previousItems = data || [];
+            }
+
+            const nextItems = (orderItems || []).map(orderItem => {
+                const previouslyDelivered = previousItems
+                    .filter(item => item.item_id === orderItem.item_id)
+                    .reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+                const ordered = Number(orderItem.qty) || 0;
+                const pending = Math.max(0, ordered - previouslyDelivered);
+                return {
+                    item_id: orderItem.item_id || "",
+                    item_name: orderItem.item_name || "",
+                    hsn_sac: orderItem.hsn_sac || "",
+                    unit: orderItem.unit || "",
+                    gst_rate: Number(orderItem.gst_rate) || 0,
+                    qty: pending,
+                    rate: Number(orderItem.rate) || 0,
+                    amount: pending * (Number(orderItem.rate) || 0),
+                    ordered_qty: ordered,
+                    delivered_qty: previouslyDelivered,
+                    pending_qty: pending,
+                    max_delivery_qty: pending
+                };
+            }).filter(item => item.item_id);
+
+            const selectedCustomer = customers.find(customer => customer.id === order.customer_id);
+            setDeliveryType("ORDER");
+            setFormData(prev => ({
+                ...prev,
+                sales_order_id: order.id,
+                sales_order_no: order.order_no,
+                customer_id: order.customer_id || "",
+                customer_name: order.customer_name || selectedCustomer?.customer_name || "",
+                customer_state: selectedCustomer?.state || "",
+                billing_address: selectedCustomer?.address || "",
+                place_of_supply: selectedCustomer?.state || prev.place_of_supply || ""
+            }));
+            setItems(nextItems);
+            calculateTotals(nextItems);
+            if (!nextItems.length || nextItems.every(item => item.pending_qty <= 0)) {
+                alert("This sales order has no pending quantities left to deliver.");
+            }
+        } catch (error) {
+            console.error("Unable to load sales order items:", error);
+            alert(error.message || "Unable to load the selected sales order.");
+        }
+    };
+
+
     const handleCustomerChange = (e) => {
 
         const customerId = e.target.value;
@@ -316,8 +439,11 @@ const [printMode, setPrintMode] = useState(false);
 
         if (!customer) {
 
+            setDeliveryType("WITHOUT_ORDER");
             setFormData(prev => ({
                 ...prev,
+                sales_order_id: "",
+                sales_order_no: "",
                 customer_id: "",
                 customer_name: "",
                 customer_state: "",
@@ -329,8 +455,11 @@ const [printMode, setPrintMode] = useState(false);
         }
 
 
+        setDeliveryType("WITHOUT_ORDER");
         setFormData(prev => ({
             ...prev,
+            sales_order_id: "",
+            sales_order_no: "",
 
             customer_id: customer.id,
 
@@ -362,6 +491,10 @@ const [printMode, setPrintMode] = useState(false);
 
         const updatedItems = [...items];
 
+        if (field === "qty" && deliveryType === "ORDER" && Number(value) > Number(updatedItems[index].max_delivery_qty || 0)) {
+            alert("Delivery quantity cannot exceed the pending quantity for this sales order item.");
+            value = updatedItems[index].max_delivery_qty || 0;
+        }
         updatedItems[index][field] = value;
 
 
@@ -569,6 +702,11 @@ const [printMode, setPrintMode] = useState(false);
                 return;
             }
 
+
+            if (deliveryType === "ORDER" && items.some(item => Number(item.qty) > Number(item.max_delivery_qty || 0))) {
+                alert("One or more delivery quantities exceed the pending sales order quantity.");
+                return;
+            }
 
             if (!formData.customer_id) {
 
