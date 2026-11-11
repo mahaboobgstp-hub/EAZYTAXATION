@@ -45,6 +45,7 @@ export default function SalesWorkspace({ kind }) {
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [itemsMaster, setItemsMaster] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -76,6 +77,7 @@ export default function SalesWorkspace({ kind }) {
   useEffect(() => {
     if (!currentCompanyId) return;
     supabase.from("customers").select("id, customer_name, state").eq("company_id", currentCompanyId).order("customer_name").then(({ data }) => setCustomers(data || []));
+    supabase.from("items").select("id, item_name, hsn_sac, unit, sales_rate, gst_rate").eq("company_id", currentCompanyId).order("item_name").then(({ data }) => setItemsMaster(data || []));
     if (kind === "credits") supabase.from("sales_invoices").select("id, invoice_no, customer_id, customer_name, total_amount").eq("company_id", currentCompanyId).eq("is_deleted", false).order("invoice_date", { ascending: false }).then(({ data }) => setInvoices(data || []));
   }, [currentCompanyId, kind]);
 
@@ -105,6 +107,82 @@ export default function SalesWorkspace({ kind }) {
     return [currency(filtered.filter(r => r.status !== "Void").reduce((s, r) => s + num(r.total_amount), 0)), currency(filtered.filter(r => r.status === "Applied").reduce((s, r) => s + num(r.total_amount), 0)), currency(filtered.filter(r => !["Applied", "Void"].includes(r.status)).reduce((s, r) => s + num(r.total_amount), 0))];
   }, [filtered, kind]);
 
+  const handleLineItemChange = (index, itemId) => {
+    const item = itemsMaster.find(row => row.id === itemId);
+    setLines(prev => prev.map((line, i) => i === index ? {
+      ...line,
+      item_id: item?.id || "",
+      description: item?.item_name || "",
+      hsn_sac: item?.hsn_sac || "",
+      unit: item?.unit || "",
+      rate: String(item?.sales_rate || 0),
+      gstRate: String(item?.gst_rate || 0),
+    } : line));
+  };
+
+  const handleOriginalInvoiceChange = async invoiceId => {
+    const invoice = invoices.find(row => row.id === invoiceId);
+    setForm(prev => ({ ...prev, originalInvoiceId: invoiceId, customerId: invoice?.customer_id || prev.customerId }));
+    if (!invoiceId) { setLines([]); return; }
+    try {
+      const { data: originalItems, error: itemError } = await supabase
+        .from("sales_invoice_items")
+        .select("item_id, item_name, particulars, hsn_sac, unit, qty, rate, gst_rate, amount")
+        .eq("invoice_id", invoiceId)
+        .order("line_no", { ascending: true });
+      if (itemError) throw itemError;
+
+      const { data: priorNotes, error: noteError } = await supabase
+        .from("credit_notes")
+        .select("id, status")
+        .eq("company_id", currentCompanyId)
+        .eq("original_invoice_id", invoiceId)
+        .eq("is_deleted", false);
+      if (noteError) throw noteError;
+
+      const activeNoteIds = (priorNotes || [])
+        .filter(note => !["void", "cancelled"].includes(String(note.status || "").toLowerCase()))
+        .map(note => note.id);
+      let returnedRows = [];
+      if (activeNoteIds.length) {
+        const { data, error } = await supabase
+          .from("credit_note_items")
+          .select("item_id, item_name, qty")
+          .in("credit_note_id", activeNoteIds);
+        if (error) throw error;
+        returnedRows = data || [];
+      }
+
+      const nextLines = (originalItems || []).map(item => {
+        const itemKey = item.item_id || item.item_name || item.particulars;
+        const returned = returnedRows
+          .filter(row => (row.item_id || row.item_name) === itemKey)
+          .reduce((sum, row) => sum + (Number(row.qty) || 0), 0);
+        const originalQty = Number(item.qty) || 0;
+        const maxQty = Math.max(0, originalQty - returned);
+        const taxableRate = originalQty > 0 && Number.isFinite(Number(item.amount))
+          ? Number(item.amount) / originalQty
+          : Number(item.rate) || 0;
+        return {
+          item_id: item.item_id || "",
+          description: item.item_name || item.particulars || "",
+          hsn_sac: item.hsn_sac || "",
+          unit: item.unit || "",
+          qty: String(maxQty),
+          rate: String(taxableRate),
+          gstRate: String(Number(item.gst_rate) || 0),
+          originalQty,
+          returnedQty: returned,
+          maxQty,
+        };
+      });
+      setLines(nextLines);
+    } catch (error) {
+      setMessage(errorText(error));
+      setLines([]);
+    }
+  };
+
   const openCreate = () => {
     setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
     setLines([{ description: "", qty: "1", rate: "0", gstRate: "0" }]);
@@ -118,11 +196,13 @@ export default function SalesWorkspace({ kind }) {
     try {
       const customer = customers.find(c => c.id === form.customerId);
       if (!customer) throw new Error("Select a customer.");
+      if (kind === "credits" && !form.originalInvoiceId) throw new Error("Select the original sales invoice.");
+      if (kind === "credits" && lines.some(line => num(line.qty) > num(line.maxQty))) throw new Error("Return quantity cannot exceed the remaining returnable quantity.");
       const prefix = kind === "quotations" ? "QT" : kind === "orders" ? "SO" : "CN";
       const existing = await supabase.from(config.table).select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId);
       if (existing.error) throw existing.error;
       const documentNo = `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
-      const validLines = lines.filter(line => line.description.trim());
+      const validLines = lines.filter(line => line.description.trim() && num(line.qty) > 0);
       if (!validLines.length) throw new Error("Add at least one item or description.");
       const taxableValue = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)), 0) * 100) / 100;
       const taxAmount = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)) * Math.max(0, num(line.gstRate)) / 100, 0) * 100) / 100;
@@ -150,7 +230,10 @@ export default function SalesWorkspace({ kind }) {
       const itemsToInsert = validLines.map((line, index) => ({
         [parentField]: id,
         line_no: index + 1,
+        item_id: line.item_id || null,
         item_name: line.description.trim(),
+        hsn_sac: line.hsn_sac || null,
+        unit: line.unit || null,
         ...(kind === "quotations" ? { particulars: line.description.trim() } : { description: line.description.trim() }),
         qty: Math.max(0, num(line.qty)),
         rate: Math.max(0, num(line.rate)),
@@ -236,11 +319,11 @@ export default function SalesWorkspace({ kind }) {
       {isNativeAndroid && <nav className="sw-mobile-steps" aria-label="Document creation steps"><span className={formStep === 1 ? "active" : formStep > 1 ? "complete" : ""}>1. Details</span><span className={formStep === 2 ? "active" : formStep > 2 ? "complete" : ""}>2. Items</span><span className={formStep === 3 ? "active" : ""}>3. Review</span></nav>}
       {(!isNativeAndroid || formStep === 1) && <>
       <label>Company<input value={currentCompany?.company_name || ""} readOnly /></label>
-      {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => { const invoice = invoices.find(i => i.id === e.target.value); setForm({ ...form, originalInvoiceId: e.target.value, customerId: invoice?.customer_id || form.customerId }); }}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
+      {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => handleOriginalInvoiceChange(e.target.value)}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
       <div className="sw-form-grid"><label>Customer<select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })}><option value="">Select customer</option>{customers.map(c => <option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></label><label>{kind === "orders" ? "Order date" : kind === "credits" ? "Credit note date" : "Quotation date"}<input required type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></label>{kind !== "credits" && <label>{kind === "orders" ? "Expected delivery" : "Valid until"}<input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} /></label>}</div>
       {kind === "credits" && <label>Reason<input required value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Reason for issuing credit" /></label>}
       </>}
-      {(!isNativeAndroid || formStep === 2) && <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong><button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0", gstRate: "0" }])}>＋ Add line</button></div>{lines.map((line, index) => <div className="sw-line-row" key={index}><label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label><label>Quantity<input type="number" min="0" step="0.01" value={line.qty} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><label>GST %<select value={line.gstRate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, gstRate: e.target.value } : item))}>{["0", "5", "12", "18", "28"].map(rate => <option key={rate} value={rate}>{rate}%</option>)}</select></label><strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
+      {(!isNativeAndroid || formStep === 2) && <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong>{!(isNativeAndroid && kind === "credits") && <button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0", gstRate: "0" }])}>＋ Add line</button>}</div>{lines.map((line, index) => <div className="sw-line-row" key={index}>{isNativeAndroid && kind !== "credits" ? <label>Item<select value={line.item_id || ""} onChange={e => handleLineItemChange(index, e.target.value)}><option value="">Select item</option>{itemsMaster.map(item => <option key={item.id} value={item.id}>{item.item_name}</option>)}</select></label> : isNativeAndroid && kind === "credits" ? <label>Original invoice item<input value={line.description} readOnly /></label> : <label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label>}<label>{kind === "credits" && isNativeAndroid ? "Return quantity" : "Quantity"}<input type="number" min="0" max={kind === "credits" && isNativeAndroid ? line.maxQty : undefined} step="0.01" value={line.qty} disabled={kind === "credits" && isNativeAndroid && Number(line.maxQty) <= 0} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><label>GST %<select value={line.gstRate} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, gstRate: e.target.value } : item))}>{["0", "5", "12", "18", "28"].map(rate => <option key={rate} value={rate}>{rate}%</option>)}</select></label>{kind === "credits" && isNativeAndroid && <small className="sw-note">Invoiced: {line.originalQty || 0} · Previously returned: {line.returnedQty || 0} · Returnable: {line.maxQty || 0}</small>}<strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
       }
       {(!isNativeAndroid || formStep === 3) && <>
       <div className="sw-total-breakdown"><div>Subtotal<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate), 0))}</strong></div><div>GST<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate) * num(line.gstRate) / 100, 0))}</strong></div><div>Grand total<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100), 0))}</strong></div></div>
