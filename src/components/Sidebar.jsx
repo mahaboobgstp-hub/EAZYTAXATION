@@ -476,7 +476,7 @@ const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
 
 
-function Sidebar() {
+function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
   const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
@@ -591,7 +591,7 @@ function Sidebar() {
 
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
       <div className="sidebar-logo">
         <div className="logo-icon">ET</div>
         <div>
