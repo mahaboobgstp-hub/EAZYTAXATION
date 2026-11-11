@@ -5,6 +5,7 @@ import {getExpenses,getExpenseById,getExpenseMasters} from "../../services/expen
 import {downloadExpensePdf} from "../../utils/expenseDocumentPdf";
 import ExpenseDocumentPreview from "./ExpenseDocumentPreview";
 import "../../css/expenses/ExpenseWorkspace.css";
+import "../../css/AndroidWorkflow.css";
 const n=v=>Number(v)||0, money=v=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(n(v));
 const dateText=v=>v?new Date(v+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"—";
 const paidStatus=r=>n(r.paid_amount)>=n(r.total_amount)&&n(r.total_amount)>0?"Paid":n(r.paid_amount)>0?"Partially Paid":"Pending";
