@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 
 import {
     getAllUnits,
@@ -279,6 +280,8 @@ function Uom() {
             <div className="uom-header">
 
                 <h2>Units (UOM) Master</h2>
+
+            <BulkTransactionImport kind="units" />
 
                 <p>
                     Create and manage Units of Measurement.
