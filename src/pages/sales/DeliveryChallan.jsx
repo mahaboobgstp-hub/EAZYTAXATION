@@ -314,7 +314,7 @@ const [printMode, setPrintMode] = useState(false);
         deliveredItems.forEach(row => deliveredByItem.set(row.item_id, (deliveredByItem.get(row.item_id) || 0) + (Number(row.qty) || 0)));
         const hasAnyDelivery = deliveredItems.some(row => Number(row.qty) > 0);
         const fullySupplied = (orderItems || []).length > 0 && orderItems.every(row => (deliveredByItem.get(row.item_id) || 0) >= (Number(row.qty) || 0));
-        const fulfillmentStatus = fullySupplied ? "Fully Supplied" : hasAnyDelivery ? "Partially Supplied" : "Open";
+        const fulfillmentStatus = fullySupplied ? "Fulfilled" : hasAnyDelivery ? "Partially Fulfilled" : "Pending";
 
         const { error: updateError } = await supabase
             .from("sales_orders")
