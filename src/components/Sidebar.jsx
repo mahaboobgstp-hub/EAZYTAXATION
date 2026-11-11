@@ -68,6 +68,18 @@ const MODULES = {
         ],
       },
       {
+        title: "Banking",
+        icon: FiCreditCard,
+        links: [
+          ["Bank Overview", "/app/banking?tab=overview"],
+          ["Import Statements", "/app/banking?tab=import"],
+          ["Classify & Post", "/app/banking?tab=transactions"],
+          ["Bank Reconciliation", "/app/banking?tab=reconciliation"],
+          ["Bank Accounts", "/app/banking?tab=accounts"],
+          ["Settings", "/app/banking?tab=settings"],
+        ],
+      },
+      {
         title: "Accounting",
         icon: FiBookOpen,
         links: [
@@ -397,6 +409,7 @@ const AVAILABLE_ROUTES = new Set([
   "/app/expenses",
   "/app/expense-register",
   "/app/payments",
+  "/app/banking",
   "/app/items",
   "/app/uom",
   "/app/expense-categories",
@@ -441,7 +454,7 @@ const LOCKED_MODULES = new Set([
 ]);
 
 const isRouteAvailable = (path) =>
-  AVAILABLE_ROUTES.has(path);
+  AVAILABLE_ROUTES.has(path.split("?")[0]);
 
 const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
@@ -546,8 +559,8 @@ function Sidebar() {
                 <NavLink
                   key={`${label}-${path}`}
                   to={path}
-                  className={({ isActive }) =>
-                    `submenu-link ${isActive ? "active" : ""}`
+                  className={() =>
+                    `submenu-link ${location.pathname + location.search === path ? "active" : ""}`
                   }
                 >
                   <span>{label}</span>
@@ -648,15 +661,6 @@ function Sidebar() {
 
         {currentModule.groups.map((group) =>
           renderGroup(group, activeModule)
-        )}
-        {activeModule === "billing" && (
-          <div className="sidebar-group sidebar-group-locked">
-            <div className="menu-link menu-link-locked" aria-disabled="true" title="Coming soon — this page is not available yet">
-              <FiRefreshCw />
-              <span>Bank Reconciliation</span>
-              <FiLock className="sidebar-lock-icon" aria-hidden="true" />
-            </div>
-          </div>
         )}
 
         <div className="sidebar-section-label">COMMON WORKSPACE</div>
