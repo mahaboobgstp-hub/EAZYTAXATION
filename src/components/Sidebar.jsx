@@ -71,7 +71,9 @@ const MODULES = {
         title: "Accounting",
         icon: FiBookOpen,
         links: [
-          ["Journal Voucher", "/journal-voucher"],
+          ["Accounting Dashboard", "/app/accounting"],
+          ["Chart of Accounts", "/app/chart-of-accounts"],
+          ["Journal Voucher", "/app/journal-voucher"],
           ["Ledger", "/app/ledger"],
           ["Trial Balance", "/app/trial-balance"],
           ["Profit & Loss", "/app/profit-loss"],
@@ -411,6 +413,13 @@ const AVAILABLE_ROUTES = new Set([
   "/app/item-ledger",
   "/app/gst-reports",
   "/app/invoice-settings",
+  "/app/accounting",
+  "/app/chart-of-accounts",
+  "/app/journal-voucher",
+  "/app/ledger",
+  "/app/trial-balance",
+  "/app/profit-loss",
+  "/app/balance-sheet",
 ]);
 
 /*

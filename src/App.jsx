@@ -69,6 +69,7 @@ import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
 import GSTR1 from "./pages/gst/GSTR1";
 import ReportsWorkspace from "./pages/reports.jsx";
+import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -492,6 +493,15 @@ function App() {
   path="hr-budget-approvals"
   element={<HRBudgetApprovals />}
 />
+
+          {/* ACCOUNTING WORKSPACE */}
+          <Route path="accounting" element={<AccountingWorkspace />} />
+          <Route path="chart-of-accounts" element={<AccountingWorkspace />} />
+          <Route path="journal-voucher" element={<AccountingWorkspace />} />
+          <Route path="ledger" element={<AccountingWorkspace />} />
+          <Route path="trial-balance" element={<AccountingWorkspace />} />
+          <Route path="profit-loss" element={<AccountingWorkspace />} />
+          <Route path="balance-sheet" element={<AccountingWorkspace />} />
 
         </Route>
         
