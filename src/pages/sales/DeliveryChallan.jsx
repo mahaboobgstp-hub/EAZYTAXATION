@@ -1194,6 +1194,32 @@ const viewChallan = async (challanId) => {
                             />
                         </div>
 
+                        {isNativeAndroid && <div>
+                            <label>Delivery Type</label>
+                            <select value={deliveryType} onChange={event => {
+                                const nextType = event.target.value;
+                                setDeliveryType(nextType);
+                                if (nextType === "WITHOUT_ORDER") {
+                                    setFormData(prev => ({ ...prev, sales_order_id: "", sales_order_no: "" }));
+                                    const emptyItems = [{ item_id: "", item_name: "", hsn_sac: "", unit: "", gst_rate: 18, qty: 1, rate: 0, amount: 0 }];
+                                    setItems(emptyItems);
+                                    calculateTotals(emptyItems);
+                                }
+                            }}>
+                                <option value="WITHOUT_ORDER">Without Sales Order</option>
+                                <option value="ORDER">Against Sales Order</option>
+                            </select>
+                        </div>}
+
+                        {isNativeAndroid && deliveryType === "ORDER" && <div>
+                            <label>Sales Order</label>
+                            <select value={formData.sales_order_id} onChange={handleSalesOrderChange} required>
+                                <option value="">Select Sales Order</option>
+                                {salesOrders.map(order => <option key={order.id} value={order.id}>{order.order_no} · {order.customer_name}</option>)}
+                            </select>
+                            <small>Ordered, previously delivered and pending quantities are calculated from this order.</small>
+                        </div>}
+
 
                         <div>
                             <label>
@@ -1201,12 +1227,9 @@ const viewChallan = async (challanId) => {
                             </label>
 
                             <select
-                                value={
-                                    formData.customer_id
-                                }
-                                onChange={
-                                    handleCustomerChange
-                                }
+                                value={formData.customer_id}
+                                onChange={handleCustomerChange}
+                                disabled={isNativeAndroid && deliveryType === "ORDER"}
                                 required
                             >
 
@@ -1469,7 +1492,12 @@ const viewChallan = async (challanId) => {
                                 <th>HSN/SAC</th>
                                 <th>Unit</th>
                                 <th>GST %</th>
-                                <th>Qty</th>
+                                {isNativeAndroid && deliveryType === "ORDER" && <>
+                                    <th>Ordered</th>
+                                    <th>Delivered</th>
+                                    <th>Pending</th>
+                                </>}
+                                <th>Deliver Now</th>
                                 <th>Rate</th>
                                 <th>Amount</th>
                                 <th></th>
@@ -1493,43 +1521,17 @@ const viewChallan = async (challanId) => {
 
                                         <td>
 
-                                            <select
-                                                value={
-                                                    item.item_id
-                                                }
-                                                onChange={e =>
-                                                    handleItemChange(
-                                                        index,
-                                                        "item_id",
-                                                        e.target.value
-                                                    )
-                                                }
-                                            >
-
-                                                <option value="">
-                                                    Select Item
-                                                </option>
-
-                                                {itemsMaster.map(
-                                                    masterItem => (
-
-                                                        <option
-                                                            key={
-                                                                masterItem.id
-                                                            }
-                                                            value={
-                                                                masterItem.id
-                                                            }
-                                                        >
-                                                            {
-                                                                masterItem.item_name
-                                                            }
-                                                        </option>
-
-                                                    )
-                                                )}
-
-                                            </select>
+                                            {isNativeAndroid && deliveryType === "ORDER" ? (
+                                                <input value={item.item_name || ""} readOnly />
+                                            ) : (
+                                                <select
+                                                    value={item.item_id}
+                                                    onChange={e => handleItemChange(index, "item_id", e.target.value)}
+                                                >
+                                                    <option value="">Select Item</option>
+                                                    {itemsMaster.map(masterItem => <option key={masterItem.id} value={masterItem.id}>{masterItem.item_name}</option>)}
+                                                </select>
+                                            )}
 
                                         </td>
 
@@ -1568,20 +1570,17 @@ const viewChallan = async (challanId) => {
                                         <td>
 
                                             <GstRateDropdown
-                                                value={
-                                                    item.gst_rate
-                                                }
-                                                onChange={value =>
-                                                    handleItemChange(
-                                                        index,
-                                                        "gst_rate",
-                                                        value
-                                                    )
-                                                }
+                                                value={item.gst_rate}
+                                                onChange={value => handleItemChange(index, "gst_rate", value)}
                                             />
 
                                         </td>
 
+                                        {isNativeAndroid && deliveryType === "ORDER" && <>
+                                            <td>{Number(item.ordered_qty || 0).toFixed(3)}</td>
+                                            <td>{Number(item.delivered_qty || 0).toFixed(3)}</td>
+                                            <td>{Number(item.pending_qty || 0).toFixed(3)}</td>
+                                        </>}
 
                                         <td>
 
