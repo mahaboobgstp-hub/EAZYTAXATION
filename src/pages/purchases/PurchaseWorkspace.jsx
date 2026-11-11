@@ -6,6 +6,7 @@ import { supabase } from "../../supabase/supabaseClient";
 import PurchaseDocumentPreview from "./PurchaseDocumentPreview";
 import { downloadPurchasePdf } from "../../utils/purchaseDocumentPdf";
 import "./PurchaseWorkspace.css";
+import "../../css/AndroidWorkflow.css";
 
 const CONFIG = {
   register: { title: "Purchase Register", table: "purchase_invoices", date: "invoice_date", number: "invoice_no", prefix: "PI", child: "purchase_invoice_items", parent: "invoice_id", metrics: ["Purchase Invoices", "Total Purchases", "Input Tax Credit (ITC)", "Outstanding"] },
