@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useState} from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import {useCompany} from "../../context/CompanyContext";
 import {supabase} from "../../supabase/supabaseClient";
 import {getExpenses,getExpensePayments,getExpenseMasters,createExpensePayment,updateExpensePayment} from "../../services/expenseService";
@@ -25,6 +26,7 @@ export default function ExpensePayments(){
  setSaving(true);try{const payload={payment_no:form.payment_no||undefined,payment_date:form.payment_date,expense_id:form.expense_id||null,vendor_id:form.vendor_id||null,paid_to:form.paid_to.trim(),payment_method:form.payment_method,account_name:form.account_name.trim(),reference_no:form.reference_no.trim(),amount:n(form.amount),status:form.status,remarks:form.remarks.trim()};if(editing)await updateExpensePayment(editing.id,payload,currentCompanyId);else await createExpensePayment(payload,currentCompanyId);setDialog(false);setEditing(null);await load();}catch(err){setMessage(err.message||"Unable to save payment.");}finally{setSaving(false);}}
  async function action(row,a){setMenu(null);if(a==="Edit"){setEditing(row);setForm({...empty(),...row,amount:String(row.amount),payment_no:row.payment_no});setDialog(true);return;}if(a==="Download"){downloadExpensePdf({kind:"payment",record:row,company:currentCompany});return;}setPreview({kind:"payment",record:row,company:currentCompany,autoPrint:a==="Print"});}
  return <main className="expense-page"><header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Payments</p><h1>Payments</h1></div><button className="ew-primary" onClick={openNew}>＋ New Payment</button></header>
+ <BulkTransactionImport kind="payments" />
  {message&&!dialog&&<div className="ew-alert">{message}<button onClick={()=>setMessage("")}>×</button></div>}
  {!currentCompanyId?<section className="ew-card">Choose a current company to view payments.</section>:<>
  <section className="ew-kpis">{[["Payments Made",kpis[0],"all completed payments"],["This Month",kpis[1],"current month"],["Cash Payments",kpis[2],"completed cash"],["Bank Payments",kpis[3],"completed non-cash"]].map(([l,v,h],i)=><article className={"ew-kpi tone-"+i} key={l}><span>{l}</span><b>{v}</b><small>{h}</small></article>)}</section>
