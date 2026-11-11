@@ -312,8 +312,10 @@ const [printMode, setPrintMode] = useState(false);
 
         const deliveredByItem = new Map();
         deliveredItems.forEach(row => deliveredByItem.set(row.item_id, (deliveredByItem.get(row.item_id) || 0) + (Number(row.qty) || 0)));
+        const orderedByItem = new Map();
+        (orderItems || []).forEach(row => orderedByItem.set(row.item_id, (orderedByItem.get(row.item_id) || 0) + (Number(row.qty) || 0)));
         const hasAnyDelivery = deliveredItems.some(row => Number(row.qty) > 0);
-        const fullySupplied = (orderItems || []).length > 0 && orderItems.every(row => (deliveredByItem.get(row.item_id) || 0) >= (Number(row.qty) || 0));
+        const fullySupplied = orderedByItem.size > 0 && [...orderedByItem.entries()].every(([itemId, orderedQty]) => (deliveredByItem.get(itemId) || 0) >= orderedQty);
         const fulfillmentStatus = fullySupplied ? "Fulfilled" : hasAnyDelivery ? "Partially Fulfilled" : "Pending";
 
         const { error: updateError } = await supabase
