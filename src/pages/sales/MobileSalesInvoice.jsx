@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "../../supabase/supabaseClient";
 import { useCompany } from "../../context/CompanyContext";
 import { calculateSalesInvoiceTax } from "../../utils/salesInvoiceTaxCalculator";
 import {
@@ -26,6 +27,7 @@ const blankLine = () => ({ item_id: "", item_name: "", hsn_sac: "", unit: "", gs
 
 export default function MobileSalesInvoice() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentCompany, currentCompanyId, loading: companyLoading } = useCompany();
   const [step, setStep] = useState(1);
   const [customers, setCustomers] = useState([]);
@@ -44,6 +46,7 @@ export default function MobileSalesInvoice() {
   const [error, setError] = useState("");
   const [savedInvoice, setSavedInvoice] = useState(null);
   const [printData, setPrintData] = useState(null);
+  const [sourceLoadedId, setSourceLoadedId] = useState("");
 
   const customer = customers.find(item => item.id === customerId) || null;
   const intraState = Boolean(currentCompany?.state && placeOfSupply && currentCompany.state.toLowerCase() === placeOfSupply.toLowerCase());
@@ -82,6 +85,58 @@ export default function MobileSalesInvoice() {
     });
     return () => { active = false; };
   }, [currentCompanyId]);
+
+  useEffect(() => {
+    const sourceId = location.state?.sourceId;
+    const sourceType = location.state?.sourceType;
+    if (!sourceId || !sourceType || !currentCompanyId || !customers.length || sourceLoadedId === sourceId) return;
+    let active = true;
+    const loadSourceDocument = async () => {
+      try {
+        const isOrder = sourceType === "orders";
+        const headerTable = isOrder ? "sales_orders" : "quotations";
+        const itemTable = isOrder ? "sales_order_items" : "quotation_items";
+        const parentField = isOrder ? "order_id" : "invoice_id";
+        const { data: source, error: sourceError } = await supabase
+          .from(headerTable)
+          .select("*")
+          .eq("id", sourceId)
+          .eq("company_id", currentCompanyId)
+          .single();
+        if (sourceError) throw sourceError;
+        const { data: sourceItems, error: itemsError } = await supabase
+          .from(itemTable)
+          .select("*")
+          .eq(parentField, sourceId)
+          .order("line_no", { ascending: true });
+        if (itemsError) throw itemsError;
+        if (!active) return;
+        const sourceCustomer = customers.find(row => row.id === source.customer_id);
+        setCustomerId(source.customer_id || "");
+        setPlaceOfSupply(sourceCustomer?.state || "");
+        setSaleType("CREDIT");
+        setRemarks(`Converted from ${isOrder ? "Sales Order " + (source.order_no || "") : "Quotation " + (source.invoice_no || "")}`);
+        setLines((sourceItems || []).map(item => ({
+          item_id: item.item_id || "",
+          item_name: item.item_name || item.particulars || item.description || "",
+          hsn_sac: item.hsn_sac || "",
+          unit: item.unit || "",
+          gst_rate: Number(item.gst_rate) || 0,
+          cess_rate: Number(item.cess_rate) || 0,
+          qty: Number(item.qty) || 0,
+          rate: Number(item.rate) || 0,
+          amount: Number(item.amount) || 0,
+        })));
+        setStep(1);
+        setSourceLoadedId(sourceId);
+        setError("");
+      } catch (err) {
+        if (active) setError(err?.message || "Unable to load the source document.");
+      }
+    };
+    loadSourceDocument();
+    return () => { active = false; };
+  }, [location.state, currentCompanyId, customers, sourceLoadedId]);
 
   const changeDate = async value => {
     setInvoiceDate(value);
