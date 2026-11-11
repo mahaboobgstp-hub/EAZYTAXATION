@@ -281,6 +281,50 @@ const [printMode, setPrintMode] = useState(false);
     };
 
 
+    const refreshSalesOrderFulfillment = async (orderId) => {
+        if (!orderId || !currentCompanyId) return;
+        const { data: orderItems, error: orderItemsError } = await supabase
+            .from("sales_order_items")
+            .select("item_id, qty")
+            .eq("order_id", orderId);
+        if (orderItemsError) throw orderItemsError;
+
+        const { data: challans, error: challanError } = await supabase
+            .from("delivery_challans")
+            .select("id, status")
+            .eq("company_id", currentCompanyId)
+            .eq("sales_order_id", orderId)
+            .eq("is_deleted", false);
+        if (challanError) throw challanError;
+
+        const activeIds = (challans || [])
+            .filter(row => String(row.status || "").toLowerCase() !== "cancelled")
+            .map(row => row.id);
+        let deliveredItems = [];
+        if (activeIds.length) {
+            const { data, error } = await supabase
+                .from("delivery_challan_items")
+                .select("item_id, qty")
+                .in("challan_id", activeIds);
+            if (error) throw error;
+            deliveredItems = data || [];
+        }
+
+        const deliveredByItem = new Map();
+        deliveredItems.forEach(row => deliveredByItem.set(row.item_id, (deliveredByItem.get(row.item_id) || 0) + (Number(row.qty) || 0)));
+        const hasAnyDelivery = deliveredItems.some(row => Number(row.qty) > 0);
+        const fullySupplied = (orderItems || []).length > 0 && orderItems.every(row => (deliveredByItem.get(row.item_id) || 0) >= (Number(row.qty) || 0));
+        const fulfillmentStatus = fullySupplied ? "Fully Supplied" : hasAnyDelivery ? "Partially Supplied" : "Open";
+
+        const { error: updateError } = await supabase
+            .from("sales_orders")
+            .update({ fulfillment_status: fulfillmentStatus })
+            .eq("id", orderId)
+            .eq("company_id", currentCompanyId);
+        if (updateError) throw updateError;
+    };
+
+
     const loadChallans = async () => {
 
         if (!currentCompanyId) return;
@@ -703,6 +747,11 @@ const [printMode, setPrintMode] = useState(false);
             }
 
 
+            if (deliveryType === "ORDER" && !formData.sales_order_id) {
+                alert("Select the sales order for this delivery.");
+                return;
+            }
+
             if (deliveryType === "ORDER" && items.some(item => Number(item.qty) > Number(item.max_delivery_qty || 0))) {
                 alert("One or more delivery quantities exceed the pending sales order quantity.");
                 return;
@@ -742,6 +791,7 @@ const [printMode, setPrintMode] = useState(false);
                     items,
                     currentCompanyId
                 );
+                if (formData.sales_order_id) await refreshSalesOrderFulfillment(formData.sales_order_id);
 
                 alert(
                     "Delivery Challan Updated Successfully"
@@ -754,6 +804,7 @@ const [printMode, setPrintMode] = useState(false);
                     items,
                     currentCompanyId
                 );
+                if (formData.sales_order_id) await refreshSalesOrderFulfillment(formData.sales_order_id);
 
                 alert(
                     "Delivery Challan Saved Successfully"
@@ -859,6 +910,8 @@ const viewChallan = async (challanId) => {
 
 
             setEditingChallanId(challanId);
+            setDeliveryType("WITHOUT_ORDER");
+            setMobileStep(1);
 
             setFormData({
 
@@ -876,6 +929,8 @@ const viewChallan = async (challanId) => {
 
                 challan_date:
                     challan.challan_date || "",
+                sales_order_id: challan.sales_order_id || "",
+                sales_order_no: challan.sales_order_no || "",
 
                 customer_id:
                     challan.customer_id || "",
@@ -1015,6 +1070,8 @@ const viewChallan = async (challanId) => {
 
 
         setEditingChallanId(null);
+        setDeliveryType("WITHOUT_ORDER");
+        setMobileStep(1);
 
 
         setFormData({
@@ -1031,6 +1088,8 @@ const viewChallan = async (challanId) => {
             challan_no: "",
 
             challan_date: today,
+            sales_order_id: "",
+            sales_order_no: "",
 
             customer_id: "",
             customer_name: "",
