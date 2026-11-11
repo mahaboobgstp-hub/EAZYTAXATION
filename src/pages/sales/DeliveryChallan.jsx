@@ -1533,6 +1533,7 @@ const viewChallan = async (challanId) => {
 
                     </>}
 
+                    {(!isNativeAndroid || mobileStep === 3) && <>
                     {/* ====================================
                         REMARKS
                     ==================================== */}
@@ -1562,7 +1563,6 @@ const viewChallan = async (challanId) => {
                     </div>
 
 
-                    {(!isNativeAndroid || mobileStep === 3) && <>
                     {/* ====================================
                         TOTALS
                     ==================================== */}
