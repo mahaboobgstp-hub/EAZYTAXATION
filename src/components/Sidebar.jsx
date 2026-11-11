@@ -69,6 +69,8 @@ const MODULES = {
           ["Payments", "/app/payments"],
           ["Expense Categories", "/app/expense-categories"],
           ["Expense Reports", "/app/expense-reports"],
+          ["Expense Categories", "/app/expense-categories"],
+          ["Expense Reports", "/app/expense-reports"],
         ],
       },
       {
