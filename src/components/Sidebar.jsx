@@ -575,6 +575,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
                 <NavLink
                   key={`${label}-${path}`}
                   to={path}
+                  onClick={onNavigate}
                   className={() =>
                     `submenu-link ${location.pathname + location.search === path ? "active" : ""}`
                   }
@@ -633,6 +634,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
         {!currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
           <NavLink
             to={currentModule.dashboard}
+            onClick={onNavigate}
             className={({ isActive }) =>
               `menu-link ${isActive ? "active" : ""}`
             }
