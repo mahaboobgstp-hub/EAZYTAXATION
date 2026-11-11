@@ -58,6 +58,7 @@ import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
 import ExpenseRegister from "./pages/expenses/ExpenseRegister";
 import ExpensePayments from "./pages/expenses/ExpensePayments";
+import ReceiptEntry from "./pages/ReceiptEntry";
 import BankingWorkspace from "./pages/banking/BankingWorkspace";
 import Items from './pages/masters/Items';
 import Uom from './pages/masters/Uom';
@@ -256,6 +257,7 @@ function App() {
           />
 <Route path="expense-register" element={<ExpenseRegister />} />
 <Route path="payments" element={<ExpensePayments />} />
+<Route path="receipts" element={<ReceiptEntry />} />
 <Route path="banking" element={<BankingWorkspace />} />
           <Route path="sales-reports" element={<ReportsWorkspace kind="sales" />} />
           <Route path="purchase-reports" element={<ReportsWorkspace kind="purchases" />} />
