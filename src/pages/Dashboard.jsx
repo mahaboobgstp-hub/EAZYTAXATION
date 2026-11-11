@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiActivity, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiCreditCard, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiWallet } from "react-icons/fi";
+import { FiActivity, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiCreditCard, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiCreditCard } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/Dashboard.css";
@@ -138,7 +138,7 @@ export default function Dashboard() {
         <Kpi icon={<FiShoppingCart/>} label="Purchases" value={money(totals.purchases)} note={`${number(data.purchases.length)} invoices`} tone="blue"/>
         <Kpi icon={<FiCreditCard/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
         <Kpi icon={<FiFileText/>} label="GST Output" value={money(totals.gst)} note="From sales invoices" tone="purple"/>
-        <Kpi icon={<FiWallet/>} label="Bank Balance" value="Not connected" note="Bank account integration pending" tone="rose"/>
+        <Kpi icon={<FiCreditCard/>} label="Bank Balance" value="Not connected" note="Bank account integration pending" tone="rose"/>
       </section>
 
       <section className="dashboard-middle-grid">
@@ -166,7 +166,7 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard-bottom-grid">
-        <article className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiWallet/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
+        <article className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiCreditCard/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
         <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
         <article className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section>
