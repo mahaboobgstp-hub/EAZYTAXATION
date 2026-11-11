@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
@@ -123,6 +124,7 @@ export default function PurchaseInvoice() {
 
   return <main className="purchase-page">
     <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><button className="pw-secondary" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></header>
+    <BulkTransactionImport kind="purchases" />
     {message&&<div className="pi-error">{message}</div>}
     {!currentCompanyId?<div className="pi-card">Choose a current company from the sidebar to create a purchase invoice.</div>:<>
       <section className="pi-card"><h2>Purchase Invoice Details</h2><div className="pi-grid">
