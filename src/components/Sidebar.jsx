@@ -121,7 +121,7 @@ const MODULES = {
 
 
   hr: {
-    dashboard: "/app",
+    dashboard: "/app/dashboard",
     groups: [
       {
         title: "Employees",
@@ -194,7 +194,7 @@ const MODULES = {
   },
 
   payroll: {
-    dashboard: "/app",
+    dashboard: "/app/dashboard",
     groups: [
       {
                 title: "Attendance",
@@ -249,7 +249,7 @@ const MODULES = {
 
 
   inventory: {
-    dashboard: "/app",
+    dashboard: "/app/dashboard",
     groups: [
       {
         title: "Stock Management",
@@ -302,7 +302,7 @@ const MODULES = {
   },
 
   "gst-tax": {
-    dashboard: "/app",
+    dashboard: "/app/dashboard",
     groups: [
       {
         title: "GST & Tax",
