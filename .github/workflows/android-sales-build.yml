@@ -27,17 +27,21 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install dependencies
         run: npm install
 
       - name: Build web assets
         run: npm run build
 
-      - name: Generate Android project
-        run: npx cap add android
-
-      - name: Synchronize Capacitor
-        run: npx cap sync android
+      - name: Generate Android project if needed and synchronize
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+          npx cap sync android
 
       - name: Build debug APK
         run: |
