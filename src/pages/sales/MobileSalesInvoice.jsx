@@ -13,6 +13,7 @@ import { getCompanyById } from "../../services/companyService";
 import { getCustomerById } from "../../services/customerService";
 import { getSalesInvoiceById, getSalesInvoiceItems } from "../../services/salesInvoiceService";
 import InvoicePrint from "../../components/InvoicePrint";
+import { numberToWords } from "../../utils/numberToWords";
 import "../../css/sales/MobileSalesInvoice.css";
 
 const todayISO = () => {
@@ -245,6 +246,7 @@ export default function MobileSalesInvoice() {
         {totals.cess > 0 && <div className="mobile-sales-summary-row"><span>Cess</span><strong>{money(totals.cess)}</strong></div>}
         <label>Remarks (optional)<textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={2} /></label>
         <div className="mobile-sales-grand-total"><span>Grand Total</span><strong>{money(grandTotal)}</strong></div>
+        <div className="mobile-sales-amount-words"><span>Amount in Words</span><strong>{numberToWords(Number(grandTotal) || 0)}</strong></div>
         <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(2)}>Back</button><button className="mobile-sales-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save Invoice"}</button></div>
       </section>}
     </main>
