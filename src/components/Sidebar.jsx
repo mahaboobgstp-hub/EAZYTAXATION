@@ -32,7 +32,7 @@ import "../css/Sidebar.css";
 
 const MODULES = {
   billing: {
-    dashboard: "/app",
+    dashboard: "/app/dashboard",
     groups: [
       {
         title: "Sales",
@@ -631,7 +631,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
 
       <nav className="sidebar-menu" aria-label="Main navigation">
         
-        {!currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
+        {isRouteAvailable(currentModule.dashboard) ? (
           <NavLink
             to={currentModule.dashboard}
             onClick={onNavigate}
