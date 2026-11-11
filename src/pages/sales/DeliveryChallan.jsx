@@ -427,11 +427,13 @@ const [printMode, setPrintMode] = useState(false);
                 previousItems = data || [];
             }
 
+            const deliveredRemaining = new Map();
+            previousItems.forEach(item => deliveredRemaining.set(item.item_id, (deliveredRemaining.get(item.item_id) || 0) + (Number(item.qty) || 0)));
             const nextItems = (orderItems || []).map(orderItem => {
-                const previouslyDelivered = previousItems
-                    .filter(item => item.item_id === orderItem.item_id)
-                    .reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
                 const ordered = Number(orderItem.qty) || 0;
+                const deliveredAvailable = deliveredRemaining.get(orderItem.item_id) || 0;
+                const previouslyDelivered = Math.min(ordered, deliveredAvailable);
+                deliveredRemaining.set(orderItem.item_id, Math.max(0, deliveredAvailable - previouslyDelivered));
                 const pending = Math.max(0, ordered - previouslyDelivered);
                 return {
                     item_id: orderItem.item_id || "",
