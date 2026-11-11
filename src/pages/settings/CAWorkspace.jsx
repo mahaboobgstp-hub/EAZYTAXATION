@@ -41,7 +41,7 @@ function CAWorkspace() {
   };
 
   return <div className="caw-page">
-    <div className="caw-heading"><span className="caw-icon"><FiBriefcase /></span><div><h1>My Assigned Companies</h1><p>Choose a client company to review its accounting records and reports.</p></div></div>
+    <div className="caw-heading"><span className="caw-icon"><FiBriefcase /></span><div><h1>Client Assignments</h1><p>Review the companies that have assigned you as their Chartered Accountant.</p></div></div>
     {error && <div className="caw-error">{error}</div>}
     {loading ? <div className="caw-empty">Loading your assigned companies...</div> : rows.length === 0 ? <div className="caw-empty">No companies have assigned you as their Chartered Accountant yet.</div> : <div className="caw-grid">
       {rows.map((row) => <article className="caw-card" key={row.id}>

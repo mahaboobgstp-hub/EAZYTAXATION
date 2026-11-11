@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext";
 import { useModule } from "../context/ModuleContext";
+import { supabase } from "../supabase/supabaseClient";
 
 import {
   FiHome,
@@ -332,14 +333,14 @@ const COMMON_GROUPS = [
   },
 
   {
-    title: "Company",
+    title: "Company Setup",
     icon: FiBriefcase,
     links: [
       ["Company Master", "/app/companies"],
     ],
   },
   {
-    title: "Masters",
+    title: "Master Data",
     icon: FiDatabase,
     links: [
       ["Customers", "/app/customers"],
@@ -354,7 +355,7 @@ const COMMON_GROUPS = [
     ],
   },
   {
-    title: "Administration",
+    title: "System Settings",
     icon: FiSettings,
     links: [
       ["Company Settings", "/app/company-settings"],
@@ -482,7 +483,39 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
   const location = useLocation();
 
   const [openMenu, setOpenMenu] = useState("");
-  const [commonOpen, setCommonOpen] = useState(false);
+  const [isCaUser, setIsCaUser] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const checkCaRole = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!user) {
+          if (active) setIsCaUser(false);
+          return;
+        }
+        const { data, error } = await supabase
+          .from("ca_company_assignments")
+          .select("id")
+          .eq("ca_user_id", user.id)
+          .eq("status", "Active")
+          .limit(1);
+        if (error) throw error;
+        if (active) setIsCaUser((data || []).length > 0);
+      } catch {
+        if (active) setIsCaUser(false);
+      }
+    };
+    checkCaRole();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkCaRole();
+    });
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const currentModule = MODULES[activeModule] || MODULES.billing;
   const currentModuleLocked = LOCKED_MODULES.has(activeModule);
@@ -504,7 +537,10 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
 
     // HR groups scheduled for later releases are locked as a whole.
     // Other groups can expand, but unavailable pages cannot be opened.
-    const availableLinks = group.links.filter(([, path]) =>
+    const visibleLinks = group.links.filter(([label]) =>
+      label !== "Client Assignments" || isCaUser
+    );
+    const availableLinks = visibleLinks.filter(([, path]) =>
       isRouteAvailable(path)
     );
 
@@ -551,7 +587,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
 
         {isOpen && !groupLocked && (
           <div className="submenu">
-            {group.links.map(([label, path]) => {
+            {visibleLinks.map(([label, path]) => {
               const available = isRouteAvailable(path);
 
               if (!available) {
@@ -681,29 +717,13 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
           renderGroup(group, activeModule)
         )}
 
-        <div className="sidebar-section-label">COMMON WORKSPACE</div>
+        <div className="sidebar-section-label">ORGANIZATION &amp; SETTINGS</div>
 
-        <button
-          type="button"
-          className="menu-title"
-          aria-expanded={commonOpen}
-          onClick={() => setCommonOpen((previous) => !previous)}
-        >
-          <span className="menu-left">
-            <FiLayers />
-            <span>Common Workspace</span>
-          </span>
-
-          {commonOpen ? <FiChevronDown /> : <FiChevronRight />}
-        </button>
-
-        {commonOpen && (
-          <div className="common-workspace">
-            {COMMON_GROUPS.map((group) =>
-              renderGroup(group, "common")
-            )}
-          </div>
-        )}
+        <div className="common-workspace">
+          {COMMON_GROUPS.map((group) =>
+            renderGroup(group, "common")
+          )}
+        </div>
       </nav>
     </aside>
   );
