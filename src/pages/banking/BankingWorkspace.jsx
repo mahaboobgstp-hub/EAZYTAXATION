@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useLocation } from "react-router-dom";
 import {
   FiArrowDownLeft, FiArrowUpRight, FiUploadCloud,
@@ -136,6 +137,7 @@ export default function BankingWorkspace() {
 
     {tab === "Bank Accounts" && <section className="banking-content">
       <div className="banking-section-title"><div><h2>Bank Accounts</h2><p>Manage the bank accounts linked to {currentCompany?.company_name || "your company"}.</p></div><button className="bank-btn bank-btn-primary" onClick={() => setShowImport(true)}><FiPlus/> Add Bank Account</button></div>
+      <BulkTransactionImport kind="bank-accounts" />
       <div className="bank-account-grid">{bankAccounts.map(row=><article className="bank-card bank-account-tile" key={row.name}><div className={"bank-logo "+row.color}>{row.bank.split(" ").map(x=>x[0]).join("").slice(0,3)}</div><div className="bank-account-status"><span className="bank-dot"/> Connected</div><h3>{row.name}</h3><p>{row.bank} · {row.number}</p><div className="bank-account-balance"><span>Available balance</span><strong>{money(row.balance)}</strong></div><div className="bank-account-actions"><button onClick={()=>{setAccount(row.name);setTab("Transactions")}}>View transactions</button><button aria-label="More options"><FiMoreVertical/></button></div></article>)}</div>
     </section>}
 
