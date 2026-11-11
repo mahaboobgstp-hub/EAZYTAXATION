@@ -70,7 +70,7 @@ function Login() {
       if (caError && caError.code !== "42P01") throw caError;
 
       alert("Login Successful");
-      navigate(caAssignments?.length ? "/app/ca-workspace" : "/app/dashboard");
+      navigate("/app/dashboard");
 
     }
 
