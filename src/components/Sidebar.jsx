@@ -323,12 +323,12 @@ const MODULES = {
 
 const COMMON_GROUPS = [
   {
-    title: "Administration",
-    icon: FiSettings,
+    title: "User & CA Management",
+    icon: FiUsers,
     links: [
       ["Users & Access", "/app/users-access"],
-      ["CA Assignment", "/app/ca-assignment"],
-      ["My CA Companies", "/app/ca-workspace"],
+      ["CA Assignments", "/app/ca-assignment"],
+      ["Client Assignments", "/app/ca-workspace"],
     ],
   },
 
