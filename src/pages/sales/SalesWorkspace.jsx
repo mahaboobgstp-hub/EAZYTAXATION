@@ -50,6 +50,8 @@ export default function SalesWorkspace({ kind }) {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All statuses");
+  const [customerFilter, setCustomerFilter] = useState("");
+  const [billingTypeFilter, setBillingTypeFilter] = useState("All");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [dialog, setDialog] = useState(false);
@@ -82,24 +84,26 @@ export default function SalesWorkspace({ kind }) {
     const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
     return (!search || text.includes(search.toLowerCase())) &&
       (statusFilter === "All statuses" || status.toLowerCase() === statusFilter.toLowerCase()) &&
+      (!customerFilter || row.customer_id === customerFilter) &&
+      (kind !== "register" || billingTypeFilter === "All" || (row.sale_type === "CASH" ? "Cash" : "Credit") === billingTypeFilter) &&
       (!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo);
-  }), [rows, search, statusFilter, dateFrom, dateTo, config, kind]);
+  }), [rows, search, statusFilter, customerFilter, billingTypeFilter, dateFrom, dateTo, config, kind]);
 
   const metrics = useMemo(() => {
     if (kind === "register") {
-      const paid = rows.filter(r => r.sale_type === "CASH").reduce((s, r) => s + num(r.total_amount), 0);
-      const outstanding = rows.filter(r => r.sale_type !== "CASH").reduce((s, r) => s + num(r.total_amount), 0);
-      return [rows.length, currency(rows.reduce((s, r) => s + num(r.total_amount), 0)), currency(paid), currency(outstanding)];
+      const paid = filtered.filter(r => r.sale_type === "CASH").reduce((s, r) => s + num(r.total_amount), 0);
+      const outstanding = filtered.filter(r => r.sale_type !== "CASH").reduce((s, r) => s + num(r.total_amount), 0);
+      return [filtered.length, currency(filtered.reduce((s, r) => s + num(r.total_amount), 0)), currency(paid), currency(outstanding)];
     }
-    if (kind === "quotations") return [rows.length, rows.filter(r => !["accepted", "rejected", "expired"].includes((r.status || "draft").toLowerCase())).length, rows.filter(r => (r.status || "").toLowerCase() === "accepted").length];
-    if (kind === "orders") return [rows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(rows.reduce((s, r) => s + num(r.total_amount), 0)), rows.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
+    if (kind === "quotations") return [filtered.length, filtered.filter(r => !["accepted", "rejected", "expired"].includes((r.status || "draft").toLowerCase())).length, filtered.filter(r => (r.status || "").toLowerCase() === "accepted").length];
+    if (kind === "orders") return [filtered.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(filtered.reduce((s, r) => s + num(r.total_amount), 0)), filtered.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
     if (kind === "challans") return [
-      rows.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
-      rows.filter(r => (r.status || "").toLowerCase().includes("transit")).length,
-      rows.filter(r => (r.status || "").toLowerCase() === "delivered").length,
+      filtered.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
+      filtered.filter(r => (r.status || "").toLowerCase().includes("transit")).length,
+      filtered.filter(r => (r.status || "").toLowerCase() === "delivered").length,
     ];
-    return [currency(rows.filter(r => r.status !== "Void").reduce((s, r) => s + num(r.total_amount), 0)), currency(rows.filter(r => r.status === "Applied").reduce((s, r) => s + num(r.total_amount), 0)), currency(rows.filter(r => !["Applied", "Void"].includes(r.status)).reduce((s, r) => s + num(r.total_amount), 0))];
-  }, [rows, kind]);
+    return [currency(filtered.filter(r => r.status !== "Void").reduce((s, r) => s + num(r.total_amount), 0)), currency(filtered.filter(r => r.status === "Applied").reduce((s, r) => s + num(r.total_amount), 0)), currency(filtered.filter(r => !["Applied", "Void"].includes(r.status)).reduce((s, r) => s + num(r.total_amount), 0))];
+  }, [filtered, kind]);
 
   const openCreate = () => {
     setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
@@ -205,9 +209,12 @@ export default function SalesWorkspace({ kind }) {
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
     <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>
     <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
-      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>
+      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{kind === "register" && <>
+      <select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}><option value="">All customers</option>{customers.map(customer => <option key={customer.id} value={customer.id}>{customer.customer_name}</option>)}</select>
+      <select value={billingTypeFilter} onChange={e => setBillingTypeFilter(e.target.value)}><option value="All">All billing types</option><option value="Cash">Cash</option><option value="Credit">Credit</option></select>
+    </>}
       <label>From <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>To <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
-      <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setDateFrom(""); setDateTo(""); }}>Reset</button>
+      <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setCustomerFilter(""); setBillingTypeFilter("All"); setDateFrom(""); setDateTo(""); }}>Reset</button>
     </section>
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div><button className="sw-export" onClick={() => window.print()}>Print list</button></div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
