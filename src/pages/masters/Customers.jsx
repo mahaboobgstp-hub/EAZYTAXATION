@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 import { useCompany } from '../../context/CompanyContext';
 import { getStates }
 from '../../services/stateService';
@@ -127,6 +128,8 @@ const loadStates = async () => {
     <div className="customers-page">
 
       <h2>Customers Master</h2>
+
+      <BulkTransactionImport kind="customers" />
 
       <form
         className="customer-form"
