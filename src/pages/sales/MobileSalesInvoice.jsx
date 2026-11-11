@@ -9,6 +9,10 @@ import {
   saveSalesInvoice,
 } from "../../services/salesInvoiceService";
 import { getInvoiceSettingsByCompany } from "../../services/invoiceSettingsService";
+import { getCompanyById } from "../../services/companyService";
+import { getCustomerById } from "../../services/customerService";
+import { getSalesInvoiceById, getSalesInvoiceItems } from "../../services/salesInvoiceService";
+import InvoicePrint from "../../components/InvoicePrint";
 import "../../css/sales/MobileSalesInvoice.css";
 
 const todayISO = () => {
@@ -38,6 +42,7 @@ export default function MobileSalesInvoice() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [savedInvoice, setSavedInvoice] = useState(null);
+  const [printData, setPrintData] = useState(null);
 
   const customer = customers.find(item => item.id === customerId) || null;
   const intraState = Boolean(currentCompany?.state && placeOfSupply && currentCompany.state.toLowerCase() === placeOfSupply.toLowerCase());
@@ -160,6 +165,14 @@ export default function MobileSalesInvoice() {
       const invoiceId = await saveSalesInvoice(header, calculated.items);
       setSavedInvoice({ id: invoiceId, invoice_no: finalNumber, total_amount: grandTotal, customer_name: customer.customer_name, invoice_date: invoiceDate });
       setInvoiceNo(finalNumber);
+      const [invoice, invoiceItems, settings, companyDetails, customerDetails] = await Promise.all([
+        getSalesInvoiceById(invoiceId),
+        getSalesInvoiceItems(invoiceId),
+        getInvoiceSettingsByCompany(currentCompanyId),
+        getCompanyById(currentCompanyId),
+        getCustomerById(customer.id),
+      ]);
+      setPrintData({ invoice, items: invoiceItems || [], settings, company: companyDetails, customer: customerDetails });
     } catch (err) {
       setError(err?.message || "Unable to save invoice.");
     } finally {
@@ -172,6 +185,7 @@ export default function MobileSalesInvoice() {
 
   if (savedInvoice) return (
     <main className="mobile-sales-page">
+      {printData && <InvoicePrint invoice={printData.invoice} items={printData.items} settings={printData.settings} company={printData.company} customer={printData.customer} onClose={() => setPrintData(null)} />}
       <section className="mobile-sales-success">
         <div className="mobile-sales-success-icon">✓</div>
         <h1>Invoice saved successfully</h1>
