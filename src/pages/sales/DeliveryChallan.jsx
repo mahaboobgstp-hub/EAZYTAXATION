@@ -1565,7 +1565,7 @@ const viewChallan = async (challanId) => {
                                     <th>Delivered</th>
                                     <th>Pending</th>
                                 </>}
-                                <th>Deliver Now</th>
+                                <th>{isNativeAndroid && deliveryType === "ORDER" ? "Deliver Now" : "Qty"}</th>
                                 <th>Rate</th>
                                 <th>Amount</th>
                                 <th></th>
