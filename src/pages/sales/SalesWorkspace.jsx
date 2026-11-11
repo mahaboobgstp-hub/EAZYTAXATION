@@ -77,7 +77,7 @@ export default function SalesWorkspace({ kind }) {
   useEffect(() => {
     if (!currentCompanyId) return;
     supabase.from("customers").select("id, customer_name, state").eq("company_id", currentCompanyId).order("customer_name").then(({ data }) => setCustomers(data || []));
-    supabase.from("items").select("id, item_name, hsn_sac, unit, sales_rate, gst_rate").eq("company_id", currentCompanyId).order("item_name").then(({ data }) => setItemsMaster(data || []));
+    if (isNativeAndroid) supabase.from("items").select("id, item_name, hsn_sac, unit, sales_rate, gst_rate").eq("company_id", currentCompanyId).order("item_name").then(({ data }) => setItemsMaster(data || []));
     if (kind === "credits") supabase.from("sales_invoices").select("id, invoice_no, customer_id, customer_name, total_amount").eq("company_id", currentCompanyId).eq("is_deleted", false).order("invoice_date", { ascending: false }).then(({ data }) => setInvoices(data || []));
   }, [currentCompanyId, kind]);
 
@@ -92,20 +92,21 @@ export default function SalesWorkspace({ kind }) {
   }), [rows, search, statusFilter, customerFilter, billingTypeFilter, dateFrom, dateTo, config, kind]);
 
   const metrics = useMemo(() => {
+    const metricRows = isNativeAndroid ? filtered : rows;
     if (kind === "register") {
-      const paid = filtered.filter(r => r.sale_type === "CASH").reduce((s, r) => s + num(r.total_amount), 0);
-      const outstanding = filtered.filter(r => r.sale_type !== "CASH").reduce((s, r) => s + num(r.total_amount), 0);
-      return [filtered.length, currency(filtered.reduce((s, r) => s + num(r.total_amount), 0)), currency(paid), currency(outstanding)];
+      const paid = metricRows.filter(r => r.sale_type === "CASH").reduce((s, r) => s + num(r.total_amount), 0);
+      const outstanding = metricRows.filter(r => r.sale_type !== "CASH").reduce((s, r) => s + num(r.total_amount), 0);
+      return [metricRows.length, currency(metricRows.reduce((s, r) => s + num(r.total_amount), 0)), currency(paid), currency(outstanding)];
     }
-    if (kind === "quotations") return [filtered.length, filtered.filter(r => !["accepted", "rejected", "expired"].includes((r.status || "draft").toLowerCase())).length, filtered.filter(r => (r.status || "").toLowerCase() === "accepted").length];
-    if (kind === "orders") return [filtered.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(filtered.reduce((s, r) => s + num(r.total_amount), 0)), filtered.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
+    if (kind === "quotations") return [metricRows.length, metricRows.filter(r => !["accepted", "rejected", "expired"].includes((r.status || "draft").toLowerCase())).length, metricRows.filter(r => (r.status || "").toLowerCase() === "accepted").length];
+    if (kind === "orders") return [metricRows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(metricRows.reduce((s, r) => s + num(r.total_amount), 0)), metricRows.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
     if (kind === "challans") return [
-      filtered.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
-      filtered.filter(r => (r.status || "").toLowerCase().includes("transit")).length,
-      filtered.filter(r => (r.status || "").toLowerCase() === "delivered").length,
+      metricRows.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
+      metricRows.filter(r => (r.status || "").toLowerCase().includes("transit")).length,
+      metricRows.filter(r => (r.status || "").toLowerCase() === "delivered").length,
     ];
-    return [currency(filtered.filter(r => r.status !== "Void").reduce((s, r) => s + num(r.total_amount), 0)), currency(filtered.filter(r => r.status === "Applied").reduce((s, r) => s + num(r.total_amount), 0)), currency(filtered.filter(r => !["Applied", "Void"].includes(r.status)).reduce((s, r) => s + num(r.total_amount), 0))];
-  }, [filtered, kind]);
+    return [currency(metricRows.filter(r => r.status !== "Void").reduce((s, r) => s + num(r.total_amount), 0)), currency(metricRows.filter(r => r.status === "Applied").reduce((s, r) => s + num(r.total_amount), 0)), currency(metricRows.filter(r => !["Applied", "Void"].includes(r.status)).reduce((s, r) => s + num(r.total_amount), 0))];
+  }, [filtered, rows, kind]);
 
   const handleLineItemChange = (index, itemId) => {
     const item = itemsMaster.find(row => row.id === itemId);
@@ -196,13 +197,13 @@ export default function SalesWorkspace({ kind }) {
     try {
       const customer = customers.find(c => c.id === form.customerId);
       if (!customer) throw new Error("Select a customer.");
-      if (kind === "credits" && !form.originalInvoiceId) throw new Error("Select the original sales invoice.");
-      if (kind === "credits" && lines.some(line => num(line.qty) > num(line.maxQty))) throw new Error("Return quantity cannot exceed the remaining returnable quantity.");
+      if (kind === "credits" && isNativeAndroid && !form.originalInvoiceId) throw new Error("Select the original sales invoice.");
+      if (kind === "credits" && isNativeAndroid && lines.some(line => num(line.qty) > num(line.maxQty))) throw new Error("Return quantity cannot exceed the remaining returnable quantity.");
       const prefix = kind === "quotations" ? "QT" : kind === "orders" ? "SO" : "CN";
       const existing = await supabase.from(config.table).select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId);
       if (existing.error) throw existing.error;
       const documentNo = `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
-      const validLines = lines.filter(line => line.description.trim() && num(line.qty) > 0);
+      const validLines = lines.filter(line => line.description.trim() && (!isNativeAndroid || num(line.qty) > 0));
       if (!validLines.length) throw new Error("Add at least one item or description.");
       const taxableValue = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)), 0) * 100) / 100;
       const taxAmount = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)) * Math.max(0, num(line.gstRate)) / 100, 0) * 100) / 100;
@@ -230,10 +231,8 @@ export default function SalesWorkspace({ kind }) {
       const itemsToInsert = validLines.map((line, index) => ({
         [parentField]: id,
         line_no: index + 1,
-        item_id: line.item_id || null,
+        ...(isNativeAndroid ? { item_id: line.item_id || null, hsn_sac: line.hsn_sac || null, unit: line.unit || null } : {}),
         item_name: line.description.trim(),
-        hsn_sac: line.hsn_sac || null,
-        unit: line.unit || null,
         ...(kind === "quotations" ? { particulars: line.description.trim() } : { description: line.description.trim() }),
         qty: Math.max(0, num(line.qty)),
         rate: Math.max(0, num(line.rate)),
@@ -292,7 +291,7 @@ export default function SalesWorkspace({ kind }) {
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
     <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>
     <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
-      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{kind === "register" && <>
+      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{isNativeAndroid && kind === "register" && <>
       <select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}><option value="">All customers</option>{customers.map(customer => <option key={customer.id} value={customer.id}>{customer.customer_name}</option>)}</select>
       <select value={billingTypeFilter} onChange={e => setBillingTypeFilter(e.target.value)}><option value="All">All billing types</option><option value="Cash">Cash</option><option value="Credit">Credit</option></select>
     </>}
@@ -311,7 +310,7 @@ export default function SalesWorkspace({ kind }) {
           {kind === "orders" && <><td data-label="Expected delivery">{dateText(row.expected_delivery_date)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Fulfillment"><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
-          <td data-label="Actions"><div className="sw-actions"><button onClick={() => view(row)}>View</button>{kind === "register" && <button onClick={() => printInvoice(row)}>Print</button>}{kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{(kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div></td>
+          <td data-label="Actions"><div className="sw-actions"><button onClick={() => view(row)}>View</button>{kind === "register" && <button onClick={() => printInvoice(row)}>Print</button>}{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div></td>
         </tr>;
       })}</tbody></table></div>}
     </section></>}
@@ -319,7 +318,7 @@ export default function SalesWorkspace({ kind }) {
       {isNativeAndroid && <nav className="sw-mobile-steps" aria-label="Document creation steps"><span className={formStep === 1 ? "active" : formStep > 1 ? "complete" : ""}>1. Details</span><span className={formStep === 2 ? "active" : formStep > 2 ? "complete" : ""}>2. Items</span><span className={formStep === 3 ? "active" : ""}>3. Review</span></nav>}
       {(!isNativeAndroid || formStep === 1) && <>
       <label>Company<input value={currentCompany?.company_name || ""} readOnly /></label>
-      {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => handleOriginalInvoiceChange(e.target.value)}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
+      {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => isNativeAndroid ? handleOriginalInvoiceChange(e.target.value) : (() => { const invoice = invoices.find(i => i.id === e.target.value); setForm({ ...form, originalInvoiceId: e.target.value, customerId: invoice?.customer_id || form.customerId }); })()}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
       <div className="sw-form-grid"><label>Customer<select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })}><option value="">Select customer</option>{customers.map(c => <option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></label><label>{kind === "orders" ? "Order date" : kind === "credits" ? "Credit note date" : "Quotation date"}<input required type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></label>{kind !== "credits" && <label>{kind === "orders" ? "Expected delivery" : "Valid until"}<input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} /></label>}</div>
       {kind === "credits" && <label>Reason<input required value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Reason for issuing credit" /></label>}
       </>}
