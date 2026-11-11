@@ -529,10 +529,14 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
   const currentModule = MODULES[effectiveModuleId] || MODULES.billing;
   const currentModuleLocked = LOCKED_MODULES.has(effectiveModuleId);
   const visibleModuleGroups = isNativeAndroid
-    ? currentModule.groups.filter(group => group.title === "Sales").map(group => ({
-        ...group,
-        links: group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
-      }))
+    ? currentModule.groups
+        .filter(group => ["Sales", "Purchases"].includes(group.title))
+        .map(group => ({
+          ...group,
+          links: group.title === "Sales"
+            ? group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
+            : group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/purchase-returns", "/app/debit-notes"].includes(path))
+        }))
     : currentModule.groups;
   const visibleCommonGroups = isNativeAndroid ? ANDROID_COMMON_GROUPS : COMMON_GROUPS;
 
