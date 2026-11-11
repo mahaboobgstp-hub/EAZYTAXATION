@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import BulkTransactionImport from "../../components/BulkTransactionImport";
 
 import '../../css/masters/ExpenseCategories.css';
 
@@ -49,6 +50,8 @@ function ExpenseCategories() {
     <div className="expense-categories-page">
 
       <h2>Expense Categories</h2>
+
+      <BulkTransactionImport kind="expense-categories" />
 
       <form
         className="expense-category-form"
