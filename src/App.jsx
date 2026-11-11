@@ -9,7 +9,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Layout from './components/Layout';
-import ModuleHome from "./pages/ModuleHome";
+import Dashboard from "./pages/Dashboard";
 import { CompanyProvider } from "./context/CompanyContext";
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
@@ -182,7 +182,7 @@ function App() {
           path="/app"
           element={<Layout />}
         >
-          <Route index element={<ModuleHome />} />
+          <Route index element={<Dashboard />} />\n          <Route path="dashboard" element={<Dashboard />} />
 
           <Route
             path="/app/companies"
