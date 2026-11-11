@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import BulkTransactionImport from '../../components/BulkTransactionImport';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
@@ -938,6 +939,8 @@ setCustomerDetails(
           <a href="/app/sales-register" className="invoice-breadcrumb">View Sales Register</a>
         </div>
       </div>
+
+      <BulkTransactionImport kind="sales" />
 
       <form id="sales-invoice-form" className="invoice-header-form" onSubmit={handleSubmit}>
         <section className="invoice-details-card">
