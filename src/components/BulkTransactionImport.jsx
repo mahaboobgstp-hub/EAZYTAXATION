@@ -4,7 +4,7 @@ import "../css/BulkTransactionImport.css";
 const TEMPLATES = {
   sales: {
     title: "Sales",
-    description: "Import multiple sales invoices using one row per invoice item.",
+    description: "Import records using the downloadable CSV template.",
     headers: ["Invoice Number","Invoice Date","Customer Name","Customer GSTIN","Place of Supply","Sale Type","Item Name","HSN/SAC","Quantity","Unit","Rate","Discount %","GST Rate %","Cess Rate %","Other Charges","Round Off","Narration"],
     sample: ["INV-2026-001","2026-11-01","ABC Traders","37ABCDE1234F1Z5","Andhra Pradesh","CREDIT","Office Chair","9401","2","Nos","4500","0","18","0","0","0","November office furniture sale"]
   },
@@ -25,6 +25,66 @@ const TEMPLATES = {
     description: "Import customer receipts, advances and invoice-linked collections.",
     headers: ["Receipt Number","Receipt Date","Received From","Customer GSTIN","Against Invoice Number","Receipt Mode","Deposit Account","Reference / UTR Number","Amount Received","Narration"],
     sample: ["","2026-11-04","ABC Traders","37ABCDE1234F1Z5","INV-2026-001","Bank Transfer","HDFC Current Account","UTR123456789","5000","Part payment against invoice"]
+  },
+  customers: {
+    title: "Customers",
+    description: "Import customer master records, contact details and GST registration information.",
+    headers: ["Customer Name","GSTIN","PAN","Mobile","Email","Address","State"],
+    sample: ["ABC Traders","37ABCDE1234F1Z5","ABCDE1234F","9876543210","accounts@abctraders.in","12 Market Road, Vijayawada","Andhra Pradesh"]
+  },
+  vendors: {
+    title: "Vendors",
+    description: "Import supplier master records and tax registration details.",
+    headers: ["Vendor Name","GSTIN","PAN","Mobile","Email","Address","State"],
+    sample: ["Sri Lakshmi Suppliers","37ABCDE1234F1Z5","ABCDE1234F","9876543211","billing@srilakshmi.in","45 Industrial Estate, Guntur","Andhra Pradesh"]
+  },
+  items: {
+    title: "Items",
+    description: "Import goods and services with HSN/SAC, units and default tax rates.",
+    headers: ["Item Code","Item Name","Item Type","HSN/SAC","Unit","GST Rate %","Sales Rate","Purchase Rate"],
+    sample: ["ITM-001","Office Chair","Goods","9401","Nos","18","4500","3600"]
+  },
+  units: {
+    title: "Units of Measurement",
+    description: "Import standard units and their display symbols.",
+    headers: ["Unit Code","Unit Name","Symbol","Decimal Places","Description","Active"],
+    sample: ["NOS","Numbers","Nos","0","Countable individual items","Yes"]
+  },
+  "tax-rates": {
+    title: "GST / Tax Rates",
+    description: "Import HSN/SAC tax classifications and applicable GST rates.",
+    headers: ["Code Type","HSN/SAC Code","Description","GST Rate %","CGST Rate %","SGST Rate %","IGST Rate %","Cess Rate %","Effective From","Effective To"],
+    sample: ["HSN","9401","Seats and furniture","18","9","9","18","0","2026-04-01",""]
+  },
+  "expense-categories": {
+    title: "Expense Categories",
+    description: "Import expense category names used to classify business expenses.",
+    headers: ["Category Name"],
+    sample: ["Office Expenses"]
+  },
+  employees: {
+    title: "Employees",
+    description: "Import employee master records and basic employment information.",
+    headers: ["Employee Code","Employee Name","Date of Joining","Mobile","Email","Department","Designation","Employment Type","PAN","UAN","ESI Number"],
+    sample: ["EMP-001","Ravi Kumar","2026-04-01","9876543212","ravi@example.in","Accounts","Accountant","Permanent","ABCDE1234F","100123456789","1234567890"]
+  },
+  locations: {
+    title: "Locations",
+    description: "Import company locations, branches and warehouses.",
+    headers: ["Location Code","Location Name","Address","City","State","PIN Code","Active"],
+    sample: ["LOC-001","Main Branch","12 Market Road","Vijayawada","Andhra Pradesh","520001","Yes"]
+  },
+  accounts: {
+    title: "Chart of Accounts",
+    description: "Import account groups and ledger opening details. Review account mapping before migration.",
+    headers: ["Account Group","Ledger Name","Ledger Code","Account Nature","Opening Balance","Opening Balance Type"],
+    sample: ["Current Assets","HDFC Current Account","LED-001","Asset","25000","Debit"]
+  },
+  "bank-accounts": {
+    title: "Bank Accounts",
+    description: "Import bank account master details and opening balances.",
+    headers: ["Account Name","Bank Name","Account Number","IFSC","Branch","Account Type","Opening Balance"],
+    sample: ["HDFC Current Account","HDFC Bank","50100123456789","HDFC0001234","Vijayawada Main","Current","25000"]
   },
   payments: {
     title: "Payments",
@@ -96,7 +156,7 @@ export default function BulkTransactionImport({ kind }) {
     const content = await selected.text();
     const parsed = parseCsvPreview(content);
     setRows(parsed);
-    if (parsed.length < 2) setNotice("The file should contain a header row and at least one transaction row.");
+    if (parsed.length < 2) setNotice("The file should contain a header row and at least one data row.");
     else if (parsed[0].length !== config.headers.length) setNotice(`Template has ${config.headers.length} columns. Your file has ${parsed[0].length} columns. Please use the downloaded template.`);
   }
 
@@ -113,14 +173,14 @@ export default function BulkTransactionImport({ kind }) {
       setNotice("Select a CSV file that follows the downloaded template before continuing.");
       return;
     }
-    setNotice("Screen preview only: database verification and transaction posting will be connected after the UI is approved.");
+    setNotice("Screen preview only: database validation and record creation will be connected after the UI is approved.");
   }
 
   return (
     <>
       <section className="bulk-import-card">
         <div className="bulk-import-copy">
-          <span className="bulk-import-eyebrow">BULK TRANSACTION IMPORT</span>
+          <span className="bulk-import-eyebrow">BULK DATA IMPORT</span>
           <h3>Import {config.title}</h3>
           <p>{config.description}</p>
         </div>
@@ -165,7 +225,7 @@ export default function BulkTransactionImport({ kind }) {
               <div className="bulk-import-preview">
                 <div className="bulk-import-preview-heading">
                   <strong>File preview</strong>
-                  <span>{Math.max(rows.length - 1, 0)} transaction rows</span>
+                  <span>{Math.max(rows.length - 1, 0)} data rows</span>
                 </div>
                 <div className="bulk-import-table-wrap">
                   <table>
