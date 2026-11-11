@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useCompany } from "../../context/CompanyContext";
-import BulkTransactionImport from "../../components/BulkTransactionImport";
-import "../../css/expenses/ExpenseWorkspace.css";
+import { useCompany } from "../context/CompanyContext";
+import BulkTransactionImport from "../components/BulkTransactionImport";
+import "../css/expenses/ExpenseWorkspace.css";
 
 const today = () => {
   const date = new Date();
