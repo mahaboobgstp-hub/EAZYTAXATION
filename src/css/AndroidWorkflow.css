@@ -26,3 +26,14 @@
  .android-workflow .ew-summary { margin-top:12px; }
  .android-workflow .pi-actions { flex-wrap:nowrap; }
 }
+
+@media(max-width:700px) {
+ .android-workflow .pw-modal,.android-workflow .ew-modal { width:calc(100vw - 20px); max-height:calc(100dvh - 20px); overflow:auto; padding:14px; }
+ .android-workflow .pw-modal form,.android-workflow .ew-modal form { padding-bottom:8px; }
+ .android-workflow .pw-line-table { overflow-x:auto; }
+ .android-workflow .pw-line { min-width:680px; }
+ .android-workflow .pw-modal footer,.android-workflow .ew-modal footer { display:flex; gap:8px; }
+ .android-workflow .pw-modal footer button,.android-workflow .ew-modal footer button { flex:1; min-height:44px; }
+ .android-workflow .pw-table-scroll,.android-workflow .ew-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+ .android-workflow .pw-table-scroll table,.android-workflow .ew-table-scroll table { min-width:760px; }
+}
