@@ -322,6 +322,16 @@ const MODULES = {
 
 const COMMON_GROUPS = [
   {
+    title: "Administration",
+    icon: FiSettings,
+    links: [
+      ["Users & Access", "/app/users-access"],
+      ["CA Assignment", "/app/ca-assignment"],
+      ["My CA Companies", "/app/ca-workspace"],
+    ],
+  },
+
+  {
     title: "Company",
     icon: FiBriefcase,
     links: [
@@ -429,6 +439,9 @@ const AVAILABLE_ROUTES = new Set([
   "/app/item-ledger",
   "/app/gst-reports",
   "/app/invoice-settings",
+  "/app/users-access",
+  "/app/ca-assignment",
+  "/app/ca-workspace",
   "/app/accounting",
   "/app/chart-of-accounts",
   "/app/journal-voucher",
