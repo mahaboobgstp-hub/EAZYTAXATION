@@ -50,3 +50,8 @@
   .sw-modal footer button{min-height:46px}
   .sw-detail-grid{grid-template-columns:1fr}
 }
+
+.sw-mobile-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;background:#f4f7fc;border-radius:11px;color:#77869a;font-size:12px;font-weight:700}
+.sw-mobile-steps span{padding:9px 5px;text-align:center;border-radius:8px}
+.sw-mobile-steps span.active{background:#e4edff;color:#155eef}
+.sw-mobile-steps span.complete{background:#e8f7ef;color:#177245}
