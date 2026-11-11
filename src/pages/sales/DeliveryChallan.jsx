@@ -451,7 +451,17 @@ const [printMode, setPrintMode] = useState(false);
                 };
             }).filter(item => item.item_id);
 
-            const selectedCustomer = customers.find(customer => customer.id === order.customer_id);
+            let selectedCustomer = customers.find(customer => customer.id === order.customer_id);
+            if (!selectedCustomer && order.customer_id) {
+                const { data: customerData, error: customerError } = await supabase
+                    .from("customers")
+                    .select("id, customer_name, state, address")
+                    .eq("id", order.customer_id)
+                    .eq("company_id", currentCompanyId)
+                    .single();
+                if (customerError) throw customerError;
+                selectedCustomer = customerData;
+            }
             setDeliveryType("ORDER");
             setFormData(prev => ({
                 ...prev,
