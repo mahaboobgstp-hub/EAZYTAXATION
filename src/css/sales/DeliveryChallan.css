@@ -496,3 +496,24 @@
     }
 
 }
+
+/* Android-friendly Delivery Challan layout */
+@media(max-width:640px){
+  .delivery-challan-page{padding:10px!important}
+  .delivery-challan-page-heading{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}
+  .delivery-challan-page-heading h2{font-size:21px}
+  .delivery-challan-page-heading a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 12px;border-radius:10px;background:#edf3ff;color:#1748bf;text-decoration:none;font-weight:700}
+  .delivery-challan-card{padding:13px;border-radius:13px;margin-bottom:13px}
+  .delivery-challan-card h3{font-size:15px;margin-bottom:13px}
+  .delivery-challan-form-grid{grid-template-columns:1fr;gap:13px}
+  .delivery-challan-form-group input,.delivery-challan-form-group select,.delivery-challan-form-group textarea{min-height:45px;font-size:14px;border-radius:10px}
+  .delivery-challan-items-wrapper{overflow-x:auto;overscroll-behavior-x:contain;border:1px solid #e2e8f0;border-radius:10px}
+  .delivery-challan-items-table{min-width:820px}
+  .delivery-challan-items-table input,.delivery-challan-items-table select{min-height:42px;font-size:13px}
+  .delivery-challan-add-item{width:100%;min-height:44px;border-radius:10px}
+  .delivery-challan-totals{width:100%;margin-top:16px}
+  .delivery-challan-actions{display:grid;grid-template-columns:1fr;gap:9px}
+  .delivery-challan-primary-btn,.delivery-challan-secondary-btn{width:100%;min-height:46px;border-radius:10px}
+  .delivery-challan-list-table-wrapper{overflow-x:auto}
+  .delivery-challan-list-table{min-width:680px}
+}
