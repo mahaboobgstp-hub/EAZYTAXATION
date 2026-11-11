@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import Landing from "./pages/landing/Landing";
 import Features from "./pages/features/Features";
 import Pricing from "./pages/pricing/Pricing";
@@ -54,6 +55,7 @@ import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
+import MobileSalesInvoice from './pages/sales/MobileSalesInvoice';
 import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
 import ExpenseRegister from "./pages/expenses/ExpenseRegister";
@@ -117,6 +119,8 @@ import HRExpenseTracking
   from "./pages/hr/HRExpenseTracking";
 import HRBudgetApprovals
   from "./pages/hr/HRBudgetApprovals";
+
+const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
 function App() {
 
@@ -214,7 +218,7 @@ function App() {
 
           <Route
             path="sales"
-            element={<SalesInvoice />}
+            element={isNativeAndroid ? <MobileSalesInvoice /> : <SalesInvoice />}
           />
 
           <Route
