@@ -27,6 +27,7 @@ import {
   FiDatabase,
   FiLock,
   FiRefreshCw,
+  FiX,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -478,7 +479,7 @@ const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
 
 
-function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
+function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose }) {
   const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
@@ -630,6 +631,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
 
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
+      <div className="sidebar-topbar">
       <div className="sidebar-logo">
         <div className="logo-icon">ET</div>
         <div>
@@ -664,6 +666,9 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
             ))}
           </select>
         </div>
+      </div>
+
+      <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Close sidebar" title="Close sidebar"><FiX /></button>
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
