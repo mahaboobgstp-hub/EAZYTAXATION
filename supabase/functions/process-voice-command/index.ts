@@ -28,6 +28,9 @@ Deno.serve(async (req: Request) => {
     const audio = form.get("audio");
     const typedText = String(form.get("text") || "").trim();
     const companyId = String(form.get("companyId") || "").trim();
+    const previousDraftRaw = String(form.get("previousDraft") || "").trim();
+    let previousDraft: unknown = null;
+    if (previousDraftRaw) { try { previousDraft = JSON.parse(previousDraftRaw); } catch { return json({ error: "Previous draft context is invalid." }, 400); } }
     if (!companyId) return json({ error: "Select a company first." }, 400);
     if (!audio && !typedText) return json({ error: "Speak or type a command." }, 400);
 
@@ -64,7 +67,11 @@ For accounting entries, identify missing essential details rather than guessing.
         model: "gpt-4.1-mini",
         temperature: 0.1,
         response_format: { type: "json_object" },
-        messages: [{ role: "system", content: prompt }, { role: "user", content: transcript }],
+        messages: [
+          { role: "system", content: prompt },
+          ...(previousDraft ? [{ role: "assistant", content: `Existing draft context (use corrections to replace prior field values): ${JSON.stringify(previousDraft)}` }] : []),
+          { role: "user", content: transcript },
+        ],
       }),
     });
     const result = await completion.json();
