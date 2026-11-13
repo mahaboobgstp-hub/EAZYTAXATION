@@ -640,16 +640,19 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose, o
 
         <div className="company-details">
           <small>Current Company</small>
+          <div className="company-name-full">
+            {currentCompany?.company_name?.trim() || (loading ? "Loading companies..." : "Select Company")}
+          </div>
           <div className="company-selector-wrap">
           <select
             className="company-select"
-            value={currentCompany?.id || ""}
+            value=""
             onChange={(event) => changeCompany(event.target.value)}
             disabled={loading || companies.length === 0}
             aria-label="Select current company"
           >
-            <option value="">
-              {loading ? "Loading..." : "Select Company"}
+            <option value="" disabled>
+              {loading ? "Loading..." : "Switch company"}
             </option>
 
             {!loading && companies.map((company) => (
@@ -663,7 +666,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose, o
         </div>
       </div>
 
-      <button type="button" className="sidebar-close-button" onClick={onToggleCollapse} aria-label="Collapse sidebar" title="Collapse sidebar"><FiChevronLeft /></button>
+      <button type="button" className="sidebar-close-button" onClick={onToggleCollapse} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}><FiChevronLeft /></button>
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
