@@ -1,6 +1,26 @@
 import { supabase } from "../supabase/supabaseClient";
 import { createVoiceSession, updateVoiceSession } from "./voiceTransactionSessionService";
 
+async function getVoiceFunctionError(error) {
+  const response = error?.context;
+  if (response && typeof response.clone === "function") {
+    try {
+      const payload = await response.clone().json();
+      if (payload?.error) {
+        return payload.requestId
+          ? payload.error + " (Reference: " + payload.requestId + ")"
+          : payload.error;
+      }
+    } catch {
+      try {
+        const raw = await response.clone().text();
+        if (raw) return raw.slice(0, 700);
+      } catch {}
+    }
+  }
+  return error?.message || "Voice command could not be processed. Please try again.";
+}
+
 export async function processVoiceCommand({ companyId, audioBlob, text, sessionId, previousDraft }) {
   if (!companyId) throw new Error("Select a company before using voice commands.");
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -16,7 +36,7 @@ export async function processVoiceCommand({ companyId, audioBlob, text, sessionI
   if (text) body.append("text", text);
   if (previousDraft) body.append("previousDraft", JSON.stringify(previousDraft));
   const { data, error } = await supabase.functions.invoke("process-voice-command", { body });
-  if (error) throw new Error(data?.error || error.message || "Voice command could not be processed.");
+  if (error) throw new Error(await getVoiceFunctionError(error));
   if (data?.error) throw new Error(data.error);
 
   const draftData = { transcript: data.transcript, language: data.detectedLanguage, commands: data.commands, response: data.response };
