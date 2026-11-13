@@ -709,3 +709,27 @@
  .sidebar-collapsed .menu-link{justify-content:flex-start;padding:11px 13px}
  .sidebar-collapsed .menu-title{justify-content:space-between;padding:10px 12px}
 }
+
+
+/* Web app: keep the company switcher visible after removing sidebar branding. */
+.layout:not(.android-native) .sidebar > .company-card {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin: 14px 12px 18px !important;
+  padding: 12px !important;
+  min-height: 72px;
+  flex: 0 0 auto;
+}
+
+.layout:not(.android-native) .sidebar > .company-card .company-details {
+  display: block !important;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.layout:not(.android-native) .sidebar > .company-card .company-select {
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+}
