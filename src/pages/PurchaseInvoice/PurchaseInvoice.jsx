@@ -27,7 +27,6 @@ export default function PurchaseInvoice() {
   const [preview,setPreview] = useState(null);
   const [message,setMessage] = useState("");
   const [saving,setSaving] = useState(false);
-  const [showAiDocumentCapture,setShowAiDocumentCapture] = useState(false);
   const [aiDocument,setAiDocument] = useState(null);
   const [formData,setFormData] = useState({
     invoice_no:"", invoice_date:today(), supplier_invoice_no:"", supplier_invoice_date:today(),
@@ -39,7 +38,6 @@ export default function PurchaseInvoice() {
 
   useEffect(()=>{
     if(isAndroid && location.state?.openAiDocumentPicker){
-      setShowAiDocumentCapture(true);
       navigate(location.pathname,{replace:true,state:null});
     }
   },[isAndroid,location.state,navigate,location.pathname]);
@@ -138,7 +136,7 @@ export default function PurchaseInvoice() {
   const goNext = () => { if (step === 1 && !formData.supplier_invoice_no.trim()) { setMessage("Enter the supplier invoice number to continue."); return; } if (step === 2 && !formData.vendor_id) { setMessage("Select a supplier to continue."); return; } if (step === 3 && !normalized.length) { setMessage("Add at least one invoice item to continue."); return; } setMessage(""); setStep(s=>Math.min(5,s+1)); };
 
   return <main className={isAndroid ? "purchase-page android-workflow" : "purchase-page"}>
-    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><div className="ai-entry-header-actions">{isAndroid&&<AiDocumentCapture onFileSelected={file=>setAiDocument(file)}/>}<button className="pw-secondary" type="button" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></div></header>
+    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><div className="ai-entry-header-actions">{isAndroid&&<AiDocumentCapture autoOpen={Boolean(location.state?.openAiDocumentPicker)} onFileSelected={file=>setAiDocument(file)}/>}<button className="pw-secondary" type="button" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></div></header>
     {aiDocument&&isAndroid&&<div className="ai-selected-document"><b>Invoice document selected:</b> {aiDocument.name}<button type="button" onClick={()=>setAiDocument(null)}>Remove</button><small>AI extraction is not connected yet. The file is selected locally; extracted details will be added after the secure AI processing service is implemented.</small></div>}
     {message&&<div className="pi-error">{message}</div>}
     {isAndroid && <nav className="android-stepper">{["Invoice","Supplier","Items","Transport","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step)setStep(i+1);}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
