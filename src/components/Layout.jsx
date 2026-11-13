@@ -17,8 +17,18 @@ function Layout() {
   return (
     <ModuleProvider>
       <div className={`layout ${sidebarCollapsed ? "sidebar-is-collapsed" : ""} ${mobileSidebarOpen ? "mobile-sidebar-is-open" : ""}`}>
-        <Sidebar collapsed={sidebarCollapsed} mobileOpen={mobileSidebarOpen} onNavigate={() => setMobileSidebarOpen(false)} />
-        <div className="main-container">
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onNavigate={() => setMobileSidebarOpen(false)}
+          onClose={() => setMobileSidebarOpen(false)}
+        />
+        {mobileSidebarOpen && (
+          <button type="button" className="sidebar-backdrop" aria-label="Close navigation menu" onClick={() => setMobileSidebarOpen(false)} />
+        )}
+        <div className="main-container" onClick={() => {
+          if (window.innerWidth <= 768 && mobileSidebarOpen) setMobileSidebarOpen(false);
+        }}>
           <Header onToggleSidebar={toggleSidebar} />
           <div className="page-content"><Outlet /></div>
         </div>
