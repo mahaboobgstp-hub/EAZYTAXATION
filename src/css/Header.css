@@ -202,3 +202,6 @@
 .android-company-selector span { color:#8490a3; font-size:10px; font-weight:600; letter-spacing:.02em; }
 .android-company-selector select { width:100%; min-width:0; padding:0; appearance:none; border:0; outline:0; background:transparent; color:#17233d; font-size:13px; font-weight:700; text-overflow:ellipsis; }
 .android-company-selector > svg { position:absolute; right:13px; top:50%; width:17px; height:17px; color:#667085; transform:translateY(-20%); pointer-events:none; }
+
+/* Keep the Android menu button in the top-bar layout (not floating over the selector). */
+@media(max-width:1050px){.layout.android-native .android-native-header .sidebar-toggle-button{position:static;top:auto;left:auto;z-index:1;}}
