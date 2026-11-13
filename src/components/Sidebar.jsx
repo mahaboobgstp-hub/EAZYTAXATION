@@ -664,6 +664,9 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
         <div className="company-details">
           <small>Current Company</small>
+          <div className="company-name-full">
+            {currentCompany?.company_name?.trim() || (loading ? "Loading companies..." : "Select Company")}
+          </div>
 
           <select
             className="company-select"
