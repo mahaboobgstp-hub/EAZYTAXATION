@@ -7,6 +7,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { FiHome, FiGrid, FiBarChart2, FiMoreHorizontal } from "react-icons/fi";
 import { ModuleProvider } from "../context/ModuleContext";
 import "../css/Layout.css";
+import GlobalVoiceAssistant from "./GlobalVoiceAssistant";
 
 function Layout() {
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
@@ -35,6 +36,7 @@ function Layout() {
           if (window.innerWidth <= 768 && mobileSidebarOpen) setMobileSidebarOpen(false);
         }}>
           <Header onToggleSidebar={toggleSidebar} />
+          <GlobalVoiceAssistant />
           <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}><Outlet /></div>
           {isNativeAndroid && (
             <nav className="android-bottom-nav" aria-label="Bottom navigation">
