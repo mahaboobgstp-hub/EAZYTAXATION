@@ -47,8 +47,17 @@ export async function uploadAndProcessAiInvoice(file, companyId, transactionType
       body: { job_id: jobId },
     });
     if (processError) {
-      const details = data?.error || processError.message || "AI invoice processing failed.";
-      throw new Error(details);
+      let details = data?.error || data?.message || "";
+      const response = processError.context;
+      if (!details && response && typeof response.clone === "function") {
+        try {
+          const errorPayload = await response.clone().json();
+          details = errorPayload?.error || errorPayload?.message || "";
+        } catch {
+          // Keep the safe fallback below when the function response is not JSON.
+        }
+      }
+      throw new Error(details || processError.message || "AI invoice processing failed.");
     }
     if (!data?.extracted_data) throw new Error(data?.error || "The AI service returned no invoice details.");
     return {
