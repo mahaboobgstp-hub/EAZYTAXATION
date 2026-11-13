@@ -6,6 +6,7 @@ import { supabase } from "../../supabase/supabaseClient";
 import { getVendorsForDropdown, getItemsForDropdown, generatePurchaseInvoiceNumber, savePurchaseInvoice, updatePurchaseInvoice, getPurchaseInvoiceById, getPurchaseInvoiceItems } from "../../services/purchaseInvoiceService";
 import PurchaseDocumentPreview from "../purchases/PurchaseDocumentPreview";
 import AiDocumentCapture from "../../components/AiDocumentCapture";
+import { uploadAndProcessAiInvoice } from "../../services/aiInvoiceRecognitionService";
 import "./PurchaseInvoice.css";
 import "../purchases/PurchaseWorkspace.css";
 import "../../css/AndroidWorkflow.css";
@@ -28,6 +29,8 @@ export default function PurchaseInvoice() {
   const [message,setMessage] = useState("");
   const [saving,setSaving] = useState(false);
   const [aiDocument,setAiDocument] = useState(null);
+  const [aiProcessing,setAiProcessing] = useState(false);
+  const [aiValidation,setAiValidation] = useState(null);
   const [openAiPicker,setOpenAiPicker] = useState(Boolean(location.state?.openAiDocumentPicker));
   const [formData,setFormData] = useState({
     invoice_no:"", invoice_date:today(), supplier_invoice_no:"", supplier_invoice_date:today(),
@@ -126,13 +129,71 @@ export default function PurchaseInvoice() {
     finally{setSaving(false);}
   };
   const setField=(key,value)=>setFormData(f=>({...f,[key]:value}));
+  const handleAiDocument = async file => {
+    setAiDocument(file);
+    setAiValidation(null);
+    setAiProcessing(true);
+    setMessage("Uploading and analysing purchase invoice…");
+    try {
+      const result = await uploadAndProcessAiInvoice(file,currentCompanyId,"purchase");
+      const data = result.extractedData || {};
+      const clean = value => String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g,"");
+      const gstin = clean(data.supplier_gstin);
+      const matchedVendor = vendors.find(v => gstin && clean(v.gstin) === gstin)
+        || vendors.find(v => clean(v.vendor_name) && clean(v.vendor_name) === clean(data.supplier_name));
+      setFormData(previous => ({
+        ...previous,
+        supplier_invoice_no: data.invoice_number || previous.supplier_invoice_no,
+        supplier_invoice_date: data.invoice_date || previous.supplier_invoice_date,
+        invoice_date: data.invoice_date || previous.invoice_date,
+        vendor_id: matchedVendor?.id || previous.vendor_id,
+        vendor_name: data.supplier_name || matchedVendor?.vendor_name || previous.vendor_name,
+        vendor_state: data.supplier_state || matchedVendor?.state || previous.vendor_state,
+        billing_address: data.supplier_address || matchedVendor?.address || previous.billing_address,
+        shipping_address: data.supplier_address || matchedVendor?.address || previous.shipping_address,
+        gstin: data.supplier_gstin || matchedVendor?.gstin || previous.gstin,
+        place_of_supply: data.place_of_supply || data.supplier_state || matchedVendor?.state || previous.place_of_supply,
+        vehicle_no: data.vehicle_number || previous.vehicle_no,
+        eway_bill_no: data.eway_bill_number || previous.eway_bill_no,
+      }));
+      const extractedLines = (data.items || []).map(item => {
+        const itemName = item.description || "";
+        const itemHsn = clean(item.hsn_sac);
+        const matchedItem = itemsMaster.find(master => itemHsn && clean(master.hsn_sac) === itemHsn)
+          || itemsMaster.find(master => clean(master.item_name) === clean(itemName));
+        const quantity = Number(item.quantity ?? 1) || 1;
+        const rate = Number(item.rate ?? (item.gross_amount != null ? Number(item.gross_amount) / quantity : 0)) || 0;
+        const gross = Number(item.gross_amount ?? quantity * rate) || 0;
+        const discount = Number(item.discount_amount || 0);
+        const gstRate = Number(item.gst_rate ?? ((Number(item.cgst_rate)||0)+(Number(item.sgst_rate)||0)+(Number(item.igst_rate)||0))) || 0;
+        return {
+          item_id: matchedItem?.id || "",
+          item_name: matchedItem?.item_name || itemName,
+          hsn_sac: item.hsn_sac || matchedItem?.hsn_sac || "",
+          uom: item.unit || matchedItem?.uom || matchedItem?.unit || "",
+          qty: String(quantity),
+          rate: String(rate),
+          discount_percent: String(gross > 0 ? discount / gross * 100 : 0),
+          gst_rate: String(gstRate),
+        };
+      });
+      if (extractedLines.length) setLines(extractedLines);
+      setAiValidation(result.validationResults);
+      setMessage("Invoice analysed. Review the extracted fields and correct any warnings before saving.");
+      setStep(1);
+    } catch (error) {
+      setMessage(error.message || "Unable to analyse this purchase invoice.");
+    } finally {
+      setAiProcessing(false);
+    }
+  };
   const companyName=currentCompany?.company_name||"";
 
   const goNext = () => { if (step === 1 && !formData.supplier_invoice_no.trim()) { setMessage("Enter the supplier invoice number to continue."); return; } if (step === 2 && !formData.vendor_id) { setMessage("Select a supplier to continue."); return; } if (step === 3 && !normalized.length) { setMessage("Add at least one invoice item to continue."); return; } setMessage(""); setStep(s=>Math.min(5,s+1)); };
 
   return <main className={isAndroid ? "purchase-page android-workflow" : "purchase-page"}>
-    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} onFileSelected={file=>{setAiDocument(file);setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});}}/><button className="pw-secondary" type="button" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></div></header>
-    {aiDocument&&isAndroid&&<div className="ai-selected-document"><b>Invoice document selected:</b> {aiDocument.name}<button type="button" onClick={()=>setAiDocument(null)}>Remove</button><small>AI extraction is not connected yet. The file is selected locally; extracted details will be added after the secure AI processing service is implemented.</small></div>}
+    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} disabled={aiProcessing} onFileSelected={file=>{setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});handleAiDocument(file);}}/><button className="pw-secondary" type="button" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></div></header>
+    {aiDocument&&isAndroid&&<div className="ai-selected-document"><b>{aiProcessing?"Analysing invoice…":"Invoice analysed:"}</b> {aiDocument.name}<small>{aiProcessing?"Reading supplier, invoice, item and GST details. Please keep this screen open.":`Supplier: ${formData.vendor_name||"Not identified"} · GSTIN: ${formData.gstin||"Not identified"} · Invoice No: ${formData.supplier_invoice_no||"Not identified"}`}</small>{aiValidation?.warnings?.length>0&&<ul>{aiValidation.warnings.map((warning,index)=><li key={index}>{warning}</li>)}</ul>}</div>}
     {message&&<div className="pi-error">{message}</div>}
     {isAndroid && <nav className="android-stepper">{["Invoice","Supplier","Items","Transport","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step)setStep(i+1);}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
     {!currentCompanyId?<div className="pi-card">Choose a current company from the sidebar to create a purchase invoice.</div>:<>
