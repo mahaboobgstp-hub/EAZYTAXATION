@@ -11,6 +11,7 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Layout from './components/Layout';
 import Dashboard from "./pages/Dashboard";
+import AndroidHome from "./pages/AndroidHome";
 import { CompanyProvider } from "./context/CompanyContext";
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
@@ -186,7 +187,7 @@ function App() {
           path="/app"
           element={<Layout />}
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={isNativeAndroid ? <AndroidHome /> : <Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
 
           <Route
