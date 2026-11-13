@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useCompany } from "../context/CompanyContext";
 import { useModule } from "../context/ModuleContext";
 import { supabase } from "../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
@@ -28,7 +27,7 @@ import {
   FiDatabase,
   FiLock,
   FiRefreshCw,
-  FiX,
+  FiArrowLeft,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -490,7 +489,6 @@ const isGroupLocked = (moduleId, group) =>
 
 
 function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose }) {
-  const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
@@ -656,40 +654,11 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
-      <div className="sidebar-topbar">
-      <div className="company-card">
-        <div className="company-icon">
-          <FiBriefcase />
-        </div>
-
-        <div className="company-details">
-          <small>Current Company</small>
-          <div className="company-name-full">
-            {currentCompany?.company_name?.trim() || (loading ? "Loading companies..." : "Select Company")}
-          </div>
-
-          <select
-            className="company-select"
-            value={currentCompany?.id || ""}
-            onChange={(event) => changeCompany(event.target.value)}
-            disabled={loading || companies.length === 0}
-            aria-label="Select current company"
-          >
-            <option value="">
-              {loading ? "Loading..." : "Select Company"}
-            </option>
-
-            {!loading && companies.map((company) => (
-              <option key={company.id} value={company.id}>
-                {company.company_name?.trim() || "Unnamed Company"}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Close sidebar" title="Close sidebar">
-        <FiX />
-      </button>
+      <div className="sidebar-topbar sidebar-compact-topbar">
+        <div className="sidebar-drawer-heading">Navigation</div>
+        <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Back to app" title="Back to app">
+          <FiArrowLeft />
+        </button>
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
