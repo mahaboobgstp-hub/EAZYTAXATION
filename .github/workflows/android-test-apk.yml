@@ -6,9 +6,12 @@ on:
   push:
     branches:
       - main
+      - android-sales-development
     paths:
       - "package.json"
+      - "package-lock.json"
       - "capacitor.config.json"
+      - "src/**"
       - ".github/workflows/android-test-apk.yml"
 
 permissions:
