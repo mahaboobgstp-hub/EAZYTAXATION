@@ -117,10 +117,15 @@ using (
   bucket_id = 'ai-invoice-documents'
   and case
     when split_part(name, '/', 1) ~* '^[0-9a-f-]{36}$' then
-      private.is_company_owner(split_part(name, '/', 1)::uuid)
-      or private.has_ca_company_access(split_part(name, '/', 1)::uuid, false)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', false)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', false)
+      case when split_part(name, '/', 2) = 'purchase' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, false)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', false)
+      when split_part(name, '/', 2) = 'expense' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, false)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', false)
+      else false end
     else false
   end
 );
@@ -133,10 +138,15 @@ with check (
   bucket_id = 'ai-invoice-documents'
   and case
     when split_part(name, '/', 1) ~* '^[0-9a-f-]{36}$' then
-      private.is_company_owner(split_part(name, '/', 1)::uuid)
-      or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      case when split_part(name, '/', 2) = 'purchase' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
+      when split_part(name, '/', 2) = 'expense' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      else false end
     else false
   end
 );
@@ -149,10 +159,15 @@ using (
   bucket_id = 'ai-invoice-documents'
   and case
     when split_part(name, '/', 1) ~* '^[0-9a-f-]{36}$' then
-      private.is_company_owner(split_part(name, '/', 1)::uuid)
-      or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      case when split_part(name, '/', 2) = 'purchase' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
+      when split_part(name, '/', 2) = 'expense' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      else false end
     else false
   end
 )
@@ -160,10 +175,15 @@ with check (
   bucket_id = 'ai-invoice-documents'
   and case
     when split_part(name, '/', 1) ~* '^[0-9a-f-]{36}$' then
-      private.is_company_owner(split_part(name, '/', 1)::uuid)
-      or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      case when split_part(name, '/', 2) = 'purchase' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
+      when split_part(name, '/', 2) = 'expense' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      else false end
     else false
   end
 );
@@ -176,10 +196,15 @@ using (
   bucket_id = 'ai-invoice-documents'
   and case
     when split_part(name, '/', 1) ~* '^[0-9a-f-]{36}$' then
-      private.is_company_owner(split_part(name, '/', 1)::uuid)
-      or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
-      or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      case when split_part(name, '/', 2) = 'purchase' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'purchase', true)
+      when split_part(name, '/', 2) = 'expense' then
+        private.is_company_owner(split_part(name, '/', 1)::uuid)
+        or private.has_ca_company_access(split_part(name, '/', 1)::uuid, true)
+        or private.has_company_user_permission(split_part(name, '/', 1)::uuid, 'expenses', true)
+      else false end
     else false
   end
 );
