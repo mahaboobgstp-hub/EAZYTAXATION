@@ -12,6 +12,9 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Layout from './components/Layout';
 import Dashboard from "./pages/Dashboard";
 import AndroidHome from "./pages/AndroidHome";
+import AIAssistant from "./pages/ai/AIAssistant";
+import AIVoiceCommand from "./pages/ai/AIVoiceCommand";
+import AIInvoiceType from "./pages/ai/AIInvoiceType";
 import { CompanyProvider } from "./context/CompanyContext";
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
@@ -189,6 +192,9 @@ function App() {
         >
           <Route index element={isNativeAndroid ? <AndroidHome /> : <Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="ai-assistant" element={isNativeAndroid ? <AIAssistant /> : <Dashboard />} />
+          <Route path="ai-assistant/voice" element={isNativeAndroid ? <AIVoiceCommand /> : <Dashboard />} />
+          <Route path="ai-assistant/document-type" element={isNativeAndroid ? <AIInvoiceType /> : <Dashboard />} />
 
           <Route
             path="/app/companies"
