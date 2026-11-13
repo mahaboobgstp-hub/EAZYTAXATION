@@ -10,8 +10,12 @@ function Layout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
-    if (window.innerWidth <= 768) setMobileSidebarOpen(open => !open);
-    else setSidebarCollapsed(collapsed => !collapsed);
+    if (window.innerWidth <= 768) {
+      if (sidebarCollapsed) setSidebarCollapsed(false);
+      setMobileSidebarOpen(open => !open);
+    } else {
+      setSidebarCollapsed(collapsed => !collapsed);
+    }
   };
 
   return (
