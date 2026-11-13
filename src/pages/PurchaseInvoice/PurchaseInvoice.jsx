@@ -5,6 +5,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import { getVendorsForDropdown, getItemsForDropdown, generatePurchaseInvoiceNumber, savePurchaseInvoice, updatePurchaseInvoice, getPurchaseInvoiceById, getPurchaseInvoiceItems } from "../../services/purchaseInvoiceService";
 import PurchaseDocumentPreview from "../purchases/PurchaseDocumentPreview";
+import AiDocumentCapture from "../../components/AiDocumentCapture";
 import "./PurchaseInvoice.css";
 import "../purchases/PurchaseWorkspace.css";
 import "../../css/AndroidWorkflow.css";
@@ -26,6 +27,8 @@ export default function PurchaseInvoice() {
   const [preview,setPreview] = useState(null);
   const [message,setMessage] = useState("");
   const [saving,setSaving] = useState(false);
+  const [showAiDocumentCapture,setShowAiDocumentCapture] = useState(false);
+  const [aiDocument,setAiDocument] = useState(null);
   const [formData,setFormData] = useState({
     invoice_no:"", invoice_date:today(), supplier_invoice_no:"", supplier_invoice_date:today(),
     vendor_id:"", vendor_name:"", vendor_state:"", billing_address:"", shipping_address:"",
@@ -33,6 +36,13 @@ export default function PurchaseInvoice() {
     gst_treatment:"Regular Supplier (Registered)"
   });
   const [lines,setLines] = useState([emptyLine()]);
+
+  useEffect(()=>{
+    if(isAndroid && location.state?.openAiDocumentPicker){
+      setShowAiDocumentCapture(true);
+      navigate(location.pathname,{replace:true,state:null});
+    }
+  },[isAndroid,location.state,navigate,location.pathname]);
 
   useEffect(()=>{
     if(!currentCompanyId)return;
@@ -128,7 +138,8 @@ export default function PurchaseInvoice() {
   const goNext = () => { if (step === 1 && !formData.supplier_invoice_no.trim()) { setMessage("Enter the supplier invoice number to continue."); return; } if (step === 2 && !formData.vendor_id) { setMessage("Select a supplier to continue."); return; } if (step === 3 && !normalized.length) { setMessage("Add at least one invoice item to continue."); return; } setMessage(""); setStep(s=>Math.min(5,s+1)); };
 
   return <main className={isAndroid ? "purchase-page android-workflow" : "purchase-page"}>
-    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><button className="pw-secondary" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></header>
+    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><div className="ai-entry-header-actions">{isAndroid&&<AiDocumentCapture onFileSelected={file=>setAiDocument(file)}/>}<button className="pw-secondary" type="button" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></div></header>
+    {aiDocument&&isAndroid&&<div className="ai-selected-document"><b>Invoice document selected:</b> {aiDocument.name}<button type="button" onClick={()=>setAiDocument(null)}>Remove</button><small>AI extraction is not connected yet. The file is selected locally; extracted details will be added after the secure AI processing service is implemented.</small></div>}
     {message&&<div className="pi-error">{message}</div>}
     {isAndroid && <nav className="android-stepper">{["Invoice","Supplier","Items","Transport","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step)setStep(i+1);}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
     {!currentCompanyId?<div className="pi-card">Choose a current company from the sidebar to create a purchase invoice.</div>:<>
@@ -157,7 +168,7 @@ export default function PurchaseInvoice() {
       {isAndroid && step===5 && <section className="pi-card android-review"><h2>Review Purchase Invoice</h2><p><b>Supplier:</b> {selectedVendor?.vendor_name||"—"}</p><p><b>Supplier Invoice:</b> {formData.supplier_invoice_no||"—"}</p><p><b>Items:</b> {normalized.length}</p><SummaryRow label="Taxable Amount" value={money(summary.taxable)}/><SummaryRow label="CGST" value={money(summary.cgst)}/><SummaryRow label="SGST" value={money(summary.sgst)}/><SummaryRow label="IGST" value={money(summary.igst)}/><div className="pi-summary-grand"><span>Grand Total</span><strong>{money(summary.grandTotal)}</strong></div></section>}
       <section className={isAndroid?"pi-actions android-workflow-actions":"pi-actions"}>{isAndroid ? <><button className="pi-btn secondary" type="button" onClick={()=>step===1?navigate("/app/purchase-register"):setStep(s=>s-1)}>{step===1?"Cancel":"Back"}</button>{step<5?<button className="pi-btn primary" type="button" onClick={goNext}>Continue →</button>:<><button className="pi-btn outline" type="button" onClick={()=>save(true)} disabled={saving}>{saving?"Saving…":"Save & Print"}</button><button className="pi-btn primary" type="button" onClick={()=>save(false)} disabled={saving}>{saving?"Saving…":editingInvoiceId?"Update Invoice":"Save Invoice"}</button></>}</> : <><button className="pi-btn secondary" type="button" onClick={reset}>Clear Form</button><button className="pi-btn outline" type="button" onClick={()=>save(true)} disabled={saving}>{saving?"Saving…":"Save & Print"}</button><button className="pi-btn primary" type="button" onClick={()=>save(false)} disabled={saving}>{saving?"Saving…":editingInvoiceId?"Update Purchase Invoice":"Save Purchase Invoice"}</button></>}</section>
     </>}
-    {preview&&<PurchaseDocumentPreview {...preview} onClose={()=>setPreview(null)}/>}
+    {showAiDocumentCapture&&<AiDocumentCapture onFileSelected={file=>setAiDocument(file)}/>}\n    {preview&&<PurchaseDocumentPreview {...preview} onClose={()=>setPreview(null)}/>}
   </main>;
 }
 
