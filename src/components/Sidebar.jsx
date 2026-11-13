@@ -632,14 +632,6 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
       <div className="sidebar-topbar">
-      <div className="sidebar-logo">
-        <div className="logo-icon">ET</div>
-        <div>
-          <h2>EAZYTAXATION</h2>
-          <span>ERP</span>
-        </div>
-      </div>
-
       <div className="company-card">
         <div className="company-icon">
           <FiBriefcase />
@@ -647,6 +639,9 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
         <div className="company-details">
           <small>Current Company</small>
+          <div className="company-name-full">
+            {currentCompany?.company_name?.trim() || (loading ? "Loading companies..." : "Select Company")}
+          </div>
 
           <select
             className="company-select"
