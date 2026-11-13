@@ -26,9 +26,7 @@ function Layout() {
         {mobileSidebarOpen && (
           <button type="button" className="sidebar-backdrop" aria-label="Close navigation menu" onClick={() => setMobileSidebarOpen(false)} />
         )}
-        <div className="main-container" onClick={() => {
-          if (window.innerWidth <= 768 && mobileSidebarOpen) setMobileSidebarOpen(false);
-        }}>
+        <div className="main-container">
           <Header onToggleSidebar={toggleSidebar} />
           <div className="page-content"><Outlet /></div>
         </div>
