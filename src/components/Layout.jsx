@@ -22,6 +22,14 @@ function Layout() {
           mobileOpen={mobileSidebarOpen}
           onNavigate={() => setMobileSidebarOpen(false)}
           onClose={() => setMobileSidebarOpen(false)}
+          onToggleCollapse={() => {
+            if (window.innerWidth <= 768) {
+              setSidebarCollapsed(true);
+              setMobileSidebarOpen(false);
+            } else {
+              setSidebarCollapsed(value => !value);
+            }
+          }}
         />
         {mobileSidebarOpen && (
           <button type="button" className="sidebar-backdrop" aria-label="Close navigation menu" onClick={() => setMobileSidebarOpen(false)} />
