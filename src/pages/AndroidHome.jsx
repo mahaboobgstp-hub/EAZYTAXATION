@@ -9,7 +9,7 @@ const tiles = [
   { title: "Expense Entry", path: "/app/expenses", icon: FiClipboard, tone: "expenses" },
   { title: "Masters", path: "/app/items", icon: FiLayers, tone: "masters" },
   { title: "Reports", path: "/app/sales-reports", icon: FiBarChart2, tone: "reports" },
-  { title: "AI Assistant", path: null, icon: FiCpu, tone: "assistant", comingSoon: true },
+  { title: "AI Assistant", path: "/app/ai-assistant", icon: FiCpu, tone: "assistant" },
 ];
 
 export default function AndroidHome() {
@@ -23,7 +23,7 @@ export default function AndroidHome() {
       </div>
       <section className="android-home-grid" aria-label="Quick actions">
         {tiles.map(({ title, path, icon: Icon, tone, comingSoon }) => (
-          <button key={title} type="button" className={`android-home-tile ${tone}`} onClick={() => path && navigate(path)} disabled={comingSoon}>
+          <button key={title} type="button" className={`android-home-tile ${tone}`} onClick={() => path && navigate(path)} disabled={comingSoon} aria-label={title}>
             <span className="android-home-tile-icon"><Icon /></span>
             <span className="android-home-tile-title">{title}</span>
             {comingSoon && <span className="android-home-coming-soon">Coming soon</span>}
