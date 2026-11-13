@@ -1,7 +1,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiX, FiMenu } from "react-icons/fi";
+import { FiSearch, FiX, FiMenu, FiChevronDown } from "react-icons/fi";
+import { Capacitor } from "@capacitor/core";
+import { useCompany } from "../context/CompanyContext";
 import { MODULES, useModule } from "../context/ModuleContext";
 import "../css/Header.css";
 
@@ -119,6 +121,8 @@ const PAGES = [
 
 function Header({ onToggleSidebar }) {
   const { activeModule, setActiveModule } = useModule();
+  const { companies, currentCompany, changeCompany, loading: companyLoading } = useCompany();
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -191,6 +195,22 @@ function Header({ onToggleSidebar }) {
       openPage(results[selectedIndex]);
     }
   };
+
+  if (isNativeAndroid) {
+    return (
+      <header className="header android-native-header">
+        <button type="button" className="sidebar-toggle-button" onClick={onToggleSidebar} aria-label="Open navigation menu"><FiMenu /></button>
+        <label className="android-company-selector">
+          <span>Current Company</span>
+          <select value={currentCompany?.id || ""} onChange={event => changeCompany(event.target.value)} disabled={companyLoading || companies.length === 0} aria-label="Select current company">
+            <option value="">{companyLoading ? "Loading companies..." : "Select Company"}</option>
+            {companies.map(company => <option key={company.id} value={company.id}>{company.company_name?.trim() || "Unnamed Company"}</option>)}
+          </select>
+          <FiChevronDown aria-hidden="true" />
+        </label>
+      </header>
+    );
+  }
 
   return (
     <header className="header">
