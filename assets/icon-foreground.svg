@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <g fill="#FFFFFF" font-family="DejaVu Sans, Arial, sans-serif">
+  <text x="512" y="365" text-anchor="middle" font-size="230" font-weight="800" letter-spacing="-8">SYD</text>
+  <text x="112" y="745" font-size="170" font-weight="400">&amp;</text>
+  <rect x="340" y="575" width="7" height="255" rx="3.5" fill="#DCE6F5"/>
+  <text x="392" y="650" font-size="82" font-weight="700">Billing</text>
+  <text x="392" y="765" font-size="68" font-weight="700">Accounting</text>
+</g>
+</svg>
