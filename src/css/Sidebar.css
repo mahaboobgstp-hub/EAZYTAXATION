@@ -712,7 +712,7 @@
 
 
 /* Web app: keep the company switcher visible after removing sidebar branding. */
-.layout:not(.android-native) .sidebar > .company-card {
+.layout:not(.android-native) .sidebar-topbar > .company-card {
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
