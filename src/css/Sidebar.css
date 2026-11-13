@@ -769,3 +769,14 @@
   .sidebar.sidebar-mobile-open .sidebar-topbar { width:100%; }
   .sidebar.sidebar-mobile-open .sidebar-topbar .company-card { margin:12px 0 !important; }
 }
+
+/* Compact Android drawer: company selector lives in the top app bar. */
+.sidebar-compact-topbar { min-height:58px; align-items:center !important; justify-content:space-between; padding:12px 14px !important; border-bottom:1px solid rgba(255,255,255,.08); }
+.sidebar-drawer-heading { color:#e5edfb; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.sidebar-compact-topbar .sidebar-close-button { display:flex; width:38px; height:38px; border:1px solid rgba(255,255,255,.14); border-radius:11px; background:rgba(255,255,255,.07); }
+.sidebar-compact-topbar .sidebar-close-button svg { width:20px; height:20px; }
+@media(max-width:768px) {
+ .sidebar { width:min(248px,78vw) !important; min-width:min(248px,78vw) !important; }
+ .sidebar.sidebar-mobile-open { transform:translateX(0); }
+ .sidebar-compact-topbar { padding-top:max(12px,env(safe-area-inset-top,0px)) !important; }
+}
