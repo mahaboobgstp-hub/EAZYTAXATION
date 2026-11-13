@@ -9,6 +9,7 @@ import {
 } from "../../services/expenseService";
 import ExpenseDocumentPreview from "./ExpenseDocumentPreview";
 import AiDocumentCapture from "../../components/AiDocumentCapture";
+import { uploadAndProcessAiInvoice } from "../../services/aiInvoiceRecognitionService";
 import "../../css/expenses/ExpenseWorkspace.css";
 import "../../css/AndroidWorkflow.css";
 
@@ -29,6 +30,7 @@ export default function ExpenseEntry(){
   const [loading,setLoading]=useState(false),[message,setMessage]=useState(""),[preview,setPreview]=useState(null);
   const [supplierState,setSupplierState]=useState("");
   const [openAiPicker,setOpenAiPicker]=useState(Boolean(location.state?.openAiDocumentPicker));
+  const [aiProcessing,setAiProcessing]=useState(false),[aiValidation,setAiValidation]=useState(null);
   const companyName=currentCompany?.company_name||"";
 
   useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);return;}getExpenseMasters(currentCompanyId).then(({vendors,categories})=>{setVendors(vendors);setCategories(categories);}).catch(e=>setMessage(e.message));},[currentCompanyId]);
@@ -47,7 +49,7 @@ export default function ExpenseEntry(){
   },[currentCompanyId,location.state]);
   const set=(key,value)=>setForm(p=>({...p,[key]:value}));
   const vendor=vendors.find(v=>v.id===form.vendor_id);
-  const isSameState=Boolean(currentCompany?.state&&vendor?.state&&currentCompany.state.trim().toLowerCase()===vendor.state.trim().toLowerCase());
+  const isSameState=Boolean(currentCompany?.state&&(supplierState||vendor?.state)&&currentCompany.state.trim().toLowerCase()===(supplierState||vendor?.state).trim().toLowerCase());
   const calc=useMemo(()=>{
     const gross=lines.reduce((s,l)=>s+Math.max(0,n(l.qty))*Math.max(0,n(l.rate)),0);
     const headerDiscount=Math.min(gross,Math.max(0,n(form.discount_amount)));
@@ -100,12 +102,77 @@ export default function ExpenseEntry(){
     finally{setLoading(false);}
   }
   function selectVendor(id){const v=vendors.find(x=>x.id===id);set("vendor_id",id);set("payee_name",v?.vendor_name||"");setSupplierState(v?.state||"");}
+  async function handleAiDocument(selectedFile){
+    setFile(selectedFile);
+    setAiValidation(null);
+    setAiProcessing(true);
+    setMessage("Uploading and analysing expense invoice…");
+    try{
+      const result=await uploadAndProcessAiInvoice(selectedFile,currentCompanyId,"expense");
+      const data=result.extractedData||{};
+      const clean=value=>String(value||"").trim().toLowerCase().replace(/[^a-z0-9]/g,"");
+      const gstin=clean(data.supplier_gstin);
+      const matchedVendor=vendors.find(v=>gstin&&clean(v.gstin)===gstin)
+        ||vendors.find(v=>clean(v.vendor_name)&&clean(v.vendor_name)===clean(data.supplier_name));
+      const supplierName=data.supplier_name||matchedVendor?.vendor_name||"";
+      const supplierPlace=data.supplier_state||data.place_of_supply||matchedVendor?.state||"";
+      setSupplierState(supplierPlace);
+      setForm(previous=>({
+        ...previous,
+        expense_date:data.invoice_date||previous.expense_date,
+        payee_name:supplierName||previous.payee_name,
+        vendor_id:matchedVendor?.id||previous.vendor_id,
+        supplier_invoice_no:data.invoice_number||previous.supplier_invoice_no,
+        supplier_invoice_date:data.invoice_date||previous.supplier_invoice_date,
+        due_date:data.due_date||previous.due_date,
+        gst_treatment:data.supplier_gstin?"Registered (Regular)":previous.gst_treatment,
+        remarks:previous.remarks||"AI extracted from uploaded invoice",
+      }));
+      const extractedLines=(data.items||[]).map(item=>{
+        const qty=Number(item.quantity??1)||1;
+        const rate=Number(item.rate??(item.gross_amount!=null?Number(item.gross_amount)/qty:0))||0;
+        const gross=Number(item.gross_amount??qty*rate)||0;
+        const discount=Number(item.discount_amount||0);
+        const gstRate=Number(item.gst_rate??((Number(item.cgst_rate)||0)+(Number(item.sgst_rate)||0)+(Number(item.igst_rate)||0)))||0;
+        return {
+          description:item.description||"Invoice item",
+          hsn_sac:item.hsn_sac||"",
+          qty:String(qty),
+          uom:item.unit||"",
+          rate:String(rate),
+          gst_percent:String(gstRate),
+          discount_percent:String(gross>0?discount/gross*100:0),
+        };
+      });
+      if(!extractedLines.length&&data.taxable_value!=null){
+        const gstTotal=Number(data.cgst_total||0)+Number(data.sgst_total||0)+Number(data.igst_total||0);
+        extractedLines.push({
+          description:supplierName?("Invoice charge - "+supplierName):"Invoice charge",
+          hsn_sac:"",
+          qty:"1",
+          uom:"Nos",
+          rate:String(Number(data.taxable_value)||0),
+          gst_percent:String(Number(data.taxable_value)?gstTotal/Number(data.taxable_value)*100:0),
+          discount_percent:"0",
+        });
+      }
+      if(extractedLines.length)setLines(extractedLines);
+      if(matchedVendor)set("vendor_id",matchedVendor.id);
+      setAiValidation(result.validationResults);
+      setMessage("Invoice analysed. Review the extracted details, select an expense category and correct any warnings before saving.");
+      setStep(1);
+    }catch(error){
+      setMessage(error.message||"Unable to analyse this expense invoice.");
+    }finally{
+      setAiProcessing(false);
+    }
+  }
 
   const nextStep=()=>{if(step===1&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===1&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===3&&!calc.normalized.length){setMessage("Add at least one expense item to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
 
   return <main className={isAndroid?"expense-page android-workflow":"expense-page"}>
-    <header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Add Expense</p><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} onFileSelected={selectedFile=>{setFile(selectedFile);setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
-    {file&&isAndroid&&<div className="ai-selected-document"><b>Invoice document selected:</b> {file.name}<small>This document will be saved as an expense attachment. AI extraction into the form will be enabled after the secure AI processing service is connected.</small></div>}
+    <header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Add Expense</p><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} disabled={aiProcessing} onFileSelected={selectedFile=>{setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});handleAiDocument(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
+    {file&&isAndroid&&<div className="ai-selected-document"><b>{aiProcessing?"Analysing invoice…":"Invoice analysed:"}</b> {file.name}<small>{aiProcessing?"Reading supplier, bill, expense and GST details. Please keep this screen open.":`Supplier: ${form.payee_name||"Not identified"} · GSTIN: ${vendor?.gstin||"See supplier details"} · Bill No: ${form.supplier_invoice_no||"Not identified"}`}</small>{aiValidation?.warnings?.length>0&&<ul>{aiValidation.warnings.map((warning,index)=><li key={index}>{warning}</li>)}</ul>}</div>}
     {message&&<div className="ew-alert">{message}<button type="button" onClick={()=>setMessage("")}>×</button></div>}
     {isAndroid&&currentCompanyId&&<nav className="android-stepper" aria-label="Expense entry steps">{["Expense","Bill & Payment","Items","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step){setMessage("");setStep(i+1);}}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
     {!currentCompanyId?<section className="ew-card">Choose a current company from the sidebar to record expenses.</section>:<>
