@@ -10,7 +10,18 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
   status, headers: { ...cors, "Content-Type": "application/json" },
 });
 
+const readProviderError = async (response: Response) => {
+  const raw = await response.text();
+  try {
+    const parsed = JSON.parse(raw);
+    return String(parsed?.error?.message || parsed?.message || raw).slice(0, 700);
+  } catch {
+    return raw.slice(0, 700);
+  }
+};
+
 Deno.serve(async (req: Request) => {
+  const requestId = crypto.randomUUID();
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   try {
@@ -22,7 +33,10 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return json({ error: "Invalid session" }, 401);
     const apiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!apiKey) return json({ error: "OPENAI_API_KEY is not configured in Supabase Edge Function secrets." }, 503);
+    if (!apiKey) {
+      console.error("Voice command missing OPENAI_API_KEY", { requestId });
+      return json({ error: "OPENAI_API_KEY is missing from Supabase Edge Function secrets.", requestId }, 503);
+    }
 
     const form = await req.formData();
     const audio = form.get("audio");
@@ -44,8 +58,12 @@ Deno.serve(async (req: Request) => {
       const transcription = await fetch("https://api.openai.com/v1/audio/transcriptions", {
         method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: audioForm,
       });
+      if (!transcription.ok) {
+        const detail = await readProviderError(transcription);
+        console.error("OpenAI transcription failed", { requestId, status: transcription.status, detail });
+        return json({ error: "OpenAI transcription error (" + transcription.status + "): " + detail, stage: "transcription", requestId }, 502);
+      }
       const transcriptionBody = await transcription.json();
-      if (!transcription.ok) return json({ error: transcriptionBody.error?.message || "Speech recognition failed." }, 502);
       transcript = String(transcriptionBody.text || "").trim();
       detectedLanguage = "auto-detected";
     }
@@ -74,12 +92,24 @@ For accounting entries, identify missing essential details rather than guessing.
         ],
       }),
     });
+    if (!completion.ok) {
+      const detail = await readProviderError(completion);
+      console.error("OpenAI interpretation failed", { requestId, status: completion.status, detail });
+      return json({ error: "OpenAI command interpretation error (" + completion.status + "): " + detail, stage: "interpretation", requestId }, 502);
+    }
     const result = await completion.json();
-    if (!completion.ok) return json({ error: result.error?.message || "AI command understanding failed." }, 502);
-    const parsed = JSON.parse(result.choices?.[0]?.message?.content || "{}");
-    if (!Array.isArray(parsed.commands)) return json({ error: "AI returned an invalid command structure." }, 502);
-    return json({ transcript, detectedLanguage: parsed.language || detectedLanguage, response: parsed.response || "I prepared your command for review.", commands: parsed.commands });
+    let parsed;
+    try {
+      parsed = JSON.parse(result.choices?.[0]?.message?.content || "{}");
+    } catch (parseError) {
+      console.error("OpenAI returned invalid JSON", { requestId, message: String(parseError) });
+      return json({ error: "AI returned an unreadable response. Please try again.", stage: "interpretation", requestId }, 502);
+    }
+    if (!Array.isArray(parsed.commands)) return json({ error: "AI returned an invalid command structure.", requestId }, 502);
+    return json({ transcript, detectedLanguage: parsed.language || detectedLanguage, response: parsed.response || "I prepared your command for review.", commands: parsed.commands, requestId });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Voice command processing failed." }, 500);
+    const message = error instanceof Error ? error.message : "Voice command processing failed.";
+    console.error("Voice command handler failed", { requestId, message });
+    return json({ error: "Voice processing failed: " + message, requestId }, 500);
   }
 });
