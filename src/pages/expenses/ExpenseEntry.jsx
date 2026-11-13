@@ -28,9 +28,9 @@ export default function ExpenseEntry(){
   const [expenseId,setExpenseId]=useState(null),[file,setFile]=useState(null),[attachmentLink,setAttachmentLink]=useState("");
   const [loading,setLoading]=useState(false),[message,setMessage]=useState(""),[preview,setPreview]=useState(null);
   const [supplierState,setSupplierState]=useState("");
+  const [openAiPicker,setOpenAiPicker]=useState(Boolean(location.state?.openAiDocumentPicker));
   const companyName=currentCompany?.company_name||"";
 
-  useEffect(()=>{if(isAndroid&&location.state?.openAiDocumentPicker){navigate(location.pathname,{replace:true,state:null});}},[isAndroid,location.state,navigate,location.pathname]);
   useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);return;}getExpenseMasters(currentCompanyId).then(({vendors,categories})=>{setVendors(vendors);setCategories(categories);}).catch(e=>setMessage(e.message));},[currentCompanyId]);
   useEffect(()=>{
     if(!currentCompanyId)return;
@@ -104,7 +104,7 @@ export default function ExpenseEntry(){
   const nextStep=()=>{if(step===1&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===1&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===3&&!calc.normalized.length){setMessage("Add at least one expense item to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
 
   return <main className={isAndroid?"expense-page android-workflow":"expense-page"}>
-    <header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Add Expense</p><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions">{isAndroid&&<AiDocumentCapture autoOpen={Boolean(location.state?.openAiDocumentPicker)} onFileSelected={selectedFile=>setFile(selectedFile)}/>}<button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
+    <header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Add Expense</p><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} onFileSelected={selectedFile=>{setFile(selectedFile);setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
     {file&&isAndroid&&<div className="ai-selected-document"><b>Invoice document selected:</b> {file.name}<small>This document will be saved as an expense attachment. AI extraction into the form will be enabled after the secure AI processing service is connected.</small></div>}
     {message&&<div className="ew-alert">{message}<button type="button" onClick={()=>setMessage("")}>×</button></div>}
     {isAndroid&&currentCompanyId&&<nav className="android-stepper" aria-label="Expense entry steps">{["Expense","Bill & Payment","Items","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step){setMessage("");setStep(i+1);}}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
