@@ -189,6 +189,7 @@ Deno.serve(async (req: Request) => {
   });
 
   let jobId: string | null = null;
+  let jobCompanyId: string | null = null;
   let supabase: any = null;
 
   try {
@@ -213,6 +214,7 @@ Deno.serve(async (req: Request) => {
     const { data: job, error: jobError } = await supabase.from("ai_invoice_processing_jobs")
       .select("*").eq("id", jobId).single();
     if (jobError || !job) throw new Error("The document processing job was not found or you do not have access.");
+    jobCompanyId = job.company_id;
     if (job.created_by !== authData.user.id) throw new Error("Only the user who uploaded this document can process it.");
     if (!["queued","failed"].includes(job.status)) throw new Error("This document has already been processed or is currently processing.");
 
@@ -290,10 +292,11 @@ Deno.serve(async (req: Request) => {
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Document processing failed.";
+    console.error("[process-ai-invoice] Processing failed", { jobId, companyId: jobCompanyId, message });
     if (supabase && jobId) {
       await supabase.from("ai_invoice_processing_jobs").update({
         status: "failed", error_message: message.slice(0, 1000), updated_at: new Date().toISOString(),
-      }).eq("id", jobId);
+      }).eq("id", jobId).eq("company_id", jobCompanyId || "");
     }
     const status = /Authentication|session|access|not found/i.test(message) ? 403 : 400;
     return new Response(JSON.stringify({ error: message }), {
