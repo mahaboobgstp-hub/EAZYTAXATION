@@ -1,8 +1,9 @@
-import React,{useRef,useState} from "react";
+import React,{useEffect,useRef,useState} from "react";
 import {FiCamera,FiImage,FiX,FiFileText} from "react-icons/fi";
 
-export default function AiDocumentCapture({onFileSelected,disabled=false}){
- const [open,setOpen]=useState(false),cameraRef=useRef(null),fileRef=useRef(null);
+export default function AiDocumentCapture({onFileSelected,disabled=false,autoOpen=false}){
+ const [open,setOpen]=useState(Boolean(autoOpen)),cameraRef=useRef(null),fileRef=useRef(null);
+ useEffect(()=>{if(autoOpen)setOpen(true);},[autoOpen]);
  const choose=(event)=>{const file=event.target.files?.[0];event.target.value="";if(!file)return;
   const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
   if(!allowed.includes(file.type)){window.alert("Please choose a PDF, JPG, PNG or WebP image.");return;}
