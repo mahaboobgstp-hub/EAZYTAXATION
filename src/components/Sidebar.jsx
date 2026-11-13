@@ -27,7 +27,7 @@ import {
   FiDatabase,
   FiLock,
   FiRefreshCw,
-  FiX,
+  FiChevronLeft,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -479,7 +479,7 @@ const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
 
 
-function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose }) {
+function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose, onToggleCollapse }) {
   const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
@@ -561,6 +561,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
           className={`menu-title ${
             groupLocked ? "menu-title-locked" : ""
           }`}
+          title={collapsed ? group.title : undefined}
           aria-expanded={groupLocked ? false : isOpen}
           aria-disabled={groupLocked}
           title={
@@ -639,10 +640,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
         <div className="company-details">
           <small>Current Company</small>
-          <div className="company-name-full">
-            {currentCompany?.company_name?.trim() || (loading ? "Loading companies..." : "Select Company")}
-          </div>
-
+          <div className="company-selector-wrap">
           <select
             className="company-select"
             value={currentCompany?.id || ""}
@@ -660,10 +658,12 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
               </option>
             ))}
           </select>
+          <FiChevronDown className="company-select-chevron" aria-hidden="true" />
+          </div>
         </div>
       </div>
 
-      <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Close sidebar" title="Close sidebar"><FiX /></button>
+      <button type="button" className="sidebar-close-button" onClick={onToggleCollapse} aria-label="Collapse sidebar" title="Collapse sidebar"><FiChevronLeft /></button>
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
@@ -672,6 +672,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
           <NavLink
             to={currentModule.dashboard}
             onClick={onNavigate}
+            title={collapsed ? "Dashboard" : undefined}
             className={({ isActive }) =>
               `menu-link ${isActive ? "active" : ""}`
             }
