@@ -656,7 +656,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate }) {
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
       <div className="sidebar-logo">
-        <div className="logo-icon">ET</div>
+        <img className="logo-icon" src="/assets/syd-app-mark.svg" alt="SYD Billing & Accounting" />
         <div>
           <h2>EAZYTAXATION</h2>
           <span>ERP</span>

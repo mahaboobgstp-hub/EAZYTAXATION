@@ -61,29 +61,15 @@
 
     height:52px;
 
-    border-radius:16px;
+    border-radius:13px;
 
-    display:flex;
+    display:block;
 
-    justify-content:center;
+    flex:0 0 42px;
 
-    align-items:center;
+    object-fit:cover;
 
-    font-size:18px;
-
-    font-weight:700;
-
-    color:#fff;
-
-    background:linear-gradient(
-        135deg,
-        #2563eb,
-        #7c3aed
-    );
-
-    box-shadow:
-
-    0 12px 25px rgba(37,99,235,.35);
+    box-shadow:none;
 
 }
 
