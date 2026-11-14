@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FiMic, FiMicOff, FiX, FiSend, FiCheck, FiRotateCcw } from "react-icons/fi";
+import { useLocation } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext";
 import { createVoiceActivityMonitor } from "../utils/voiceActivityMonitor";
 import { processVoiceCommand, confirmVoiceDraft } from "../services/voiceCommandService";
@@ -7,6 +8,7 @@ import "../css/GlobalVoiceAssistant.css";
 
 export default function GlobalVoiceAssistant() {
   const { currentCompanyId } = useCompany();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -17,6 +19,7 @@ export default function GlobalVoiceAssistant() {
   const chunks = useRef([]);
   const voiceMonitor = useRef(null);
   useEffect(() => () => { try { recorder.current?.stop(); } catch {} voiceMonitor.current?.stop?.(); }, []);
+  if (location.pathname.startsWith("/app/ai-assistant")) return null;
 
   const startRecording = async () => {
     try {

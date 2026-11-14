@@ -6,31 +6,39 @@ async function getVoiceFunctionError(error) {
   if (response && typeof response.clone === "function") {
     try {
       const payload = await response.clone().json();
-      if (payload?.error) {
-        return payload.requestId
-          ? payload.error + " (Reference: " + payload.requestId + ")"
-          : payload.error;
-      }
+      if (payload?.error) return payload.requestId ? payload.error + " (Reference: " + payload.requestId + ")" : payload.error;
+      if (payload?.message) return payload.message;
+      if (payload?.detail?.message) return payload.detail.message;
+      if (typeof payload?.detail === "string") return payload.detail;
     } catch {
-      try {
-        const raw = await response.clone().text();
-        if (raw) return raw.slice(0, 700);
-      } catch {}
+      try { const raw = await response.clone().text(); if (raw) return raw.slice(0, 700); } catch {}
     }
   }
   return error?.message || "Voice command could not be processed. Please try again.";
 }
 
-export async function processVoiceCommand({ companyId, audioBlob, text, sessionId, previousDraft }) {
+export async function transcribeVoiceAudio({ audioBlob, language = "auto" }) {
+  if (!audioBlob || !audioBlob.size) throw new Error("Record a voice command first.");
+  const form = new FormData();
+  const extension = audioBlob.type.includes("mp4") ? "mp4" : audioBlob.type.includes("ogg") ? "ogg" : "webm";
+  form.append("file", audioBlob, `voice-command.${extension}`);
+  form.append("language", language);
+  const { data, error } = await supabase.functions.invoke("transcribe-voice-audio", { body: form });
+  if (error) throw new Error(await getVoiceFunctionError(error));
+  if (data?.error) throw new Error(data.error);
+  if (!data?.transcript) throw new Error("No speech was recognized. Please try again.");
+  return data;
+}
+
+export async function processVoiceCommand({ companyId, text, sessionId, previousDraft }) {
   if (!companyId) throw new Error("Select a company before using voice commands.");
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   if (!session?.access_token) throw new Error("Please sign in again.");
+  if (!text?.trim()) throw new Error("No recognized text was provided.");
 
   const body = new FormData();
   body.append("companyId", companyId);
-  if (audioBlob) throw new Error("Audio uploads are disabled. Only locally recognized text may be sent to OpenAI.");
-  if (!text?.trim()) throw new Error("No recognized text was provided. No OpenAI request was made.");
   body.append("text", text.trim());
   if (previousDraft) body.append("previousDraft", JSON.stringify(previousDraft));
   const { data, error } = await supabase.functions.invoke("process-voice-command", { body });
