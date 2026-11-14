@@ -2,6 +2,7 @@
 """Inject strict Android on-device speech recognition into generated Capacitor project."""
 from pathlib import Path
 import re
+import xml.etree.ElementTree as ET
 
 root = Path("android")
 if not root.exists():
@@ -20,6 +21,31 @@ if "android.speech.RecognitionService" not in text:
 """
     text = re.sub(r"(\s*<application\b)", insert + r"\1", text, count=1)
 manifest.write_text(text)
+
+# Verify that Android launches the BridgeActivity subclass that registers the plugin.
+ANDROID_NS = "http://schemas.android.com/apk/res/android"
+ET.register_namespace("android", ANDROID_NS)
+manifest_tree = ET.parse(manifest)
+manifest_root = manifest_tree.getroot()
+application = manifest_root.find("application")
+if application is None:
+    raise SystemExit("Android manifest has no application element.")
+launcher = None
+for activity in application.findall("activity"):
+    intent_filter = activity.find("intent-filter")
+    if intent_filter is None:
+        continue
+    actions = [x.get(f"{{{ANDROID_NS}}}name") for x in intent_filter.findall("action")]
+    categories = [x.get(f"{{{ANDROID_NS}}}name") for x in intent_filter.findall("category")]
+    if "android.intent.action.MAIN" in actions and "android.intent.category.LAUNCHER" in categories:
+        launcher = activity
+        break
+if launcher is None:
+    raise SystemExit("Could not locate Android MAIN/LAUNCHER activity.")
+launcher_name = launcher.get(f"{{{ANDROID_NS}}}name", "")
+if launcher_name not in (".MainActivity", "com.eazytaxation.mobile.MainActivity"):
+    raise SystemExit(f"Unexpected launcher activity '{launcher_name}'. Refusing to build an APK that cannot register the speech plugin.")
+manifest_tree.write(manifest, encoding="utf-8", xml_declaration=True)
 
 main = root / "app/src/main/java/com/eazytaxation/mobile/MainActivity.java"
 main.parent.mkdir(parents=True, exist_ok=True)
