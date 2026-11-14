@@ -5,7 +5,7 @@ import { supabase } from "../supabase/supabaseClient";
 import "../css/BillingReports.css";
 import { jsPDF } from "jspdf";
 
-const titles={sales:"Sales Reports",purchases:"Purchase Reports",expenses:"Expense Reports",customer:"Customer Ledger",vendor:"Vendor Ledger",item:"Item Ledger",gst:"GST Reports"};
+const titles={sales:"Sales Reports",purchases:"Purchase Reports",expenses:"Expense Reports",customer:"Customer Ledger",vendor:"Vendor Ledger",item:"Item Ledger",gst:"GST Reports","receivables-ageing":"Receivables Ageing","payables-ageing":"Payables Ageing"};
 const today=new Date();
 const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 const money=v=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0);
@@ -30,6 +30,8 @@ export default function ReportsWorkspace({kind}){
  useEffect(()=>{let active=true;if(!currentCompanyId){setDb({});return()=>{active=false}}setLoading(true);setError("");
   (async()=>{try{let d={};
    if(kind==="sales"){[d.sales,d.customers]=await Promise.all([fetchCompany("sales_invoices",currentCompanyId,"invoice_date"),fetchCompany("customers",currentCompanyId,"customer_name")]);}
+   if(kind==="receivables-ageing"){[d.sales,d.customers]=await Promise.all([fetchCompany("sales_invoices",currentCompanyId,"invoice_date"),fetchCompany("customers",currentCompanyId,"customer_name")]);}
+   if(kind==="payables-ageing"){[d.purchases,d.vendors]=await Promise.all([fetchCompany("purchase_invoices",currentCompanyId,"invoice_date"),fetchCompany("vendors",currentCompanyId,"vendor_name")]);}
    if(kind==="purchases"){[d.purchases,d.vendors]=await Promise.all([fetchCompany("purchase_invoices",currentCompanyId,"invoice_date"),fetchCompany("vendors",currentCompanyId,"vendor_name")]);}
    if(kind==="expenses"){[d.expenses,d.vendors]=await Promise.all([fetchCompany("expenses",currentCompanyId,"expense_date"),fetchCompany("vendors",currentCompanyId,"vendor_name")]);const r=await supabase.from("expense_categories").select("*").order("category_name");if(r.error)throw r.error;d.categories=r.data||[];}
    if(kind==="customer"){[d.customers,d.sales,d.credits]=await Promise.all([fetchCompany("customers",currentCompanyId,"customer_name"),fetchCompany("sales_invoices",currentCompanyId,"invoice_date"),fetchCompany("credit_notes",currentCompanyId,"credit_note_date")]);}
@@ -122,6 +124,13 @@ function build(kind,d,range,f){
   const base=rowsFor(d.expenses,"expense_date").filter(r=>(!f.category||r.category_id===f.category)&&(!f.party||r.payment_status===f.party));
   const rows=base.map(r=>formatRow(r,r.payee_name||vm.get(r.vendor_id),"expense_date","expense_no",r.taxable_amount,r.total_amount,gst(r),r.payment_status||"Unpaid",{category:cm.get(r.category_id)||"Uncategorized",mode:r.payment_mode||"—"}));
   return{cards:[["Total Expenses",money(sum(base,r=>r.total_amount))],["This Month",money(sum(base.filter(r=>r.expense_date?.slice(0,7)===iso(today).slice(0,7)),r=>r.total_amount))],["GST Input Credit",money(sum(base,gst))],["Pending Payments",money(sum(base.filter(r=>r.payment_status!=="Paid"),r=>Math.max(0,n(r.total_amount)-n(r.paid_amount))))]].map(([label,value])=>({label,value})),chart:{title:"Monthly Expenses",legend:"Expenses",...chartFor(rows,"rawDate","amount")},tableTitle:"Expense Register",columns:cols([["date","Date"],["number","Expense No."],["party","Payee"],["category","Category"],["mode","Payment Mode"],["base","Taxable",true],["tax","GST",true],["total","Total",true],["status","Status"]]),rows};
+ }
+ if(kind==="receivables-ageing"||kind==="payables-ageing"){
+  const receivable=kind==="receivables-ageing",invoices=receivable?(d.sales||[]):(d.purchases||[]),parties=receivable?(d.customers||[]):(d.vendors||[]),partyMap=new Map(parties.map(p=>[p.id,receivable?p.customer_name:p.vendor_name]));
+  const todayDate=new Date();const ageing=invoices.filter(r=>!r.is_deleted).map(r=>{const gross=n(receivable?r.total_amount:r.grand_total),paid=n(r.paid_amount),balance=Math.max(0,gross-paid),date=r.due_date||r.invoice_date,days=date?Math.max(0,Math.floor((todayDate-new Date(date+"T00:00:00"))/86400000)):0;return{party:partyMap.get(receivable?r.customer_id:r.vendor_id)||"Unknown Party",number:r.invoice_no||"—",date:dateLabel(date),days,balance,b0:days<=30?balance:0,b1:days>30&&days<=60?balance:0,b2:days>60&&days<=90?balance:0,b3:days>90?balance:0};}).filter(r=>r.balance>0).sort((a,b)=>b.days-a.days);
+  const rows=ageing.map((r,i)=>({id:i,party:r.party,number:r.number,date:r.date,days:r.days+" days","0-30":money(r.b0),"31-60":money(r.b1),"61-90":money(r.b2),"90+":money(r.b3),outstanding:money(r.balance)}));
+  const total=key=>money(sum(ageing,r=>r[key]));
+  return{cards:[["Total Outstanding",money(sum(ageing,r=>r.balance))],["0–30 Days",total("b0")],["31–60 Days",total("b1")],["61–90 Days",total("b2")],["Over 90 Days",total("b3")]].map(([label,value])=>({label,value})),tableTitle:receivable?"Receivables Ageing":"Payables Ageing",columns:cols([["party",receivable?"Customer":"Supplier"],["number","Invoice No."],["date","Invoice / Due Date"],["days","Age"],["0-30","0–30 Days"],["31-60","31–60 Days"],["61-90","61–90 Days"],["90+","Over 90 Days"],["outstanding","Outstanding"]]),rows,note:"Age is calculated from due_date when available, otherwise invoice_date. The current invoice schema may not contain due dates; confirm payment terms before using this for collections or payment decisions."};
  }
  if(kind==="customer"||kind==="vendor"){
   const isC=kind==="customer",list=isC?d.customers||[]:d.vendors||[],selected=list.find(r=>r.id===f.party),sid=selected?.id;
