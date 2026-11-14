@@ -1,12 +1,12 @@
-import React,{useEffect,useState} from "react";
+import React,{useEffect,useState} from "react";\nimport {useLocation} from "react-router-dom";
 import {FiSave,FiDownload,FiRefreshCw,FiAlertCircle} from "react-icons/fi";
 import {useCompany} from "../../context/CompanyContext";
 import {supabase} from "../../supabase/supabaseClient";
 
 const tables=["customers","vendors","items","sales_invoices","sales_invoice_items","purchase_invoices","purchase_invoice_items","expenses","account_groups","chart_of_accounts","accounting_vouchers","accounting_voucher_lines"];
 export default function CompanySettingsWorkspace(){
- const {currentCompanyId,currentCompany}=useCompany();
- const [tab,setTab]=useState("profile"),[form,setForm]=useState({}),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const {currentCompanyId,currentCompany}=useCompany();\n const location=useLocation();
+ const [tab,setTab]=useState("profile"),[form,setForm]=useState({}),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");\n useEffect(()=>{const requested=new URLSearchParams(location.search).get("tab");if(["profile","financial","backup"].includes(requested))setTab(requested);},[location.search]);
  useEffect(()=>{if(currentCompany)setForm({company_name:currentCompany.company_name||"",gstin:currentCompany.gstin||"",pan:currentCompany.pan||"",address:currentCompany.address||"",state:currentCompany.state||"",contact_person:currentCompany.contact_person||"",mobile:currentCompany.mobile||"",email:currentCompany.email||"",financial_year:currentCompany.financial_year||""});},[currentCompany]);
  const save=async e=>{e.preventDefault();setBusy(true);setError("");setNotice("");try{if(!currentCompanyId)throw new Error("Select a company first.");const {error:e1}=await supabase.from("companies").update({...form}).eq("id",currentCompanyId);if(e1)throw e1;setNotice("Company profile and financial year settings saved.");}catch(e2){setError(e2.message||"Unable to save company settings.");}finally{setBusy(false);}};
  const backup=async()=>{
