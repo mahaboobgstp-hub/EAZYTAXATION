@@ -114,7 +114,7 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language);
                 }
                 if (Build.VERSION.SDK_INT >= 34 && "auto".equals(language)) {
-                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_DETECTION_ALLOWED, true);
+                    intent.putExtra(RecognizerIntent.EXTRA_ENABLE_LANGUAGE_DETECTION, true);
                 }
                 intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
                 intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
