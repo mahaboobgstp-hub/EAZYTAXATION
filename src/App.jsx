@@ -81,6 +81,7 @@ import GSTR1 from "./pages/gst/GSTR1";
 import GSTR3B from "./pages/gst/GSTR3B";
 import GSTR2B from "./pages/gst/GSTR2B";
 import EwayBills from "./pages/gst/EwayBills";
+import EInvoiceWorkspace from "./pages/gst/EInvoiceWorkspace";
 import ReportsWorkspace from "./pages/reports.jsx";
 import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
 
@@ -239,6 +240,7 @@ function App() {
 <Route path="gstr3b" element={<GSTR3B />} />
 <Route path="gstr2b" element={<GSTR2B />} />
 <Route path="eway-bills" element={<EwayBills />} />
+<Route path="einvoice" element={<EInvoiceWorkspace />} />
 <Route
   path="delivery-challans"
   element={<SalesWorkspace kind="challans" />}
