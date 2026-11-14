@@ -39,39 +39,15 @@ Deno.serve(async (req: Request) => {
     }
 
     const form = await req.formData();
-    const audio = form.get("audio");
     const typedText = String(form.get("text") || "").trim();
     const companyId = String(form.get("companyId") || "").trim();
     const previousDraftRaw = String(form.get("previousDraft") || "").trim();
     let previousDraft: unknown = null;
     if (previousDraftRaw) { try { previousDraft = JSON.parse(previousDraftRaw); } catch { return json({ error: "Previous draft context is invalid." }, 400); } }
     if (!companyId) return json({ error: "Select a company first." }, 400);
-    if (!audio && !typedText) return json({ error: "Speak or type a command." }, 400);
-    if (audio instanceof File && audio.size === 0) return json({ error: "The uploaded recording is empty. Please record again." }, 400);
-    if (audio instanceof File && audio.size > 24 * 1024 * 1024) {
-      return json({ error: "The recording is too large. Please record a shorter command." }, 413);
-    }
-
-    let transcript = typedText;
-    let detectedLanguage = "unknown";
-    if (audio instanceof File) {
-      const audioForm = new FormData();
-      audioForm.append("file", audio, audio.name || "voice-command.webm");
-      audioForm.append("model", "gpt-4o-mini-transcribe");
-      audioForm.append("response_format", "json");
-      const transcription = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-        method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: audioForm,
-      });
-      if (!transcription.ok) {
-        const detail = await readProviderError(transcription);
-        console.error("OpenAI transcription failed", { requestId, status: transcription.status, detail });
-        return json({ error: "OpenAI transcription error (" + transcription.status + "): " + detail, stage: "transcription", requestId }, 502);
-      }
-      const transcriptionBody = await transcription.json();
-      transcript = String(transcriptionBody.text || "").trim();
-      detectedLanguage = "auto-detected";
-    }
-    if (!transcript) return json({ error: "No speech was recognized. Please try again." }, 422);
+    if (!typedText) return json({ error: "No recognized text was provided. No audio transcription is accepted by this endpoint." }, 400);
+    const transcript = typedText;
+    const detectedLanguage = "user-selected";
 
     const prompt = `You are the command-understanding engine for EAZYTAXATION, an Indian accounting ERP.
 Understand commands in English, Hindi, Telugu, and mixed-language speech. Normalize accounting terminology and Indian number/currency expressions.
