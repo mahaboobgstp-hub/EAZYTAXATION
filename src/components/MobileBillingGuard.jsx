@@ -1,38 +1,140 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { isAndroidApp } from "../utils/platform";
 
-// Only implemented Billing & Accounting routes are permitted
-// in the Android application.
+// Android is a mobile client for the complete Billing & Accounting workspace.
+// Keep this list aligned with the child routes registered in App.jsx.
 const MOBILE_BILLING_ROUTES = new Set([
+  "/app",
+  "/app//",
+  "/app//features",
+  "/app//pricing",
+  "/app//about",
+  "/app//contact",
+  "/app//privacy-policy",
+  "/app//login",
+  "/app//register",
+  "/app//forgot-password",
+  "/app//app",
   "/app/companies",
   "/app/customers",
   "/app/vendors",
   "/app/expense-categories",
+  "/app/asset-categories",
   "/app/sales",
   "/app/gst-rates",
   "/app/delivery-challans",
+  "/app/delivery-challans/new",
   "/app/quotation",
   "/app/purchases",
   "/app/expenses",
+  "/app/dashboard",
+  "/app/sales-orders",
+  "/app/credit-notes",
+  "/app/purchase-register",
+  "/app/purchase-orders",
+  "/app/purchase-returns",
+  "/app/debit-notes",
+  "/app/expense-register",
+  "/app/banking/overview",
+  "/app/banking/accounts",
+  "/app/banking/transactions",
+  "/app/banking/cash-book",
+  "/app/receipts",
+  "/app/payments",
+  "/app/contra",
+  "/app/bank-reconciliation",
+  "/app/accounting",
+  "/app/chart-of-accounts",
+  "/app/journal-voucher",
+  "/app/ledger",
+  "/app/trial-balance",
+  "/app/profit-loss",
+  "/app/balance-sheet",
+  "/app/gst-dashboard",
+  "/app/gstr1",
+  "/app/gstr2b",
+  "/app/gstr3b",
+  "/app/eway-bills",
+  "/app/einvoice",
+  "/app/sales-reports",
+  "/app/purchase-reports",
+  "/app/expense-reports",
+  "/app/customer-ledger",
+  "/app/vendor-ledger",
+  "/app/item-ledger",
+  "/app/gst-reports",
+  "/app/reports/receivables",
+  "/app/reports/payables",
+  "/app/company-profile",
+  "/app/financial-year-tax",
+  "/app/user-profile",
+  "/app/users-access",
+  "/app/roles-permissions",
+  "/app/data-backup",
+  "/app/application-settings",
+  "/app/payment-terms",
+  "/app/attendance-settings",
   "/app/sales-register",
   "/app/invoice-settings",
   "/app/items",
   "/app/uom",
+  "/app/employees",
+  "/app/employee-register",
+  "/app/employee-settings",
+  "/app/attendance",
+  "/app/attendance-register",
+  "/app/departments",
+  "/app/designations",
+  "/app/payslips",
+  "/app/employee-documents",
+  "/app/leave-management",
+  "/app/final-settlement",
+  "/app/leave-application",
+  "/app/leave-approval",
+  "/app/employee-document-repository",
+  "/app/performance-management",
+  "/app/expense-reimbursement",
+  "/app/employee-loans-advances",
+  "/app/shifts",
+  "/app/locations",
+  "/app/payroll-processing",
+  "/app/salary-arrears",
+  "/app/payroll-policy-settings",
+  "/app/payroll-policy-master",
+  "/app/statutory-configuration",
+  "/app/holiday-calendar-leave-ledger",
+  "/app/hr-dashboard-reports",
+  "/app/employee-self-service",
+  "/app/asset-register",
+  "/app/employee-asset-assignment",
+  "/app/vehicle-management",
+  "/app/asset-maintenance",
+  "/app/asset-dashboard-reports",
+  "/app/recruitment-dashboard-reports",
+  "/app/job-requisition-management",
+  "/app/candidate-management",
+  "/app/interview-management",
+  "/app/offer-management",
+  "/app/training-dashboard-reports",
+  "/app/training-program-master",
+  "/app/training-calendar",
+  "/app/employee-training-assignments",
+  "/app/training-assessment-feedback",
+  "/app/hr-budget-dashboard-reports",
+  "/app/hr-budget-planning",
+  "/app/hr-expense-tracking",
+  "/app/hr-budget-approvals"
 ]);
 
 function MobileBillingGuard({ children }) {
   const location = useLocation();
+  if (!isAndroidApp) return children;
 
-  // Never restrict the normal web application.
-  if (!isAndroidApp) {
-    return children;
-  }
+  // Permit registered Android workspace pages and nested detail/create pages.
+  const allowed = MOBILE_BILLING_ROUTES.has(location.pathname) ||
+    [...MOBILE_BILLING_ROUTES].some((route) => route !== "/app" && location.pathname.startsWith(route + "/"));
 
-  // Keep Android users inside the approved Billing module.
-  if (!MOBILE_BILLING_ROUTES.has(location.pathname)) {
-    return <Navigate to="/app/companies" replace />;
-  }
-
+  if (!allowed) return <Navigate to="/app/dashboard" replace />;
   return children;
 }
 
