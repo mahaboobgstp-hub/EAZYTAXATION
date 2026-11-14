@@ -787,8 +787,8 @@
   .layout.android-native .sidebar,
   .layout.android-native .sidebar.sidebar-mobile-open,
   .layout.android-native .sidebar.sidebar-collapsed {
-    width: min(220px, 72vw) !important;
-    min-width: min(220px, 72vw) !important;
-    max-width: 220px;
+    width: min(200px, 62vw) !important;
+    min-width: min(200px, 62vw) !important;
+    max-width: 200px;
   }
 }
