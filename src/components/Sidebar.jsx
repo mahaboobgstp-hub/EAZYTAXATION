@@ -78,11 +78,13 @@ const MODULES = {
         icon: FiCreditCard,
         links: [
           ["Bank Overview", "/app/banking?tab=overview"],
-          ["Import Statements", "/app/banking?tab=import"],
-          ["Classify & Post", "/app/banking?tab=transactions"],
-          ["Bank Reconciliation", "/app/banking?tab=reconciliation"],
           ["Bank Accounts", "/app/banking?tab=accounts"],
-          ["Settings", "/app/banking?tab=settings"],
+          ["Bank Transactions", "/app/banking?tab=transactions"],
+          ["Cash & Bank Book", "/app/banking?tab=cashbook"],
+          ["Receipts Register", "/app/banking?tab=receipts"],
+          ["Payments Register", "/app/banking?tab=payments"],
+          ["Contra / Transfers", "/app/banking?tab=contra"],
+          ["Bank Reconciliation", "/app/banking?tab=reconciliation"],
         ],
       },
       {
