@@ -36,7 +36,7 @@ function Layout() {
           if (window.innerWidth <= 768 && mobileSidebarOpen) setMobileSidebarOpen(false);
         }}>
           <Header onToggleSidebar={toggleSidebar} />
-          <GlobalVoiceAssistant />
+          {location.pathname !== "/app/ai-assistant/voice" && <GlobalVoiceAssistant />}
           <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}><Outlet /></div>
           {isNativeAndroid && (
             <nav className="android-bottom-nav" aria-label="Bottom navigation">
