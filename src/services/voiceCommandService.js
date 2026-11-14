@@ -30,7 +30,16 @@ export async function processVoiceCommand({ companyId, audioBlob, text, sessionI
   const body = new FormData();
   body.append("companyId", companyId);
   if (audioBlob) {
-    const extension = audioBlob.type?.includes("mp4") ? "m4a" : "webm";
+    if (!audioBlob.size) throw new Error("No audio was recorded. Please try again.");
+    if (audioBlob.size > 24 * 1024 * 1024) {
+      throw new Error("The recording is too large. Please record a shorter command.");
+    }
+    const mimeType = (audioBlob.type || "audio/webm").split(";")[0].toLowerCase();
+    const extension = mimeType === "audio/mp4" ? "m4a"
+      : mimeType === "audio/mpeg" ? "mp3"
+      : mimeType === "audio/wav" ? "wav"
+      : mimeType === "audio/ogg" ? "ogg"
+      : "webm";
     body.append("audio", audioBlob, `voice-command.${extension}`);
   }
   if (text) body.append("text", text);
