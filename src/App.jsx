@@ -298,6 +298,8 @@ function App() {
             element={<InvoiceSettings />}
           />
           <Route path="users-access" element={<UsersAccess />} />
+          <Route path="users" element={<UsersAccess />} />
+          <Route path="roles" element={<UsersAccess />} />
           <Route path="ca-assignment" element={<CAAssignment />} />
           <Route path="ca-workspace" element={<CAWorkspace />} />
 
