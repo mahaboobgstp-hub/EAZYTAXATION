@@ -780,3 +780,15 @@
  .sidebar.sidebar-mobile-open { transform:translateX(0); }
  .sidebar-compact-topbar { padding-top:max(12px,env(safe-area-inset-top,0px)) !important; }
 }
+
+
+/* Android drawer: compact width; keep the navigation readable without taking over the screen. */
+@media (max-width: 768px) {
+  .layout.android-native .sidebar,
+  .layout.android-native .sidebar.sidebar-mobile-open,
+  .layout.android-native .sidebar.sidebar-collapsed {
+    width: min(220px, 72vw) !important;
+    min-width: min(220px, 72vw) !important;
+    max-width: 220px;
+  }
+}
