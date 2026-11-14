@@ -47,6 +47,10 @@ Deno.serve(async (req: Request) => {
     if (previousDraftRaw) { try { previousDraft = JSON.parse(previousDraftRaw); } catch { return json({ error: "Previous draft context is invalid." }, 400); } }
     if (!companyId) return json({ error: "Select a company first." }, 400);
     if (!audio && !typedText) return json({ error: "Speak or type a command." }, 400);
+    if (audio instanceof File && audio.size === 0) return json({ error: "The uploaded recording is empty. Please record again." }, 400);
+    if (audio instanceof File && audio.size > 24 * 1024 * 1024) {
+      return json({ error: "The recording is too large. Please record a shorter command." }, 413);
+    }
 
     let transcript = typedText;
     let detectedLanguage = "unknown";
