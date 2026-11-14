@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../css/auth/Login.css";
-import { supabase } from "../../supabase/supabaseClient";
 
 import {
 
@@ -47,30 +46,17 @@ function Login() {
 
       setLoading(true);
 
-      const loginData = await loginUser(
+      await loginUser(
+
         formData.email,
+
         formData.password
+
       );
 
-      const signedInUserId = loginData?.user?.id;
-      const { data: ownedCompanies, error: ownedError } = await supabase
-        .from("companies")
-        .select("id")
-        .eq("owner_user_id", signedInUserId)
-        .limit(1);
-      if (ownedError) throw ownedError;
-
-      const { data: caAssignments, error: caError } = await supabase
-        .from("ca_company_assignments")
-        .select("id")
-        .eq("ca_user_id", signedInUserId)
-        .eq("status", "Active")
-        .limit(1);
-
-      if (caError && caError.code !== "42P01") throw caError;
-
       alert("Login Successful");
-      navigate("/app/dashboard");
+
+      navigate("/app/companies");
 
     }
 
@@ -108,9 +94,9 @@ async function handleGoogleLogin() {
 
       <div className="login-card">
 
-        <h1>EAZYTAXATION ERP</h1>
+        <div className="syd-login-brand"><div className="syd-login-mark">SYD<span>✦</span></div><div><h1>SYD Billing &amp; Accounting</h1><p>AI-assisted business billing</p></div></div>
 
-        <h2>Login</h2>
+        <h2>Welcome back</h2>
 
         <form onSubmit={handleSubmit}>
 
@@ -147,7 +133,7 @@ async function handleGoogleLogin() {
 
             name="email"
 
-            placeholder="Email"
+            placeholder="Username / Email"
 
             value={formData.email}
 
@@ -197,23 +183,16 @@ async function handleGoogleLogin() {
 
         <div className="login-links">
 
-          <Link to="/forgot-password">
+          <Link to="/forgot-username">Forgot Username?</Link><Link to="/forgot-password">
 
             Forgot Password?
 
           </Link>
 
-          <br />
-
-          <br />
-
-          <Link to="/register">
-
-            Create Account
-
-          </Link>
+          <Link className="login-signup" to="/register">Create Account</Link>
 
         </div>
+        <p className="syd-trial-note">Start your 7-day free trial today</p>
 
       </div>
 

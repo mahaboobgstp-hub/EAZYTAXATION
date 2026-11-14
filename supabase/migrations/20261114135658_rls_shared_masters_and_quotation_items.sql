@@ -1,0 +1,30 @@
+alter table public.expense_categories enable row level security;
+alter table public.asset_categories enable row level security;
+alter table public.expense_sequences enable row level security;
+alter table public.invoice_sequences enable row level security;
+alter table public.states enable row level security;
+alter table public.quotation_items enable row level security;
+drop policy if exists "Authenticated users manage shared expense categories" on public.expense_categories;
+create policy "Authenticated users manage shared expense categories" on public.expense_categories for all to authenticated using(true) with check(true);
+grant select,insert,update,delete on public.expense_categories to authenticated;
+drop policy if exists "Authenticated users manage shared asset categories" on public.asset_categories;
+create policy "Authenticated users manage shared asset categories" on public.asset_categories for all to authenticated using(true) with check(true);
+grant select,insert,update,delete on public.asset_categories to authenticated;
+drop policy if exists "Authenticated users read invoice sequences" on public.invoice_sequences;
+create policy "Authenticated users read invoice sequences" on public.invoice_sequences for select to authenticated using(true);
+drop policy if exists "Authenticated users update invoice sequences" on public.invoice_sequences;
+create policy "Authenticated users update invoice sequences" on public.invoice_sequences for update to authenticated using(true) with check(true);
+grant select,update on public.invoice_sequences to authenticated;
+drop policy if exists "Authenticated users read expense sequences" on public.expense_sequences;
+create policy "Authenticated users read expense sequences" on public.expense_sequences for select to authenticated using(true);
+drop policy if exists "Authenticated users update expense sequences" on public.expense_sequences;
+create policy "Authenticated users update expense sequences" on public.expense_sequences for update to authenticated using(true) with check(true);
+grant select,update on public.expense_sequences to authenticated;
+drop policy if exists "Authenticated users read Indian states" on public.states;
+create policy "Authenticated users read Indian states" on public.states for select to authenticated using(true);
+grant select on public.states to authenticated;
+drop policy if exists "Company owners manage quotation items" on public.quotation_items;
+create policy "Company owners manage quotation items" on public.quotation_items for all to authenticated
+using(exists(select 1 from public.quotations q join public.companies c on c.id=q.company_id where q.id=quotation_items.invoice_id and c.owner_user_id=(select auth.uid())))
+with check(exists(select 1 from public.quotations q join public.companies c on c.id=q.company_id where q.id=quotation_items.invoice_id and c.owner_user_id=(select auth.uid())));
+grant select,insert,update,delete on public.quotation_items to authenticated;

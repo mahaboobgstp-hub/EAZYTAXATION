@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useCompany } from "../context/CompanyContext";
 import { useModule } from "../context/ModuleContext";
-import { supabase } from "../supabase/supabaseClient";
-import { Capacitor } from "@capacitor/core";
+import { isAndroidApp } from "../utils/platform";
 
 import {
   FiHome,
@@ -26,15 +26,13 @@ import {
   FiUserCheck,
   FiDatabase,
   FiLock,
-  FiRefreshCw,
-  FiArrowLeft,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
 
 const MODULES = {
   billing: {
-    dashboard: "/app/dashboard",
+    dashboard: "/app/billing-dashboard",
     groups: [
       {
         title: "Sales",
@@ -46,7 +44,6 @@ const MODULES = {
           ["Sales Orders", "/app/sales-orders"],
           ["Delivery Challans", "/app/delivery-challans"],
           ["Credit Notes", "/app/credit-notes"],
-          ["Receipts", "/app/receipts"],
         ],
       },
       {
@@ -66,32 +63,17 @@ const MODULES = {
         links: [
           ["Add Expense", "/app/expenses"],
           ["Expense Register", "/app/expense-register"],
+          ["Receipts", "/receipts"],
           ["Payments", "/app/payments"],
-          ["Expense Categories", "/app/expense-categories"],
-          ["Expense Reports", "/app/expense-reports"],
-          ["Expense Categories", "/app/expense-categories"],
-          ["Expense Reports", "/app/expense-reports"],
-        ],
-      },
-      {
-        title: "Banking",
-        icon: FiCreditCard,
-        links: [
-          ["Bank Overview", "/app/banking?tab=overview"],
-          ["Import Statements", "/app/banking?tab=import"],
-          ["Classify & Post", "/app/banking?tab=transactions"],
-          ["Bank Reconciliation", "/app/banking?tab=reconciliation"],
-          ["Bank Accounts", "/app/banking?tab=accounts"],
-          ["Settings", "/app/banking?tab=settings"],
+          ["Contra", "/app/contra"],
+          ["Bank Reconciliation", "/app/bank-reconciliation"],
         ],
       },
       {
         title: "Accounting",
         icon: FiBookOpen,
         links: [
-          ["Accounting Dashboard", "/app/accounting"],
-          ["Chart of Accounts", "/app/chart-of-accounts"],
-          ["Journal Voucher", "/app/journal-voucher"],
+          ["Journal Voucher", "/journal-voucher"],
           ["Ledger", "/app/ledger"],
           ["Trial Balance", "/app/trial-balance"],
           ["Profit & Loss", "/app/profit-loss"],
@@ -114,7 +96,7 @@ const MODULES = {
         icon: FiBarChart2,
         links: [
           ["Sales Reports", "/app/sales-reports"],
-          ["Purchase Reports", "/app/purchase-reports"],
+          ["Purchase Reports", "/purchase-reports"],
           ["Expense Reports", "/app/expense-reports"],
           ["Customer Ledger", "/app/customer-ledger"],
           ["Vendor Ledger", "/app/vendor-ledger"],
@@ -127,7 +109,7 @@ const MODULES = {
 
 
   hr: {
-    dashboard: "/app/dashboard",
+    dashboard: "/app/hr-dashboard-reports",
     groups: [
       {
         title: "Employees",
@@ -200,7 +182,7 @@ const MODULES = {
   },
 
   payroll: {
-    dashboard: "/app/dashboard",
+    dashboard: "/app/payroll-dashboard",
     groups: [
       {
                 title: "Attendance",
@@ -306,46 +288,18 @@ const MODULES = {
       },
     ],
   },
-
-  "gst-tax": {
-    dashboard: "/app/dashboard",
-    groups: [
-      {
-        title: "GST & Tax",
-        icon: FiFileText,
-        links: [
-          ["GST Rates", "/app/gst-rates"],
-          ["GSTR-1", "/app/gstr1"],
-          ["GSTR-3B", "/app/gstr3b"],
-          ["GSTR-2B Reconciliation", "/app/gstr2b"],
-          ["E-Way Bills", "/app/eway-bills"],
-          ["E-Invoice", "/app/einvoice"],
-        ],
-      },
-    ],
-  },
 };
 
 const COMMON_GROUPS = [
   {
-    title: "User & CA Management",
-    icon: FiUsers,
-    links: [
-      ["Users & Access", "/app/users-access"],
-      ["CA Assignments", "/app/ca-assignment"],
-      ["Client Assignments", "/app/ca-workspace"],
-    ],
-  },
-
-  {
-    title: "Company Setup",
+    title: "Company",
     icon: FiBriefcase,
     links: [
       ["Company Master", "/app/companies"],
     ],
   },
   {
-    title: "Master Data",
+    title: "Masters",
     icon: FiDatabase,
     links: [
       ["Customers", "/app/customers"],
@@ -360,7 +314,7 @@ const COMMON_GROUPS = [
     ],
   },
   {
-    title: "System Settings",
+    title: "Administration",
     icon: FiSettings,
     links: [
       ["Company Settings", "/app/company-settings"],
@@ -370,6 +324,23 @@ const COMMON_GROUPS = [
       ["Invoice Settings", "/app/invoice-settings"],
     ],
   },
+];
+
+// Common workspace items permitted in the Android Billing app.
+const MOBILE_BILLING_GROUPS = [
+ {title:"Sales",icon:FiDollarSign,links:[["Add Sales Invoice","/app/sales"],["Sales Register","/app/sales-register"],["Quotations","/app/quotation"],["Sales Orders","/app/sales-orders"],["Delivery Challans","/app/delivery-challans"],["Credit Notes","/app/credit-notes"]]},
+ {title:"Purchases",icon:FiShoppingCart,links:[["Add Purchase Invoice","/app/purchases"],["Purchase Register","/app/purchase-register"],["Purchase Orders","/app/purchase-orders"],["Purchase Returns","/app/purchase-returns"],["Debit Notes","/app/debit-notes"]]},
+ {title:"Expenses",icon:FiTruck,links:[["Add Expense","/app/expenses"],["Expense Register","/app/expense-register"],["Expense Categories","/app/expense-categories"]]},
+ {title:"Banking & Money",icon:FiCreditCard,links:[["Banking Overview","/app/banking/overview"],["Bank Accounts","/app/banking/accounts"],["Bank Transactions","/app/banking/transactions"],["Cash & Bank Book","/app/banking/cash-book"],["Receipts","/app/receipts"],["Payments","/app/payments"],["Contra / Bank Transfers","/app/contra"],["Bank Reconciliation","/app/bank-reconciliation"]]},
+ {title:"Accounting",icon:FiBookOpen,links:[["Accounting Dashboard","/app/accounting"],["Chart of Accounts","/app/chart-of-accounts"],["Journal Voucher","/app/journal-voucher"],["Ledger","/app/ledger"],["Trial Balance","/app/trial-balance"],["Profit & Loss","/app/profit-loss"],["Balance Sheet","/app/balance-sheet"]]},
+ {title:"GST & Tax",icon:FiFileText,links:[["GST Dashboard","/app/gst-dashboard"],["GSTR-1","/app/gstr1"],["GSTR-3B","/app/gstr3b"],["GSTR-2B Reconciliation","/app/gstr2b"],["E-Invoice","/app/einvoice"],["E-Way Bills","/app/eway-bills"],["GST Reports","/app/gst-reports"]]},
+ {title:"Reports",icon:FiBarChart2,links:[["Sales Reports","/app/sales-reports"],["Purchase Reports","/app/purchase-reports"],["Expense Reports","/app/expense-reports"],["Customer Ledger","/app/customer-ledger"],["Supplier Ledger","/app/vendor-ledger"],["Item Ledger","/app/item-ledger"],["Receivables Ageing","/app/reports/receivables"],["Payables Ageing","/app/reports/payables"]]}
+];
+
+const MOBILE_COMMON_GROUPS = [
+ {title:"Company Setup",icon:FiBriefcase,links:[["Company Creation","/app/companies"],["Company Profile","/app/company-profile"],["Financial Year & Tax Configuration","/app/financial-year-tax"]]},
+ {title:"Masters",icon:FiDatabase,links:[["Customers","/app/customers"],["Suppliers / Vendors","/app/vendors"],["Items","/app/items"],["Units (UOM)","/app/uom"],["GST Rates","/app/gst-rates"],["Payment Terms","/app/payment-terms"]]},
+ {title:"Settings",icon:FiSettings,links:[["Invoice Settings","/app/invoice-settings"],["User Profile","/app/user-profile"],["Users & Access","/app/users-access"],["Roles & Permissions","/app/roles-permissions"],["Data Export & Backup","/app/data-backup"],["Application Settings","/app/application-settings"]]}
 ];
 
 
@@ -415,46 +386,22 @@ const AVAILABLE_ROUTES = new Set([
   "/app/vendors",
   "/app/sales",
   "/app/sales-register",
-  "/app/sales-orders",
-  "/app/credit-notes",
   "/app/purchases",
-  "/app/purchase-register",
-  "/app/purchase-orders",
-  "/app/purchase-returns",
-  "/app/debit-notes",
   "/app/expenses",
-  "/app/expense-register",
-  "/app/payments",
-  "/app/banking",
   "/app/items",
   "/app/uom",
   "/app/expense-categories",
   "/app/asset-categories",
   "/app/gst-rates",
-  "/app/gstr1",
-  "/app/gstr3b",
-  "/app/gstr2b",
-  "/app/eway-bills",
   "/app/delivery-challans",
   "/app/quotation",
-  "/app/sales-reports",
-  "/app/purchase-reports",
-  "/app/expense-reports",
-  "/app/customer-ledger",
-  "/app/vendor-ledger",
-  "/app/item-ledger",
-  "/app/gst-reports",
   "/app/invoice-settings",
-  "/app/users-access",
-  "/app/ca-assignment",
-  "/app/ca-workspace",
-  "/app/accounting",
-  "/app/chart-of-accounts",
-  "/app/journal-voucher",
-  "/app/ledger",
-  "/app/trial-balance",
-  "/app/profit-loss",
-  "/app/balance-sheet",
+  "/app/dashboard","/app/sales-orders","/app/credit-notes","/app/purchase-register","/app/purchase-orders","/app/purchase-returns","/app/debit-notes","/app/expense-register",
+  "/app/banking/overview","/app/banking/accounts","/app/banking/transactions","/app/banking/cash-book","/app/receipts","/app/payments","/app/contra","/app/bank-reconciliation",
+  "/app/accounting","/app/chart-of-accounts","/app/journal-voucher","/app/ledger","/app/trial-balance","/app/profit-loss","/app/balance-sheet",
+  "/app/gst-dashboard","/app/gstr1","/app/gstr2b","/app/gstr3b","/app/einvoice","/app/eway-bills","/app/gst-reports",
+  "/app/sales-reports","/app/purchase-reports","/app/expense-reports","/app/customer-ledger","/app/vendor-ledger","/app/item-ledger","/app/reports/receivables","/app/reports/payables",
+  "/app/company-profile","/app/financial-year-tax","/app/user-profile","/app/users-access","/app/roles-permissions","/app/data-backup","/app/application-settings","/app/payment-terms"
 ]);
 
 /*
@@ -470,80 +417,54 @@ const LOCKED_HR_GROUPS = new Set([
 ]);
 
 
-const ANDROID_COMMON_GROUPS = [
-  { title: "Company Setup", icon: FiBriefcase, links: [["Company Creation", "/app/companies"]] },
-  { title: "Sales Masters", icon: FiDatabase, links: [["Customers", "/app/customers"], ["Items", "/app/items"], ["Units (UOM)", "/app/uom"]] },
-  { title: "Invoice Settings", icon: FiSettings, links: [["Invoice Settings", "/app/invoice-settings"]] },
-];
-
 const LOCKED_MODULES = new Set([
   "inventory",
   "supply-chain",
 ]);
 
 const isRouteAvailable = (path) =>
-  AVAILABLE_ROUTES.has(path.split("?")[0]);
+  AVAILABLE_ROUTES.has(path);
 
 const isGroupLocked = (moduleId, group) =>
   moduleId === "hr" && LOCKED_HR_GROUPS.has(group.title);
 
 
-function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose }) {
+function Sidebar({ isMobileOpen = false, onClose = () => {} }) {
+  const { companies, currentCompany, changeCompany, loading } = useCompany();
   const { activeModule } = useModule();
   const location = useLocation();
-  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
-  const effectiveModuleId = isNativeAndroid ? "billing" : activeModule;
+  useEffect(() => {
+  if (!isMobileOpen) return;
+
+  const handleEscape = (event) => {
+    if (event.key === "Escape") {
+      onClose();
+    }
+  };
+
+  window.addEventListener("keydown", handleEscape);
+
+  return () => {
+    window.removeEventListener("keydown", handleEscape);
+  };
+}, [isMobileOpen, onClose]);
+
+useEffect(() => {
+  onClose();
+}, [location.pathname]);
 
   const [openMenu, setOpenMenu] = useState("");
-  const [isCaUser, setIsCaUser] = useState(false);
+  const [commonOpen, setCommonOpen] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    const checkCaRole = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        if (!user) {
-          if (active) setIsCaUser(false);
-          return;
-        }
-        const { data, error } = await supabase
-          .from("ca_company_assignments")
-          .select("id")
-          .eq("ca_user_id", user.id)
-          .eq("status", "Active")
-          .limit(1);
-        if (error) throw error;
-        if (active) setIsCaUser((data || []).length > 0);
-      } catch {
-        if (active) setIsCaUser(false);
-      }
-    };
-    checkCaRole();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkCaRole();
-    });
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  const currentModuleId = isAndroidApp ? "billing" : activeModule;
 
-  const currentModule = MODULES[effectiveModuleId] || MODULES.billing;
-  const currentModuleLocked = LOCKED_MODULES.has(effectiveModuleId);
-  const visibleModuleGroups = isNativeAndroid
-    ? currentModule.groups
-        .filter(group => ["Sales", "Purchases", "Expenses"].includes(group.title))
-        .map(group => ({
-          ...group,
-          links: group.title === "Sales"
-            ? group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
-            : group.title === "Purchases"
-              ? group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/purchase-returns", "/app/debit-notes"].includes(path))
-              : group.links.filter(([, path]) => ["/app/expenses", "/app/expense-register", "/app/payments", "/app/expense-categories", "/app/expense-reports"].includes(path))
-        }))
-    : currentModule.groups;
-  const visibleCommonGroups = isNativeAndroid ? ANDROID_COMMON_GROUPS : COMMON_GROUPS;
+const currentModule = isAndroidApp ? { ...MODULES.billing, groups: MOBILE_BILLING_GROUPS } : (MODULES[currentModuleId] || MODULES.billing);
+
+const visibleCommonGroups = isAndroidApp
+  ? MOBILE_COMMON_GROUPS
+  : COMMON_GROUPS;
+
+const currentModuleLocked = LOCKED_MODULES.has(currentModuleId);
 
   const toggleMenu = (menuName) => {
     setOpenMenu((previous) => previous === menuName ? "" : menuName);
@@ -562,10 +483,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
     // HR groups scheduled for later releases are locked as a whole.
     // Other groups can expand, but unavailable pages cannot be opened.
-    const visibleLinks = group.links.filter(([label]) =>
-      label !== "Client Assignments" || isCaUser
-    );
-    const availableLinks = visibleLinks.filter(([, path]) =>
+    const availableLinks = group.links.filter(([, path]) =>
       isRouteAvailable(path)
     );
 
@@ -612,7 +530,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
         {isOpen && !groupLocked && (
           <div className="submenu">
-            {visibleLinks.map(([label, path]) => {
+            {group.links.map(([label, path]) => {
               const available = isRouteAvailable(path);
 
               if (!available) {
@@ -634,13 +552,13 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
               return (
                 <NavLink
-                  key={`${label}-${path}`}
-                  to={path}
-                  onClick={onNavigate}
-                  className={() =>
-                    `submenu-link ${location.pathname + location.search === path ? "active" : ""}`
-                  }
-                >
+  key={`${label}-${path}`}
+  to={path}
+  onClick={onClose}
+  className={({ isActive }) =>
+    `submenu-link ${isActive ? "active" : ""}`
+  }
+>
                   <span>{label}</span>
                 </NavLink>
               );
@@ -653,37 +571,70 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
 
   return (
-    <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
-      <div className="sidebar-topbar sidebar-compact-topbar">
-        <div className="sidebar-drawer-heading">Navigation</div>
-        <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Back to app" title="Back to app">
-          <FiArrowLeft />
-        </button>
+    <aside
+  className={`sidebar ${
+    isAndroidApp ? "app-native-sidebar" : ""
+  } ${
+    isAndroidApp && isMobileOpen ? "mobile-open" : ""
+  }`}
+>
+      <div className="sidebar-logo">
+        <div className="logo-icon">{isAndroidApp ? "SYD" : "ET"}</div>
+        <div>
+          <h2>{isAndroidApp ? "SYD" : "EAZYTAXATION"}</h2>
+          <span>{isAndroidApp ? "Billing & Accounting" : "ERP"}</span>
+        </div>
+      </div>
+
+      <div className="company-card">
+        <div className="company-icon">
+          <FiBriefcase />
+        </div>
+
+        <div className="company-details">
+          <small>Current Company</small>
+
+          <select
+            className="company-select"
+            value={currentCompany?.id || ""}
+            onChange={(event) => changeCompany(event.target.value)}
+            disabled={loading || companies.length === 0}
+            aria-label="Select current company"
+          >
+            <option value="">
+              {loading ? "Loading..." : "Select Company"}
+            </option>
+
+            {!loading && companies.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.company_name?.trim() || "Unnamed Company"}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
         
-        {isRouteAvailable(currentModule.dashboard) ? (
+       {!isAndroidApp && (
+        !currentModuleLocked && isRouteAvailable(currentModule.dashboard) ? (
           <NavLink
             to={currentModule.dashboard}
-            onClick={onNavigate}
             className={({ isActive }) =>
               `menu-link ${isActive ? "active" : ""}`
             }
           >
             <FiHome />
             <span>
-              {effectiveModuleId === "hr"
+              {activeModule === "hr"
                 ? "HR Dashboard"
-                : effectiveModuleId === "payroll"
+                : activeModule === "payroll"
                   ? "Payroll Dashboard"
-                  : effectiveModuleId === "inventory"
+                  : activeModule === "inventory"
                     ? "Inventory Dashboard"
-                    : effectiveModuleId === "supply-chain"
+                    : activeModule === "supply-chain"
                       ? "Supply Chain Dashboard"
-                      : effectiveModuleId === "gst-tax"
-                        ? "GST & Tax Dashboard"
-                        : "Dashboard"}
+                      : "Dashboard"}
             </span>
           </NavLink>
         ) : (
@@ -694,32 +645,55 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
           >
             <FiHome />
             <span>
-              {effectiveModuleId === "hr"
+              {activeModule === "hr"
                 ? "HR Dashboard"
-                : effectiveModuleId === "payroll"
+                : activeModule === "payroll"
                   ? "Payroll Dashboard"
-                  : effectiveModuleId === "inventory"
+                  : activeModule === "inventory"
                     ? "Inventory Dashboard"
-                    : effectiveModuleId === "supply-chain"
+                    : activeModule === "supply-chain"
                       ? "Supply Chain Dashboard"
                       : "Dashboard"}
             </span>
             <FiLock className="sidebar-lock-icon" aria-hidden="true" />
           </div>
+        )
+  
+)}
+
+        {isAndroidApp && (
+          <NavLink to="/app/dashboard" onClick={onClose} className={({isActive}) => `menu-link ${isActive ? "active" : ""}`}>
+            <FiHome /><span>Dashboard</span>
+          </NavLink>
         )}
 
+        {currentModule.groups.map((group) =>
+  renderGroup(group, currentModuleId)
+)}
 
-        {visibleModuleGroups.map((group) =>
-          renderGroup(group, effectiveModuleId)
+        <div className="sidebar-section-label">{isAndroidApp ? "ORGANIZATION & SETTINGS" : "COMMON WORKSPACE"}</div>
+
+        <button
+          type="button"
+          className="menu-title"
+          aria-expanded={commonOpen}
+          onClick={() => setCommonOpen((previous) => !previous)}
+        >
+          <span className="menu-left">
+            <FiLayers />
+            <span>Common Workspace</span>
+          </span>
+
+          {commonOpen ? <FiChevronDown /> : <FiChevronRight />}
+        </button>
+
+        {commonOpen && (
+          <div className="common-workspace">
+            {visibleCommonGroups.map((group) =>
+  renderGroup(group, "common")
+)}
+          </div>
         )}
-
-        <div className="sidebar-section-label">ORGANIZATION &amp; SETTINGS</div>
-
-        <div className="common-workspace">
-          {visibleCommonGroups.map((group) =>
-            renderGroup(group, "common")
-          )}
-        </div>
       </nav>
     </aside>
   );

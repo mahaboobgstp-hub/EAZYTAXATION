@@ -1,16 +1,17 @@
-name: Build EAZYTAXATION Android Test APK
+name: Build SYD Billing & Accounting Android Test APK
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
       - android-sales-development
+      - android-integration
     paths:
       - "package.json"
       - "package-lock.json"
       - "capacitor.config.json"
       - "src/**"
+      - "public/assets/icon.png"
       - "scripts/**"
       - ".github/workflows/android-test-apk.yml"
 
@@ -20,46 +21,69 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-
+      - uses: android-actions/setup-android@v3
       - name: Install dependencies
-        run: npm install
-
-      - name: Build React application
+        run: npm install --no-audit --no-fund
+      - name: Build web application
         run: npm run build
-
       - name: Generate Android project
         run: npx cap add android
-
-      - name: Add Android microphone permissions
+      - name: Generate SYD launcher icons
+        run: |
+          mkdir -p assets
+          cp public/assets/icon.png assets/icon.png
+          npx --yes @capacitor/assets generate --android
+      - name: Configure Android microphone permission
         run: python3 scripts/ensure-android-microphone-permissions.py
-
+      - name: Configure Android OAuth callback
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          if 'android:scheme="com.eazytaxation.mobile"' not in s:
+              pattern = re.compile(r'<activity\\b(?=[^>]*android:name="[^"]*MainActivity")[^>]*>')
+              m = pattern.search(s)
+              if not m:
+                  raise SystemExit("MainActivity not found")
+              end = s.find("</activity>", m.end())
+              if end < 0:
+                  raise SystemExit("MainActivity closing tag not found")
+              callback = """
+                  <intent-filter>
+                    <action android:name="android.intent.action.VIEW" />
+                    <category android:name="android.intent.category.DEFAULT" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data android:scheme="com.eazytaxation.mobile" android:host="auth" android:pathPrefix="/callback" />
+                  </intent-filter>
+              """
+              s = s[:end] + callback + s[end:]
+              p.write_text(s)
+          PY
       - name: Synchronize Capacitor
         run: npx cap sync android
-
-      - name: Build Android APK
+      - name: Build debug APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-
+      - name: Verify APK
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          unzip -l android/app/build/outputs/apk/debug/app-debug.apk | grep -q 'classes.*dex'
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: EAZYTAXATION-Android-Test
+          name: SYD-Billing-Accounting-Android-Test
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30

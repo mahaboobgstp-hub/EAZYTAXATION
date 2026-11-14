@@ -1,0 +1,7 @@
+create index if not exists bank_statement_lines_company_account_fk_idx on public.bank_statement_lines(company_id,bank_account_id);
+create index if not exists bank_statement_lines_company_matched_voucher_fk_idx on public.bank_statement_lines(company_id,matched_voucher_id);
+create index if not exists sales_invoice_receipts_company_voucher_fk_idx on public.sales_invoice_receipts(company_id,voucher_id);
+create index if not exists sales_invoice_receipts_company_bank_ledger_fk_idx on public.sales_invoice_receipts(company_id,bank_ledger_id);
+create index if not exists purchase_invoice_payments_company_voucher_fk_idx on public.purchase_invoice_payments(company_id,voucher_id);
+create index if not exists purchase_invoice_payments_company_bank_ledger_fk_idx on public.purchase_invoice_payments(company_id,bank_ledger_id);
+create index if not exists accounting_voucher_lines_company_voucher_fk_idx on public.accounting_voucher_lines(company_id,voucher_id);

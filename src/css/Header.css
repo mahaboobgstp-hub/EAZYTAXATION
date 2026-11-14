@@ -188,20 +188,101 @@
   }
 }
 
-.sidebar-toggle-button{position:relative;z-index:1001;display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;margin:0 2px 0 0;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#344054;font-size:19px;cursor:pointer}
 
-/* Keep native Android navigation reachable while the page content scrolls. */
-@media(max-width:1050px){.layout.android-native .sidebar-toggle-button{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 12px);left:18px;z-index:2000;margin:0;box-shadow:0 2px 8px rgba(15,23,42,.12)}}
-.sidebar-toggle-button:hover{background:#f1f5f9}
-@media(max-width:1050px){.header{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center}.header .module-switcher{grid-column:1/-1;grid-row:2}.header .global-page-search{grid-column:1/-1;grid-row:3}.sidebar-toggle-button{grid-column:1;grid-row:1}}
 
-/* Android top bar: hamburger + single company selector */
-.android-native-header { position:sticky; top:0; z-index:950; display:flex; flex-direction:row; align-items:center; gap:12px; min-height:70px; padding:12px 16px; padding-top:max(12px,env(safe-area-inset-top,0px)); border-bottom:1px solid #e8edf5; }
-.android-native-header .sidebar-toggle-button { position:static; flex:0 0 42px; width:42px; height:42px; margin:0; border:0; border-radius:12px; background:#eff4ff; color:#1d4ed8; box-shadow:none; }
-.android-company-selector { position:relative; display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; padding:7px 38px 7px 12px; border:1px solid #e0e7f1; border-radius:12px; background:#fff; }
-.android-company-selector span { color:#8490a3; font-size:10px; font-weight:600; letter-spacing:.02em; }
-.android-company-selector select { width:100%; min-width:0; padding:0; appearance:none; border:0; outline:0; background:transparent; color:#17233d; font-size:13px; font-weight:700; text-overflow:ellipsis; }
-.android-company-selector > svg { position:absolute; right:13px; top:50%; width:17px; height:17px; color:#667085; transform:translateY(-20%); pointer-events:none; }
+/* =========================================
+   ANDROID APP HEADER
+   These styles do not affect the web app.
+========================================= */
 
-/* Keep the Android menu button in the top-bar layout (not floating over the selector). */
-@media(max-width:1050px){.layout.android-native .android-native-header .sidebar-toggle-button{position:static;top:auto;left:auto;z-index:1;}}
+.app-native .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  min-height: auto;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.app-native .module-switcher {
+  display: none;
+}
+
+.app-native .mobile-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+}
+
+.app-native .mobile-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.app-native .mobile-menu-button:active {
+  background: #f1f5f9;
+}
+
+.app-native .mobile-header-title {
+  min-width: 0;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.app-native .global-page-search {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+
+.app-native .page-search-input-wrap {
+  min-height: 40px;
+}
+
+.app-native .page-search-input-wrap input {
+  font-size: 14px;
+}
+
+.app-native .search-shortcut {
+  display: none;
+}
+
+.app-native .page-search-results {
+  right: 0;
+  left: 0;
+  width: 100%;
+  max-height: 55vh;
+}
+
+@media (max-width: 1050px) {
+  .app-native .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

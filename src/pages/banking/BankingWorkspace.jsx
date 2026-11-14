@@ -1,163 +1,269 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
-import {
-  FiArrowDownLeft, FiArrowUpRight, FiUploadCloud,
-  FiPlus, FiRefreshCw, FiSearch, FiDownload, FiCheck, FiX, FiLink,
-  FiMoreVertical, FiCalendar, FiChevronDown, FiSliders, FiCheckCircle,
-  FiAlertCircle, FiClock, FiCreditCard, FiFileText, FiSettings,
-  FiArrowRight, FiZap, FiEye
-} from "react-icons/fi";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
-import "../../css/banking/BankingWorkspace.css";
+import { supabase } from "../../supabase/supabaseClient";
+import { createAccountGroup, createLedger, createVoucher, getAccountingData } from "../../services/accountingService";
+import "./BankingWorkspace.css";
 
-const initialTransactions = [
-  { id: 1, date: "11 Jul 2026", narration: "NEFT - ABC Suppliers Pvt Ltd", ref: "NEFT452316", amount: -250000, type: "Purchase / Supplier Payment", ledger: "Purchase - ABC Suppliers", status: "To Post" },
-  { id: 2, date: "10 Jul 2026", narration: "RTGS - Customer Payment", ref: "RTGS993210", amount: 380000, type: "Receipt from Customer", ledger: "Debtors - M/s XYZ", status: "Posted" },
-  { id: 3, date: "09 Jul 2026", narration: "IMPS - Electricity Bill", ref: "IMPS776221", amount: -42560, type: "Expenses", ledger: "Electricity Expenses", status: "Unclassified" },
-  { id: 4, date: "09 Jul 2026", narration: "UPI - Office Expenses", ref: "UPI554990", amount: -6850, type: "Expenses", ledger: "Office Expenses", status: "Unclassified" },
-  { id: 5, date: "08 Jul 2026", narration: "Charges - NEFT", ref: "CHG77231", amount: -35.4, type: "Bank Charges", ledger: "Bank Charges", status: "To Post" },
-  { id: 6, date: "07 Jul 2026", narration: "Own Account Transfer", ref: "TRF118820", amount: 150000, type: "Contra / Transfer", ledger: "ICICI Current Account", status: "Posted" }
+const money = value => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(Number(value)||0);
+const today = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const emptyAccount = () => ({bank_name:"",account_holder_name:"",account_number_masked:"",ifsc:"",branch_name:"",account_type:"Current",opening_balance:"0"});
+const emptyTxn = () => ({voucher_date:today(),bank_ledger_id:"",counter_ledger_id:"",to_ledger_id:"",amount:"",reference_number:"",narration:"",link_type:"",link_id:""});
+const DEFAULT_GROUPS = [
+  ["Assets","AST","Asset","Debit","Balance Sheet"],
+  ["Liabilities","LIA","Liability","Credit","Balance Sheet"],
+  ["Equity","EQT","Equity","Credit","Balance Sheet"],
+  ["Income","INC","Income","Credit","Profit & Loss"],
+  ["Expenses","EXP","Expense","Debit","Profit & Loss"]
 ];
-const money = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Math.abs(Number(value) || 0));
-const bankAccounts = [
-  { name: "HDFC Current Account", bank: "HDFC Bank", number: "•••• 5678", balance: 4876230, date: "11 Jul 2026", color: "hdfc" },
-  { name: "SBI Current Account", bank: "State Bank of India", number: "•••• 9012", balance: 1240560.75, date: "10 Jul 2026", color: "sbi" },
-  { name: "ICICI Current Account", bank: "ICICI Bank", number: "•••• 4567", balance: 892130, date: "09 Jul 2026", color: "icici" }
-];
-const categories = ["Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];
+const VIEWS = {
+  "/app/banking/overview":"overview",
+  "/app/banking/accounts":"accounts",
+  "/app/banking/transactions":"transactions",
+  "/app/banking/cash-book":"cash-book",
+  "/app/receipts":"receipts",
+  "/app/payments":"payments",
+  "/app/contra":"contra",
+  "/app/bank-reconciliation":"reconciliation"
+};
+const TITLES = {
+  overview:"Banking Overview",accounts:"Bank Accounts",transactions:"Bank Transactions",
+  "cash-book":"Cash & Bank Book",receipts:"Receipts",payments:"Payments",
+  contra:"Contra / Bank Transfers",reconciliation:"Bank Reconciliation"
+};
 
-export default function BankingWorkspace() {
-  const { currentCompany } = useCompany();
-  const location = useLocation();
-  const [tab, setTab] = useState(() =>
-    new URLSearchParams(location.search).get("tab") === "reconciliation"
-      ? "Reconciliation"
-      : "Overview"
-  );
+export default function BankingWorkspace(){
+  const {currentCompany,currentCompanyId}=useCompany();
+  const location=useLocation(),navigate=useNavigate();
+  const view=VIEWS[location.pathname]||"overview";
+  const [data,setData]=useState({groups:[],ledgers:[],vouchers:[],lines:[]});
+  const [accounts,setAccounts]=useState([]);
+  const [statementLines,setStatementLines]=useState([]);
+  const [salesInvoices,setSalesInvoices]=useState([]),[purchaseInvoices,setPurchaseInvoices]=useState([]),[expenses,setExpenses]=useState([]),[receiptTotals,setReceiptTotals]=useState([]),[purchasePaymentTotals,setPurchasePaymentTotals]=useState([]);
+  const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false);
+  const [error,setError]=useState(""),[notice,setNotice]=useState("");
+  const [accountForm,setAccountForm]=useState(emptyAccount());
+  const [showAccountForm,setShowAccountForm]=useState(false);
+  const [txn,setTxn]=useState(emptyTxn());
+  const [search,setSearch]=useState("");
+  const [selectedAccount,setSelectedAccount]=useState("");
+  const [statementFile,setStatementFile]=useState("");
+  const [dateFrom,setDateFrom]=useState("");
+  const [dateTo,setDateTo]=useState("");
 
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [selected, setSelected] = useState([1, 3]);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All Transactions");
-  const [account, setAccount] = useState("HDFC Current Account");
-  const [showImport, setShowImport] = useState(false);
-  const [importStep, setImportStep] = useState(1);
-  const [importMethod, setImportMethod] = useState("aggregator");
-  const [selectedBanks, setSelectedBanks] = useState(["HDFC Bank", "SBI"]);
-  const [fileName, setFileName] = useState("");
-  const [notice, setNotice] = useState("");
-  const [reconMatched, setReconMatched] = useState(false);
-  const [period, setPeriod] = useState("Apr 2025");
-  const [settingsTab, setSettingsTab] = useState("Account Aggregator");
-
-  // Sidebar submenu links use query parameters to open the matching Banking workspace.
-  useEffect(() => {
-    const requestedTab = new URLSearchParams(location.search).get("tab");
-    const tabMap = {
-      overview: "Overview",
-      transactions: "Transactions",
-      reconciliation: "Reconciliation",
-      accounts: "Bank Accounts",
-      settings: "Settings",
-    };
-
-    if (requestedTab === "import") {
-      setTab("Overview");
-      setShowImport(true);
-      setImportStep(1);
-      return;
-    }
-
-    setShowImport(false);
-    setTab(tabMap[requestedTab] || "Overview");
-  }, [location.search]);
-
-  const visibleTransactions = useMemo(() => transactions.filter(row => {
-    const matchesSearch = !search || [row.narration, row.ref, row.ledger].join(" ").toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === "All Transactions" || row.status === filter;
-    return matchesSearch && matchesFilter;
-  }), [transactions, search, filter]);
-
-  const updateTransaction = (id, key, value) => setTransactions(rows => rows.map(row => row.id === id ? { ...row, [key]: value } : row));
-  const postSelected = () => {
-    setTransactions(rows => rows.map(row => selected.includes(row.id) ? { ...row, status: "Posted" } : row));
-    setSelected([]);
-    setNotice("Selected transactions have been marked as posted in this UI preview. Live voucher posting will be connected in the accounting integration phase.");
+  const load=async()=>{
+    if(!currentCompanyId){setData({groups:[],ledgers:[],vouchers:[],lines:[]});setAccounts([]);setStatementLines([]);setLoading(false);return;}
+    setLoading(true);setError("");
+    try{
+      const [accounting,bankResult,salesResult,purchaseResult,expenseResult,receiptResult,paymentResult]=await Promise.all([
+        getAccountingData(currentCompanyId),
+        supabase.from("bank_account_profiles").select("*").eq("company_id",currentCompanyId).order("bank_name"),
+        supabase.from("sales_invoices").select("id,invoice_no,invoice_date,customer_id,customer_name,total_amount,sale_type").eq("company_id",currentCompanyId).eq("is_deleted",false).order("invoice_date",{ascending:false}),
+        supabase.from("purchase_invoices").select("id,invoice_no,supplier_invoice_no,invoice_date,vendor_id,grand_total,paid_amount,payment_status").eq("company_id",currentCompanyId).eq("is_deleted",false).order("invoice_date",{ascending:false}),
+        supabase.from("expenses").select("id,expense_no,expense_date,vendor_id,payee_name,total_amount,paid_amount,payment_status").eq("company_id",currentCompanyId).order("expense_date",{ascending:false}),
+        supabase.from("sales_invoice_receipts").select("invoice_id,amount").eq("company_id",currentCompanyId),
+        supabase.from("purchase_invoice_payments").select("invoice_id,amount").eq("company_id",currentCompanyId)
+      ]);
+      for(const result of [bankResult,salesResult,purchaseResult,expenseResult,receiptResult,paymentResult])if(result.error)throw result.error;
+      setData(accounting);setAccounts(bankResult.data||[]);setSalesInvoices(salesResult.data||[]);setPurchaseInvoices(purchaseResult.data||[]);setExpenses(expenseResult.data||[]);setReceiptTotals(receiptResult.data||[]);setPurchasePaymentTotals(paymentResult.data||[]);
+      const active=bankResult.data||[];
+      const current=active.find(x=>x.id===selectedAccount)||active[0];
+      if(current){setSelectedAccount(current.id);const stmt=await supabase.from("bank_statement_lines").select("*").eq("company_id",currentCompanyId).eq("bank_account_id",current.id).order("statement_date",{ascending:false}).limit(300);if(stmt.error)throw stmt.error;setStatementLines(stmt.data||[]);}
+      else setStatementLines([]);
+    }catch(e){setError(e.message||"Unable to load banking data.");}
+    finally{setLoading(false);}
   };
-  const toggleSelected = id => setSelected(rows => rows.includes(id) ? rows.filter(x => x !== id) : [...rows, id]);
+  useEffect(()=>{load();},[currentCompanyId,selectedAccount]);
 
-  return <main className="banking-page">
-    <div className="banking-breadcrumb">Accounting <span>/</span> Banking <span>/</span> {tab}</div>
-    <header className="banking-heading">
-      <div><div className="banking-eyebrow">CASH & BANK MANAGEMENT</div><h1>Banking</h1><p>Connect accounts, classify transactions and reconcile your books.</p></div>
-      <div className="banking-heading-actions">
-        <button className="bank-btn bank-btn-light" onClick={() => setTab("Bank Accounts")}><FiPlus/> Add Bank Account</button>
-        <button className="bank-btn bank-btn-primary" onClick={() => { setShowImport(true); setImportStep(1); }}><FiUploadCloud/> Import Statement</button>
-      </div>
-    </header>
+  const assetGroup=()=>data.groups.find(g=>g.account_nature==="Asset");
+  const bankLedgers=useMemo(()=>data.ledgers.filter(l=>l.party_type==="Bank"&&l.is_active!==false),[data.ledgers]);
+  const cashLedgers=useMemo(()=>data.ledgers.filter(l=>/cash in hand|cash account/i.test(l.ledger_name)&&l.is_active!==false),[data.ledgers]);
+  const moneyLedgers=useMemo(()=>data.ledgers.filter(l=>l.is_active!==false),[data.ledgers]);
+  const bankIds=new Set(bankLedgers.map(l=>l.id).concat(cashLedgers.map(l=>l.id)));
+  const postedVouchers=useMemo(()=>data.vouchers.filter(v=>v.status==="Posted"),[data.vouchers]);
+  const bankActivity=useMemo(()=>{
+    const voucherMap=new Map(postedVouchers.map(v=>[v.id,v]));
+    return data.lines.filter(line=>bankIds.has(line.ledger_id)&&voucherMap.has(line.voucher_id)).map(line=>{
+      const v=voucherMap.get(line.voucher_id),ledger=data.ledgers.find(l=>l.id===line.ledger_id);
+      return {...line,voucher:v,ledger,amount:Number(line.debit||0)||Number(line.credit||0),direction:Number(line.debit||0)>0?"Credit":"Debit"};
+    }).filter(row=>(!dateFrom||row.voucher.voucher_date>=dateFrom)&&(!dateTo||row.voucher.voucher_date<=dateTo))
+      .filter(row=>!search||[row.voucher.voucher_number,row.voucher.narration,row.voucher.reference_number,row.ledger?.ledger_name].join(" ").toLowerCase().includes(search.toLowerCase()))
+      .sort((a,b)=>String(b.voucher.voucher_date).localeCompare(String(a.voucher.voucher_date)));
+  },[data.lines,postedVouchers,data.ledgers,dateFrom,dateTo,search]);
+  const accountBalance=(ledgerId)=>{
+    const ledger=data.ledgers.find(x=>x.id===ledgerId);if(!ledger)return 0;
+    const opening=Number(ledger.opening_balance||0)*(ledger.opening_balance_type==="Credit"?-1:1);
+    const lines=data.lines.filter(x=>x.ledger_id===ledgerId&&postedVouchers.some(v=>v.id===x.voucher_id));
+    return opening+lines.reduce((s,x)=>s+Number(x.debit||0)-Number(x.credit||0),0);
+  };
+  const totalBank=bankLedgers.reduce((s,l)=>s+accountBalance(l.id),0);
+  const totalCash=cashLedgers.reduce((s,l)=>s+accountBalance(l.id),0);
+  const receipts=postedVouchers.filter(v=>v.voucher_type==="Receipt");
+  const payments=postedVouchers.filter(v=>v.voucher_type==="Payment");
 
-    <nav className="banking-tabs">
-      {["Overview", "Transactions", "Reconciliation", "Bank Accounts", "Settings"].map(item => <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}
-    </nav>
+  const ensureDefaultGroups=async()=>{
+    if(!currentCompanyId)throw new Error("Select a company first.");
+    const current=await getAccountingData(currentCompanyId);
+    const existing=new Set(current.groups.map(g=>g.group_code));
+    for(const row of DEFAULT_GROUPS){if(!existing.has(row[1]))await createAccountGroup(currentCompanyId,{group_name:row[0],group_code:row[1],parent_group_id:null,account_nature:row[2],normal_balance:row[3],statement_classification:row[4],description:"System account group",is_system:true,is_active:true});}
+    return await getAccountingData(currentCompanyId);
+  };
 
-    {notice && <div className="banking-notice"><FiCheckCircle/><span>{notice}</span><button onClick={() => setNotice("")}><FiX/></button></div>}
+  const saveAccount=async(e)=>{
+    e.preventDefault();setSaving(true);setError("");setNotice("");
+    try{
+      let currentData=data;
+      if(!assetGroup())currentData=await ensureDefaultGroups();
+      const group=currentData.groups.find(g=>g.account_nature==="Asset");
+      if(!group)throw new Error("Create the standard Assets account group first.");
+      const ledger=await createLedger(currentCompanyId,{
+        ledger_name:accountForm.bank_name+" - "+accountForm.account_type,
+        ledger_code:"BANK-"+Date.now().toString().slice(-10),
+        group_id:group.id,opening_balance:Number(accountForm.opening_balance||0),
+        opening_balance_type:"Debit",opening_date:today(),party_type:"Bank",
+        description:"Bank account: "+(accountForm.account_number_masked||"")+" | IFSC: "+(accountForm.ifsc||"")
+      });
+      const {error:profileError}=await supabase.from("bank_account_profiles").insert([{
+        ...accountForm,company_id:currentCompanyId,ledger_id:ledger.id,
+        opening_balance:undefined
+      }]);
+      if(profileError){await supabase.from("chart_of_accounts").delete().eq("id",ledger.id).eq("company_id",currentCompanyId);throw profileError;}
+      setShowAccountForm(false);setAccountForm(emptyAccount());setNotice("Bank account added successfully.");await load();
+    }catch(e){setError(e.message||"Unable to add bank account.");}
+    finally{setSaving(false);}
+  };
 
-    {tab === "Overview" && <section className="banking-content">
-      <div className="banking-metrics">
-        <Metric icon={<FiCreditCard/>} label="Connected Bank Accounts" value="3" hint="Active" tone="blue"/>
-        <Metric icon={<FiFileText/>} label="Unclassified Transactions" value={transactions.filter(x => x.status === "Unclassified").length + 40} hint="Needs Action" tone="orange"/>
-        <Metric icon={<FiClock/>} label="Pending Reconciliation" value="1" hint="Apr 2025" tone="pink"/>
-        <Metric icon={<FiCheckCircle/>} label="Last Import" value="11 Jul 2026" hint="Up to date" tone="green"/>
-      </div>
-      <div className="banking-overview-grid">
-        <section className="bank-card bank-accounts-card"><div className="bank-card-heading"><div><h2>Bank Accounts (3)</h2><p>Your connected business accounts</p></div><button className="bank-text-button" onClick={() => setTab("Bank Accounts")}>View all <FiArrowRight/></button></div>
-          <div className="bank-table-wrap"><table className="bank-table"><thead><tr><th>Bank Account</th><th>Account No.</th><th>Bank</th><th>Closing Balance</th><th>Last Statement</th><th></th></tr></thead><tbody>{bankAccounts.map(row => <tr key={row.name}><td><strong>{row.name}</strong></td><td>{row.number}</td><td>{row.bank}</td><td className="bank-amount">{money(row.balance)}</td><td>{row.date}</td><td><button className="bank-icon-button"><FiMoreVertical/></button></td></tr>)}</tbody></table></div>
-        </section>
-        <section className="bank-card bank-trend-card"><div className="bank-card-heading"><div><h2>Bank Balance Trend</h2><p>Consolidated closing balance</p></div><span className="bank-period">Apr – Jul</span></div><div className="bank-chart"><div className="bank-chart-y"><span>60L</span><span>45L</span><span>30L</span><span>15L</span><span>0</span></div><svg viewBox="0 0 420 190" role="img" aria-label="Bank balance trend chart"><defs><linearGradient id="bankFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#7550e8" stopOpacity=".22"/><stop offset="100%" stopColor="#7550e8" stopOpacity="0"/></linearGradient></defs><path d="M0 145 C45 138 55 112 92 119 S150 126 184 94 S245 111 280 70 S340 82 420 22 L420 180 L0 180Z" fill="url(#bankFill)"/><path d="M0 145 C45 138 55 112 92 119 S150 126 184 94 S245 111 280 70 S340 82 420 22" fill="none" stroke="#7047e8" strokeWidth="3" strokeLinecap="round"/><circle cx="420" cy="22" r="5" fill="#7047e8"/></svg></div><div className="bank-chart-x"><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div></section>
-      </div>
-      <section className="bank-card bank-recent-card"><div className="bank-card-heading"><div><h2>Recent Bank Transactions</h2><p>Latest activity across connected accounts</p></div><button className="bank-text-button" onClick={() => setTab("Transactions")}>View transactions <FiArrowRight/></button></div><TransactionTable rows={transactions.slice(0,4)} compact/></section>
-    </section>}
+  const addCashLedger=async()=>{
+    setSaving(true);setError("");try{
+      let currentData=data;if(!assetGroup())currentData=await ensureDefaultGroups();
+      const group=currentData.groups.find(g=>g.account_nature==="Asset");
+      await createLedger(currentCompanyId,{ledger_name:"Cash in Hand",ledger_code:"CASH-"+Date.now().toString().slice(-6),group_id:group.id,opening_balance:0,opening_balance_type:"Debit",opening_date:today(),party_type:"Other",description:"Cash account"});
+      setNotice("Cash in Hand ledger created.");await load();
+    }catch(e){setError(e.message||"Unable to create cash ledger.");}finally{setSaving(false);}
+  };
 
-    {tab === "Transactions" && <section className="banking-content">
-      <div className="banking-section-title"><div><h2>Bank Transactions – Classify & Post</h2><p>Review imported statement lines and map each transaction to the correct accounting entry.</p></div><div className="banking-heading-actions"><button className="bank-btn bank-btn-light" onClick={() => setNotice("Auto-classification preview completed. Review the suggested categories before posting.")}><FiZap/> Auto-Classify</button><button className="bank-btn bank-btn-primary" disabled={!selected.length} onClick={postSelected}><FiCheck/> Post Selected ({selected.length})</button></div></div>
-      <div className="bank-filter-bar"><select value={account} onChange={e => setAccount(e.target.value)}>{bankAccounts.map(x => <option key={x.name}>{x.name}</option>)}</select><label className="bank-date-filter"><FiCalendar/><span>01 Apr 2025 – 11 Jul 2026</span><FiChevronDown/></label><select value={filter} onChange={e => setFilter(e.target.value)}><option>All Transactions</option><option>Unclassified</option><option>To Post</option><option>Posted</option></select><label className="bank-search"><FiSearch/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search narration, amount..."/></label></div>
-      <div className="banking-status-tabs"><button className="active">All ({transactions.length})</button><button onClick={() => setFilter("Unclassified")}>Unclassified ({transactions.filter(x=>x.status==="Unclassified").length})</button><button onClick={() => setFilter("To Post")}>To Post ({transactions.filter(x=>x.status==="To Post").length})</button><button onClick={() => setFilter("Posted")}>Posted ({transactions.filter(x=>x.status==="Posted").length})</button></div>
-      <section className="bank-card"><TransactionTable rows={visibleTransactions} selected={selected} onToggle={toggleSelected} onChange={updateTransaction}/></section>
-      <p className="banking-footnote"><FiAlertCircle/> Posting is a preview action only. Actual journal, payment, receipt and purchase vouchers will be created after the accounting ledger integration is implemented.</p>
-    </section>}
+  const saveVoucher=async(type,e)=>{
+    e.preventDefault();setSaving(true);setError("");setNotice("");
+    try{
+      const amount=Number(txn.amount);
+      if(!Number.isFinite(amount)||amount<=0)throw new Error("Enter an amount greater than zero.");
+      if(type==="Receipt"&&txn.link_type==="sales"&&txn.link_id){
+        const invoice=salesInvoices.find(x=>x.id===txn.link_id);
+        if(!invoice)throw new Error("Selected sales invoice was not found.");
+        const already=String(invoice.sale_type||"").toLowerCase()==="cash"?Number(invoice.total_amount||0):receiptTotals.filter(x=>x.invoice_id===invoice.id).reduce((a,x)=>a+Number(x.amount||0),0);
+        if(amount>Math.max(0,Number(invoice.total_amount||0)-already)+0.01)throw new Error("Receipt exceeds this invoice's outstanding balance.");
+      }
+      if(type==="Payment"&&txn.link_type==="purchase"&&txn.link_id){
+        const invoice=purchaseInvoices.find(x=>x.id===txn.link_id);
+        if(!invoice)throw new Error("Selected purchase invoice was not found.");
+        const already=Math.max(Number(invoice.paid_amount||0),purchasePaymentTotals.filter(x=>x.invoice_id===invoice.id).reduce((a,x)=>a+Number(x.amount||0),0));
+        if(amount>Math.max(0,Number(invoice.grand_total||0)-already)+0.01)throw new Error("Payment exceeds this purchase invoice's outstanding balance.");
+      }
+      if(type==="Payment"&&txn.link_type==="expense"&&txn.link_id){
+        const expense=expenses.find(x=>x.id===txn.link_id);
+        if(!expense)throw new Error("Selected expense was not found.");
+        if(amount>Math.max(0,Number(expense.total_amount||0)-Number(expense.paid_amount||0))+0.01)throw new Error("Payment exceeds this expense's outstanding balance.");
+      }
+      let lines=[];
+      if(type==="Receipt"){
+        if(!txn.bank_ledger_id||!txn.counter_ledger_id)throw new Error("Select the receiving bank/cash account and customer or income ledger.");
+        lines=[{ledger_id:txn.bank_ledger_id,debit:amount,credit:0,line_narration:txn.narration},{ledger_id:txn.counter_ledger_id,debit:0,credit:amount,line_narration:txn.narration}];
+      }else if(type==="Payment"){
+        if(!txn.bank_ledger_id||!txn.counter_ledger_id)throw new Error("Select the paying bank/cash account and supplier or expense ledger.");
+        lines=[{ledger_id:txn.counter_ledger_id,debit:amount,credit:0,line_narration:txn.narration},{ledger_id:txn.bank_ledger_id,debit:0,credit:amount,line_narration:txn.narration}];
+      }else{
+        if(!txn.bank_ledger_id||!txn.to_ledger_id||txn.bank_ledger_id===txn.to_ledger_id)throw new Error("Select two different cash/bank accounts.");
+        lines=[{ledger_id:txn.to_ledger_id,debit:amount,credit:0,line_narration:txn.narration},{ledger_id:txn.bank_ledger_id,debit:0,credit:amount,line_narration:txn.narration}];
+      }
+      const prefix=type==="Receipt"?"RCT":type==="Payment"?"PAY":"CTR";
+      const voucher=await createVoucher(currentCompanyId,{
+        voucher_number:prefix+"-"+Date.now().toString(),
+        voucher_type:type,voucher_date:txn.voucher_date,reference_number:txn.reference_number||null,
+        narration:txn.narration||type+" entry",source_module:"Banking",status:"Draft"
+      },lines);
+      const allocationType=type==="Receipt"&&txn.link_type==="sales"?"sales":type==="Payment"&&txn.link_type==="purchase"?"purchase":type==="Payment"&&txn.link_type==="expense"?"expense":"none";
+      const bankProfile=accounts.find(a=>a.ledger_id===txn.bank_ledger_id);
+      const bankLedger=data.ledgers.find(a=>a.id===txn.bank_ledger_id);
+      const {error:postingError}=await supabase.rpc("post_banking_voucher",{
+        p_company_id:currentCompanyId,p_voucher_id:voucher.id,p_allocation_type:allocationType,
+        p_invoice_id:allocationType==="sales"||allocationType==="purchase"?txn.link_id:null,
+        p_expense_id:allocationType==="expense"?txn.link_id:null,
+        p_payment_date:txn.voucher_date,p_amount:amount,p_payment_method:"Bank Transfer",
+        p_bank_ledger_id:txn.bank_ledger_id,p_reference_number:txn.reference_number||null,
+        p_account_name:bankProfile?.bank_name||bankLedger?.ledger_name||"Bank",p_remarks:txn.narration||null
+      });
+      if(postingError)throw postingError;
+      setTxn(emptyTxn());setNotice(type+" recorded and posted successfully.");await load();
+    }catch(e){setError(e.message||"Unable to save transaction.");}
+    finally{setSaving(false);}
+  };
 
-    {tab === "Reconciliation" && <section className="banking-content">
-      <div className="banking-section-title"><div><h2>Bank Reconciliation</h2><p>Match statement transactions with accounting book entries.</p></div><button className="bank-btn bank-btn-primary" onClick={() => setReconMatched(true)}><FiRefreshCw/> Reconcile Now</button></div>
-      <div className="bank-recon-controls"><label><span>Bank Account</span><select><option>HDFC Current Account (•••• 5678)</option><option>SBI Current Account (•••• 9012)</option><option>ICICI Current Account (•••• 4567)</option></select></label><label><span>Reconciliation Period</span><select value={period} onChange={e=>setPeriod(e.target.value)}><option>Apr 2025</option><option>May 2025</option><option>Jun 2025</option><option>Jul 2026</option></select></label><button className="bank-btn bank-btn-light"><FiDownload/> Download Report</button></div>
-      <div className="banking-metrics recon-metrics"><Metric icon={<FiCreditCard/>} label="Bank Statement Balance" value="₹48,76,230.00" tone="blue"/><Metric icon={<FiBookOpenIcon/>} label="Book Balance" value="₹48,51,230.00" tone="purple"/><Metric icon={<FiCheckCircle/>} label="Matched" value={reconMatched ? "₹48,76,230.00" : "₹48,51,230.00"} tone="green"/><Metric icon={<FiAlertCircle/>} label="Unmatched (Statement)" value={reconMatched ? "₹0.00" : "₹25,000.00"} tone="orange"/><Metric icon={<FiX/>} label="Unmatched (Book)" value="₹0.00" tone="pink"/></div>
-      <div className="banking-status-tabs"><button className="active">Unmatched in Bank (1)</button><button>Unmatched in Books (0)</button><button>Matched (312)</button></div>
-      <section className="bank-card"><div className="bank-table-wrap"><table className="bank-table"><thead><tr><th></th><th>Date</th><th>Narration</th><th>Amount</th><th>Action</th></tr></thead><tbody>{reconMatched ? <tr><td colSpan="5" className="bank-empty"><FiCheckCircle/> All statement entries in this period are matched.</td></tr> : <tr><td><input type="checkbox"/></td><td>11 Jul 2025</td><td><strong>NEFT – ABC Transport</strong></td><td className="bank-negative">−₹25,000.00</td><td><button className="bank-btn bank-btn-primary bank-btn-small" onClick={() => setNotice("Match transaction panel is ready for the selected bank line.")}>Match</button></td></tr>}</tbody></table></div></section>
-    </section>}
+  const importStatement=async(e)=>{
+    const file=e.target.files?.[0];if(!file)return;
+    if(!selectedAccount){setError("Select a bank account first.");return;}
+    setSaving(true);setError("");setNotice("");
+    try{
+      const text=await file.text();
+      const rows=text.split(/\r?\n/).filter(Boolean);
+      if(rows.length<2)throw new Error("The CSV file has no transaction rows.");
+      const parseLine=line=>{const out=[];let value="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'){value+='"';i++;}else if(ch==='"'){quoted=!quoted;}else if(ch===","&&!quoted){out.push(value.trim());value="";}else value+=ch;}out.push(value.trim());return out;};
+      const headers=parseLine(rows[0]).map(x=>x.toLowerCase().replace(/[^a-z0-9]/g,""));
+      const col=(names)=>headers.findIndex(h=>names.includes(h));
+      const dateIx=col(["date","transactiondate","valuedate"]),descIx=col(["description","narration","particulars","details"]),refIx=col(["reference","referenceno","ref","utr"]),amtIx=col(["amount","transactionamount"]),typeIx=col(["type","direction","drcr","transactiontype"]),balIx=col(["balance","runningbalance","closingbalance"]);
+      if(dateIx<0||descIx<0||amtIx<0)throw new Error("CSV needs Date, Description and Amount columns. Optional: Reference, Type (Credit/Debit), Balance.");
+      const batch="IMP-"+Date.now();
+      const payload=rows.slice(1).map(parseLine).filter(r=>r[dateIx]&&r[amtIx]).map(r=>{
+        const rawDate=r[dateIx];let date=rawDate;
+        if(/^\d{2}\/\d{2}\/\d{4}$/.test(rawDate)){const [d,m,y]=rawDate.split("/");date=y+"-"+m+"-"+d;}
+        const rawAmount=String(r[amtIx]).replace(/[₹,\s]/g,"");
+        const amount=Math.abs(Number(rawAmount));
+        const rawType=typeIx>=0?String(r[typeIx]||"").toLowerCase():"";
+        const direction=/debit|withdraw|dr|paid/.test(rawType)||Number(rawAmount)<0?"Debit":"Credit";
+        return {company_id:currentCompanyId,bank_account_id:selectedAccount,statement_date:date,narration:r[descIx]||"Bank transaction",reference_number:refIx>=0?r[refIx]||null:null,amount,direction,running_balance:balIx>=0&&r[balIx]?Number(String(r[balIx]).replace(/[₹,\s]/g,"")):null,import_batch:batch};
+      }).filter(x=>Number.isFinite(x.amount)&&x.amount>0&&/^\d{4}-\d{2}-\d{2}$/.test(x.statement_date));
+      if(!payload.length)throw new Error("No valid statement rows were found.");
+      const {error:insertError}=await supabase.from("bank_statement_lines").insert(payload);
+      if(insertError)throw insertError;
+      setStatementFile(file.name);setNotice(payload.length+" bank statement rows imported.");await load();
+    }catch(e){setError(e.message||"Unable to import bank statement.");}
+    finally{setSaving(false);e.target.value="";}
+  };
 
-    {tab === "Bank Accounts" && <section className="banking-content">
-      <div className="banking-section-title"><div><h2>Bank Accounts</h2><p>Manage the bank accounts linked to {currentCompany?.company_name || "your company"}.</p></div><button className="bank-btn bank-btn-primary" onClick={() => setShowImport(true)}><FiPlus/> Add Bank Account</button></div>
-      <div className="bank-account-grid">{bankAccounts.map(row=><article className="bank-card bank-account-tile" key={row.name}><div className={"bank-logo "+row.color}>{row.bank.split(" ").map(x=>x[0]).join("").slice(0,3)}</div><div className="bank-account-status"><span className="bank-dot"/> Connected</div><h3>{row.name}</h3><p>{row.bank} · {row.number}</p><div className="bank-account-balance"><span>Available balance</span><strong>{money(row.balance)}</strong></div><div className="bank-account-actions"><button onClick={()=>{setAccount(row.name);setTab("Transactions")}}>View transactions</button><button aria-label="More options"><FiMoreVertical/></button></div></article>)}</div>
-    </section>}
+  const matchLine=async(line)=>{
+    setSaving(true);setError("");try{
+      const bankProfile=accounts.find(a=>a.id===line.bank_account_id);
+      if(!bankProfile)throw new Error("Bank account profile not found.");
+      const candidates=postedVouchers.filter(v=>Math.abs(new Date(v.voucher_date+"T00:00:00").getTime()-new Date(line.statement_date+"T00:00:00").getTime())<=3*86400000);
+      let matched=null;
+      for(const v of candidates){
+        const row=data.lines.find(x=>x.voucher_id===v.id&&x.ledger_id===bankProfile.ledger_id);
+        if(!row)continue;
+        const bookDirection=Number(row.debit||0)>0?"Credit":"Debit";
+        const bookAmount=Number(row.debit||0)||Number(row.credit||0);
+        if(bookDirection===line.direction&&Math.abs(bookAmount-Number(line.amount))<0.01){matched=v;break;}
+      }
+      if(!matched)throw new Error("No exact bank ledger match found within three days. Check the statement and accounting entry.");
+      const {error:matchError}=await supabase.from("bank_statement_lines").update({match_status:"Matched",matched_voucher_id:matched.id,matched_at:new Date().toISOString()}).eq("id",line.id).eq("company_id",currentCompanyId);
+      if(matchError)throw matchError;setNotice("Statement line matched to "+matched.voucher_number+".");await load();
+    }catch(e){setError(e.message||"Unable to match statement line.");}finally{setSaving(false);}
+  };
 
-    {tab === "Settings" && <section className="banking-content">
-      <div className="banking-section-title"><div><h2>Banking Settings</h2><p>Manage bank connections, categorisation and reconciliation preferences.</p></div></div>
-      <div className="banking-settings-tabs">{["Bank Accounts","Account Aggregator","Transaction Rules","Reconciliation Rules"].map(x=><button key={x} className={settingsTab===x?"active":""} onClick={()=>setSettingsTab(x)}>{x}</button>)}</div>
-      {settingsTab==="Account Aggregator" ? <section className="bank-card bank-aggregator-settings"><div className="bank-aggregator-intro"><div className="bank-aggregator-icon"><FiLink/></div><div><h3>Account Aggregator Connections</h3><p>Securely connect and manage bank accounts through an RBI-regulated Account Aggregator partner.</p></div></div>{bankAccounts.map(x=><div className="bank-connection-row" key={x.name}><div className={"bank-logo "+x.color}>{x.bank.split(" ").map(y=>y[0]).join("").slice(0,3)}</div><div><strong>{x.bank}</strong><small>Last sync: 11 Jul 2026 · 10:24 AM</small></div><span className="bank-connected">Connected</span><button className="bank-icon-button"><FiRefreshCw/></button></div>)}<button className="bank-btn bank-btn-primary" onClick={()=>setShowImport(true)}><FiPlus/> Connect Another Bank</button></section> : <section className="bank-card bank-settings-placeholder"><FiSettings/><h3>{settingsTab}</h3><p>Configure company-specific {settingsTab.toLowerCase()} for automatic bank processing.</p><button className="bank-btn bank-btn-light" onClick={()=>setNotice("Settings editor will be enabled with the banking database configuration.")}>Configure Rules</button></section>}
-    </section>}
+  const heading=<header className="fin-heading"><div><span className="fin-eyebrow">SYD / BANKING & MONEY</span><h1>{TITLES[view]}</h1><p>{currentCompany?.company_name||"Select a company"} · Manage cash, bank movements and reconciliation.</p></div><div className="fin-actions">{view==="accounts"&&<button className="fin-primary" onClick={()=>setShowAccountForm(true)}>＋ Add Account</button>}{["receipts","payments","contra"].includes(view)&&<button className="fin-secondary" onClick={()=>navigate("/app/banking/accounts")}>Manage Accounts</button>}</div></header>;
+  const accountOptions=<><option value="">Select account</option>{accounts.filter(a=>a.is_active).map(a=><option key={a.id} value={a.ledger_id}>{a.bank_name} · {a.account_number_masked||"Bank account"}</option>)}{cashLedgers.map(l=><option key={l.id} value={l.id}>{l.ledger_name}</option>)}</>;
+  const counterOptions=<><option value="">Select ledger</option>{moneyLedgers.filter(l=>!bankIds.has(l.id)).map(l=><option key={l.id} value={l.id}>{l.ledger_name}</option>)}</>;
 
-    {showImport && <div className="bank-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setShowImport(false);}}><section className="bank-import-modal" role="dialog" aria-modal="true" aria-labelledby="bank-import-title">
-      <div className="bank-modal-heading"><div><div className="banking-eyebrow">BANKING</div><h2 id="bank-import-title">Import Bank Statements</h2><p>Connect your bank or upload a statement file.</p></div><button className="bank-icon-button" onClick={()=>setShowImport(false)}><FiX/></button></div>
-      <div className="bank-import-steps"><span className={importStep>=1?"current":""}>1 <b>Select Bank</b></span><i/><span className={importStep>=2?"current":""}>2 <b>Import Data</b></span><i/><span className={importStep>=3?"current":""}>3 <b>Review & Confirm</b></span></div>
-      {importStep===1 && <div className="bank-import-layout"><div><h3>Choose Import Method</h3><button className={"bank-method "+(importMethod==="aggregator"?"selected":"")} onClick={()=>setImportMethod("aggregator")}><FiLink/><span><b>Account Aggregator (Recommended)</b><small>Securely fetch statements from multiple banks via an RBI-regulated Account Aggregator.</small></span></button><button className={"bank-method "+(importMethod==="upload"?"selected":"")} onClick={()=>setImportMethod("upload")}><FiUploadCloud/><span><b>Upload Statement File</b><small>Upload PDF / CSV / Excel bank statement.</small></span></button></div><div><h3>{importMethod==="aggregator"?"Select Bank(s) to Connect":"Upload Statement"}</h3>{importMethod==="aggregator" ? <div className="bank-picker">{["HDFC Bank","ICICI Bank","SBI","Axis Bank","Kotak Mahindra","IndusInd Bank","Canara Bank","Other Bank"].map(x=><button key={x} className={selectedBanks.includes(x)?"selected":""} onClick={()=>setSelectedBanks(old=>old.includes(x)?old.filter(y=>y!==x):[...old,x])}><span className="bank-picker-mark">{x==="HDFC Bank"?"H":x==="ICICI Bank"?"i":x==="SBI"?"S":x==="Axis Bank"?"A":x[0]}</span>{x}{selectedBanks.includes(x)&&<FiCheck/>}</button>)}</div> : <label className="bank-file-drop"><FiUploadCloud/><b>{fileName||"Choose a bank statement file"}</b><small>PDF, CSV or XLSX · Maximum 10 MB</small><input type="file" accept=".pdf,.csv,.xlsx,.xls" onChange={e=>setFileName(e.target.files?.[0]?.name||"")}/></label>}</div></div>}
-      {importStep===2 && <div className="bank-import-review"><div className="bank-import-success"><FiCheckCircle/><div><b>{importMethod==="aggregator"?"Bank connection consent required":"Statement file selected"}</b><p>{importMethod==="aggregator"?"The next live integration step will redirect to the partner consent journey. No bank credentials are collected in this ERP screen.":fileName||"No file selected"}</p></div></div><p className="banking-footnote">This screen is currently a UI preview. Account Aggregator consent, secure data retrieval and file parsing will be connected through a backend integration.</p></div>}
-      {importStep===3 && <div className="bank-import-review"><FiCheckCircle className="bank-review-check"/><h3>Import request prepared</h3><p>Your selected bank and import method are ready for integration.</p></div>}
-      <div className="bank-modal-actions"><button className="bank-btn bank-btn-light" onClick={()=>importStep===1?setShowImport(false):setImportStep(importStep-1)}>{importStep===1?"Cancel":"Back"}</button><button className="bank-btn bank-btn-primary" disabled={importStep===1 && importMethod==="aggregator" && selectedBanks.length===0 || importStep===1 && importMethod==="upload" && !fileName} onClick={()=>importStep<3?setImportStep(importStep+1):(setShowImport(false),setNotice("Import flow preview completed. Live bank import will be enabled after integration."))}>{importStep===3?"Finish":"Continue"} <FiArrowRight/></button></div>
-    </section></div>}
+  return <main className="fin-page">
+    <nav className="fin-subnav">{Object.entries(TITLES).map(([key,label])=><button key={key} className={view===key?"active":""} onClick={()=>navigate(Object.keys(VIEWS).find(path=>VIEWS[path]===key))}>{label}</button>)}</nav>
+    {heading}
+    {error&&<div className="fin-alert error">{error}<button onClick={()=>setError("")}>×</button></div>}
+    {notice&&<div className="fin-alert success">{notice}<button onClick={()=>setNotice("")}>×</button></div>}
+    {!currentCompanyId?<div className="fin-empty">Create or select a company to use Banking & Money.</div>:loading?<div className="fin-empty">Loading company banking records…</div>:<>
+      {view==="overview"&&<><section className="fin-kpis"><article><span>Total Bank Balance</span><strong>{money(totalBank)}</strong></article><article><span>Cash in Hand</span><strong>{money(totalCash)}</strong></article><article><span>Total Receipts</span><strong>{money(receipts.reduce((s,v)=>s+Number(v.total_debit||0),0))}</strong></article><article><span>Total Payments</span><strong>{money(payments.reduce((s,v)=>s+Number(v.total_credit||0),0))}</strong></article></section><section className="fin-grid"><article className="fin-panel"><div className="fin-panel-title"><h2>Bank Accounts</h2><button onClick={()=>navigate("/app/banking/accounts")}>View all →</button></div>{accounts.map(a=>{const ledger=data.ledgers.find(l=>l.id===a.ledger_id);return <div className="fin-account-row" key={a.id}><span className="fin-bank-icon">▣</span><div><b>{a.bank_name} – {a.account_type}</b><small>{a.account_number_masked||"Account details not provided"}</small></div><strong>{money(accountBalance(a.ledger_id))}</strong></div>})}{!accounts.length&&<p className="fin-muted">No bank accounts yet. Add a bank account to begin.</p>}</article><article className="fin-panel"><div className="fin-panel-title"><h2>Quick Actions</h2></div><div className="fin-quick"><button onClick={()=>navigate("/app/receipts")}>＋ Record Receipt</button><button onClick={()=>navigate("/app/payments")}>＋ Record Payment</button><button onClick={()=>navigate("/app/contra")}>⇄ Bank Transfer</button><button onClick={()=>navigate("/app/bank-reconciliation")}>✓ Reconcile Statement</button></div></article></section></>}
+      {view==="accounts"&&<section className="fin-panel"><div className="fin-panel-title"><h2>Business bank accounts</h2><button onClick={addCashLedger} disabled={saving}>＋ Add Cash Ledger</button></div>{accounts.map(a=><div className="fin-account-card" key={a.id}><div><b>{a.bank_name} – {a.account_type}</b><small>{a.account_holder_name||currentCompany?.company_name} · {a.account_number_masked||"—"} · IFSC {a.ifsc||"—"}</small><small>{a.branch_name||"Branch not specified"}</small></div><strong>{money(accountBalance(a.ledger_id))}</strong><span className={a.is_active?"fin-pill":"fin-pill muted"}>{a.is_active?"Active":"Inactive"}</span></div>)}{!accounts.length&&<div className="fin-empty">No bank accounts configured.</div>}{cashLedgers.map(l=><div className="fin-account-card" key={l.id}><div><b>{l.ledger_name}</b><small>Cash account</small></div><strong>{money(accountBalance(l.id))}</strong><span className="fin-pill">Active</span></div>)}</section>}
+      {["transactions","cash-book"].includes(view)&&<><section className="fin-panel"><div className="fin-filters"><input placeholder="Search voucher, reference or account…" value={search} onChange={e=>setSearch(e.target.value)}/><label>From<input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}/></label><label>To<input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}/></label><button onClick={()=>{setSearch("");setDateFrom("");setDateTo("");}}>Reset</button></div><div className="fin-table-wrap"><table className="fin-table"><thead><tr><th>Date</th><th>Voucher</th><th>Account</th><th>Particulars</th><th>Type</th><th>Debit</th><th>Credit</th></tr></thead><tbody>{bankActivity.map(r=><tr key={r.id}><td>{r.voucher.voucher_date}</td><td>{r.voucher.voucher_number}</td><td>{r.ledger?.ledger_name}</td><td>{r.voucher.narration||r.voucher.reference_number||"—"}</td><td>{r.voucher.voucher_type}</td><td>{Number(r.debit)>0?money(r.debit):"—"}</td><td>{Number(r.credit)>0?money(r.credit):"—"}</td></tr>)}{!bankActivity.length&&<tr><td colSpan="7" className="fin-empty-cell">No posted bank/cash transactions found for these filters.</td></tr>}</tbody></table></div></section></>}
+      {["receipts","payments","contra"].includes(view)&&<><section className="fin-panel"><h2>{view==="receipts"?"Record Money Received":view==="payments"?"Record Money Paid":"Transfer Between Accounts"}</h2><p className="fin-muted">Entries are saved as balanced accounting vouchers and posted to the selected company ledger.</p><form className="fin-form" onSubmit={e=>saveVoucher(view==="receipts"?"Receipt":view==="payments"?"Payment":"Contra",e)}><label>Date<input type="date" value={txn.voucher_date} onChange={e=>setTxn(p=>({...p,voucher_date:e.target.value}))} required/></label><label>{view==="contra"?"Transfer From":"Cash / Bank Account"}<select value={txn.bank_ledger_id} onChange={e=>setTxn(p=>({...p,bank_ledger_id:e.target.value}))} required>{accountOptions}</select></label>{view==="contra"?<label>Transfer To<select value={txn.to_ledger_id} onChange={e=>setTxn(p=>({...p,to_ledger_id:e.target.value}))} required>{accountOptions}</select></label>:<label>{view==="receipts"?"Received From / Credit Ledger":"Paid To / Debit Ledger"}<select value={txn.counter_ledger_id} onChange={e=>setTxn(p=>({...p,counter_ledger_id:e.target.value}))} required>{counterOptions}</select></label>}<label>{view==="receipts"?"Allocate to Sales Invoice (optional)":"Link to Bill (optional)"}<select value={txn.link_type+"|"+txn.link_id} onChange={e=>{const [link_type,link_id]=e.target.value.split("|");setTxn(p=>({...p,link_type:link_type||"",link_id:link_id||""}));}}><option value="|">No invoice allocation</option>{view==="receipts"?salesInvoices.map(x=><option key={x.id} value={"sales|"+x.id}>{x.invoice_no} · {x.customer_name} · {money(x.total_amount)}</option>):<>{purchaseInvoices.map(x=><option key={x.id} value={"purchase|"+x.id}>{x.invoice_no} · Purchase · {money(x.grand_total)}</option>)}{expenses.map(x=><option key={x.id} value={"expense|"+x.id}>{x.expense_no} · Expense · {money(x.total_amount)}</option>)}</>}</select></label><label>Amount (₹)<input type="number" min="0.01" step="0.01" value={txn.amount} onChange={e=>setTxn(p=>({...p,amount:e.target.value}))} required/></label><label>Reference / UTR<input value={txn.reference_number} onChange={e=>setTxn(p=>({...p,reference_number:e.target.value}))}/></label><label className="fin-wide">Narration<input value={txn.narration} onChange={e=>setTxn(p=>({...p,narration:e.target.value}))} placeholder="Enter transaction details"/></label><div className="fin-wide fin-form-actions"><button className="fin-primary" disabled={saving}>{saving?"Saving…":view==="receipts"?"Save & Post Receipt":view==="payments"?"Save & Post Payment":"Save & Post Transfer"}</button><button type="button" className="fin-secondary" onClick={()=>setTxn(emptyTxn())}>Clear</button></div></form></section><section className="fin-panel"><h2>Recent {view==="receipts"?"Receipts":view==="payments"?"Payments":"Transfers"}</h2><div className="fin-table-wrap"><table className="fin-table"><thead><tr><th>Date</th><th>Voucher No.</th><th>Reference</th><th>Narration</th><th>Amount</th><th>Status</th></tr></thead><tbody>{postedVouchers.filter(v=>v.voucher_type===(view==="receipts"?"Receipt":view==="payments"?"Payment":"Contra")).slice(0,20).map(v=><tr key={v.id}><td>{v.voucher_date}</td><td>{v.voucher_number}</td><td>{v.reference_number||"—"}</td><td>{v.narration||"—"}</td><td>{money(v.total_debit)}</td><td><span className="fin-pill">Posted</span></td></tr>)}{!postedVouchers.some(v=>v.voucher_type===(view==="receipts"?"Receipt":view==="payments"?"Payment":"Contra"))&&<tr><td colSpan="6" className="fin-empty-cell">No records yet.</td></tr>}</tbody></table></div></section></>}
+      {view==="reconciliation"&&<><section className="fin-panel"><div className="fin-panel-title"><div><h2>Import bank statement</h2><p className="fin-muted">CSV columns: Date, Description, Amount. Optional: Reference, Type, Balance.</p></div><a className="fin-secondary" href="data:text/csv;charset=utf-8,Date%2CDescription%2CReference%2CAmount%2CType%2CBalance%0A2026-11-14%2CSample%20NEFT%2CREF001%2C1250%2CCredit%2C101250" download="syd-bank-statement-template.csv">Download CSV Template</a></div><label className="fin-upload">Choose bank account<select value={selectedAccount} onChange={e=>setSelectedAccount(e.target.value)}><option value="">Select bank account</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.bank_name} · {a.account_number_masked}</option>)}</select><input type="file" accept=".csv,text/csv" onChange={importStatement} disabled={!selectedAccount||saving}/></label>{statementFile&&<p className="fin-muted">Last imported: {statementFile}</p>}</section><section className="fin-panel"><div className="fin-panel-title"><h2>Statement reconciliation</h2><button onClick={load}>Refresh</button></div><div className="fin-kpis compact"><article><span>Statement Lines</span><strong>{statementLines.length}</strong></article><article><span>Matched</span><strong>{statementLines.filter(x=>x.match_status==="Matched").length}</strong></article><article><span>Unmatched</span><strong>{statementLines.filter(x=>x.match_status==="Unmatched").length}</strong></article><article><span>Book Balance</span><strong>{money(accounts.find(a=>a.id===selectedAccount)?accountBalance(accounts.find(a=>a.id===selectedAccount).ledger_id):0)}</strong></article></div><div className="fin-table-wrap"><table className="fin-table"><thead><tr><th>Date</th><th>Description</th><th>Reference</th><th>Direction</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>{statementLines.map(line=><tr key={line.id}><td>{line.statement_date}</td><td>{line.narration}</td><td>{line.reference_number||"—"}</td><td>{line.direction}</td><td>{money(line.amount)}</td><td><span className={line.match_status==="Matched"?"fin-pill":"fin-pill warning"}>{line.match_status}</span></td><td>{line.match_status==="Unmatched"&&<button className="fin-link" disabled={saving} onClick={()=>matchLine(line)}>Auto-match</button>}</td></tr>)}{!statementLines.length&&<tr><td colSpan="7" className="fin-empty-cell">Import a bank statement to start reconciliation.</td></tr>}</tbody></table></div></section></>}
+    </>}
+    {showAccountForm&&<div className="fin-modal-backdrop"><form className="fin-modal" onSubmit={saveAccount}><div className="fin-panel-title"><h2>Add Bank Account</h2><button type="button" onClick={()=>setShowAccountForm(false)}>×</button></div><div className="fin-form"><label>Bank Name<input value={accountForm.bank_name} onChange={e=>setAccountForm(p=>({...p,bank_name:e.target.value}))} required/></label><label>Account Type<select value={accountForm.account_type} onChange={e=>setAccountForm(p=>({...p,account_type:e.target.value}))}><option>Current</option><option>Savings</option><option>Cash Credit</option><option>Overdraft</option></select></label><label>Account Holder<input value={accountForm.account_holder_name} onChange={e=>setAccountForm(p=>({...p,account_holder_name:e.target.value}))}/></label><label>Account Number (masked)<input value={accountForm.account_number_masked} onChange={e=>setAccountForm(p=>({...p,account_number_masked:e.target.value}))} placeholder="XXXX XXXX 1234"/></label><label>IFSC<input value={accountForm.ifsc} onChange={e=>setAccountForm(p=>({...p,ifsc:e.target.value.toUpperCase()}))}/></label><label>Branch<input value={accountForm.branch_name} onChange={e=>setAccountForm(p=>({...p,branch_name:e.target.value}))}/></label><label>Opening Balance<input type="number" min="0" step="0.01" value={accountForm.opening_balance} onChange={e=>setAccountForm(p=>({...p,opening_balance:e.target.value}))}/></label></div><div className="fin-form-actions"><button className="fin-primary" disabled={saving}>{saving?"Saving…":"Save Bank Account"}</button><button type="button" className="fin-secondary" onClick={()=>setShowAccountForm(false)}>Cancel</button></div></form></div>}
   </main>;
 }
-
-function Metric({icon,label,value,hint,tone="blue"}) { return <article className="bank-metric"><div className={"bank-metric-icon "+tone}>{icon}</div><div className="bank-metric-copy"><span>{label}</span><strong>{value}</strong><small className={tone}>{hint}</small></div></article>; }
-function TransactionTable({rows,selected=[],onToggle,onChange,compact=false}) {
-  return <div className="bank-table-wrap"><table className="bank-table bank-transactions-table"><thead><tr>{!compact&&<th><input type="checkbox" aria-label="Select all"/></th>}<th>Date</th><th>Narration / Description</th><th>Bank Ref.</th><th>Amount (₹)</th><th>Type / Purpose</th><th>Accounting Mapping</th><th>Status</th></tr></thead><tbody>{rows.map(row=><tr key={row.id}>{!compact&&<td><input type="checkbox" checked={selected.includes(row.id)} onChange={()=>onToggle?.(row.id)} aria-label={"Select "+row.narration}/></td>}<td>{row.date}</td><td><strong>{row.narration}</strong></td><td>{row.ref}</td><td className={row.amount<0?"bank-negative":"bank-positive"}>{row.amount<0?"−":"+"}{money(row.amount)}</td><td>{compact?row.type:<select value={row.type} onChange={e=>onChange?.(row.id,"type",e.target.value)}>{categories.map(x=><option key={x}>{x}</option>)}</select>}</td><td>{compact?row.ledger:<input className="bank-ledger-input" value={row.ledger} onChange={e=>onChange?.(row.id,"ledger",e.target.value)}/>}</td><td><span className={"bank-status "+row.status.toLowerCase().replaceAll(" ","-")}>{row.status}</span></td></tr>)}</tbody></table>{!rows.length&&<div className="bank-empty">No transactions match your filters.</div>}</div>;
-}
-function FiBookOpenIcon(){return <FiFileText/>;}

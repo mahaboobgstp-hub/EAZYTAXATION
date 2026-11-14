@@ -1,10 +1,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiX, FiMenu, FiChevronDown } from "react-icons/fi";
-import { Capacitor } from "@capacitor/core";
-import { useCompany } from "../context/CompanyContext";
+import { FiSearch, FiX, FiMenu } from "react-icons/fi";
 import { MODULES, useModule } from "../context/ModuleContext";
+import { isAndroidApp } from "../utils/platform";
 import "../css/Header.css";
 
 const PAGES = [
@@ -43,7 +42,7 @@ const PAGES = [
   { label: "E-Way Bills", path: "/app/eway-bills", module: "billing" },
   { label: "E-Invoice", path: "/app/einvoice", module: "billing" },
   { label: "Sales Reports", path: "/app/sales-reports", module: "billing" },
-  { label: "Purchase Reports", path: "/app/purchase-reports", module: "billing" },
+  { label: "Purchase Reports", path: "/purchase-reports", module: "billing" },
   { label: "Expense Reports", path: "/app/expense-reports", module: "billing" },
   { label: "Customer Ledger", path: "/app/customer-ledger", module: "billing" },
   { label: "Vendor Ledger", path: "/app/vendor-ledger", module: "billing" },
@@ -119,10 +118,29 @@ const PAGES = [
   { label: "Backup & Restore", path: "/app/backup", module: "billing" },
 ];
 
-function Header({ onToggleSidebar }) {
+// Only expose implemented Billing & Accounting pages in Android search.
+const MOBILE_BILLING_SEARCH_ROUTES = new Set([
+  "/app/companies",
+  "/app/customers",
+  "/app/vendors",
+  "/app/items",
+  "/app/uom",
+  "/app/sales",
+  "/app/sales-register",
+  "/app/quotation",
+  "/app/delivery-challans",
+  "/app/purchases",
+  "/app/expenses",
+  "/app/expense-categories",
+  "/app/gst-rates",
+  "/app/invoice-settings",
+]);
+
+function Header({
+  onMenuClick = () => {},
+  mobileTitle = "Billing & Accounting",
+}) {
   const { activeModule, setActiveModule } = useModule();
-  const { companies, currentCompany, changeCompany, loading: companyLoading } = useCompany();
-  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -131,17 +149,32 @@ function Header({ onToggleSidebar }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchRef = useRef(null);
 
-  const results = useMemo(() => {
+    const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
+
     if (!normalized) return [];
 
     return PAGES
+      .filter((page) => {
+        if (isAndroidApp) {
+          return (
+            page.module === "billing" &&
+            MOBILE_BILLING_SEARCH_ROUTES.has(page.path)
+          );
+        }
+
+        return true;
+      })
       .filter((page) =>
         `${page.label} ${page.module}`.toLowerCase().includes(normalized)
       )
       .filter(
         (page, index, array) =>
-          array.findIndex((item) => item.path === page.path && item.label === page.label) === index
+          array.findIndex(
+            (item) =>
+              item.path === page.path &&
+              item.label === page.label
+          ) === index
       )
       .slice(0, 10);
   }, [query]);
@@ -171,8 +204,12 @@ function Header({ onToggleSidebar }) {
     setSelectedIndex(0);
   }, [query]);
 
-  const openPage = (page) => {
-    setActiveModule(page.module);
+    const openPage = (page) => {
+    // Module switching remains available on the web only.
+    if (!isAndroidApp) {
+      setActiveModule(page.module);
+    }
+
     setSearchOpen(false);
     setQuery("");
     navigate(page.path);
@@ -196,26 +233,28 @@ function Header({ onToggleSidebar }) {
     }
   };
 
-  if (isNativeAndroid) {
-    return (
-      <header className="header android-native-header">
-        <button type="button" className="sidebar-toggle-button" onClick={onToggleSidebar} aria-label="Open navigation menu"><FiMenu /></button>
-        <label className="android-company-selector">
-          <span>Current Company</span>
-          <select value={currentCompany?.id || ""} onChange={event => changeCompany(event.target.value)} disabled={companyLoading || companies.length === 0} aria-label="Select current company">
-            <option value="">{companyLoading ? "Loading companies..." : "Select Company"}</option>
-            {companies.map(company => <option key={company.id} value={company.id}>{company.company_name?.trim() || "Unnamed Company"}</option>)}
-          </select>
-          <FiChevronDown aria-hidden="true" />
-        </label>
-      </header>
-    );
-  }
-
   return (
-    <header className="header">
-      <button type="button" className="sidebar-toggle-button" onClick={onToggleSidebar} aria-label="Toggle sidebar" title="Show or hide sidebar"><FiMenu /></button>
-      <nav className="module-switcher" aria-label="ERP modules">
+        <header className="header">
+
+      {isAndroidApp && (
+        <div className="mobile-header-brand">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={onMenuClick}
+            aria-label="Open navigation menu"
+          >
+            <FiMenu />
+          </button>
+
+          <span className="mobile-header-title">
+            {mobileTitle}
+          </span>
+        </div>
+      )}
+
+      {!isAndroidApp && (
+        <nav className="module-switcher" aria-label="ERP modules">
         {MODULES.map((module) => (
           <button
             key={module.id}
@@ -224,15 +263,13 @@ function Header({ onToggleSidebar }) {
               activeModule === module.id ? "active" : ""
             }`}
             aria-pressed={activeModule === module.id}
-            onClick={() => {
-              setActiveModule(module.id);
-              navigate("/app");
-            }}
+            onClick={() => setActiveModule(module.id)}
           >
             {module.label}
           </button>
         ))}
       </nav>
+          )}
 
       <div className="global-page-search">
         <div className="page-search-input-wrap">
