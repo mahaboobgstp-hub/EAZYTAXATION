@@ -66,33 +66,29 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
     @PluginMethod
     public void checkAvailability(PluginCall call) {
         JSObject result = new JSObject();
-        if (Build.VERSION.SDK_INT < 31) {
-            result.put("available", false);
-            result.put("reason", "Strict on-device speech recognition requires Android 12 or later (API 31).");
-            call.resolve(result);
-            return;
-        }
-        boolean available = SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext());
+        boolean available = SpeechRecognizer.isRecognitionAvailable(getContext());
+        boolean onDevice = Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext());
         result.put("available", available);
-        result.put("reason", available ? "" : "No Android on-device speech recognition service is installed or available.");
+        result.put("onDevice", onDevice);
+        result.put("reason", available ? "" : "No Android speech recognition service is installed or available.");
         call.resolve(result);
     }
 
     @PluginMethod
     public void startListening(PluginCall call) {
-        if (Build.VERSION.SDK_INT < 31) {
-            call.reject("Offline-only speech recognition requires Android 12 or later. Online recognition is disabled.");
+        if (!SpeechRecognizer.isRecognitionAvailable(getContext())) {
+            call.reject("No Android speech recognition service is available on this device.");
             return;
         }
-        if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
-            call.reject("Offline speech recognition is unavailable on this device. Install a supported offline speech recognition service and language pack.");
-            return;
-        }
-        String language = call.getString("language", "en-IN");
+        String language = call.getString("language", "auto");
         getActivity().runOnUiThread(() -> {
             try {
                 destroyRecognizer();
-                recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
+                if (Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
+                    recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
+                } else {
+                    recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
+                }
                 recognizer.setRecognitionListener(new RecognitionListener() {
                     @Override public void onReadyForSpeech(Bundle params) { notifyListeners("speechStatus", status("ready")); }
                     @Override public void onBeginningOfSpeech() { notifyListeners("speechStatus", status("speaking")); }
@@ -113,8 +109,13 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
                 });
                 Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language);
+                if (!"auto".equals(language)) {
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language);
+                }
+                if (Build.VERSION.SDK_INT >= 34 && "auto".equals(language)) {
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_DETECTION_ALLOWED, true);
+                }
                 intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
                 intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
                 intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
