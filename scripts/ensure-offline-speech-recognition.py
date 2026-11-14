@@ -79,7 +79,9 @@ print("Generated deterministic MainActivity with native speech plugin registrati
 plugin = main.parent / "OfflineSpeechRecognitionPlugin.java"
 plugin.write_text(r'''package com.eazytaxation.mobile;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -90,9 +92,11 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 import java.util.ArrayList;
 
-@CapacitorPlugin(name = "OfflineSpeechRecognition")
+@CapacitorPlugin(name = "OfflineSpeechRecognition", permissions = { @Permission(alias = "microphone", strings = { Manifest.permission.RECORD_AUDIO }) })
 public class OfflineSpeechRecognitionPlugin extends Plugin {
     private SpeechRecognizer recognizer;
 
@@ -109,6 +113,10 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
 
     @PluginMethod
     public void startListening(PluginCall call) {
+        if (getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionForAlias("microphone", call, "microphonePermissionResult");
+            return;
+        }
         if (!SpeechRecognizer.isRecognitionAvailable(getContext())) {
             call.reject("No Android speech recognition service is available on this device.");
             return;
@@ -159,6 +167,15 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
                 call.reject("Could not start offline speech recognition: " + error.getMessage());
             }
         });
+    }
+
+    @PermissionCallback
+    private void microphonePermissionResult(PluginCall call) {
+        if (getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            startListening(call);
+        } else {
+            call.reject("Microphone permission was denied. Allow microphone access in Android settings to use voice recognition.");
+        }
     }
 
     @PluginMethod
