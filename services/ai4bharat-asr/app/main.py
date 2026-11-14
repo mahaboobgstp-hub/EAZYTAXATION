@@ -96,6 +96,8 @@ def decode_audio(data: bytes) -> torch.Tensor:
     duration = samples.size / TARGET_SAMPLE_RATE
     if duration > MAX_AUDIO_SECONDS:
         raise HTTPException(status_code=413, detail=f"Recording exceeds {MAX_AUDIO_SECONDS} seconds")
+    if samples.size / TARGET_SAMPLE_RATE > MAX_AUDIO_SECONDS:
+        raise HTTPException(status_code=413, detail=f"Recording exceeds {MAX_AUDIO_SECONDS} seconds")
     samples = np.nan_to_num(samples, copy=False)
     return torch.from_numpy(samples).unsqueeze(0).contiguous()
 
@@ -169,10 +171,16 @@ async def transcribe(
     if not use_openai_first and language not in LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language code: {language}")
 
+    try:
+        waveform = await run_in_threadpool(decode_audio, audio_bytes)
+    except HTTPException:
+        raise
+    except Exception as decode_error:
+        raise HTTPException(status_code=400, detail=str(decode_error)[:250])
+
     primary_error = None
     if not use_openai_first:
         try:
-            waveform = await run_in_threadpool(decode_audio, audio_bytes)
             transcript = await run_in_threadpool(transcribe_ai4bharat, waveform, language)
             return {
                 "transcript": transcript, "provider": "ai4bharat",
