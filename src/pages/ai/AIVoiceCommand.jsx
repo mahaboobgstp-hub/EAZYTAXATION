@@ -9,8 +9,8 @@ const suggestions = ["Create a sales invoice", "Create a purchase invoice", "Rec
 const languageOptions = [
   { value: "auto", label: "Automatic", sub: "OpenAI language detection" },
   { value: "en-IN", label: "English", sub: "OpenAI" },
-  { value: "hi", label: "हिन्दी", sub: "AI4Bharat first" },
-  { value: "te", label: "తెలుగు", sub: "AI4Bharat first" },
+  { value: "hi", label: "हिन्दी", sub: "OpenAI" },
+  { value: "te", label: "తెలుగు", sub: "OpenAI" },
 ];
 
 export default function AIVoiceCommand() {
@@ -61,7 +61,7 @@ export default function AIVoiceCommand() {
           const data = await transcribeVoiceAudio({ audioBlob: blob, language });
           setTranscript(data.transcript || "");
           setProviderInfo(data);
-          setNotice(data.transcript ? `Transcribed by ${data.provider === "ai4bharat" ? "AI4Bharat" : "OpenAI"}${data.fallback_used ? " after AI4Bharat fallback" : ""}. Review or edit the transcript.` : "No speech was detected. Please record again.");
+          setNotice(data.transcript ? `Transcribed by OpenAI. Review or edit the transcript.` : "No speech was detected. Please record again.");
         } catch (error) { setNotice(error.message || "Transcription failed. Please try again."); }
         finally { setBusy(false); setRecording(false); }
       };
@@ -123,7 +123,7 @@ export default function AIVoiceCommand() {
           {languageOptions.map(option => <button type="button" key={option.value} className={language === option.value ? "selected" : ""} onClick={() => setLanguage(option.value)} disabled={recording || busy}><b>{option.label}</b><small>{option.sub}</small></button>)}
         </div>
       </div>
-      <p>Audio is processed securely. Indic languages use AI4Bharat first; OpenAI is the fallback.</p>
+      <p>Audio is processed securely by OpenAI. Choose Automatic, English, Hindi or Telugu.</p>
     </section>
     <div className="ai-suggestion-list">{suggestions.map(item => <button type="button" key={item} onClick={() => setTranscript(item)}>{item}</button>)}</div>
     <section className="ai-command-form ai-live-transcript">
@@ -140,6 +140,6 @@ export default function AIVoiceCommand() {
       <button type="button" onClick={confirmDraft} disabled={busy}><FiCheck/> Confirm draft</button>
       <button type="button" onClick={reset} disabled={busy}><FiRotateCcw/> Start over</button>
     </section>}
-    <p className="ai-safe-note">Your recording is sent to the SYD transcription server. AI4Bharat is attempted first for supported Indian languages; OpenAI is used for automatic language detection, English, or when AI4Bharat fails. Only the transcript is sent to the command interpreter. No accounting entry is posted automatically.</p>
+    <p className="ai-safe-note">Your recording is sent securely from Supabase to OpenAI for transcription. Only the transcript is sent to the command interpreter. No accounting entry is posted automatically.</p>
   </main>;
 }
