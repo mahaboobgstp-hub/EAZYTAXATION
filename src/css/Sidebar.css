@@ -862,3 +862,13 @@
     transition: none;
   }
 }
+
+
+/* Android drawer: compact width so the menu does not dominate the screen */
+@media (max-width: 600px) {
+  .app-native .sidebar.app-native-sidebar {
+    width: min(62vw, 250px);
+    min-width: 0;
+    max-width: 250px;
+  }
+}
