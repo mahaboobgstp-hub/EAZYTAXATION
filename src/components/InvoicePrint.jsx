@@ -23,47 +23,32 @@ function InvoicePrint({
   console.log("Invoice Settings:", settings);
 
   const handleDownloadPDF = async () => {
-
-  const input = document.getElementById("invoice-content");
-
-  if (!input) {
-    alert("Invoice content not found.");
-    return;
-  }
-
-  const canvas = await html2canvas(input, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#ffffff",
-    scrollY: 0,
-    logging: false,
-  });
-
-  const imgData = canvas.toDataURL("image/png");
-
-  const pdf = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
-
-  const pageWidth = pdf.internal.pageSize.getWidth();
-const pageHeight = pdf.internal.pageSize.getHeight();
-
-const pdfMargin = 2;
-
-pdf.addImage(
-    imgData,
-    "PNG",
-    pdfMargin,
-    pdfMargin,
-    pageWidth - pdfMargin * 2,
-    pageHeight - pdfMargin * 2
-);
-
-  pdf.save(`${invoice.invoice_no}.pdf`);
-
-};
+    try {
+      const input = document.getElementById("invoice-content");
+      if (!input) throw new Error("Invoice content not found.");
+      const canvas = await html2canvas(input, {
+        scale: 2, useCORS: true, backgroundColor: "#ffffff",
+        scrollY: 0, logging: false
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 5;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+      const imageHeight = canvas.height * contentWidth / canvas.width;
+      const pageCount = Math.max(1, Math.ceil(imageHeight / contentHeight));
+      for (let page = 0; page < pageCount; page += 1) {
+        if (page > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", margin, margin - page * contentHeight, contentWidth, imageHeight);
+      }
+      const safeName = String(invoice.invoice_no || "Sales-Invoice").replace(/[^a-zA-Z0-9_-]/g, "_");
+      pdf.save(safeName + ".pdf");
+    } catch (error) {
+      alert(error?.message || "Unable to create the invoice PDF.");
+    }
+  };
   return (
     <div className="invoice-overlay">
       <div className="invoice-print">
