@@ -282,6 +282,8 @@ function App() {
           <Route path="vendor-ledger" element={<ReportsWorkspace kind="vendor" />} />
           <Route path="item-ledger" element={<ReportsWorkspace kind="item" />} />
           <Route path="gst-reports" element={<ReportsWorkspace kind="gst" />} />
+          <Route path="receivables-ageing" element={<ReportsWorkspace kind="receivables-ageing" />} />
+          <Route path="payables-ageing" element={<ReportsWorkspace kind="payables-ageing" />} />
 <Route
     path="attendance-settings"
     element={<AttendanceSettings />}
