@@ -68,6 +68,9 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Verify native speech bridge inside APK
+        run: python3 scripts/verify-android-speech-apk.py
+
       - name: Upload Android test APK
         uses: actions/upload-artifact@v4
         with:
