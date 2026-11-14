@@ -307,10 +307,7 @@ function App() {
     path="attendance-settings"
     element={<AttendanceSettings />}
 />
-          <Route
-            path="sales-register"
-            element={<SalesRegister />}
-          />
+          <Route path="sales-register" element={<SalesWorkspace kind="register" />} />
 
           <Route
             path="invoice-settings"
