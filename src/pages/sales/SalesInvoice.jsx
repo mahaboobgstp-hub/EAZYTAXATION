@@ -7,6 +7,7 @@ import SalesInvoiceView
 from '../../components/SalesInvoiceView';
 import InvoicePrint
 from '../../components/InvoicePrint';
+import EwayBillPreparationModal from '../../components/EwayBillPreparationModal';
 import {
   getInvoiceSettingsByCompany
 }
@@ -49,6 +50,8 @@ function SalesInvoice() {
   const [states, setStates] = useState([]);
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [printMode, setPrintMode] = useState(false);
+  const [ewayModalOpen, setEwayModalOpen] = useState(false);
+  const [ewaySourceInvoice, setEwaySourceInvoice] = useState(null);
  const [invoiceSettings,
 setInvoiceSettings] =
 useState(null);
@@ -472,7 +475,7 @@ const grandTotal =
   sgst +
   igst;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, generateEwayBill = false) => {
 
   e.preventDefault();
 
@@ -522,6 +525,8 @@ const grandTotal =
       alert(
         'Invoice Updated'
       );
+      await printInvoice(editingInvoiceId);
+      if (generateEwayBill) { setEwaySourceInvoice({ ...invoiceHeader, id: editingInvoiceId }); setEwayModalOpen(true); }
 
     } else {
 
@@ -538,6 +543,7 @@ const grandTotal =
       await printInvoice(
         savedInvoiceId
       );
+      if (generateEwayBill) { setEwaySourceInvoice({ ...invoiceHeader, id: savedInvoiceId }); setEwayModalOpen(true); }
 
 
       setFormData({
@@ -1019,13 +1025,10 @@ onChange={handleChange}
           onChange={handleChange}
         />     
 
-       <button type="submit">
-
-  {editingInvoiceId
-    ? 'Update Invoice'
-    : 'Save Invoice'}
-
-</button>
+       <div className="sales-invoice-save-actions">
+<button type="submit" className="sales-save-primary">{editingInvoiceId ? 'Update Invoice' : 'Save Invoice'}</button>
+{!editingInvoiceId && <button type="button" className="sales-save-eway" onClick={() => handleSubmit({ preventDefault: () => {} }, true)}>Save &amp; Generate E-Way Bill</button>}
+</div>
 
       </form>
 
@@ -1307,6 +1310,7 @@ onChange={handleChange}
 
   )
 }
+      {ewayModalOpen && ewaySourceInvoice && <EwayBillPreparationModal invoice={ewaySourceInvoice} company={companyDetails || currentCompany} onClose={() => setEwayModalOpen(false)} />}
       {
   printMode &&
   selectedInvoice && (
