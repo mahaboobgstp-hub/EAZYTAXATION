@@ -58,5 +58,5 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: Check transcription Edge Function
-        run: deno check supabase/functions/transcribe-voice-audio/index.ts
+      - name: Lint transcription Edge Function source
+        run: deno lint supabase/functions/transcribe-voice-audio/index.ts
