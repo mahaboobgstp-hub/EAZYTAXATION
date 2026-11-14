@@ -182,11 +182,6 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
         }
     }
 
-    @Override
-    protected void handleOnDestroy() {
-        destroyRecognizer();
-        super.handleOnDestroy();
-    }
 }
 ''')
 print("Injected strict offline SpeechRecognizer plugin and Android 11 package visibility query.")
