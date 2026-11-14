@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FiMic, FiMicOff, FiX, FiSend, FiCheck, FiRotateCcw } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
+import { createVoiceActivityMonitor } from "../utils/voiceActivityMonitor";
 import { processVoiceCommand, confirmVoiceDraft } from "../services/voiceCommandService";
 import "../css/GlobalVoiceAssistant.css";
 
@@ -14,20 +15,29 @@ export default function GlobalVoiceAssistant() {
   const [notice, setNotice] = useState("");
   const recorder = useRef(null);
   const chunks = useRef([]);
-  useEffect(() => () => { try { recorder.current?.stop(); } catch {} }, []);
+  const voiceMonitor = useRef(null);
+  useEffect(() => () => { try { recorder.current?.stop(); } catch {} voiceMonitor.current?.stop?.(); }, []);
 
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error("Audio recording is not supported in this app. You can type your command instead.");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      voiceMonitor.current = createVoiceActivityMonitor(stream);
       const supportedTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
       const mimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type));
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       recorder.current = mediaRecorder; chunks.current = [];
       mediaRecorder.ondataavailable = event => { if (event.data.size) chunks.current.push(event.data); };
       mediaRecorder.onstop = async () => {
+        const activity = voiceMonitor.current?.getStats?.();
+        await voiceMonitor.current?.stop?.();
+        voiceMonitor.current = null;
         stream.getTracks().forEach(track => track.stop());
         setRecording(false);
+        if (!activity || activity.activeMs < 400 || activity.peakRms < 0.015) {
+          setNotice("I couldn't detect clear speech. No audio was sent to OpenAI and no transcription request was made. Please speak closer to the microphone and try again.");
+          return;
+        }
         const blob = new Blob(chunks.current, { type: mediaRecorder.mimeType || mimeType || "audio/webm" });
         if (!blob.size) { setNotice("No audio was captured. Please try again."); return; }
         if (blob.size > 24 * 1024 * 1024) { setNotice("The recording is too large. Please record a shorter command."); return; }
