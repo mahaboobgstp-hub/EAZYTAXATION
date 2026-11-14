@@ -13,13 +13,17 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
   try {
     const authorization = req.headers.get("Authorization");
     if (!authorization?.startsWith("Bearer ")) return json({ error: "Authentication required" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const openAiKey = Deno.env.get("OPENAI_API_KEY");
     if (!supabaseUrl || !anonKey) return json({ error: "Supabase authentication is not configured." }, 503);
+    if (!openAiKey) return json({ error: "OpenAI transcription is not configured. Add OPENAI_API_KEY to Supabase Edge Function secrets." }, 503);
+
     const supabase = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authorization } },
       auth: { persistSession: false, autoRefreshToken: false },
@@ -27,52 +31,57 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return json({ error: "Your session is invalid. Please sign in again." }, 401);
 
-    const asrUrl = Deno.env.get("ASR_SERVICE_URL");
-    const asrKey = Deno.env.get("ASR_API_KEY");
-    if (!asrUrl || !asrKey) return json({ error: "Speech transcription service is not configured yet." }, 503);
-
     const incoming = await req.formData();
     const file = incoming.get("file");
-    const language = String(incoming.get("language") || "auto").toLowerCase();
+    const selectedLanguage = String(incoming.get("language") || "auto").toLowerCase();
     if (!(file instanceof File)) return json({ error: "Audio recording is missing." }, 400);
     if (file.size === 0) return json({ error: "Audio recording is empty." }, 400);
     if (file.size > 25 * 1024 * 1024) return json({ error: "Audio recording exceeds the 25 MB limit." }, 413);
-    if (!["auto", "en-in", "en", "hi", "te"].includes(language)) return json({ error: "Unsupported language selection." }, 400);
+    if (!["auto", "en-in", "en", "hi", "te"].includes(selectedLanguage)) {
+      return json({ error: "Unsupported language selection." }, 400);
+    }
 
-    const outbound = new FormData();
-    outbound.append("file", file, file.name || "voice-command.webm");
-    outbound.append("language", language);
+    const audio = new FormData();
+    audio.append("file", file, file.name || "voice-command.webm");
+    audio.append("model", Deno.env.get("OPENAI_TRANSCRIPTION_MODEL") || "gpt-transcribe");
+    if (selectedLanguage === "en" || selectedLanguage === "en-in") audio.append("language", "en");
+    if (selectedLanguage === "hi" || selectedLanguage === "te") audio.append("language", selectedLanguage);
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 150_000);
+    const timeout = setTimeout(() => controller.abort(), 120_000);
     let response: Response;
     try {
-      response = await fetch(asrUrl.replace(/\/$/, "") + "/v1/transcribe", {
+      response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
         method: "POST",
-        headers: { Authorization: `Bearer ${asrKey}` },
-        body: outbound,
+        headers: { Authorization: `Bearer ${openAiKey}` },
+        body: audio,
         signal: controller.signal,
       });
     } finally {
       clearTimeout(timeout);
     }
-    const payload = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      console.error("ASR service returned an error", { status: response.status, userId: user.id });
-      const detail = payload?.detail;
-      return json({ error: typeof detail === "string" ? detail : (detail?.message || "Speech transcription failed. Please try again.") }, response.status >= 500 ? 502 : response.status);
+      const failure = await response.json().catch(() => ({}));
+      console.error("OpenAI transcription failed", { status: response.status, userId: user.id });
+      if (response.status === 429) return json({ error: "OpenAI rate limit or usage quota reached. Check API billing and try again." }, 429);
+      if (response.status === 401 || response.status === 403) return json({ error: "OpenAI API authentication failed. Check the OPENAI_API_KEY secret." }, 502);
+      return json({ error: failure?.error?.message || "OpenAI could not transcribe this recording. Please try again." }, 502);
     }
-    if (!payload?.transcript) return json({ error: "No speech was recognized. Please try again." }, 502);
+
+    const payload = await response.json();
+    const transcript = String(payload?.text || "").trim();
+    if (!transcript) return json({ error: "No speech was recognized. Please record again." }, 422);
     return json({
-      transcript: payload.transcript,
-      provider: payload.provider,
-      fallback_used: Boolean(payload.fallback_used),
-      language: payload.language,
-      duration_seconds: payload.duration_seconds,
+      transcript,
+      provider: "openai",
+      fallback_used: false,
+      language: selectedLanguage,
     });
   } catch (error) {
     const message = error instanceof Error && error.name === "AbortError"
       ? "Speech transcription timed out. Please try a shorter recording."
-      : "Speech transcription service is temporarily unavailable.";
+      : "Speech transcription is temporarily unavailable. Please try again.";
     console.error("transcribe-voice-audio failed", error);
     return json({ error: message }, 500);
   }
