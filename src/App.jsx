@@ -8,6 +8,7 @@ import PrivacyPolicy from "./pages/privacy/PrivacyPolicy";
 import Login from "./pages/auth/Login";  
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ForgotUsername from "./pages/auth/ForgotUsername";
 import Layout from './components/Layout';
 import MobileBillingGuard from "./components/MobileBillingGuard";
 import AndroidAuthCallback from "./components/AndroidAuthCallback";
@@ -180,6 +181,7 @@ function App() {
           path="/forgot-password"
           element={<ForgotPassword />}
         />
+        <Route path="/forgot-username" element={<ForgotUsername />} />
 
         {/* ===========================
             ERP ROUTES
