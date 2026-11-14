@@ -46,7 +46,7 @@ const MODULES = {
           ["Sales Orders", "/app/sales-orders"],
           ["Delivery Challans", "/app/delivery-challans"],
           ["Credit Notes", "/app/credit-notes"],
-          ["Receipts", "/app/receipts"],
+          ["Receipts", "/app/banking?tab=receipts"],
         ],
       },
       {
