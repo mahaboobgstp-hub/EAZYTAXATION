@@ -327,33 +327,20 @@ const COMMON_GROUPS = [
 ];
 
 // Common workspace items permitted in the Android Billing app.
+const MOBILE_BILLING_GROUPS = [
+ {title:"Sales",icon:FiDollarSign,links:[["Add Sales Invoice","/app/sales"],["Sales Register","/app/sales-register"],["Quotations","/app/quotation"],["Sales Orders","/app/sales-orders"],["Delivery Challans","/app/delivery-challans"],["Credit Notes","/app/credit-notes"]]},
+ {title:"Purchases",icon:FiShoppingCart,links:[["Add Purchase Invoice","/app/purchases"],["Purchase Register","/app/purchase-register"],["Purchase Orders","/app/purchase-orders"],["Purchase Returns","/app/purchase-returns"],["Debit Notes","/app/debit-notes"]]},
+ {title:"Expenses",icon:FiTruck,links:[["Add Expense","/app/expenses"],["Expense Register","/app/expense-register"],["Expense Categories","/app/expense-categories"]]},
+ {title:"Banking & Money",icon:FiCreditCard,links:[["Banking Overview","/app/banking/overview"],["Bank Accounts","/app/banking/accounts"],["Bank Transactions","/app/banking/transactions"],["Cash & Bank Book","/app/banking/cash-book"],["Receipts","/app/receipts"],["Payments","/app/payments"],["Contra / Bank Transfers","/app/contra"],["Bank Reconciliation","/app/bank-reconciliation"]]},
+ {title:"Accounting",icon:FiBookOpen,links:[["Accounting Dashboard","/app/accounting"],["Chart of Accounts","/app/chart-of-accounts"],["Journal Voucher","/app/journal-voucher"],["Ledger","/app/ledger"],["Trial Balance","/app/trial-balance"],["Profit & Loss","/app/profit-loss"],["Balance Sheet","/app/balance-sheet"]]},
+ {title:"GST & Tax",icon:FiFileText,links:[["GST Dashboard","/app/gst-dashboard"],["GSTR-1","/app/gstr1"],["GSTR-3B","/app/gstr3b"],["GSTR-2B Reconciliation","/app/gstr2b"],["E-Invoice","/app/einvoice"],["E-Way Bills","/app/eway-bills"],["GST Reports","/app/gst-reports"]]},
+ {title:"Reports",icon:FiBarChart2,links:[["Sales Reports","/app/sales-reports"],["Purchase Reports","/app/purchase-reports"],["Expense Reports","/app/expense-reports"],["Customer Ledger","/app/customer-ledger"],["Supplier Ledger","/app/vendor-ledger"],["Item Ledger","/app/item-ledger"],["Receivables Ageing","/app/reports/receivables"],["Payables Ageing","/app/reports/payables"]]}
+];
+
 const MOBILE_COMMON_GROUPS = [
-  {
-    title: "Company",
-    icon: FiBriefcase,
-    links: [
-      ["Company Master", "/app/companies"],
-    ],
-  },
-  {
-    title: "Masters",
-    icon: FiDatabase,
-    links: [
-      ["Customers", "/app/customers"],
-      ["Vendors", "/app/vendors"],
-      ["Items", "/app/items"],
-      ["Units (UOM)", "/app/uom"],
-      ["Expense Categories", "/app/expense-categories"],
-      ["GST Rates", "/app/gst-rates"],
-    ],
-  },
-  {
-    title: "Administration",
-    icon: FiSettings,
-    links: [
-      ["Invoice Settings", "/app/invoice-settings"],
-    ],
-  },
+ {title:"Company Setup",icon:FiBriefcase,links:[["Company Creation","/app/companies"],["Company Profile","/app/company-profile"],["Financial Year & Tax Configuration","/app/financial-year-tax"]]},
+ {title:"Masters",icon:FiDatabase,links:[["Customers","/app/customers"],["Suppliers / Vendors","/app/vendors"],["Items","/app/items"],["Units (UOM)","/app/uom"],["GST Rates","/app/gst-rates"],["Payment Terms","/app/payment-terms"]]},
+ {title:"Settings",icon:FiSettings,links:[["Invoice Settings","/app/invoice-settings"],["User Profile","/app/user-profile"],["Users & Access","/app/users-access"],["Roles & Permissions","/app/roles-permissions"],["Data Export & Backup","/app/data-backup"],["Application Settings","/app/application-settings"]]}
 ];
 
 
@@ -409,6 +396,12 @@ const AVAILABLE_ROUTES = new Set([
   "/app/delivery-challans",
   "/app/quotation",
   "/app/invoice-settings",
+  "/app/dashboard","/app/sales-orders","/app/credit-notes","/app/purchase-register","/app/purchase-orders","/app/purchase-returns","/app/debit-notes","/app/expense-register",
+  "/app/banking/overview","/app/banking/accounts","/app/banking/transactions","/app/banking/cash-book","/app/receipts","/app/payments","/app/contra","/app/bank-reconciliation",
+  "/app/accounting","/app/chart-of-accounts","/app/journal-voucher","/app/ledger","/app/trial-balance","/app/profit-loss","/app/balance-sheet",
+  "/app/gst-dashboard","/app/gstr1","/app/gstr2b","/app/gstr3b","/app/einvoice","/app/eway-bills","/app/gst-reports",
+  "/app/sales-reports","/app/purchase-reports","/app/expense-reports","/app/customer-ledger","/app/vendor-ledger","/app/item-ledger","/app/reports/receivables","/app/reports/payables",
+  "/app/company-profile","/app/financial-year-tax","/app/user-profile","/app/users-access","/app/roles-permissions","/app/data-backup","/app/application-settings","/app/payment-terms"
 ]);
 
 /*
@@ -465,7 +458,7 @@ useEffect(() => {
 
   const currentModuleId = isAndroidApp ? "billing" : activeModule;
 
-const currentModule = MODULES[currentModuleId] || MODULES.billing;
+const currentModule = isAndroidApp ? { ...MODULES.billing, groups: MOBILE_BILLING_GROUPS } : (MODULES[currentModuleId] || MODULES.billing);
 
 const visibleCommonGroups = isAndroidApp
   ? MOBILE_COMMON_GROUPS
@@ -586,10 +579,10 @@ const currentModuleLocked = LOCKED_MODULES.has(currentModuleId);
   }`}
 >
       <div className="sidebar-logo">
-        <div className="logo-icon">ET</div>
+        <div className="logo-icon">{isAndroidApp ? "SYD" : "ET"}</div>
         <div>
-          <h2>EAZYTAXATION</h2>
-          <span>ERP</span>
+          <h2>{isAndroidApp ? "SYD" : "EAZYTAXATION"}</h2>
+          <span>{isAndroidApp ? "Billing & Accounting" : "ERP"}</span>
         </div>
       </div>
 
@@ -668,11 +661,17 @@ const currentModuleLocked = LOCKED_MODULES.has(currentModuleId);
   
 )}
 
+        {isAndroidApp && (
+          <NavLink to="/app/dashboard" onClick={onClose} className={({isActive}) => `menu-link ${isActive ? "active" : ""}`}>
+            <FiHome /><span>Dashboard</span>
+          </NavLink>
+        )}
+
         {currentModule.groups.map((group) =>
   renderGroup(group, currentModuleId)
 )}
 
-        <div className="sidebar-section-label">COMMON WORKSPACE</div>
+        <div className="sidebar-section-label">{isAndroidApp ? "ORGANIZATION & SETTINGS" : "COMMON WORKSPACE"}</div>
 
         <button
           type="button"

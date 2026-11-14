@@ -65,6 +65,22 @@ from './pages/settings/InvoiceSettings';
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import SalesRegister from "./pages/sales/SalesRegister";
 import GSTRates from "./pages/GSTRates";
+import BusinessDashboard from "./pages/BusinessDashboard";
+import BankingWorkspace from "./pages/banking/BankingWorkspace";
+import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
+import GSTR1 from "./pages/gst/GSTR1";
+import GSTR2B from "./pages/gst/GSTR2B";
+import GSTR3B from "./pages/gst/GSTR3B";
+import EwayBills from "./pages/gst/EwayBills";
+import GSTDashboard from "./pages/gst/GSTDashboard";
+import EInvoiceWorkspace from "./pages/gst/EInvoiceWorkspace";
+import ReportsWorkspace from "./pages/reports.jsx";
+import SalesWorkspace from "./pages/sales/SalesWorkspace";
+import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
+import ExpenseRegister from "./pages/expenses/ExpenseRegister";
+import AdminWorkspace from "./pages/settings/AdminWorkspace";
+import OutstandingWorkspace from "./pages/reports/OutstandingWorkspace";
+
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -218,10 +234,8 @@ function App() {
     path="gst-rates"
     element={<GSTRates />}
 />
-<Route
-  path="delivery-challans"
-  element={<DeliveryChallan />}
-/>
+<Route path="delivery-challans" element={<SalesWorkspace kind="challans" />} />
+<Route path="delivery-challans/new" element={<DeliveryChallan />} />
           <Route
             path="quotation"
             element={<Quotation />}
@@ -236,6 +250,59 @@ function App() {
             path="expenses"
             element={<ExpenseEntry />}
           />
+          <Route index element={<BusinessDashboard />} />
+          <Route path="dashboard" element={<BusinessDashboard />} />
+          <Route path="sales-orders" element={<SalesWorkspace kind="orders" />} />
+          <Route path="credit-notes" element={<SalesWorkspace kind="credits" />} />
+          <Route path="purchase-register" element={<PurchaseWorkspace kind="register" />} />
+          <Route path="purchase-orders" element={<PurchaseWorkspace kind="orders" />} />
+          <Route path="purchase-returns" element={<PurchaseWorkspace kind="returns" />} />
+          <Route path="debit-notes" element={<PurchaseWorkspace kind="debits" />} />
+          <Route path="expense-register" element={<ExpenseRegister />} />
+
+          <Route path="banking/overview" element={<BankingWorkspace />} />
+          <Route path="banking/accounts" element={<BankingWorkspace />} />
+          <Route path="banking/transactions" element={<BankingWorkspace />} />
+          <Route path="banking/cash-book" element={<BankingWorkspace />} />
+          <Route path="receipts" element={<BankingWorkspace />} />
+          <Route path="payments" element={<BankingWorkspace />} />
+          <Route path="contra" element={<BankingWorkspace />} />
+          <Route path="bank-reconciliation" element={<BankingWorkspace />} />
+
+          <Route path="accounting" element={<AccountingWorkspace />} />
+          <Route path="chart-of-accounts" element={<AccountingWorkspace />} />
+          <Route path="journal-voucher" element={<AccountingWorkspace />} />
+          <Route path="ledger" element={<AccountingWorkspace />} />
+          <Route path="trial-balance" element={<AccountingWorkspace />} />
+          <Route path="profit-loss" element={<AccountingWorkspace />} />
+          <Route path="balance-sheet" element={<AccountingWorkspace />} />
+
+          <Route path="gst-dashboard" element={<GSTDashboard />} />
+          <Route path="gstr1" element={<GSTR1 />} />
+          <Route path="gstr2b" element={<GSTR2B />} />
+          <Route path="gstr3b" element={<GSTR3B />} />
+          <Route path="eway-bills" element={<EwayBills />} />
+          <Route path="einvoice" element={<EInvoiceWorkspace />} />
+
+          <Route path="sales-reports" element={<ReportsWorkspace kind="sales" />} />
+          <Route path="purchase-reports" element={<ReportsWorkspace kind="purchases" />} />
+          <Route path="expense-reports" element={<ReportsWorkspace kind="expenses" />} />
+          <Route path="customer-ledger" element={<ReportsWorkspace kind="customer" />} />
+          <Route path="vendor-ledger" element={<ReportsWorkspace kind="vendor" />} />
+          <Route path="item-ledger" element={<ReportsWorkspace kind="item" />} />
+          <Route path="gst-reports" element={<ReportsWorkspace kind="gst" />} />
+          <Route path="reports/receivables" element={<OutstandingWorkspace kind="customer" />} />
+          <Route path="reports/payables" element={<OutstandingWorkspace kind="vendor" />} />
+
+          <Route path="company-profile" element={<AdminWorkspace />} />
+          <Route path="financial-year-tax" element={<AdminWorkspace />} />
+          <Route path="user-profile" element={<AdminWorkspace />} />
+          <Route path="users-access" element={<AdminWorkspace />} />
+          <Route path="roles-permissions" element={<AdminWorkspace />} />
+          <Route path="data-backup" element={<AdminWorkspace />} />
+          <Route path="application-settings" element={<AdminWorkspace />} />
+          <Route path="payment-terms" element={<AdminWorkspace />} />
+
 <Route
     path="attendance-settings"
     element={<AttendanceSettings />}

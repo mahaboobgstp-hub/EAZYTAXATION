@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import MobileBottomNav from "./MobileBottomNav";
 
 import { ModuleProvider } from "../context/ModuleContext";
 import { isAndroidApp } from "../utils/platform";
@@ -46,6 +47,7 @@ function Layout() {
           <div className="page-content">
             <Outlet />
           </div>
+          {isAndroidApp && <MobileBottomNav onMore={openMobileMenu} />}
         </div>
       </div>
     </ModuleProvider>
