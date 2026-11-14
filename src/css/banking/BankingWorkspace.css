@@ -16,3 +16,34 @@
 .bank-modal-backdrop{position:fixed;inset:0;background:#11182780;z-index:1200;display:grid;place-items:center;padding:18px}.bank-import-modal{width:min(850px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;padding:23px;box-shadow:0 25px 80px #0d152b40}.bank-modal-heading{display:flex;justify-content:space-between;gap:15px}.bank-modal-heading h2{font-size:20px;margin:0 0 5px}.bank-modal-heading p{font-size:11px;color:#7e8799;margin:0}.bank-import-steps{display:flex;align-items:center;gap:10px;margin:22px 0}.bank-import-steps span{display:flex;align-items:center;gap:7px;color:#a0a7b5;font-size:11px;white-space:nowrap}.bank-import-steps span:first-letter{border:1px solid #dfe3ec}.bank-import-steps span.current{color:var(--bank-purple)}.bank-import-steps span.current:first-letter{color:#fff}.bank-import-steps i{height:1px;background:#e5e8ef;flex:1}.bank-import-layout{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}.bank-import-layout h3{font-size:12px;margin:0 0 11px}.bank-method{width:100%;display:flex;align-items:flex-start;gap:11px;text-align:left;border:1px solid #e1e5ed;background:#fff;border-radius:9px;padding:13px;margin-bottom:9px;cursor:pointer;color:#3c4860}.bank-method>svg{font-size:19px;color:#7954df;flex:0 0 auto}.bank-method span{display:flex;flex-direction:column;gap:5px}.bank-method b{font-size:11px}.bank-method small{font-size:9px;color:#8992a4;line-height:1.5}.bank-method.selected{border-color:#805de5;background:#faf8ff;box-shadow:0 0 0 2px #805de51a}.bank-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bank-picker button{position:relative;display:flex;align-items:center;gap:8px;border:1px solid #e1e5ed;border-radius:8px;background:#fff;padding:10px;font-size:10px;color:#4b566c;cursor:pointer}.bank-picker button.selected{border-color:#805de5;background:#faf8ff}.bank-picker button>svg{margin-left:auto;color:var(--bank-purple)}.bank-picker-mark{width:25px;height:25px;border-radius:7px;background:#f0eff8;color:#6650bd;display:grid;place-items:center;font-weight:800}.bank-file-drop{border:1px dashed #b9aedf;border-radius:10px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#7353d4;position:relative;cursor:pointer}.bank-file-drop small{font-size:9px;color:#8a93a5}.bank-file-drop b{font-size:11px;color:#4d5870}.bank-file-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.bank-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:24px;padding-top:15px;border-top:1px solid #edf0f5}.bank-import-review{min-height:180px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px}.bank-import-success{display:flex;gap:13px;align-items:center;background:#f0faf5;border:1px solid #d8f0e2;padding:15px;border-radius:9px;width:100%;text-align:left}.bank-import-success>svg,.bank-review-check{font-size:25px;color:#17965e;flex:0 0 auto}.bank-import-success b{font-size:12px}.bank-import-success p,.bank-import-review>p{font-size:10px;color:#7e8799;margin:5px 0 0;line-height:1.5}.bank-import-review h3{font-size:16px;margin:0}
 @media(max-width:1100px){.banking-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.recon-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.banking-overview-grid{grid-template-columns:1fr}.bank-account-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.banking-page{padding:17px 13px 30px}.banking-heading,.banking-section-title{flex-direction:column;align-items:stretch}.banking-heading h1{font-size:23px}.banking-heading-actions{width:100%}.banking-heading-actions .bank-btn{flex:1}.banking-tabs{gap:19px;margin-top:18px}.banking-metrics{gap:9px}.bank-metric{padding:11px;gap:9px}.bank-metric-icon{width:32px;height:32px;flex-basis:32px;font-size:15px}.bank-metric-copy span{font-size:9px;white-space:normal}.bank-metric-copy strong{font-size:17px}.recon-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-account-grid{grid-template-columns:1fr}.banking-section-title .banking-heading-actions{justify-content:stretch}.banking-section-title .bank-btn{flex:1}.bank-recon-controls{align-items:stretch}.bank-recon-controls label,.bank-recon-controls select{width:100%}.bank-recon-controls .bank-btn{margin-left:0}.bank-import-modal{padding:17px}.bank-import-layout{grid-template-columns:1fr}.bank-import-steps{gap:6px}.bank-import-steps span{font-size:9px}.bank-import-steps span b{display:none}.bank-picker{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* SYD mobile-first banking forms and feedback */
+.banking-notice{display:flex;align-items:flex-start;gap:9px;padding:12px 14px;margin:14px 0;border:1px solid #d9e6fb;border-radius:9px;background:#f3f7ff;color:#29446d;font-size:12px;line-height:1.45}
+.banking-notice span{flex:1;min-width:0}.banking-notice button{border:0;background:transparent;color:inherit;cursor:pointer}
+.bank-entry-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:18px}
+.bank-entry-form label{display:flex;flex-direction:column;gap:6px;color:#657086;font-size:11px;font-weight:700;min-width:0}
+.bank-entry-form input,.bank-entry-form select{width:100%;height:40px;box-sizing:border-box;border:1px solid #dfe3ec;border-radius:7px;background:#fff;padding:0 10px;color:#263148;font:inherit;font-weight:500;min-width:0}
+.bank-entry-form .wide{grid-column:1/-1}
+.bank-form-actions{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:768px){
+ .banking-page{padding:12px 0 26px}
+ .banking-heading{align-items:flex-start;flex-direction:column;gap:10px}
+ .banking-heading h1{font-size:23px}
+ .banking-heading-actions{width:100%}
+ .banking-tabs{gap:17px;margin-top:16px}
+ .banking-tabs button{font-size:11px}
+ .banking-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .bank-metric{padding:11px 9px;gap:8px}
+ .bank-metric-icon{width:32px;height:32px;flex-basis:32px;font-size:15px}
+ .bank-metric-copy strong{font-size:15px}
+ .banking-overview-grid{grid-template-columns:1fr}
+ .bank-account-grid{grid-template-columns:1fr}
+ .banking-section-title{align-items:flex-start;flex-direction:column}
+ .bank-entry-form{grid-template-columns:1fr}
+ .bank-entry-form .wide{grid-column:auto}
+ .bank-filter-bar select{min-width:0;max-width:100%}
+ .bank-search{min-width:0}
+ .bank-modal-backdrop{padding:10px;overflow:auto}
+ .bank-import-modal{width:100%;max-width:560px;max-height:calc(100dvh - 20px);overflow:auto}
+}
