@@ -1,0 +1,36 @@
+name: AI4Bharat FastAPI Service Check
+
+on:
+  push:
+    branches:
+      - ai4bharat-fastapi-development
+    paths:
+      - "services/ai4bharat-asr/**"
+      - ".github/workflows/ai4bharat-asr-check.yml"
+  pull_request:
+    paths:
+      - "services/ai4bharat-asr/**"
+      - ".github/workflows/ai4bharat-asr-check.yml"
+  workflow_dispatch:
+
+jobs:
+  python-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ai4bharat-asr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check Python syntax
+        run: python -m py_compile app/main.py
+      - name: Validate required service files
+        run: |
+          test -s requirements.txt
+          test -s Dockerfile
+          test -s .env.example
+          test -s README.md
