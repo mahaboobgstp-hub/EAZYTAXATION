@@ -29,20 +29,9 @@ export async function processVoiceCommand({ companyId, audioBlob, text, sessionI
 
   const body = new FormData();
   body.append("companyId", companyId);
-  if (audioBlob) {
-    if (!audioBlob.size) throw new Error("No audio was recorded. Please try again.");
-    if (audioBlob.size > 24 * 1024 * 1024) {
-      throw new Error("The recording is too large. Please record a shorter command.");
-    }
-    const mimeType = (audioBlob.type || "audio/webm").split(";")[0].toLowerCase();
-    const extension = mimeType === "audio/mp4" ? "m4a"
-      : mimeType === "audio/mpeg" ? "mp3"
-      : mimeType === "audio/wav" ? "wav"
-      : mimeType === "audio/ogg" ? "ogg"
-      : "webm";
-    body.append("audio", audioBlob, `voice-command.${extension}`);
-  }
-  if (text) body.append("text", text);
+  if (audioBlob) throw new Error("Audio uploads are disabled. Only locally recognized text may be sent to OpenAI.");
+  if (!text?.trim()) throw new Error("No recognized text was provided. No OpenAI request was made.");
+  body.append("text", text.trim());
   if (previousDraft) body.append("previousDraft", JSON.stringify(previousDraft));
   const { data, error } = await supabase.functions.invoke("process-voice-command", { body });
   if (error) throw new Error(await getVoiceFunctionError(error));
