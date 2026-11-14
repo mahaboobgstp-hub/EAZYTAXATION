@@ -3,6 +3,8 @@
 from pathlib import Path
 from zipfile import ZipFile
 import sys
+import shutil
+import subprocess
 
 apk = Path("android/app/build/outputs/apk/debug/app-debug.apk")
 if not apk.is_file():
@@ -23,9 +25,17 @@ with ZipFile(apk) as archive:
     missing = [item.decode("ascii") for item in required if item not in dex]
     if missing:
         raise SystemExit("ERROR: Native speech bridge missing from APK DEX: " + ", ".join(missing))
-    manifest = archive.read("AndroidManifest.xml")
-    if b"RECORD_AUDIO" not in manifest:
-        raise SystemExit("ERROR: APK manifest does not contain RECORD_AUDIO permission.")
+aapt = shutil.which("aapt")
+if not aapt:
+    sdk = Path.home() / "Android" / "Sdk" / "build-tools"
+    candidates = sorted(sdk.glob("*/aapt"))
+    if candidates:
+        aapt = str(candidates[-1])
+if not aapt:
+    raise SystemExit("ERROR: Android aapt tool not found; cannot verify packaged microphone permission.")
+permissions = subprocess.run([aapt, "dump", "permissions", str(apk)], capture_output=True, text=True)
+if permissions.returncode != 0 or "android.permission.RECORD_AUDIO" not in permissions.stdout:
+    raise SystemExit("ERROR: APK manifest does not declare android.permission.RECORD_AUDIO.")
 
 print("APK verification passed:")
 print(" - Native OfflineSpeechRecognition plugin class is packaged")
