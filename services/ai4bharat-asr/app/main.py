@@ -171,16 +171,10 @@ async def transcribe(
     if not use_openai_first and language not in LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language code: {language}")
 
-    try:
-        waveform = await run_in_threadpool(decode_audio, audio_bytes)
-    except HTTPException:
-        raise
-    except Exception as decode_error:
-        raise HTTPException(status_code=400, detail=str(decode_error)[:250])
-
     primary_error = None
     if not use_openai_first:
         try:
+            waveform = await run_in_threadpool(decode_audio, audio_bytes)
             transcript = await run_in_threadpool(transcribe_ai4bharat, waveform, language)
             return {
                 "transcript": transcript, "provider": "ai4bharat",
