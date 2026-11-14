@@ -19,18 +19,18 @@ export default function AIVoiceCommand() {
   const [transcript, setTranscript] = useState("");
   const [partial, setPartial] = useState("");
   const [result, setResult] = useState(null);
-  const [notice, setNotice] = useState("Checking Android offline speech recognition…");
+  const [notice, setNotice] = useState("Checking Android online speech recognition…");
   const [available, setAvailable] = useState(false);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
-      setNotice("Offline speech recognition requires the installed Android app.");
+      setNotice("Online speech recognition requires the installed Android app.");
       return;
     }
     OfflineSpeechRecognition.checkAvailability().then(value => {
       setAvailable(Boolean(value?.available));
-      setNotice(value?.available ? "Offline speech recognition is ready." : (value?.reason || "Offline recognition is unavailable. Online recognition is disabled."));
-    }).catch(error => setNotice(error.message || "Could not check offline recognition."));
+      setNotice(value?.available ? "Online speech recognition is ready." : (value?.reason || "Online speech recognition is unavailable. Online recognition is disabled."));
+    }).catch(error => setNotice(error.message || "Could not check online speech recognition."));
     return () => {
       listeners.current.forEach(item => item.remove());
       OfflineSpeechRecognition.cancelListening().catch(() => {});
@@ -42,25 +42,25 @@ export default function AIVoiceCommand() {
     setTranscript(""); setPartial(""); setResult(null);
     try {
       const status = await OfflineSpeechRecognition.checkAvailability();
-      if (!status?.available) { setAvailable(false); setNotice(status?.reason || "Offline recognition unavailable. No online fallback will be used."); return; }
+      if (!status?.available) { setAvailable(false); setNotice(status?.reason || "Online speech recognition unavailable. No online fallback will be used."); return; }
       listeners.current.forEach(item => item.remove());
       listeners.current = [
         await OfflineSpeechRecognition.addListener("partialResults", event => { setPartial(event.transcript || ""); setRecording(true); }),
         await OfflineSpeechRecognition.addListener("recognized", event => {
           const words = String(event.transcript || "").trim();
           setTranscript(words); setPartial(""); setRecording(false);
-          setNotice(words ? "Recognized offline. Review or edit the words, then process them." : "No words recognized. Nothing was sent to OpenAI.");
+          setNotice(words ? "Speech recognized. Review or edit the words, then process them." : "No words recognized. Nothing was sent to OpenAI.");
         }),
-        await OfflineSpeechRecognition.addListener("recognitionError", event => { setRecording(false); setPartial(""); setNotice(event.message || "Offline recognition failed. Nothing was sent to OpenAI."); }),
-        await OfflineSpeechRecognition.addListener("speechStatus", event => { if (event.status === "ready" || event.status === "speaking") setRecording(true); if (event.status === "processing") setNotice("Finishing offline recognition…"); })
+        await OfflineSpeechRecognition.addListener("recognitionError", event => { setRecording(false); setPartial(""); setNotice(event.message || "Online speech recognition failed. Nothing was sent to OpenAI."); }),
+        await OfflineSpeechRecognition.addListener("speechStatus", event => { if (event.status === "ready" || event.status === "speaking") setRecording(true); if (event.status === "processing") setNotice("Finishing online speech recognition…"); })
       ];
       await OfflineSpeechRecognition.startListening({ language });
-      setRecording(true); setNotice("Listening offline… speak your command.");
-    } catch (error) { setRecording(false); setNotice(error.message || "Could not start offline recognition."); }
+      setRecording(true); setNotice("Listening… speak your command.");
+    } catch (error) { setRecording(false); setNotice(error.message || "Could not start online speech recognition."); }
   };
 
   const stopListening = async () => {
-    try { setNotice("Finishing offline recognition…"); await OfflineSpeechRecognition.stopListening(); }
+    try { setNotice("Finishing online speech recognition…"); await OfflineSpeechRecognition.stopListening(); }
     catch (error) { setRecording(false); setNotice(error.message || "Could not stop recognition."); }
   };
 
@@ -91,7 +91,7 @@ export default function AIVoiceCommand() {
   return <main className="ai-screen ai-voice-screen">
     <header className="ai-screen-header"><button type="button" onClick={() => navigate("/app/ai-assistant")} aria-label="Back"><FiArrowLeft /></button><h1>Voice Command</h1></header>
     <section className="ai-mic-area">
-      <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} disabled={busy || (!available && !recording)} aria-label={recording ? "Stop recognition" : "Start offline recognition"}>{recording ? <FiMicOff /> : <FiMic />}</button>
+      <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} disabled={busy || (!available && !recording)} aria-label={recording ? "Stop recognition" : "Start online speech recognition"}>{recording ? <FiMicOff /> : <FiMic />}</button>
       <h2>{recording ? "Listening… Tap to Stop" : busy ? "Processing…" : "Tap and Speak"}</h2>
       <div className="ai-language-picker">
         <span className="ai-language-title">Recognition language</span>
