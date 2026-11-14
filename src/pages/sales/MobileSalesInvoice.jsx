@@ -37,6 +37,10 @@ export default function MobileSalesInvoice() {
   const [invoiceDate, setInvoiceDate] = useState(todayISO());
   const [customerId, setCustomerId] = useState("");
   const [saleType, setSaleType] = useState("CASH");
+  const [discountType, setDiscountType] = useState("AMOUNT");
+  const [discountValue, setDiscountValue] = useState("0");
+  const [otherAmount, setOtherAmount] = useState("0");
+  const [roundOff, setRoundOff] = useState("0");
   const [placeOfSupply, setPlaceOfSupply] = useState("");
   const [remarks, setRemarks] = useState("");
   const [searchItem, setSearchItem] = useState("");
@@ -53,12 +57,12 @@ export default function MobileSalesInvoice() {
   const calculated = useMemo(() => calculateSalesInvoiceTax({
     items: lines,
     taxInclusive: false,
-    discountType: "AMOUNT",
-    discountValue: 0,
+    discountType,
+    discountValue,
     intraState,
-    otherAmount: 0,
-    roundOff: 0,
-  }), [lines, intraState]);
+    otherAmount,
+    roundOff,
+  }), [lines, intraState, discountType, discountValue, otherAmount, roundOff]);
   const totals = calculated.totals;
   const grandTotal = totals.grandTotal;
   const visibleItems = itemsMaster.filter(item => !searchItem || (item.item_name || "").toLowerCase().includes(searchItem.toLowerCase()) || (item.hsn_sac || "").toLowerCase().includes(searchItem.toLowerCase()));
@@ -204,13 +208,13 @@ export default function MobileSalesInvoice() {
         gst_type: intraState ? "INTRA_STATE" : "INTER_STATE",
         sale_type: saleType,
         tax_inclusive: false,
-        discount_type: "AMOUNT",
-        discount_value: 0,
-        discount_amount: 0,
+        discount_type: discountType,
+        discount_value: Number(discountValue) || 0,
+        discount_amount: totals.discount,
         cess_amount: totals.cess,
         additional_cess_amount: 0,
-        other_amount: 0,
-        round_off: 0,
+        other_amount: totals.otherAmount,
+        round_off: totals.roundOff,
         taxable_value: totals.taxable,
         cgst: totals.cgst,
         sgst: totals.sgst,
@@ -261,7 +265,7 @@ export default function MobileSalesInvoice() {
         <div><small>{currentCompany?.company_name || "EAZYTAXATION"}</small><h1>Add Sales Invoice</h1></div>
       </header>
       <nav className="mobile-sales-steps" aria-label="Invoice steps">
-        {["Details", "Items", "Review"].map((label, index) => <div className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><b>{step > index + 1 ? "✓" : index + 1}</b><span>{label}</span></div>)}
+        {["Details", "Items", "Charges & Tax", "Review"].map((label, index) => <div className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><b>{step > index + 1 ? "✓" : index + 1}</b><span>{label}</span></div>)}
       </nav>
       {error && <div className="mobile-sales-error" role="alert">{error}<button onClick={() => setError("")}>×</button></div>}
 
@@ -285,11 +289,29 @@ export default function MobileSalesInvoice() {
           <div className="mobile-sales-line-total">Line amount <strong>{money(Number(line.qty) * Number(line.rate))}</strong></div>
         </article>)}
         <button className="mobile-sales-add" type="button" onClick={() => setLines(prev => [...prev, blankLine()])}>＋ Add Another Item</button>
-        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(1)}>Back</button><button className="mobile-sales-primary" onClick={() => { if (lines.some(line => !line.item_id || Number(line.qty) <= 0)) { setError("Select an item and enter a valid quantity in every row."); return; } setError(""); setStep(3); }}>Next: Review →</button></div>
+        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(1)}>Back</button><button className="mobile-sales-primary" onClick={() => { if (lines.some(line => !line.item_id || Number(line.qty) <= 0)) { setError("Select an item and enter a valid quantity in every row."); return; } setError(""); setStep(3); }}>Next: Charges & Tax →</button></div>
       </section>}
 
       {step === 3 && <section className="mobile-sales-card">
-        <h2>Invoice Summary</h2>
+        <h2>Charges &amp; Tax</h2>
+        <p>Review the calculated GST and apply invoice-level adjustments before final review.</p>
+        <label>Discount Type<select value={discountType} onChange={e => setDiscountType(e.target.value)}><option value="AMOUNT">Amount (₹)</option><option value="PERCENT">Percentage (%)</option></select></label>
+        <label>Discount {discountType === "PERCENT" ? "(%)" : "(₹)"}<input type="number" min="0" step="0.01" value={discountValue} onChange={e => setDiscountValue(e.target.value)} /></label>
+        <label>Other Charges (₹)<input type="number" min="0" step="0.01" value={otherAmount} onChange={e => setOtherAmount(e.target.value)} /></label>
+        <label>Round Off (₹)<input type="number" step="0.01" value={roundOff} onChange={e => setRoundOff(e.target.value)} /></label>
+        <div className="mobile-sales-summary-row"><span>Gross Taxable Value</span><strong>{money(totals.subtotal)}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Discount</span><strong>{money(totals.discount)}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Taxable Amount</span><strong>{money(totals.taxable)}</strong></div>
+        {intraState ? <><div className="mobile-sales-summary-row"><span>CGST</span><strong>{money(totals.cgst)}</strong></div><div className="mobile-sales-summary-row"><span>SGST</span><strong>{money(totals.sgst)}</strong></div></> : <div className="mobile-sales-summary-row"><span>IGST</span><strong>{money(totals.igst)}</strong></div>}
+        {totals.cess > 0 && <div className="mobile-sales-summary-row"><span>Cess</span><strong>{money(totals.cess)}</strong></div>}
+        <div className="mobile-sales-summary-row"><span>Other Charges</span><strong>{money(totals.otherAmount)}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Round Off</span><strong>{money(totals.roundOff)}</strong></div>
+        <div className="mobile-sales-grand-total"><span>Calculated Total</span><strong>{money(grandTotal)}</strong></div>
+        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(2)}>Back</button><button className="mobile-sales-primary" onClick={() => setStep(4)}>Next: Review →</button></div>
+      </section>}
+
+      {step === 4 && <section className="mobile-sales-card">
+        <h2>Review Sales Invoice</h2>
         <div className="mobile-sales-summary-row"><span>Invoice No.</span><strong>{invoiceNo || "—"}</strong></div>
         <div className="mobile-sales-summary-row"><span>Invoice Date</span><strong>{invoiceDate}</strong></div>
         <div className="mobile-sales-summary-row"><span>Customer</span><strong>{customer?.customer_name || "—"}</strong></div>
@@ -299,10 +321,13 @@ export default function MobileSalesInvoice() {
         <div className="mobile-sales-summary-row"><span>Taxable Amount</span><strong>{money(totals.taxable)}</strong></div>
         {intraState ? <><div className="mobile-sales-summary-row"><span>CGST</span><strong>{money(totals.cgst)}</strong></div><div className="mobile-sales-summary-row"><span>SGST</span><strong>{money(totals.sgst)}</strong></div></> : <div className="mobile-sales-summary-row"><span>IGST</span><strong>{money(totals.igst)}</strong></div>}
         {totals.cess > 0 && <div className="mobile-sales-summary-row"><span>Cess</span><strong>{money(totals.cess)}</strong></div>}
+        <div className="mobile-sales-summary-row"><span>Discount</span><strong>{money(totals.discount)}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Other Charges</span><strong>{money(totals.otherAmount)}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Round Off</span><strong>{money(totals.roundOff)}</strong></div>
         <label>Remarks (optional)<textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={2} /></label>
         <div className="mobile-sales-grand-total"><span>Grand Total</span><strong>{money(grandTotal)}</strong></div>
         <div className="mobile-sales-amount-words"><span>Amount in Words</span><strong>{numberToWords(Number(grandTotal) || 0)}</strong></div>
-        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(2)}>Back</button><button className="mobile-sales-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save Invoice"}</button></div>
+        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(3)}>Back</button><button className="mobile-sales-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save Invoice"}</button></div>
       </section>}
     </main>
   );
