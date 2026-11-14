@@ -1,24 +1,41 @@
 # SYD AI4Bharat Speech Recognition API
 
-A standalone FastAPI service for SYD Billing & Accounting. AI4Bharat IndicConformer is the primary ASR provider. OpenAI transcription is called only when primary transcription fails or returns no usable text.
+Standalone FastAPI speech-to-text service for SYD Billing & Accounting.
 
-## Important architecture
+## Request flow
 
-- This service is separate from the React/Capacitor Android app.
-- Model weights are downloaded at runtime and cached in `HF_HOME`; they are not committed to Git.
-- Keep `ASR_API_KEY`, `HF_TOKEN`, and `OPENAI_API_KEY` in the hosting provider's secret manager.
-- The API requires a bearer `ASR_API_KEY`.
-- Current endpoint accepts one of the model's supported language codes. Automatic language detection is not implemented in this first version.
-- Audio is normalized to mono 16 kHz before AI4Bharat inference.
-- This initial implementation uses CPU-compatible PyTorch dependencies. First model startup can take several minutes and requires substantial RAM/disk.
+1. The Android app records a short audio clip with the WebView MediaRecorder API.
+2. The signed-in user uploads it to the Supabase Edge Function `transcribe-voice-audio`.
+3. Supabase validates the user session and forwards the audio using a server-side `ASR_API_KEY`.
+4. FastAPI decodes browser audio with FFmpeg and validates the 25 MB / 90-second limits.
+5. For a selected supported Indic language, AI4Bharat IndicConformer is attempted first. If it fails, OpenAI `gpt-transcribe` is attempted once.
+6. English and Automatic language selection go directly to OpenAI because the selected IndicConformer model does not claim English support and does not perform language identification.
+7. The transcript returns to the app for user editing. The existing `process-voice-command` function then interprets text and prepares a draft. It does not post accounting entries.
 
-## Supported language codes
+## Repository and secrets
 
-`as bn brx doi gu hi kn kok ks mai ml mni mr ne or pa sa sat sd ta te ur`
+Model weights download at runtime and are cached in `HF_HOME`; they are not committed to Git.
+
+Keep these values in the container host's secret manager:
+- `ASR_API_KEY`: long random shared secret used only between Supabase and FastAPI.
+- `OPENAI_API_KEY`: OpenAI transcription fallback.
+- `HF_TOKEN`: optional Hugging Face read token if repository access requires it.
+
+Set these Supabase Edge Function secrets:
+- `ASR_SERVICE_URL`: public HTTPS base URL of the deployed FastAPI service, without a trailing slash.
+- `ASR_API_KEY`: exactly the same secret as the FastAPI container.
+
+Never put any of these secrets in React, Android assets, GitHub source, or a public Vercel environment variable.
+
+## Indic language codes
+
+The selected model supports: `as bn brx doi gu hi kn kok ks mai ml mni mr ne or pa sa sat sd ta te ur`.
+
+The initial app exposes Telugu and Hindi as AI4Bharat-first options. English and Automatic route directly to OpenAI. The language selector is explicit; automatic language detection is not available in the selected AI4Bharat model.
 
 ## Run locally
 
-Python 3.11 is recommended.
+Python 3.11 is recommended. FFmpeg is required.
 
 ```bash
 cd services/ai4bharat-asr
@@ -26,16 +43,12 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Set ASR_API_KEY and optionally HF_TOKEN / OPENAI_API_KEY in .env
+# Add ASR_API_KEY and OPENAI_API_KEY to .env
 set -a && source .env && set +a
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Health check:
-
-```bash
-curl http://localhost:8000/health
-```
+Health check: `GET /health`
 
 Transcription:
 
@@ -43,7 +56,7 @@ Transcription:
 curl -X POST http://localhost:8000/v1/transcribe \
   -H "Authorization: Bearer $ASR_API_KEY" \
   -F "language=te" \
-  -F "file=@sample.wav"
+  -F "file=@sample.webm"
 ```
 
 ## Docker
@@ -53,27 +66,17 @@ docker build -t syd-ai4bharat-asr .
 docker run --env-file .env -p 8000:8000 -v syd-hf-cache:/opt/huggingface syd-ai4bharat-asr
 ```
 
-## Response
+## Hosting requirements
 
-```json
-{
-  "transcript": "…",
-  "provider": "ai4bharat",
-  "fallback_used": false,
-  "language": "te",
-  "duration_seconds": 2.31
-}
-```
+Do not run the 600M model in a Supabase Edge Function. Deploy the container to a persistent Python/container host with sufficient RAM, disk, CPU and request duration. The model is downloaded on first startup; persist `/opt/huggingface` to avoid repeated downloads. Free CPU hosting may sleep or run out of memory. We have not yet measured this model on a free host, so no free-tier provider is declared production-ready.
 
-If AI4Bharat fails, the same audio is sent to OpenAI and the response reports `provider: openai` and `fallback_used: true`.
+## Verification still required
 
-## Deployment notes
+- Actual AI4Bharat model download and access.
+- Telugu and Hindi inference accuracy / latency on CPU.
+- OpenAI fallback with a real recording.
+- Android microphone permission and MediaRecorder test on the target Redmi device.
+- Supabase Edge Function deployment with the two secrets.
+- End-to-end test from Android through Supabase and FastAPI.
 
-Do not deploy this model on Supabase Edge Functions. The model requires more memory and CPU time than an Edge Function provides. Deploy this container to a persistent Python/container host with enough RAM and disk. Free-tier hosts may sleep, have limited RAM, or use ephemeral storage; confirm those limits before selecting a production host.
-
-## Current limitations
-
-- No streaming transcription in this first version.
-- No automatic language identification; client must send a supported language code.
-- A successful HTTP response from the API is not proof of model accuracy; test recordings in English, Hindi and Telugu are required.
-- The fallback model name can be overridden with `OPENAI_TRANSCRIPTION_MODEL`.
+The CI workflow checks Python syntax, service files and the frontend production build. Passing CI does not replace real audio/model testing.
