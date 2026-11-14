@@ -441,6 +441,7 @@ const AVAILABLE_ROUTES = new Set([
   "/app/gstr3b",
   "/app/gstr2b",
   "/app/eway-bills",
+  "/app/einvoice",
   "/app/delivery-challans",
   "/app/quotation",
   "/app/sales-reports",
@@ -450,7 +451,13 @@ const AVAILABLE_ROUTES = new Set([
   "/app/vendor-ledger",
   "/app/item-ledger",
   "/app/gst-reports",
+  "/app/receivables-ageing",
+  "/app/payables-ageing",
   "/app/invoice-settings",
+  "/app/company-settings",
+  "/app/user-profile",
+  "/app/users",
+  "/app/roles",
   "/app/users-access",
   "/app/ca-assignment",
   "/app/ca-workspace",
@@ -477,9 +484,10 @@ const LOCKED_HR_GROUPS = new Set([
 
 
 const ANDROID_COMMON_GROUPS = [
-  { title: "Company Setup", icon: FiBriefcase, links: [["Company Creation", "/app/companies"]] },
+  { title: "Company Setup", icon: FiBriefcase, links: [["Company Creation", "/app/companies"], ["Company Profile", "/app/company-settings"], ["Financial Year & Tax", "/app/company-settings?tab=financial"]] },
   { title: "Sales Masters", icon: FiDatabase, links: [["Customers", "/app/customers"], ["Items", "/app/items"], ["Units (UOM)", "/app/uom"]] },
   { title: "Invoice Settings", icon: FiSettings, links: [["Invoice Settings", "/app/invoice-settings"]] },
+  { title: "Administration", icon: FiUsers, links: [["User Profile", "/app/user-profile"], ["Users & Access", "/app/users-access"], ["Roles & Permissions", "/app/roles"], ["Data Backup", "/app/company-settings?tab=backup"]] },
 ];
 
 const LOCKED_MODULES = new Set([
