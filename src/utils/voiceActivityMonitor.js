@@ -3,6 +3,7 @@ export function createVoiceActivityMonitor(stream) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) throw new Error("This device cannot verify microphone audio. Please update Android System WebView.");
   const context = new AudioContextClass();
+  context.resume().catch(() => {});
   const source = context.createMediaStreamSource(stream);
   const analyser = context.createAnalyser();
   analyser.fftSize = 2048;
