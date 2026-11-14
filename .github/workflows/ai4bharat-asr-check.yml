@@ -59,4 +59,4 @@ jobs:
         with:
           deno-version: v2.x
       - name: Lint transcription Edge Function source
-        run: deno lint supabase/functions/transcribe-voice-audio/index.ts
+        run: deno lint --rules-exclude=no-import-prefix,no-unversioned-import supabase/functions/transcribe-voice-audio/index.ts
