@@ -1,12 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FiFileText, FiShoppingCart, FiClipboard, FiLayers, FiBarChart2, FiCpu } from "react-icons/fi";
+import { FiFileText, FiShoppingCart, FiClipboard, FiLayers, FiBarChart2, FiCpu, FiCreditCard, FiBookOpen } from "react-icons/fi";
 import "../css/AndroidHome.css";
 
 const tiles = [
   { title: "Sales Invoice", path: "/app/sales", icon: FiFileText, tone: "sales" },
   { title: "Purchase Invoice", path: "/app/purchases", icon: FiShoppingCart, tone: "purchases" },
   { title: "Expense Entry", path: "/app/expenses", icon: FiClipboard, tone: "expenses" },
+  { title: "Banking", path: "/app/banking?tab=overview", icon: FiCreditCard, tone: "banking" },
+  { title: "Accounting", path: "/app/accounting", icon: FiBookOpen, tone: "accounting" },
   { title: "Masters", path: "/app/items", icon: FiLayers, tone: "masters" },
   { title: "Reports", path: "/app/sales-reports", icon: FiBarChart2, tone: "reports" },
   { title: "AI Assistant", path: "/app/ai-assistant", icon: FiCpu, tone: "assistant" },
