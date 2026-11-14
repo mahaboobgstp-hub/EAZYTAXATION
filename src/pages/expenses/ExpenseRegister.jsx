@@ -10,7 +10,7 @@ export default function ExpenseRegister(){
  async function load(){if(!currentCompanyId){setRows([]);setLoading(false);return;}setLoading(true);setError("");try{const [e,v,c]=await Promise.all([
   supabase.from("expenses").select("*").eq("company_id",currentCompanyId).order("expense_date",{ascending:false}),
   supabase.from("vendors").select("id,vendor_name").eq("company_id",currentCompanyId).order("vendor_name"),
-  supabase.from("expense_categories").select("*").order("category_name")
+  supabase.from("expense_categories").select("*").eq("company_id",currentCompanyId).order("category_name")
  ]);for(const r of [e,v,c])if(r.error)throw r.error;const vm=new Map((v.data||[]).map(x=>[x.id,x.vendor_name]));const cm=new Map((c.data||[]).map(x=>[x.id,x.category_name]));setRows((e.data||[]).map(x=>({...x,vendor_name:vm.get(x.vendor_id)||x.payee_name||"—",category_name:cm.get(x.category_id)||"Uncategorized"})));setVendors(v.data||[]);setCategories(c.data||[]);}catch(e){setError(e.message||"Unable to load expenses.");}finally{setLoading(false);}}
  useEffect(()=>{load();},[currentCompanyId]);
  const filtered=useMemo(()=>rows.filter(r=>{const text=[r.expense_no,r.vendor_name,r.category_name,r.reference_no,r.remarks].join(" ").toLowerCase();const s=Number(r.paid_amount||0)>=Number(r.total_amount||0)?"Paid":Number(r.paid_amount||0)>0?"Partially Paid":"Pending";return(!search||text.includes(search.toLowerCase()))&&(!from||r.expense_date>=from)&&(!to||r.expense_date<=to)&&(!status||s===status);}),[rows,search,from,to,status]);
