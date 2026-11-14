@@ -70,6 +70,7 @@ import Uom from './pages/masters/Uom';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import UsersAccess from "./pages/settings/UsersAccess";
+import UserProfile from "./pages/settings/UserProfile";
 import CAAssignment from "./pages/settings/CAAssignment";
 import CAWorkspace from "./pages/settings/CAWorkspace";
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
@@ -299,6 +300,7 @@ function App() {
           />
           <Route path="users-access" element={<UsersAccess />} />
           <Route path="users" element={<UsersAccess />} />
+          <Route path="user-profile" element={<UserProfile />} />
           <Route path="roles" element={<UsersAccess />} />
           <Route path="ca-assignment" element={<CAAssignment />} />
           <Route path="ca-workspace" element={<CAWorkspace />} />
