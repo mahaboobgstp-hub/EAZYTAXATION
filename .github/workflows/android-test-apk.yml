@@ -10,7 +10,7 @@ on:
       - "package-lock.json"
       - "capacitor.config.json"
       - "src/**"
-      - "public/assets/icon.png"
+      - "public/assets/icon.svg"
       - ".github/workflows/android-test-apk.yml"
 
 permissions:
@@ -46,8 +46,17 @@ jobs:
 
       - name: Generate Android launcher icons
         run: |
+          python -m pip install --quiet cairosvg
           mkdir -p assets
-          cp public/assets/icon.png assets/icon.png
+          python - <<'PY'
+          import cairosvg
+          cairosvg.svg2png(
+              url="public/assets/icon.svg",
+              write_to="assets/icon.png",
+              output_width=1024,
+              output_height=1024
+          )
+          PY
           npx --yes @capacitor/assets generate --android
 
       - name: Configure Android OAuth Deep Link
