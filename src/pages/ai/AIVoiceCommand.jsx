@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiMic, FiMicOff, FiSend, FiCheck, FiRotateCcw } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
+import { createVoiceActivityMonitor } from "../../utils/voiceActivityMonitor";
 import { processVoiceCommand, confirmVoiceDraft } from "../../services/voiceCommandService";
 import "../../css/AIWorkflows.css";
 
@@ -13,6 +14,7 @@ export default function AIVoiceCommand() {
   const recorder = useRef(null);
   const chunks = useRef([]);
   const micStream = useRef(null);
+  const voiceMonitor = useRef(null);
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -22,6 +24,7 @@ export default function AIVoiceCommand() {
   useEffect(() => () => {
     try { if (recorder.current?.state === "recording") recorder.current.stop(); } catch {}
     micStream.current?.getTracks?.().forEach(track => track.stop());
+    voiceMonitor.current?.stop?.();
   }, []);
 
   const microphoneError = error => {
@@ -44,6 +47,7 @@ export default function AIVoiceCommand() {
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       micStream.current = stream;
+      voiceMonitor.current = createVoiceActivityMonitor(stream);
 
       const supportedTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
       const mimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type));
@@ -63,9 +67,16 @@ export default function AIVoiceCommand() {
         setNotice("Audio recording failed. Please check your microphone and try again.");
       };
       recorderEngine.onstop = async () => {
+        const activity = voiceMonitor.current?.getStats?.();
+        await voiceMonitor.current?.stop?.();
+        voiceMonitor.current = null;
         stream.getTracks().forEach(track => track.stop());
         micStream.current = null;
         setRecording(false);
+        if (!activity || activity.activeMs < 400 || activity.peakRms < 0.015) {
+          setNotice("I couldn't detect clear speech. No audio was sent to OpenAI and no transcription request was made. Please speak closer to the microphone and try again.");
+          return;
+        }
         const actualType = recorderEngine.mimeType || mimeType || "audio/webm";
         const blob = new Blob(chunks.current, { type: actualType });
         if (!blob.size) {
@@ -85,6 +96,8 @@ export default function AIVoiceCommand() {
       setNotice("Listening… speak your command, then tap the microphone again to stop and process it.");
     } catch (error) {
       stream?.getTracks?.().forEach(track => track.stop());
+      await voiceMonitor.current?.stop?.();
+      voiceMonitor.current = null;
       micStream.current = null;
       setRecording(false);
       setNotice(microphoneError(error));
