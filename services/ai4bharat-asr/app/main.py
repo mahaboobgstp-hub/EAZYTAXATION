@@ -11,6 +11,7 @@ import torch
 import torchaudio
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 from transformers import AutoModel
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -143,7 +144,11 @@ async def transcribe(
 ):
     check_auth(authorization)
     language = language.lower().strip()
-    if language not in LANGUAGES:
+    # IndicConformer covers 22 scheduled Indian languages, not English. English
+    # recordings are routed directly to the OpenAI fallback instead of being
+    # sent to a model that does not claim English support.
+    english_requested = language in {"en", "en-in", "english"}
+    if not english_requested and language not in LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language code: {language}")
     audio_bytes = await file.read()
     if not audio_bytes:
@@ -153,8 +158,10 @@ async def transcribe(
 
     started = time.perf_counter()
     try:
+        if english_requested:
+            raise RuntimeError("English is not supported by the selected AI4Bharat IndicConformer model; using OpenAI fallback.")
         waveform = decode_audio(audio_bytes)
-        transcript = transcribe_ai4bharat(waveform, language)
+        transcript = await run_in_threadpool(transcribe_ai4bharat, waveform, language)
         return {
             "transcript": transcript,
             "provider": "ai4bharat",
