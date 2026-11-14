@@ -268,6 +268,10 @@ function App() {
 <Route path="expense-register" element={<ExpenseRegister />} />
 <Route path="payments" element={<ExpensePayments />} />
 <Route path="banking" element={<BankingWorkspace />} />
+<Route path="receipts" element={<BankingWorkspace />} />
+<Route path="contra" element={<BankingWorkspace />} />
+<Route path="bank-reconciliation" element={<BankingWorkspace />} />
+<Route path="cash-bank-book" element={<BankingWorkspace />} />
           <Route path="sales-reports" element={<ReportsWorkspace kind="sales" />} />
           <Route path="purchase-reports" element={<ReportsWorkspace kind="purchases" />} />
           <Route path="expense-reports" element={<ReportsWorkspace kind="expenses" />} />
