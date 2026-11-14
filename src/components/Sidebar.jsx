@@ -122,6 +122,8 @@ const MODULES = {
           ["Vendor Ledger", "/app/vendor-ledger"],
           ["Item Ledger", "/app/item-ledger"],
           ["GST Reports", "/app/gst-reports"],
+          ["Receivables Ageing", "/app/receivables-ageing"],
+          ["Payables Ageing", "/app/payables-ageing"],
         ],
       },
     ],
