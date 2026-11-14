@@ -20,14 +20,17 @@ export default function GlobalVoiceAssistant() {
     try {
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error("Audio recording is not supported in this app. You can type your command instead.");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
-      const mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const supportedTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+      const mimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type));
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       recorder.current = mediaRecorder; chunks.current = [];
       mediaRecorder.ondataavailable = event => { if (event.data.size) chunks.current.push(event.data); };
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
         setRecording(false);
-        const blob = new Blob(chunks.current, { type: mediaRecorder.mimeType || "audio/webm" });
+        const blob = new Blob(chunks.current, { type: mediaRecorder.mimeType || mimeType || "audio/webm" });
+        if (!blob.size) { setNotice("No audio was captured. Please try again."); return; }
+        if (blob.size > 24 * 1024 * 1024) { setNotice("The recording is too large. Please record a shorter command."); return; }
         await submit({ audioBlob: blob });
       };
       mediaRecorder.start(); setRecording(true); setNotice("Listening… tap stop when you finish speaking.");
