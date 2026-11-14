@@ -19,7 +19,7 @@ export default function AIVoiceCommand() {
   const mediaRecorder = useRef(null);
   const mediaStream = useRef(null);
   const audioChunks = useRef([]);
-  const [language, setLanguage] = useState("te");
+  const [language, setLanguage] = useState("auto");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
