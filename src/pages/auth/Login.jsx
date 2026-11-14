@@ -94,9 +94,9 @@ async function handleGoogleLogin() {
 
       <div className="login-card">
 
-        <h1>EAZYTAXATION ERP</h1>
+        <div className="syd-login-brand"><div className="syd-login-mark">SYD<span>✦</span></div><div><h1>SYD Billing &amp; Accounting</h1><p>AI-assisted business billing</p></div></div>
 
-        <h2>Login</h2>
+        <h2>Welcome back</h2>
 
         <form onSubmit={handleSubmit}>
 
@@ -133,7 +133,7 @@ async function handleGoogleLogin() {
 
             name="email"
 
-            placeholder="Email"
+            placeholder="Username / Email"
 
             value={formData.email}
 
@@ -183,7 +183,7 @@ async function handleGoogleLogin() {
 
         <div className="login-links">
 
-          <Link to="/forgot-password">
+          <Link to="/forgot-username">Forgot Username?</Link><Link to="/forgot-password">
 
             Forgot Password?
 
