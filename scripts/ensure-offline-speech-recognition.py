@@ -69,6 +69,15 @@ else:
         source = source.replace("super.onCreate(savedInstanceState);", "registerPlugin(OfflineSpeechRecognitionPlugin.class);\n        super.onCreate(savedInstanceState);")
         main.write_text(source)
 
+main_source = main.read_text()
+if "extends BridgeActivity" not in main_source:
+    raise SystemExit("ERROR: Android launcher MainActivity does not extend Capacitor BridgeActivity.")
+if "registerPlugin(OfflineSpeechRecognitionPlugin.class);" not in main_source:
+    raise SystemExit("ERROR: OfflineSpeechRecognitionPlugin is not registered in the actual launcher MainActivity.")
+
+print(f"Verified Android launcher activity: {launcher_name}")
+print("Verified Capacitor BridgeActivity subclass and explicit OfflineSpeechRecognition registration.")
+
 plugin = main.parent / "OfflineSpeechRecognitionPlugin.java"
 plugin.write_text(r'''package com.eazytaxation.mobile;
 
@@ -211,4 +220,4 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
 
 }
 ''')
-print("Injected strict offline SpeechRecognizer plugin and Android 11 package visibility query.")
+print("Generated native Android SpeechRecognizer plugin. Offline availability depends on the device recognition provider and language pack.")
