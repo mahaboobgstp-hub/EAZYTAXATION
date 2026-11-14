@@ -13,7 +13,7 @@ export default function AIVoiceCommand() {
   const navigate = useNavigate();
   const { currentCompanyId } = useCompany();
   const listeners = useRef([]);
-  const [language, setLanguage] = useState("en-IN");
+  const [language, setLanguage] = useState("auto");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -93,8 +93,8 @@ export default function AIVoiceCommand() {
     <section className="ai-mic-area">
       <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} disabled={busy || (!available && !recording)} aria-label={recording ? "Stop recognition" : "Start offline recognition"}>{recording ? <FiMicOff /> : <FiMic />}</button>
       <h2>{recording ? "Listening… Tap to Stop" : busy ? "Processing…" : "Tap and Speak"}</h2>
-      <label>Recognition language <select value={language} onChange={event => setLanguage(event.target.value)} disabled={recording || busy}><option value="en-IN">English (India)</option><option value="hi-IN">हिन्दी</option><option value="te-IN">తెలుగు</option></select></label>
-      <p>Android native · Offline only</p>
+      <label>Recognition language <select value={language} onChange={event => setLanguage(event.target.value)} disabled={recording || busy}><option value="auto">Automatic (default)</option><option value="en-IN">English (India)</option><option value="hi-IN">हिन्दी</option><option value="te-IN">తెలుగు</option></select></label>
+      <p>Android native recognition · Automatic or manual language</p>
     </section>
     <div className="ai-suggestion-list">{suggestions.map(item => <button type="button" key={item} onClick={() => setTranscript(item)}>{item}</button>)}</div>
     <section className="ai-command-form ai-live-transcript">
@@ -111,6 +111,6 @@ export default function AIVoiceCommand() {
       <button type="button" onClick={confirmDraft} disabled={busy}><FiCheck/> Confirm draft</button>
       <button type="button" onClick={reset} disabled={busy}><FiRotateCcw/> Start over</button>
     </section>}
-    <p className="ai-safe-note">Speech recognition runs offline on Android. Only recognized text is sent to OpenAI. Audio is never uploaded.</p>
+    <p className="ai-safe-note">Speech recognition uses the Android recognition service. Offline operation depends on the service and installed language packs. Only recognized text is sent for command interpretation; audio is never uploaded.</p>
   </main>;
 }
