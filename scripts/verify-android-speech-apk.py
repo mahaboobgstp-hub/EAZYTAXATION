@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import sys
 import shutil
 import subprocess
+import os
 
 apk = Path("android/app/build/outputs/apk/debug/app-debug.apk")
 if not apk.is_file():
@@ -25,12 +26,24 @@ with ZipFile(apk) as archive:
     missing = [item.decode("ascii") for item in required if item not in dex]
     if missing:
         raise SystemExit("ERROR: Native speech bridge missing from APK DEX: " + ", ".join(missing))
+# GitHub-hosted runners install the SDK under ANDROID_HOME, not ~/Android/Sdk.
 aapt = shutil.which("aapt")
 if not aapt:
-    sdk = Path.home() / "Android" / "Sdk" / "build-tools"
-    candidates = sorted(sdk.glob("*/aapt"))
+    sdk_roots = []
+    for variable in ("ANDROID_HOME", "ANDROID_SDK_ROOT"):
+        value = os.environ.get(variable)
+        if value:
+            candidate = Path(value)
+            if candidate not in sdk_roots:
+                sdk_roots.append(candidate)
+    sdk_roots.append(Path.home() / "Android" / "Sdk")
+    candidates = []
+    for sdk_root in sdk_roots:
+        candidates.extend((sdk_root / "build-tools").glob("*/aapt"))
     if candidates:
-        aapt = str(candidates[-1])
+        def version_key(path):
+            return tuple(int(part) if part.isdigit() else 0 for part in path.parent.name.split("."))
+        aapt = str(sorted(candidates, key=version_key)[-1])
 if not aapt:
     raise SystemExit("ERROR: Android aapt tool not found; cannot verify packaged microphone permission.")
 permissions = subprocess.run([aapt, "dump", "permissions", str(apk)], capture_output=True, text=True)
