@@ -3,6 +3,7 @@ import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
 import '../../css/sales/SalesInvoice.css';
+import '../../css/sales/SalesInvoiceActions.css';
 import SalesInvoiceView
 from '../../components/SalesInvoiceView';
 import InvoicePrint
