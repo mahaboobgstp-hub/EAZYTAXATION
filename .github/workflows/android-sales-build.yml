@@ -50,6 +50,9 @@ jobs:
             npx cap add android
           fi
 
+      - name: Add Android microphone permissions
+        run: python3 scripts/ensure-android-microphone-permissions.py
+
       - name: Generate SYD Android launcher icons
         run: npx @capacitor/assets generate --android
 
