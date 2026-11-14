@@ -53,6 +53,9 @@ jobs:
       - name: Add Android microphone permissions
         run: python3 scripts/ensure-android-microphone-permissions.py
 
+      - name: Install strict offline speech recognition plugin
+        run: python3 scripts/ensure-offline-speech-recognition.py
+
       - name: Generate SYD Android launcher icons
         run: npx @capacitor/assets generate --android
 
