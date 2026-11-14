@@ -125,11 +125,8 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
         getActivity().runOnUiThread(() -> {
             try {
                 destroyRecognizer();
-                if (Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
-                    recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
-                } else {
-                    recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
-                }
+                // Online-first mode: use the device's configured system recognition service.
+                recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
                 recognizer.setRecognitionListener(new RecognitionListener() {
                     @Override public void onReadyForSpeech(Bundle params) { notifyListeners("speechStatus", status("ready")); }
                     @Override public void onBeginningOfSpeech() { notifyListeners("speechStatus", status("speaking")); }
@@ -158,13 +155,14 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
                     intent.putExtra(RecognizerIntent.EXTRA_ENABLE_LANGUAGE_DETECTION, true);
                 }
                 intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-                intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+                // Online-first mode: do not prefer offline recognition.
+                intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false);
                 intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
                 recognizer.startListening(intent);
                 call.resolve();
             } catch (Exception error) {
                 destroyRecognizer();
-                call.reject("Could not start offline speech recognition: " + error.getMessage());
+                call.reject("Could not start speech recognition: " + error.getMessage());
             }
         });
     }
@@ -218,7 +216,7 @@ public class OfflineSpeechRecognitionPlugin extends Plugin {
             case SpeechRecognizer.ERROR_CLIENT: return "Speech recognition client error.";
             case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: return "Microphone permission is required.";
             case SpeechRecognizer.ERROR_NETWORK:
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: return "Offline recognition service reported a network error; online fallback is disabled.";
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: return "Online speech recognition network error. Check internet and the installed recognition provider.";
             case SpeechRecognizer.ERROR_NO_MATCH: return "No speech was recognized. Please try again.";
             case SpeechRecognizer.ERROR_RECOGNIZER_BUSY: return "Speech recognizer is busy. Please try again.";
             case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: return "No speech was detected.";
