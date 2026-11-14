@@ -301,6 +301,7 @@ function App() {
           <Route path="users-access" element={<UsersAccess />} />
           <Route path="users" element={<UsersAccess />} />
           <Route path="user-profile" element={<UserProfile />} />
+          <Route path="company-settings" element={<CompanySettingsWorkspace />} />
           <Route path="roles" element={<UsersAccess />} />
           <Route path="ca-assignment" element={<CAAssignment />} />
           <Route path="ca-workspace" element={<CAWorkspace />} />
