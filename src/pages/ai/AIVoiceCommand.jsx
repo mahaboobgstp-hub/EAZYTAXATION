@@ -1,183 +1,116 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiMic, FiMicOff, FiSend, FiCheck, FiRotateCcw } from "react-icons/fi";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { useCompany } from "../../context/CompanyContext";
-import { createVoiceActivityMonitor } from "../../utils/voiceActivityMonitor";
 import { processVoiceCommand, confirmVoiceDraft } from "../../services/voiceCommandService";
 import "../../css/AIWorkflows.css";
 
+const OfflineSpeechRecognition = registerPlugin("OfflineSpeechRecognition");
 const suggestions = ["Create a sales invoice", "Create a purchase invoice", "Record an expense", "Create a customer", "Create a vendor", "Create an item"];
 
 export default function AIVoiceCommand() {
   const navigate = useNavigate();
   const { currentCompanyId } = useCompany();
-  const recorder = useRef(null);
-  const chunks = useRef([]);
-  const micStream = useRef(null);
-  const voiceMonitor = useRef(null);
+  const listeners = useRef([]);
+  const [language, setLanguage] = useState("en-IN");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [partial, setPartial] = useState("");
   const [result, setResult] = useState(null);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState("Checking Android offline speech recognition…");
+  const [available, setAvailable] = useState(false);
 
-  useEffect(() => () => {
-    try { if (recorder.current?.state === "recording") recorder.current.stop(); } catch {}
-    micStream.current?.getTracks?.().forEach(track => track.stop());
-    voiceMonitor.current?.stop?.();
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) {
+      setNotice("Offline speech recognition requires the installed Android app.");
+      return;
+    }
+    OfflineSpeechRecognition.checkAvailability().then(value => {
+      setAvailable(Boolean(value?.available));
+      setNotice(value?.available ? "Offline speech recognition is ready." : (value?.reason || "Offline recognition is unavailable. Online recognition is disabled."));
+    }).catch(error => setNotice(error.message || "Could not check offline recognition."));
+    return () => {
+      listeners.current.forEach(item => item.remove());
+      OfflineSpeechRecognition.cancelListening().catch(() => {});
+    };
   }, []);
 
-  const microphoneError = error => {
-    if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
-      return "Microphone permission is blocked for this app/site. On Android, open Settings → Apps → EAZYTAXATION → Permissions → Microphone → Allow. Also check Chrome/Android System WebView site permissions if you opened the web preview.";
-    }
-    if (error?.name === "NotFoundError") return "No microphone was found on this device.";
-    if (error?.name === "NotReadableError") return "The microphone is busy or unavailable. Close other apps using it and try again.";
-    return error?.message || "Could not start the microphone.";
-  };
-
   const startListening = async () => {
-    let stream;
+    if (!Capacitor.isNativePlatform()) { setNotice("Use the installed Android app for offline voice recognition."); return; }
+    setTranscript(""); setPartial(""); setResult(null);
     try {
-      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-        throw new Error("Audio recording is not supported in this app. Please update Android System WebView and try again.");
-      }
-      setNotice("Requesting microphone permission…");
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-      micStream.current = stream;
-      voiceMonitor.current = createVoiceActivityMonitor(stream);
-
-      const supportedTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
-      const mimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type));
-      const recorderEngine = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      recorder.current = recorderEngine;
-      chunks.current = [];
-      setTranscript("");
-      setResult(null);
-
-      recorderEngine.ondataavailable = event => {
-        if (event.data?.size) chunks.current.push(event.data);
-      };
-      recorderEngine.onerror = () => {
-        stream.getTracks().forEach(track => track.stop());
-        micStream.current = null;
-        setRecording(false);
-        setNotice("Audio recording failed. Please check your microphone and try again.");
-      };
-      recorderEngine.onstop = async () => {
-        const activity = voiceMonitor.current?.getStats?.();
-        await voiceMonitor.current?.stop?.();
-        voiceMonitor.current = null;
-        stream.getTracks().forEach(track => track.stop());
-        micStream.current = null;
-        setRecording(false);
-        if (!activity || activity.activeMs < 400 || activity.peakRms < 0.015) {
-          setNotice("I couldn't detect clear speech. No audio was sent to OpenAI and no transcription request was made. Please speak closer to the microphone and try again.");
-          return;
-        }
-        const actualType = recorderEngine.mimeType || mimeType || "audio/webm";
-        const blob = new Blob(chunks.current, { type: actualType });
-        if (!blob.size) {
-          setNotice("No audio was captured. Please speak for a little longer and try again.");
-          return;
-        }
-        if (blob.size > 24 * 1024 * 1024) {
-          setNotice("This recording is too large. Please record a shorter command (under 2 minutes).");
-          return;
-        }
-        setNotice("Audio captured. Sending it for speech recognition…");
-        await runCommand({ audioBlob: blob });
-      };
-
-      recorderEngine.start(500);
-      setRecording(true);
-      setNotice("Listening… speak your command, then tap the microphone again to stop and process it.");
-    } catch (error) {
-      stream?.getTracks?.().forEach(track => track.stop());
-      await voiceMonitor.current?.stop?.();
-      voiceMonitor.current = null;
-      micStream.current = null;
-      setRecording(false);
-      setNotice(microphoneError(error));
-    }
+      const status = await OfflineSpeechRecognition.checkAvailability();
+      if (!status?.available) { setAvailable(false); setNotice(status?.reason || "Offline recognition unavailable. No online fallback will be used."); return; }
+      listeners.current.forEach(item => item.remove());
+      listeners.current = [
+        await OfflineSpeechRecognition.addListener("partialResults", event => { setPartial(event.transcript || ""); setRecording(true); }),
+        await OfflineSpeechRecognition.addListener("recognized", event => {
+          const words = String(event.transcript || "").trim();
+          setTranscript(words); setPartial(""); setRecording(false);
+          setNotice(words ? "Recognized offline. Review or edit the words, then process them." : "No words recognized. Nothing was sent to OpenAI.");
+        }),
+        await OfflineSpeechRecognition.addListener("recognitionError", event => { setRecording(false); setPartial(""); setNotice(event.message || "Offline recognition failed. Nothing was sent to OpenAI."); }),
+        await OfflineSpeechRecognition.addListener("speechStatus", event => { if (event.status === "ready" || event.status === "speaking") setRecording(true); if (event.status === "processing") setNotice("Finishing offline recognition…"); })
+      ];
+      await OfflineSpeechRecognition.startListening({ language });
+      setRecording(true); setNotice("Listening offline… speak your command.");
+    } catch (error) { setRecording(false); setNotice(error.message || "Could not start offline recognition."); }
   };
 
-  const stopListening = () => {
-    if (recorder.current?.state === "recording") {
-      setNotice("Finishing your recording…");
-      recorder.current.stop();
-    }
+  const stopListening = async () => {
+    try { setNotice("Finishing offline recognition…"); await OfflineSpeechRecognition.stopListening(); }
+    catch (error) { setRecording(false); setNotice(error.message || "Could not stop recognition."); }
   };
 
-  const runCommand = async ({ audioBlob, typed } = {}) => {
+  const runCommand = async (text = transcript) => {
+    const commandText = String(text || "").trim();
+    if (!commandText) { setNotice("No recognized words are available. Nothing was sent to OpenAI."); return; }
     if (!currentCompanyId) { setNotice("Please select a company before using voice commands."); return; }
-    setBusy(true); setNotice("Sending your command securely for speech recognition and AI understanding…");
+    setBusy(true); setNotice("Sending recognized text for AI command interpretation…");
     try {
-      const data = await processVoiceCommand({
-        companyId: currentCompanyId,
-        audioBlob,
-        text: typed,
-        sessionId: result?.session?.id,
-        previousDraft: result ? { transcript: result.transcript, commands: result.commands } : null,
-      });
-      setResult(data);
-      setTranscript(data.transcript || typed || "");
-      setNotice("Command understood. Review the draft below. Nothing has been saved to your accounts.");
-    } catch (error) {
-      setNotice(error.message || "Voice command processing failed. Check your internet connection and try again.");
-    } finally { setBusy(false); }
+      const data = await processVoiceCommand({ companyId: currentCompanyId, text: commandText, sessionId: result?.session?.id, previousDraft: result ? { transcript: result.transcript, commands: result.commands } : null });
+      setResult(data); setTranscript(data.transcript || commandText); setNotice("Command understood. Review the draft below. Nothing has been saved.");
+    } catch (error) { setNotice(error.message || "Command interpretation failed."); }
+    finally { setBusy(false); }
   };
-
-  const submitText = event => { event.preventDefault(); if (transcript.trim()) runCommand({ typed: transcript.trim() }); };
 
   const confirmDraft = async () => {
     if (!result?.session?.id) return;
     setBusy(true);
     try {
-      await confirmVoiceDraft(result.session.id, currentCompanyId, {
-        transcript: result.transcript, language: result.detectedLanguage,
-        commands: result.commands, response: result.response,
-      });
-      setNotice("Your draft confirmation has been recorded. No invoice, purchase or expense has been posted. Actual accounting save integration is not enabled yet.");
+      await confirmVoiceDraft(result.session.id, currentCompanyId, { transcript: result.transcript, language: result.detectedLanguage, commands: result.commands, response: result.response });
+      setNotice("Draft confirmation recorded. No accounting entry has been posted.");
       setResult(null); setTranscript("");
-    } catch (error) { setNotice(error.message || "Could not confirm this draft."); }
+    } catch (error) { setNotice(error.message || "Could not confirm draft."); }
     finally { setBusy(false); }
   };
-
-  const reset = () => { setResult(null); setTranscript(""); setNotice(""); };
+  const reset = () => { setResult(null); setTranscript(""); setPartial(""); setNotice(""); };
 
   return <main className="ai-screen ai-voice-screen">
     <header className="ai-screen-header"><button type="button" onClick={() => navigate("/app/ai-assistant")} aria-label="Back"><FiArrowLeft /></button><h1>Voice Command</h1></header>
     <section className="ai-mic-area">
-      <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} onPointerUp={event => event.currentTarget.blur()} disabled={busy} aria-label={recording ? "Stop recording" : "Start voice recording"}><>{recording ? <FiMicOff /> : <FiMic />}</></button>
+      <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} disabled={busy || (!available && !recording)} aria-label={recording ? "Stop recognition" : "Start offline recognition"}>{recording ? <FiMicOff /> : <FiMic />}</button>
       <h2>{recording ? "Listening… Tap to Stop" : busy ? "Processing…" : "Tap and Speak"}</h2>
-      <p>English · हिन्दी · తెలుగు · Mixed language</p>
+      <label>Recognition language <select value={language} onChange={event => setLanguage(event.target.value)} disabled={recording || busy}><option value="en-IN">English (India)</option><option value="hi-IN">हिन्दी</option><option value="te-IN">తెలుగు</option></select></label>
+      <p>Android native · Offline only</p>
     </section>
     <div className="ai-suggestion-list">{suggestions.map(item => <button type="button" key={item} onClick={() => setTranscript(item)}>{item}</button>)}</div>
-    <form className="ai-command-form" onSubmit={submitText}>
-      <label htmlFor="ai-command-text">{recording ? "Recording your voice" : "Your command or correction"}</label>
-      <textarea id="ai-command-text" rows="3" value={transcript} onChange={event => setTranscript(event.target.value)} placeholder="Your recognized words will appear here after recording. You can also type or edit a command…"/>
-      <button type="submit" disabled={busy || !transcript.trim()}><FiSend /> Process command</button>
-    </form>
+    <section className="ai-command-form ai-live-transcript">
+      <label>Live recognized words</label>
+      <div className="ai-live-words" aria-live="polite">{transcript} {partial && <span className="ai-partial-words">{partial}</span>}{!transcript && !partial && <span className="ai-transcript-placeholder">Your words will appear here as you speak…</span>}</div>
+      <textarea rows="2" value={transcript} onChange={event => setTranscript(event.target.value)} placeholder="Edit recognized words here…"/>
+      <button type="button" onClick={() => runCommand()} disabled={busy || !transcript.trim()}><FiSend /> Process recognized text</button>
+    </section>
     {notice && <p className="ai-notice" role="status" aria-live="polite">{notice}</p>}
     {result && <section className="ai-command-form" style={{marginTop:14}}>
-      <h3 style={{margin:"0 0 5px"}}>Review AI interpretation</h3>
-      <p><b>Recognized:</b> {result.transcript}</p>
-      <p><b>Language:</b> {result.detectedLanguage}</p>
-      <p>{result.response}</p>
-      {(result.commands || []).map((command, index) => <article key={index} style={{padding:12,margin:"8px 0",border:"1px solid #e3e8f2",borderRadius:12}}>
-        <b>{index + 1}. {command.summary || command.intent}</b>
-        <p>Type: {command.transaction_type}</p>
-        <pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere",fontSize:12,background:"#f5f6fa",padding:10,borderRadius:8}}>{JSON.stringify(command.fields || {}, null, 2)}</pre>
-        {command.missing_fields?.length > 0 && <p>Still required: {command.missing_fields.join(", ")}</p>}
-        {command.requires_clarification && <p>Please clarify before proceeding.</p>}
-      </article>)}
-      <p className="ai-safe-note">Confirmation stores this reviewed draft only. It does not create or post financial entries.</p>
-      <button type="button" onClick={confirmDraft} disabled={busy} style={{width:"100%",padding:13,border:0,borderRadius:12,background:"#5636d5",color:"#fff",fontWeight:750,display:"flex",justifyContent:"center",gap:8,alignItems:"center"}}><FiCheck/> Confirm draft</button>
-      <button type="button" onClick={reset} disabled={busy} style={{width:"100%",marginTop:8,padding:12,border:"1px solid #dce3ef",borderRadius:12,background:"#fff",color:"#263451"}}><FiRotateCcw/> Start over</button>
+      <h3>Review AI interpretation</h3><p><b>Recognized:</b> {result.transcript}</p><p><b>Language:</b> {result.detectedLanguage}</p><p>{result.response}</p>
+      {(result.commands || []).map((command,index) => <article key={index}><b>{index+1}. {command.summary || command.intent}</b><p>Type: {command.transaction_type}</p><pre>{JSON.stringify(command.fields || {},null,2)}</pre>{command.missing_fields?.length>0 && <p>Required: {command.missing_fields.join(", ")}</p>}</article>)}
+      <p className="ai-safe-note">Confirmation records this draft only. It does not post an accounting entry.</p>
+      <button type="button" onClick={confirmDraft} disabled={busy}><FiCheck/> Confirm draft</button>
+      <button type="button" onClick={reset} disabled={busy}><FiRotateCcw/> Start over</button>
     </section>}
-    <p className="ai-safe-note">All commands are processed through the secure OpenAI service. Review is required before a draft is confirmed.</p>
+    <p className="ai-safe-note">Speech recognition runs offline on Android. Only recognized text is sent to OpenAI. Audio is never uploaded.</p>
   </main>;
 }
