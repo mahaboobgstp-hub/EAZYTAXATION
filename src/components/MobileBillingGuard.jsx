@@ -1,20 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { isAndroidApp } from "../utils/platform";
 
-// Android is a mobile client for the complete Billing & Accounting workspace.
-// Keep this list aligned with the child routes registered in App.jsx.
+// Android supports the Billing & Accounting workspace routes registered in App.jsx.
 const MOBILE_BILLING_ROUTES = new Set([
-  "/app",
-  "/app//",
-  "/app//features",
-  "/app//pricing",
-  "/app//about",
-  "/app//contact",
-  "/app//privacy-policy",
-  "/app//login",
-  "/app//register",
-  "/app//forgot-password",
-  "/app//app",
+  "/app/dashboard",
   "/app/companies",
   "/app/customers",
   "/app/vendors",
@@ -27,7 +16,6 @@ const MOBILE_BILLING_ROUTES = new Set([
   "/app/quotation",
   "/app/purchases",
   "/app/expenses",
-  "/app/dashboard",
   "/app/sales-orders",
   "/app/credit-notes",
   "/app/purchase-register",
@@ -129,13 +117,9 @@ const MOBILE_BILLING_ROUTES = new Set([
 function MobileBillingGuard({ children }) {
   const location = useLocation();
   if (!isAndroidApp) return children;
-
-  // Permit registered Android workspace pages and nested detail/create pages.
   const allowed = MOBILE_BILLING_ROUTES.has(location.pathname) ||
-    [...MOBILE_BILLING_ROUTES].some((route) => route !== "/app" && location.pathname.startsWith(route + "/"));
-
+    [...MOBILE_BILLING_ROUTES].some((route) => location.pathname.startsWith(route + "/"));
   if (!allowed) return <Navigate to="/app/dashboard" replace />;
   return children;
 }
-
 export default MobileBillingGuard;
