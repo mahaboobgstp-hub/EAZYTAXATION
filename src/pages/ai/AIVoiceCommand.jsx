@@ -19,6 +19,7 @@ export default function AIVoiceCommand() {
   const mediaRecorder = useRef(null);
   const mediaStream = useRef(null);
   const audioChunks = useRef([]);
+  const recordingStartedAt = useRef(0);
   const [language, setLanguage] = useState("auto");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -63,9 +64,11 @@ export default function AIVoiceCommand() {
       recorder.onstop = () => {
         stream.getTracks().forEach(track => track.stop());
         mediaStream.current = null;
+        const elapsedSeconds = recordingStartedAt.current ? Math.floor((Date.now() - recordingStartedAt.current) / 1000) : 0;
         const blob = new Blob(audioChunks.current, { type: recorder.mimeType || "audio/webm" });
         setRecording(false);
-        if (!blob.size || recordingSeconds < 1) {
+        setRecordingSeconds(elapsedSeconds);
+        if (!blob.size || blob.size < 1500 || elapsedSeconds < 1) {
           setRecordedAudio(null);
           setNotice("No usable recording detected. Nothing was sent to OpenAI. Please speak for at least one second and try again.");
           return;
@@ -78,6 +81,7 @@ export default function AIVoiceCommand() {
         setRecordedAudio(blob);
         setNotice("Recording saved on this device. Listen/review, then tap Send to OpenAI when ready.");
       };
+      recordingStartedAt.current = Date.now();
       recorder.start(250);
       setRecording(true);
       setNotice("Recording on this device only. Speak clearly, then tap Stop.");
