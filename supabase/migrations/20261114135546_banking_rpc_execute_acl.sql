@@ -1,0 +1,2 @@
+revoke all on function public.post_banking_voucher(uuid,uuid,text,uuid,uuid,date,numeric,text,uuid,text,text,text) from public, anon;
+grant execute on function public.post_banking_voucher(uuid,uuid,text,uuid,uuid,date,numeric,text,uuid,text,text,text) to authenticated;

@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Capacitor } from "@capacitor/core";
 import { useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import PurchaseDocumentPreview from "./PurchaseDocumentPreview";
 import { downloadPurchasePdf } from "../../utils/purchaseDocumentPdf";
 import "./PurchaseWorkspace.css";
-import "../../css/AndroidWorkflow.css";
 
 const CONFIG = {
   register: { title: "Purchase Register", table: "purchase_invoices", date: "invoice_date", number: "invoice_no", prefix: "PI", child: "purchase_invoice_items", parent: "invoice_id", metrics: ["Purchase Invoices", "Total Purchases", "Input Tax Credit (ITC)", "Outstanding"] },
@@ -27,7 +25,6 @@ const blankLine = () => ({ item_id: "", item_name: "", hsn_sac: "", uom: "", qty
 
 export default function PurchaseWorkspace({ kind }) {
   const config = CONFIG[kind];
-  const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==="android";
   const { currentCompany, currentCompanyId } = useCompany();
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
@@ -45,7 +42,6 @@ export default function PurchaseWorkspace({ kind }) {
   const [menuId, setMenuId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dialog, setDialog] = useState(false);
-  const [dialogStep,setDialogStep]=useState(1);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ date: today(), dueDate: "", vendorId: "", originalInvoiceId: "", reason: "", status: "Draft", remarks: "" });
@@ -132,7 +128,7 @@ export default function PurchaseWorkspace({ kind }) {
   const openCreate = () => {
     setEditing(null); setMessage("");
     setForm({ date: today(), dueDate: "", vendorId: "", originalInvoiceId: "", reason: "", status: kind === "debits" ? "Issued" : "Draft", remarks: "" });
-    setLines([blankLine()]); setDialogStep(1); setDialog(true);
+    setLines([blankLine()]); setDialog(true);
   };
 
   const openEdit = async row => {
@@ -156,7 +152,7 @@ export default function PurchaseWorkspace({ kind }) {
         item_id: item.item_id || "", item_name: item.item_name || "", hsn_sac: item.hsn_sac || "", uom: item.uom || "",
         qty: String(item.qty ?? 1), rate: String(item.rate ?? 0), gst_rate: String(item.gst_rate ?? 0),
       })) : [blankLine()]);
-      setDialogStep(1); setDialog(true); setMenuId(null);
+      setDialog(true); setMenuId(null);
     } catch (error) { setMessage(error.message); }
   };
 
@@ -270,7 +266,6 @@ export default function PurchaseWorkspace({ kind }) {
   };
 
   const createAction = () => kind === "register" ? navigate("/app/purchases") : openCreate();
-  const nextDialogStep=()=>{if(dialogStep===1&&!form.vendorId){setMessage("Select a supplier to continue.");return;}if(dialogStep===2&&(kind!=="orders"&&(!form.originalInvoiceId||!form.reason.trim()))){setMessage("Select the original invoice and enter a reason.");return;}if(dialogStep===3&&!calculate().normalized.length){setMessage("Add at least one item to continue.");return;}setMessage("");setDialogStep(s=>Math.min(4,s+1));};
   const actionLabel = kind === "register" ? "Add Purchase Invoice" : kind === "orders" ? "Create Purchase Order" : kind === "returns" ? "Create Purchase Return" : "Create Debit Note";
   const invoiceStatuses = ["Paid", "Partially Paid", "Unpaid"];
   const statuses = kind === "register" ? invoiceStatuses : STATUS_OPTIONS[kind];
@@ -316,24 +311,16 @@ export default function PurchaseWorkspace({ kind }) {
       })}</tbody></table></div>}
       {!!filtered.length && <footer className="pw-table-footer"><span>Showing {Math.min(filtered.length,(page-1)*8+1)}–{Math.min(page*8,filtered.length)} of {filtered.length} records</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button><span>{page}</span><button disabled={page*8>=filtered.length} onClick={()=>setPage(p=>p+1)}>›</button></div></footer>}
     </section></>}
-    {dialog && <div className="pw-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setDialog(false);}}><section className="pw-modal" role="dialog" aria-modal="true"><header><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases</p><h2>{editing ? `Edit ${config.title.slice(0,-1)}` : actionLabel}</h2></div><button className="pw-close" onClick={()=>setDialog(false)}>×</button></header><form noValidate={isAndroid} onSubmit={save}>
-      {isAndroid&&<nav className="android-stepper">{["Document","Supplier","Items","Review"].map((label,i)=><button type="button" key={label} className={dialogStep===i+1?"active":dialogStep>i+1?"complete":""} onClick={()=>{if(i+1<dialogStep)setDialogStep(i+1);}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
-      <div style={isAndroid&&dialogStep!==1?{display:"none"}:{}}>
-        <label>Company<input readOnly value={currentCompany?.company_name||""}/></label>
-        {kind !== "orders" && <label>Original Purchase Invoice<select required value={form.originalInvoiceId} onChange={e=>{const inv=invoices.find(i=>i.id===e.target.value);setForm(f=>({...f,originalInvoiceId:e.target.value,vendorId:inv?.vendor_id||f.vendorId}));}}><option value="">Select invoice</option>{invoices.map(i=><option key={i.id} value={i.id}>{i.supplier_invoice_no||i.invoice_no} · {i.vendor_name||vendorName(i)} · {money(i.grand_total)}</option>)}</select></label>}
-        <div className="pw-form-grid"><label>Supplier<select required value={form.vendorId} onChange={e=>setForm(f=>({...f,vendorId:e.target.value}))}><option value="">Select supplier</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.vendor_name}</option>)}</select></label><label>{kind==="orders"?"Order Date":kind==="returns"?"Return Date":"Debit Note Date"}<input type="date" required value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></label>{kind==="orders"&&<label>Expected Delivery Date<input type="date" value={form.dueDate} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></label>}</div>
-      </div>
-      <div style={isAndroid&&dialogStep!==2?{display:"none"}:{}}>
-        {kind!=="orders"&&<label>Reason<input required value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder={kind==="returns"?"e.g. Damaged goods or excess quantity":"e.g. Short supply or rate difference"}/></label>}
-        <div className="pw-form-grid"><label>Status<select value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{STATUS_OPTIONS[kind].map(s=><option key={s}>{s}</option>)}</select></label><label>Remarks<input value={form.remarks} onChange={e=>setForm(f=>({...f,remarks:e.target.value}))}/></label></div>
-      </div>
-      <div style={isAndroid&&dialogStep!==3?{display:"none"}:{}}>
-        <div className="pw-lines-heading"><strong>Line items</strong><button type="button" onClick={()=>setLines(p=>[...p,blankLine()])}>＋ Add item</button></div>
-        <div className="pw-line-table"><div className="pw-line-head"><span>Item / Description</span><span>HSN/SAC</span><span>Qty</span><span>Unit</span><span>Rate</span><span>GST %</span><span>Amount</span><span></span></div>{lines.map((line,index)=><div className="pw-line" key={index}><input list={`purchase-items-${index}`} value={line.item_name} onChange={e=>{const match=itemsMaster.find(item=>item.item_name.toLowerCase()===e.target.value.toLowerCase());if(match)chooseItem(index,match.id);else setLines(p=>p.map((l,i)=>i===index?{...l,item_id:"",item_name:e.target.value}:l));}} placeholder="Select or enter item"/><datalist id={`purchase-items-${index}`}>{itemsMaster.map(item=><option key={item.id} value={item.item_name}/>)}</datalist><input value={line.hsn_sac} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,hsn_sac:e.target.value}:l))} placeholder="HSN"/><input type="number" min="0" step="0.001" value={line.qty} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,qty:e.target.value}:l))}/><input value={line.uom} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,uom:e.target.value}:l))} placeholder="Unit"/><input type="number" min="0" step="0.01" value={line.rate} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,rate:e.target.value}:l))}/><select value={line.gst_rate} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,gst_rate:e.target.value}:l))}>{["0","5","12","18","28"].map(n=><option key={n} value={n}>{n}%</option>)}</select><strong>{money(num(line.qty)*num(line.rate)*(1+num(line.gst_rate)/100))}</strong><button type="button" className="pw-remove-line" onClick={()=>setLines(p=>p.length>1?p.filter((_,i)=>i!==index):p)} aria-label="Remove item">×</button></div>)}</div>
-        <div className="pw-total-strip"><span>Taxable: <b>{money(totals.taxable)}</b></span><span>CGST: <b>{money(totals.cgst)}</b></span><span>SGST: <b>{money(totals.sgst)}</b></span><span>IGST: <b>{money(totals.igst)}</b></span><strong>Total: {money(totals.total)}</strong></div>
-      </div>
-      {isAndroid&&dialogStep===4&&<section className="android-review"><h3>Review {config.title.slice(0,-1)}</h3><p>Supplier: <b>{vendors.find(v=>v.id===form.vendorId)?.vendor_name||"—"}</b></p><p>Items: <b>{totals.normalized.length}</b></p><p>Grand Total: <b>{money(totals.total)}</b></p></section>}
-      <footer>{isAndroid?<><button type="button" className="pw-reset" onClick={()=>dialogStep===1?setDialog(false):setDialogStep(s=>s-1)}>{dialogStep===1?"Cancel":"Back"}</button>{dialogStep<4?<button type="button" className="pw-primary" onClick={nextDialogStep}>Continue →</button>:<button className="pw-primary" disabled={saving}>{saving?"Saving…":editing?"Update Document":"Save Document"}</button>}</>:<><button type="button" className="pw-reset" onClick={()=>setDialog(false)}>Cancel</button><button className="pw-primary" disabled={saving}>{saving?"Saving…":editing?"Update Document":"Save Document"}</button></>}</footer>
+    {dialog && <div className="pw-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setDialog(false);}}><section className="pw-modal" role="dialog" aria-modal="true"><header><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases</p><h2>{editing ? `Edit ${config.title.slice(0,-1)}` : actionLabel}</h2></div><button className="pw-close" onClick={()=>setDialog(false)}>×</button></header><form onSubmit={save}>
+      <label>Company<input readOnly value={currentCompany?.company_name||""}/></label>
+      {kind !== "orders" && <label>Original Purchase Invoice<select required value={form.originalInvoiceId} onChange={e=>{const inv=invoices.find(i=>i.id===e.target.value);setForm(f=>({...f,originalInvoiceId:e.target.value,vendorId:inv?.vendor_id||f.vendorId}));}}><option value="">Select invoice</option>{invoices.map(i=><option key={i.id} value={i.id}>{i.supplier_invoice_no||i.invoice_no} · {i.vendor_name||vendorName(i)} · {money(i.grand_total)}</option>)}</select></label>}
+      <div className="pw-form-grid"><label>Supplier<select required value={form.vendorId} onChange={e=>setForm(f=>({...f,vendorId:e.target.value}))}><option value="">Select supplier</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.vendor_name}</option>)}</select></label><label>{kind==="orders"?"Order Date":kind==="returns"?"Return Date":"Debit Note Date"}<input type="date" required value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></label>{kind==="orders"&&<label>Expected Delivery Date<input type="date" value={form.dueDate} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></label>}</div>
+      {kind!=="orders"&&<label>Reason<input required value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder={kind==="returns"?"e.g. Damaged goods or excess quantity":"e.g. Short supply or rate difference"}/></label>}
+      <div className="pw-form-grid"><label>Status<select value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{STATUS_OPTIONS[kind].map(s=><option key={s}>{s}</option>)}</select></label><label>Remarks<input value={form.remarks} onChange={e=>setForm(f=>({...f,remarks:e.target.value}))}/></label></div>
+      <div className="pw-lines-heading"><strong>Line items</strong><button type="button" onClick={()=>setLines(p=>[...p,blankLine()])}>＋ Add item</button></div>
+      <div className="pw-line-table"><div className="pw-line-head"><span>Item / Description</span><span>HSN/SAC</span><span>Qty</span><span>Unit</span><span>Rate</span><span>GST %</span><span>Amount</span><span></span></div>{lines.map((line,index)=><div className="pw-line" key={index}><input list={`purchase-items-${index}`} value={line.item_name} onChange={e=>{const match=itemsMaster.find(item=>item.item_name.toLowerCase()===e.target.value.toLowerCase());if(match)chooseItem(index,match.id);else setLines(p=>p.map((l,i)=>i===index?{...l,item_id:"",item_name:e.target.value}:l));}} placeholder="Select or enter item"/><datalist id={`purchase-items-${index}`}>{itemsMaster.map(item=><option key={item.id} value={item.item_name}/>)}</datalist><input value={line.hsn_sac} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,hsn_sac:e.target.value}:l))} placeholder="HSN"/><input type="number" min="0" step="0.001" value={line.qty} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,qty:e.target.value}:l))}/><input value={line.uom} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,uom:e.target.value}:l))} placeholder="Unit"/><input type="number" min="0" step="0.01" value={line.rate} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,rate:e.target.value}:l))}/><select value={line.gst_rate} onChange={e=>setLines(p=>p.map((l,i)=>i===index?{...l,gst_rate:e.target.value}:l))}>{["0","5","12","18","28"].map(n=><option key={n} value={n}>{n}%</option>)}</select><strong>{money(num(line.qty)*num(line.rate)*(1+num(line.gst_rate)/100))}</strong><button type="button" className="pw-remove-line" onClick={()=>setLines(p=>p.length>1?p.filter((_,i)=>i!==index):p)} aria-label="Remove item">×</button></div>)}</div>
+      <div className="pw-total-strip"><span>Taxable: <b>{money(totals.taxable)}</b></span><span>CGST: <b>{money(totals.cgst)}</b></span><span>SGST: <b>{money(totals.sgst)}</b></span><span>IGST: <b>{money(totals.igst)}</b></span><strong>Total: {money(totals.total)}</strong></div>
+      <footer><button type="button" className="pw-reset" onClick={()=>setDialog(false)}>Cancel</button><button className="pw-primary" disabled={saving}>{saving?"Saving…":editing?"Update Document":"Save Document"}</button></footer>
     </form></section></div>}
     {preview && <PurchaseDocumentPreview {...preview} onClose={()=>setPreview(null)} />}
   </main>;

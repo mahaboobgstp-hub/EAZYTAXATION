@@ -49,7 +49,7 @@ function ForgotPassword() {
 
         <h1>
 
-          EAZYTAXATION ERP
+          SYD Billing & Accounting
 
         </h1>
 

@@ -1,0 +1,5 @@
+import React from "react";
+import {NavLink} from "react-router-dom";
+import {FiHome,FiGrid,FiBarChart2,FiMoreHorizontal} from "react-icons/fi";
+import "./MobileBottomNav.css";
+export default function MobileBottomNav({onMore=()=>{}}){return <nav className="syd-mobile-bottom-nav" aria-label="Primary navigation"><NavLink to="/app/dashboard" className={({isActive})=>"syd-bottom-item "+(isActive?"active":"")}><FiHome/><span>Home</span></NavLink><NavLink to="/app/sales-register" className={({isActive})=>"syd-bottom-item "+(isActive?"active":"")}><FiGrid/><span>Transactions</span></NavLink><NavLink to="/app/sales-reports" className={({isActive})=>"syd-bottom-item "+(isActive?"active":"")}><FiBarChart2/><span>Reports</span></NavLink><button type="button" className="syd-bottom-item" onClick={onMore}><FiMoreHorizontal/><span>More</span></button></nav>}

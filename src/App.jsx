@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core';
 import Landing from "./pages/landing/Landing";
 import Features from "./pages/features/Features";
 import Pricing from "./pages/pricing/Pricing";
@@ -9,12 +8,13 @@ import PrivacyPolicy from "./pages/privacy/PrivacyPolicy";
 import Login from "./pages/auth/Login";  
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
-import Layout from './components/Layout';
-import Dashboard from "./pages/Dashboard";
-import AndroidHome from "./pages/AndroidHome";
 import AIAssistant from "./pages/ai/AIAssistant";
 import AIVoiceCommand from "./pages/ai/AIVoiceCommand";
 import AIInvoiceType from "./pages/ai/AIInvoiceType";
+import ForgotUsername from "./pages/auth/ForgotUsername";
+import Layout from './components/Layout';
+import MobileBillingGuard from "./components/MobileBillingGuard";
+import AndroidAuthCallback from "./components/AndroidAuthCallback";
 import { CompanyProvider } from "./context/CompanyContext";
 import Companies from './pages/masters/Companies';
 import Customers from './pages/masters/Customers';
@@ -59,30 +59,32 @@ import StatutoryConfiguration from "./pages/hr/StatutoryConfiguration";
 import ExpenseCategories from './pages/masters/ExpenseCategories';
 import AssetCategories from './pages/masters/AssetCategories';
 import SalesInvoice from './pages/sales/SalesInvoice';
-import MobileSalesInvoice from './pages/sales/MobileSalesInvoice';
 import DeliveryChallan from "./pages/sales/DeliveryChallan";
 import ExpenseEntry from "./pages/expenses/ExpenseEntry";
-import ExpenseRegister from "./pages/expenses/ExpenseRegister";
-import ExpensePayments from "./pages/expenses/ExpensePayments";
-import BankingWorkspace from "./pages/banking/BankingWorkspace";
+import Quotation from "./pages/quotations/Quotation";
 import Items from './pages/masters/Items';
 import Uom from './pages/masters/Uom';
 import InvoiceSettings
 from './pages/settings/InvoiceSettings';
-import UsersAccess from "./pages/settings/UsersAccess";
-import CAAssignment from "./pages/settings/CAAssignment";
-import CAWorkspace from "./pages/settings/CAWorkspace";
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
-import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
 import SalesRegister from "./pages/sales/SalesRegister";
-import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import GSTRates from "./pages/GSTRates";
-import GSTR1 from "./pages/gst/GSTR1";
-import GSTR3B from "./pages/gst/GSTR3B";
-import GSTR2B from "./pages/gst/GSTR2B";
-import EwayBills from "./pages/gst/EwayBills";
-import ReportsWorkspace from "./pages/reports.jsx";
+import BusinessDashboard from "./pages/BusinessDashboard";
+import BankingWorkspace from "./pages/banking/BankingWorkspace";
 import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
+import GSTR1 from "./pages/gst/GSTR1";
+import GSTR2B from "./pages/gst/GSTR2B";
+import GSTR3B from "./pages/gst/GSTR3B";
+import EwayBills from "./pages/gst/EwayBills";
+import GSTDashboard from "./pages/gst/GSTDashboard";
+import EInvoiceWorkspace from "./pages/gst/EInvoiceWorkspace";
+import ReportsWorkspace from "./pages/reports.jsx";
+import SalesWorkspace from "./pages/sales/SalesWorkspace";
+import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
+import ExpenseRegister from "./pages/expenses/ExpenseRegister";
+import AdminWorkspace from "./pages/settings/AdminWorkspace";
+import OutstandingWorkspace from "./pages/reports/OutstandingWorkspace";
+
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -124,8 +126,6 @@ import HRExpenseTracking
 import HRBudgetApprovals
   from "./pages/hr/HRBudgetApprovals";
 
-const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
-
 function App() {
 
   return (
@@ -133,6 +133,9 @@ function App() {
     <BrowserRouter>
 
       <CompanyProvider>
+
+      <AndroidAuthCallback />
+
       <Routes>
 
         {/* ===========================
@@ -181,20 +184,24 @@ function App() {
           path="/forgot-password"
           element={<ForgotPassword />}
         />
+        <Route path="/forgot-username" element={<ForgotUsername />} />
 
         {/* ===========================
             ERP ROUTES
         =========================== */}
 
-        <Route
-          path="/app"
-          element={<Layout />}
-        >
-          <Route index element={isNativeAndroid ? <AndroidHome /> : <Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="ai-assistant" element={isNativeAndroid ? <AIAssistant /> : <Dashboard />} />
-          <Route path="ai-assistant/voice" element={isNativeAndroid ? <AIVoiceCommand /> : <Dashboard />} />
-          <Route path="ai-assistant/document-type" element={isNativeAndroid ? <AIInvoiceType /> : <Dashboard />} />
+     
+
+            
+            <Route
+              path="/app"
+              element={
+                <MobileBillingGuard>
+                  <Layout />
+                </MobileBillingGuard>
+              }
+            >
+
 
           <Route
             path="/app/companies"
@@ -225,49 +232,66 @@ function App() {
 
           <Route
             path="sales"
-            element={isNativeAndroid ? <MobileSalesInvoice /> : <SalesInvoice />}
+            element={<SalesInvoice />}
           />
 
           <Route
     path="gst-rates"
     element={<GSTRates />}
 />
-<Route
-    path="gstr1"
-    element={<GSTR1 />}
-/>
-<Route path="gstr3b" element={<GSTR3B />} />
-<Route path="gstr2b" element={<GSTR2B />} />
-<Route path="eway-bills" element={<EwayBills />} />
-<Route
-  path="delivery-challans"
-  element={<SalesWorkspace kind="challans" />}
-/>
-<Route
-  path="delivery-challans/new"
-  element={<DeliveryChallan />}
-/>
+<Route path="delivery-challans" element={<SalesWorkspace kind="challans" />} />
+<Route path="delivery-challans/new" element={<DeliveryChallan />} />
           <Route
             path="quotation"
-            element={<SalesWorkspace kind="quotations" />}
+            element={<Quotation />}
           />
 
           <Route
             path="purchases"
             element={<PurchaseInvoice />}
           />
-          <Route path="purchase-register" element={<PurchaseWorkspace kind="register" />} />
-          <Route path="purchase-orders" element={<PurchaseWorkspace kind="orders" />} />
-          <Route path="purchase-returns" element={<PurchaseWorkspace kind="returns" />} />
-          <Route path="debit-notes" element={<PurchaseWorkspace kind="debits" />} />
 
           <Route
             path="expenses"
             element={<ExpenseEntry />}
           />
-<Route path="expense-register" element={<ExpenseRegister />} />
-<Route path="payments" element={<ExpensePayments />} />
-<Route path="banking" element={<BankingWorkspace />} />
+          <Route index element={<BusinessDashboard />} />
+          <Route path="dashboard" element={<BusinessDashboard />} />
+          <Route path="ai-assistant" element={<AIAssistant />} />
+          <Route path="ai-assistant/voice" element={<AIVoiceCommand />} />
+          <Route path="ai-assistant/document-type" element={<AIInvoiceType />} />
+          <Route path="sales-orders" element={<SalesWorkspace kind="orders" />} />
+          <Route path="credit-notes" element={<SalesWorkspace kind="credits" />} />
+          <Route path="purchase-register" element={<PurchaseWorkspace kind="register" />} />
+          <Route path="purchase-orders" element={<PurchaseWorkspace kind="orders" />} />
+          <Route path="purchase-returns" element={<PurchaseWorkspace kind="returns" />} />
+          <Route path="debit-notes" element={<PurchaseWorkspace kind="debits" />} />
+          <Route path="expense-register" element={<ExpenseRegister />} />
+
+          <Route path="banking/overview" element={<BankingWorkspace />} />
+          <Route path="banking/accounts" element={<BankingWorkspace />} />
+          <Route path="banking/transactions" element={<BankingWorkspace />} />
+          <Route path="banking/cash-book" element={<BankingWorkspace />} />
+          <Route path="receipts" element={<BankingWorkspace />} />
+          <Route path="payments" element={<BankingWorkspace />} />
+          <Route path="contra" element={<BankingWorkspace />} />
+          <Route path="bank-reconciliation" element={<BankingWorkspace />} />
+
+          <Route path="accounting" element={<AccountingWorkspace />} />
+          <Route path="chart-of-accounts" element={<AccountingWorkspace />} />
+          <Route path="journal-voucher" element={<AccountingWorkspace />} />
+          <Route path="ledger" element={<AccountingWorkspace />} />
+          <Route path="trial-balance" element={<AccountingWorkspace />} />
+          <Route path="profit-loss" element={<AccountingWorkspace />} />
+          <Route path="balance-sheet" element={<AccountingWorkspace />} />
+
+          <Route path="gst-dashboard" element={<GSTDashboard />} />
+          <Route path="gstr1" element={<GSTR1 />} />
+          <Route path="gstr2b" element={<GSTR2B />} />
+          <Route path="gstr3b" element={<GSTR3B />} />
+          <Route path="eway-bills" element={<EwayBills />} />
+          <Route path="einvoice" element={<EInvoiceWorkspace />} />
+
           <Route path="sales-reports" element={<ReportsWorkspace kind="sales" />} />
           <Route path="purchase-reports" element={<ReportsWorkspace kind="purchases" />} />
           <Route path="expense-reports" element={<ReportsWorkspace kind="expenses" />} />
@@ -275,25 +299,28 @@ function App() {
           <Route path="vendor-ledger" element={<ReportsWorkspace kind="vendor" />} />
           <Route path="item-ledger" element={<ReportsWorkspace kind="item" />} />
           <Route path="gst-reports" element={<ReportsWorkspace kind="gst" />} />
+          <Route path="reports/receivables" element={<OutstandingWorkspace kind="customer" />} />
+          <Route path="reports/payables" element={<OutstandingWorkspace kind="vendor" />} />
+
+          <Route path="company-profile" element={<AdminWorkspace />} />
+          <Route path="financial-year-tax" element={<AdminWorkspace />} />
+          <Route path="user-profile" element={<AdminWorkspace />} />
+          <Route path="users-access" element={<AdminWorkspace />} />
+          <Route path="roles-permissions" element={<AdminWorkspace />} />
+          <Route path="data-backup" element={<AdminWorkspace />} />
+          <Route path="application-settings" element={<AdminWorkspace />} />
+          <Route path="payment-terms" element={<AdminWorkspace />} />
+
 <Route
     path="attendance-settings"
     element={<AttendanceSettings />}
 />
-          <Route
-            path="sales-register"
-            element={<SalesWorkspace kind="register" />}
-          />
-          <Route path="sales-orders" element={<SalesWorkspace kind="orders" />} />
-          <Route path="credit-notes" element={<SalesWorkspace kind="credits" />}
-          />
+          <Route path="sales-register" element={<SalesWorkspace kind="register" />} />
 
           <Route
             path="invoice-settings"
             element={<InvoiceSettings />}
           />
-          <Route path="users-access" element={<UsersAccess />} />
-          <Route path="ca-assignment" element={<CAAssignment />} />
-          <Route path="ca-workspace" element={<CAWorkspace />} />
 
           <Route
             path="items"
@@ -519,15 +546,6 @@ function App() {
   path="hr-budget-approvals"
   element={<HRBudgetApprovals />}
 />
-
-          {/* ACCOUNTING WORKSPACE */}
-          <Route path="accounting" element={<AccountingWorkspace />} />
-          <Route path="chart-of-accounts" element={<AccountingWorkspace />} />
-          <Route path="journal-voucher" element={<AccountingWorkspace />} />
-          <Route path="ledger" element={<AccountingWorkspace />} />
-          <Route path="trial-balance" element={<AccountingWorkspace />} />
-          <Route path="profit-loss" element={<AccountingWorkspace />} />
-          <Route path="balance-sheet" element={<AccountingWorkspace />} />
 
         </Route>
         
