@@ -367,6 +367,7 @@ const COMMON_GROUPS = [
     links: [
       ["Company Settings", "/app/company-settings"],
       ["Financial Year & Tax Settings", "/app/company-settings?tab=financial"],
+      ["User Profile", "/app/user-profile"],
       ["Users", "/app/users-access"],
       ["Roles & Permissions", "/app/users-access"],
       ["Data Backup", "/app/company-settings?tab=backup"],
