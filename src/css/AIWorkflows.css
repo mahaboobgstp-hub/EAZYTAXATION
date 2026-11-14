@@ -2,3 +2,17 @@
 
 .ai-entry-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.ai-selected-document{display:flex;flex-direction:column;gap:5px;margin:10px 0 14px;padding:12px 14px;border:1px solid #dce8fb;border-radius:13px;background:#f3f7ff;color:#25416f;font-size:12px;overflow-wrap:anywhere}.ai-selected-document button{align-self:flex-start;padding:5px 9px;border:1px solid #d7e1f2;border-radius:8px;background:#fff;color:#3158a8;font-size:11px;font-weight:700}.ai-selected-document small{color:#687b9a;font-size:11px;line-height:1.45}
 @media(max-width:430px){.ai-entry-header-actions{width:100%;justify-content:flex-start}.ai-entry-header-actions>.pw-secondary,.ai-entry-header-actions>.ew-soft{font-size:11px;padding:8px 10px}.ai-action-copy b{font-size:15px}}
+
+/* Modern voice language controls */
+.ai-language-picker{max-width:520px;margin:16px auto 0;text-align:left}
+.ai-language-title{display:block;margin:0 0 9px;color:#34415b;font-size:13px;font-weight:750}
+.ai-language-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ai-language-options button{display:flex;min-height:58px;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding:10px 12px;border:1px solid #e1e6f0;border-radius:14px;background:#fff;color:#263451;text-align:left;transition:border-color .18s,background .18s,box-shadow .18s}
+.ai-language-options button b{font-size:13px;font-weight:750}
+.ai-language-options button small{color:#778196;font-size:11px}
+.ai-language-options button.selected{border:1.5px solid #6744df;background:linear-gradient(135deg,#f3efff,#faf8ff);box-shadow:0 3px 12px rgba(91,61,190,.10)}
+.ai-language-options button:disabled{opacity:.55}
+.ai-live-words{min-height:58px;padding:10px 2px;color:#18243c;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.ai-partial-words{color:#7558d8}
+.ai-transcript-placeholder{color:#8b94a5}
+@media(max-width:360px){.ai-language-options{grid-template-columns:1fr 1fr}.ai-language-options button{padding:9px}}
