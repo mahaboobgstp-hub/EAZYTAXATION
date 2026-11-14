@@ -1,4 +1,3 @@
-
 name: Build EAZYTAXATION Android Test APK
 
 on:
@@ -12,6 +11,7 @@ on:
       - "package-lock.json"
       - "capacitor.config.json"
       - "src/**"
+      - "scripts/**"
       - ".github/workflows/android-test-apk.yml"
 
 permissions:
@@ -44,6 +44,9 @@ jobs:
 
       - name: Generate Android project
         run: npx cap add android
+
+      - name: Add Android microphone permissions
+        run: python3 scripts/ensure-android-microphone-permissions.py
 
       - name: Synchronize Capacitor
         run: npx cap sync android
