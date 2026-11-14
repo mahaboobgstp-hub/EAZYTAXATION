@@ -49,8 +49,11 @@ manifest_tree.write(manifest, encoding="utf-8", xml_declaration=True)
 
 main = root / "app/src/main/java/com/eazytaxation/mobile/MainActivity.java"
 main.parent.mkdir(parents=True, exist_ok=True)
-if not main.exists():
-    main.write_text("""package com.eazytaxation.mobile;
+
+# Capacitor creates a minimal MainActivity. Replace it deterministically so the
+# custom native plugin is registered in the real launcher before BridgeActivity
+# initializes its WebView/plugin bridge. This avoids brittle text substitution.
+main.write_text("""package com.eazytaxation.mobile;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
@@ -63,20 +66,15 @@ public class MainActivity extends BridgeActivity {
     }
 }
 """)
-else:
-    source = main.read_text()
-    if "OfflineSpeechRecognitionPlugin.class" not in source:
-        source = source.replace("super.onCreate(savedInstanceState);", "registerPlugin(OfflineSpeechRecognitionPlugin.class);\n        super.onCreate(savedInstanceState);")
-        main.write_text(source)
 
 main_source = main.read_text()
 if "extends BridgeActivity" not in main_source:
     raise SystemExit("ERROR: Android launcher MainActivity does not extend Capacitor BridgeActivity.")
 if "registerPlugin(OfflineSpeechRecognitionPlugin.class);" not in main_source:
-    raise SystemExit("ERROR: OfflineSpeechRecognitionPlugin is not registered in the actual launcher MainActivity.")
+    raise SystemExit("ERROR: OfflineSpeechRecognitionPlugin registration missing from launcher MainActivity.")
 
 print(f"Verified Android launcher activity: {launcher_name}")
-print("Verified Capacitor BridgeActivity subclass and explicit OfflineSpeechRecognition registration.")
+print("Generated deterministic MainActivity with native speech plugin registration.")
 
 plugin = main.parent / "OfflineSpeechRecognitionPlugin.java"
 plugin.write_text(r'''package com.eazytaxation.mobile;
