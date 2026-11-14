@@ -257,3 +257,6 @@ export async function deleteQuotation(
     return true;
 }
 
+// Backwards-compatible names used by the quotation entry screen.
+export const createQuotation = saveQuotation;
+export const getNextQuotationNumber = generateInvoiceNumber;
