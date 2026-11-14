@@ -12,9 +12,7 @@ export default function AIVoiceCommand() {
   const { currentCompanyId } = useCompany();
   const recorder = useRef(null);
   const chunks = useRef([]);
-  const speechEngine = useRef(null);
   const micStream = useRef(null);
-  const liveTranscript = useRef("");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -22,7 +20,6 @@ export default function AIVoiceCommand() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => () => {
-    try { speechEngine.current?.stop(); } catch {}
     try { if (recorder.current?.state === "recording") recorder.current.stop(); } catch {}
     micStream.current?.getTracks?.().forEach(track => track.stop());
   }, []);
@@ -37,84 +34,57 @@ export default function AIVoiceCommand() {
   };
 
   const startListening = async () => {
+    let stream;
     try {
-      if (!navigator.mediaDevices?.getUserMedia) throw new Error("This app environment does not expose microphone access. Update Android System WebView and check app permissions.");
-      setNotice("Requesting microphone permission…");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-      micStream.current = stream;
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      if (SpeechRecognition) {
-        const engine = new SpeechRecognition();
-        speechEngine.current = engine;
-        engine.lang = "en-IN";
-        engine.continuous = true;
-        engine.interimResults = true;
-        liveTranscript.current = "";
-        setTranscript("");
-        engine.onresult = event => {
-          let interim = "";
-          let finalText = liveTranscript.current;
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const phrase = event.results[i][0]?.transcript || "";
-            if (event.results[i].isFinal) finalText += (finalText ? " " : "") + phrase.trim();
-            else interim += phrase;
-          }
-          liveTranscript.current = finalText;
-          setTranscript([finalText, interim.trim()].filter(Boolean).join(" "));
-          setNotice(interim ? "Listening… recognizing your words live." : "Listening… keep speaking or tap the microphone to finish.");
-        };
-        engine.onerror = event => {
-          setRecording(false);
-          micStream.current?.getTracks?.().forEach(track => track.stop());
-          micStream.current = null;
-          const reason = event.error === "not-allowed" || event.error === "service-not-allowed"
-            ? "Microphone permission was denied by Android or the browser. Open Android Settings → Apps → EAZYTAXATION → Permissions → Microphone → Allow, then reopen the app."
-            : event.error === "no-speech" ? "I did not hear speech. Please try again closer to the microphone."
-            : event.error === "network" ? "Live speech recognition needs an internet connection. Check your connection and try again."
-            : "Speech recognition failed (" + event.error + "). Please try again.";
-          setNotice(reason);
-        };
-        engine.onend = () => {
-          setRecording(false);
-          micStream.current?.getTracks?.().forEach(track => track.stop());
-          micStream.current = null;
-          if (liveTranscript.current.trim()) {
-            setTranscript(liveTranscript.current.trim());
-            setNotice("Voice recognized. Review or edit the text, then tap Process command.");
-          }
-        };
-        engine.start();
-        setRecording(true);
-        setNotice("Listening… your recognized words will appear below as you speak.");
-        return;
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+        throw new Error("Audio recording is not supported in this app. Please update Android System WebView and try again.");
       }
+      setNotice("Requesting microphone permission…");
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      micStream.current = stream;
 
-      if (!window.MediaRecorder) throw new Error("Live speech recognition is not supported in this Android WebView. Update Android System WebView/Chrome.");
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : (MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "");
-      const recorderEngine = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const supportedTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+      const mimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type));
+      const recorderEngine = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       recorder.current = recorderEngine;
       chunks.current = [];
-      recorderEngine.ondataavailable = event => { if (event.data?.size) chunks.current.push(event.data); };
+      setTranscript("");
+      setResult(null);
+
+      recorderEngine.ondataavailable = event => {
+        if (event.data?.size) chunks.current.push(event.data);
+      };
       recorderEngine.onerror = () => {
         stream.getTracks().forEach(track => track.stop());
         micStream.current = null;
         setRecording(false);
-        setNotice("Audio recording failed. Please try again.");
+        setNotice("Audio recording failed. Please check your microphone and try again.");
       };
       recorderEngine.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
         micStream.current = null;
         setRecording(false);
-        const blob = new Blob(chunks.current, { type: recorderEngine.mimeType || "audio/webm" });
-        if (!blob.size) { setNotice("No audio was captured. Please try again."); return; }
+        const actualType = recorderEngine.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(chunks.current, { type: actualType });
+        if (!blob.size) {
+          setNotice("No audio was captured. Please speak for a little longer and try again.");
+          return;
+        }
+        if (blob.size > 24 * 1024 * 1024) {
+          setNotice("This recording is too large. Please record a shorter command (under 2 minutes).");
+          return;
+        }
+        setNotice("Audio captured. Sending it for speech recognition…");
         await runCommand({ audioBlob: blob });
       };
-      recorderEngine.start(250);
+
+      recorderEngine.start(500);
       setRecording(true);
-      setNotice("Recording audio. Live on-screen transcription is unavailable in this WebView.");
+      setNotice("Listening… speak your command, then tap the microphone again to stop and process it.");
     } catch (error) {
-      micStream.current?.getTracks?.().forEach(track => track.stop());
+      stream?.getTracks?.().forEach(track => track.stop());
       micStream.current = null;
       setRecording(false);
       setNotice(microphoneError(error));
@@ -122,22 +92,10 @@ export default function AIVoiceCommand() {
   };
 
   const stopListening = () => {
-    if (speechEngine.current) {
-      const engine = speechEngine.current;
-      speechEngine.current = null;
-      try { engine.stop(); } catch {}
-      micStream.current?.getTracks?.().forEach(track => track.stop());
-      micStream.current = null;
-      setRecording(false);
-      if (liveTranscript.current.trim()) {
-        setTranscript(liveTranscript.current.trim());
-        setNotice("Voice recognized. Review or edit the text, then tap Process command.");
-      } else {
-        setNotice("No words were recognized. Please try speaking again.");
-      }
-      return;
+    if (recorder.current?.state === "recording") {
+      setNotice("Finishing your recording…");
+      recorder.current.stop();
     }
-    if (recorder.current?.state === "recording") recorder.current.stop();
   };
 
   const runCommand = async ({ audioBlob, typed } = {}) => {
@@ -186,8 +144,8 @@ export default function AIVoiceCommand() {
     </section>
     <div className="ai-suggestion-list">{suggestions.map(item => <button type="button" key={item} onClick={() => setTranscript(item)}>{item}</button>)}</div>
     <form className="ai-command-form" onSubmit={submitText}>
-      <label htmlFor="ai-command-text">{recording ? "Live voice transcription" : "Your command or correction"}</label>
-      <textarea id="ai-command-text" rows="3" value={transcript} onChange={event => setTranscript(event.target.value)} placeholder="Your spoken words will appear here while you speak. You can also type or edit a command…"/>
+      <label htmlFor="ai-command-text">{recording ? "Recording your voice" : "Your command or correction"}</label>
+      <textarea id="ai-command-text" rows="3" value={transcript} onChange={event => setTranscript(event.target.value)} placeholder="Your recognized words will appear here after recording. You can also type or edit a command…"/>
       <button type="submit" disabled={busy || !transcript.trim()}><FiSend /> Process command</button>
     </form>
     {notice && <p className="ai-notice" role="status" aria-live="polite">{notice}</p>}
