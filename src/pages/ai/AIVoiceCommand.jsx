@@ -23,6 +23,7 @@ export default function AIVoiceCommand() {
   const startListening = async () => {
     try {
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error("This Android WebView does not support audio recording. Please update Android System WebView/Chrome.");
+      setNotice("Requesting microphone access…");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : (MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "");
       const engine = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
@@ -37,11 +38,18 @@ export default function AIVoiceCommand() {
         if (!blob.size) { setNotice("No audio was captured. Please tap the microphone and speak again."); return; }
         await runCommand({ audioBlob: blob });
       };
-      engine.start();
+      engine.start(250);
       setRecording(true);
       setNotice("Listening… speak naturally in English, Hindi or Telugu. Tap the microphone again when finished.");
     } catch (error) {
-      setNotice(error.name === "NotAllowedError" ? "Microphone permission is blocked. Allow microphone access for EAZYTAXATION in Android app settings." : (error.message || "Could not start the microphone."));
+      const detail = error.name === "NotAllowedError"
+        ? "Microphone permission was denied. Allow microphone access for EAZYTAXATION in Android app settings, then reopen the app."
+        : error.name === "NotFoundError"
+          ? "No microphone was found on this device."
+          : error.name === "NotReadableError"
+            ? "The microphone is busy or unavailable. Close other apps using it and try again."
+            : (error.message || "Could not start the microphone.");
+      setNotice(detail);
     }
   };
 
@@ -87,7 +95,7 @@ export default function AIVoiceCommand() {
   return <main className="ai-screen ai-voice-screen">
     <header className="ai-screen-header"><button type="button" onClick={() => navigate("/app/ai-assistant")} aria-label="Back"><FiArrowLeft /></button><h1>Voice Command</h1></header>
     <section className="ai-mic-area">
-      <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} disabled={busy} aria-label={recording ? "Stop recording" : "Start voice recording"}><>{recording ? <FiMicOff /> : <FiMic />}</></button>
+      <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} onPointerUp={event => event.currentTarget.blur()} disabled={busy} aria-label={recording ? "Stop recording" : "Start voice recording"}><>{recording ? <FiMicOff /> : <FiMic />}</></button>
       <h2>{recording ? "Listening… Tap to Stop" : busy ? "Processing…" : "Tap and Speak"}</h2>
       <p>English · हिन्दी · తెలుగు · Mixed language</p>
     </section>
@@ -97,7 +105,7 @@ export default function AIVoiceCommand() {
       <textarea id="ai-command-text" rows="3" value={transcript} onChange={event => setTranscript(event.target.value)} placeholder="Speak or type one or more commands…"/>
       <button type="submit" disabled={busy || !transcript.trim()}><FiSend /> Process command</button>
     </form>
-    {notice && <p className="ai-notice" role="status">{notice}</p>}
+    {notice && <p className="ai-notice" role="status" aria-live="polite">{notice}</p>}
     {result && <section className="ai-command-form" style={{marginTop:14}}>
       <h3 style={{margin:"0 0 5px"}}>Review AI interpretation</h3>
       <p><b>Recognized:</b> {result.transcript}</p>
