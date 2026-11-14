@@ -189,17 +189,10 @@ async function handleGoogleLogin() {
 
           </Link>
 
-          <br />
-
-          <br />
-
-          <Link to="/register">
-
-            Create Account
-
-          </Link>
+          <Link className="login-signup" to="/register">Create Account</Link>
 
         </div>
+        <p className="syd-trial-note">Start your 7-day free trial today</p>
 
       </div>
 
