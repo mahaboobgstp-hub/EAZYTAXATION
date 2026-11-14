@@ -93,7 +93,12 @@ export default function AIVoiceCommand() {
     <section className="ai-mic-area">
       <button type="button" className={recording ? "ai-mic-button listening" : "ai-mic-button"} onClick={recording ? stopListening : startListening} disabled={busy || (!available && !recording)} aria-label={recording ? "Stop recognition" : "Start offline recognition"}>{recording ? <FiMicOff /> : <FiMic />}</button>
       <h2>{recording ? "Listening… Tap to Stop" : busy ? "Processing…" : "Tap and Speak"}</h2>
-      <label>Recognition language <select value={language} onChange={event => setLanguage(event.target.value)} disabled={recording || busy}><option value="auto">Automatic (default)</option><option value="en-IN">English (India)</option><option value="hi-IN">हिन्दी</option><option value="te-IN">తెలుగు</option></select></label>
+      <div className="ai-language-picker">
+        <span className="ai-language-title">Recognition language</span>
+        <div className="ai-language-options" role="group" aria-label="Recognition language">
+          {[{value:"auto",label:"Automatic",sub:"Detect language"},{value:"en-IN",label:"English",sub:"India"},{value:"hi-IN",label:"हिन्दी",sub:"Hindi"},{value:"te-IN",label:"తెలుగు",sub:"Telugu"}].map(option => <button type="button" key={option.value} className={language===option.value ? "selected" : ""} onClick={() => setLanguage(option.value)} disabled={recording || busy}><b>{option.label}</b><small>{option.sub}</small></button>)}
+        </div>
+      </div>
       <p>Android native recognition · Automatic or manual language</p>
     </section>
     <div className="ai-suggestion-list">{suggestions.map(item => <button type="button" key={item} onClick={() => setTranscript(item)}>{item}</button>)}</div>
