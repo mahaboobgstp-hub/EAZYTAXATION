@@ -131,8 +131,14 @@ export default function BankingWorkspace(){
     if(!voucherId) {setError("Choose the accounting voucher to match.");return;}
     setBusy(true);setError("");setNotice("");
     try{
+      const profile=accounts.find(a=>a.id===row.bank_account_id);
+      const voucher=accounting.vouchers.find(v=>v.id===voucherId&&v.status==="Posted");
+      if(!profile||!voucher)throw new Error("The selected bank account or posted voucher is unavailable.");
+      const expectedSide=row.direction==="Credit"?"debit":"credit";
+      const matchingLine=accounting.lines.find(line=>line.voucher_id===voucherId&&line.ledger_id===profile.ledger_id&&Math.abs(Number(line[expectedSide]||0)-Number(row.amount||0))<=0.01);
+      if(!matchingLine)throw new Error("The selected voucher does not contain the same bank ledger and amount/direction. Choose the correct voucher.");
       const {error:e}=await supabase.from("bank_statement_lines").update({match_status:"Matched",matched_voucher_id:voucherId,matched_at:new Date().toISOString()}).eq("id",row.id).eq("company_id",currentCompanyId);
-      if(e)throw e;setNotice("Statement line matched to voucher.");await load();
+      if(e)throw e;setNotice("Statement line matched to the corresponding bank ledger voucher.");await load();
     }catch(e2){setError(e2.message||"Unable to match statement line.");}finally{setBusy(false);}
   };
 
