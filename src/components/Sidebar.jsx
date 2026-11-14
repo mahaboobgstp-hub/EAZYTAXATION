@@ -366,9 +366,10 @@ const COMMON_GROUPS = [
     icon: FiSettings,
     links: [
       ["Company Settings", "/app/company-settings"],
-      ["Users", "/app/users"],
-      ["Roles & Permissions", "/app/roles"],
-      ["Backup & Restore", "/app/backup"],
+      ["Financial Year & Tax Settings", "/app/company-settings?tab=financial"],
+      ["Users", "/app/users-access"],
+      ["Roles & Permissions", "/app/users-access"],
+      ["Data Backup", "/app/company-settings?tab=backup"],
       ["Invoice Settings", "/app/invoice-settings"],
     ],
   },
