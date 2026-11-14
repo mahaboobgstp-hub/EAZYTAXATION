@@ -51,7 +51,7 @@ jobs:
           p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
           if 'android:scheme="com.eazytaxation.mobile"' not in s:
-              pattern = re.compile(r'<activity\\b(?=[^>]*android:name="[^"]*MainActivity")[^>]*>')
+              pattern = re.compile(r'<activity(?=[^>]*android:name="[^"]*MainActivity")[^>]*>')
               m = pattern.search(s)
               if not m:
                   raise SystemExit("MainActivity not found")
