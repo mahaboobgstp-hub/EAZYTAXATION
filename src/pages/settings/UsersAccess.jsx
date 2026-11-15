@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FiUserPlus, FiUsers, FiSearch, FiShield, FiCheckCircle } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
 import {
@@ -14,6 +15,7 @@ const emptyForm = () => ({
 
 function UsersAccess() {
   const { currentCompany, currentCompanyId, loading: companyLoading } = useCompany();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -99,7 +101,7 @@ function UsersAccess() {
     <div className="ua-page">
       <div className="ua-heading">
         <div><span className="ua-eyebrow">ADMINISTRATION</span><h1>Users & Access</h1><p>Create and manage users, roles and module-wise permissions.</p></div>
-        <div className="ua-company-chip">{currentCompany?.company_name || (companyLoading ? "Loading company..." : "Select a company")}</div>
+        <div className="ua-heading-actions"><button type="button" className="ua-primary" onClick={() => navigate("/app/ca-assignment")}>CA Assignment</button><div className="ua-company-chip">{currentCompany?.company_name || (companyLoading ? "Loading company..." : "Select a company")}</div></div>
       </div>
       {message && <div className="ua-alert success"><FiCheckCircle />{message}</div>}
       {error && <div className="ua-alert error">{error}</div>}
@@ -122,7 +124,7 @@ function UsersAccess() {
             <div className="ua-form-grid">
               <label>Full Name *<input required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Enter full name" /></label>
               <label>Email Address *<input required type="email" disabled={Boolean(selectedId)} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@company.com" /></label>
-              <label>Role *<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option>Accounts</option><option>Billing</option><option>Inventory</option><option>HR & Payroll</option><option>GST</option><option>Custom</option></select></label>
+              <label>Role *<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option>Accounts</option><option>Billing</option><option>Inventory</option><option>HR & Payroll</option><option>GST</option><option>CA</option><option>Custom</option></select></label>
               <label>Status<select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}><option>Active</option><option>Inactive</option></select></label>
             </div>
             <div className="ua-permission-heading"><div><h3><FiShield /> Permissions</h3><p>Set module-wise Read / Write access for this user.</p></div></div>
