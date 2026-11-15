@@ -205,3 +205,9 @@
 
 /* Keep the Android menu button in the top-bar layout (not floating over the selector). */
 @media(max-width:1050px){.layout.android-native .android-native-header .sidebar-toggle-button{position:static;top:auto;left:auto;z-index:1;}}
+
+
+/* Compact microphone shortcut beside the company selector in the Android top bar. */
+.android-voice-button{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:0;border:1px solid #dbe5f5;border-radius:12px;background:#eff4ff;color:#1d4ed8;box-shadow:0 2px 8px rgba(29,78,216,.08);cursor:pointer}
+.android-voice-button svg{width:19px;height:19px;stroke-width:2.2}
+.android-voice-button:active{background:#dfeaff;transform:scale(.97)}
