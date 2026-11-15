@@ -28,6 +28,7 @@ import {
   FiLock,
   FiRefreshCw,
   FiArrowLeft,
+  FiCpu,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
