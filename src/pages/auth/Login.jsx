@@ -70,7 +70,7 @@ function Login() {
       if (caError && caError.code !== "42P01") throw caError;
 
       alert("Login Successful");
-      navigate("/app/dashboard");
+      navigate("/app");
 
     }
 
@@ -108,7 +108,7 @@ async function handleGoogleLogin() {
 
       <div className="login-card">
 
-        <h1>EAZYTAXATION ERP</h1>
+        <h1>SYD</h1><p className="login-brand-subtitle">Billing &amp; Accounting</p>
 
         <h2>Login</h2>
 
@@ -197,21 +197,13 @@ async function handleGoogleLogin() {
 
         <div className="login-links">
 
-          <Link to="/forgot-password">
+          <Link to="/forgot-username">Forgot Username?</Link><Link to="/forgot-password">
 
             Forgot Password?
 
           </Link>
 
-          <br />
-
-          <br />
-
-          <Link to="/register">
-
-            Create Account
-
-          </Link>
+          <Link to="/register">Create Account</Link>
 
         </div>
 
