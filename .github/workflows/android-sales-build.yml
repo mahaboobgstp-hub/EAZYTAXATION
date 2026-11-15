@@ -45,16 +45,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Verify remote-shell configuration
+      - name: Build complete React application for Android
         run: |
+          npm run build
           python3 - <<'PY'
           import json
           from pathlib import Path
           config = json.loads(Path('capacitor.config.json').read_text())
-          assert config.get('server', {}).get('url', '').startswith('https://'), 'Remote HTTPS application URL is required.'
-          assert config.get('webDir') == 'android-shell', 'APK must use the lightweight shell assets, not the full React dist bundle.'
-          assert Path('android-shell/index.html').exists(), 'Lightweight Android shell fallback is missing.'
-          print('Remote-shell configuration verified; full React application is not bundled into the APK.')
+          assert 'server' not in config or 'url' not in config.get('server', {}), 'APK must not depend on a remote website.'
+          assert config.get('webDir') == 'dist', 'APK must bundle the complete React production build.'
+          assert Path('dist/index.html').is_file(), 'React production index.html is missing.'
+          assets = list(Path('dist/assets').glob('*')) if Path('dist/assets').exists() else []
+          assert assets, 'Compiled React assets are missing from dist/assets.'
+          print(f'Local APK bundle verified: {len(assets)} compiled assets. No remote server URL configured.')
           PY
 
       - name: Generate Android project if missing
