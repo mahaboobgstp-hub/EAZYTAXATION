@@ -48,11 +48,22 @@ export default function PurchaseInvoice() {
 
   useEffect(()=>{
     if(!currentCompanyId || editingInvoiceId || formData.invoice_no)return;
-    generatePurchaseInvoiceNumber(currentCompanyId).then(no=>setFormData(f=>({...f,invoice_no:no}))).catch(async()=>{
-      const {data:client}=await import("../../supabase/supabaseClient");
-      const {count}=await client.supabase.from("purchase_invoices").select("id",{count:"exact",head:true}).eq("company_id",currentCompanyId);
-      setFormData(f=>({...f,invoice_no:"PI-"+new Date().getFullYear()+"-"+String((count||0)+1).padStart(5,"0")}));
-    });
+    let active=true;
+    generatePurchaseInvoiceNumber(currentCompanyId)
+      .then(no=>{if(active)setFormData(f=>({...f,invoice_no:no}));})
+      .catch(async()=>{
+        // Fallback uses the already imported Supabase client. The old dynamic
+        // import incorrectly destructured a non-existent "data" export and
+        // then attempted client.supabase, crashing the purchase entry screen.
+        const {count,error}=await supabase.from("purchase_invoices")
+          .select("id",{count:"exact",head:true})
+          .eq("company_id",currentCompanyId)
+          .eq("is_deleted",false);
+        if(error)throw error;
+        if(active)setFormData(f=>({...f,invoice_no:"PI-"+new Date().getFullYear()+"-"+String((count||0)+1).padStart(5,"0")}));
+      })
+      .catch(error=>{if(active)setMessage(error?.message||"Unable to generate purchase invoice number.");});
+    return()=>{active=false;};
   },[currentCompanyId,formData.invoice_no,editingInvoiceId]);
 
   useEffect(()=>{
