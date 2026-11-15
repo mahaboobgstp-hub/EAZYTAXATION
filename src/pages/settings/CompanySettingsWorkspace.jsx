@@ -4,7 +4,7 @@ import {FiSave,FiDownload,FiRefreshCw,FiAlertCircle} from "react-icons/fi";
 import {useCompany} from "../../context/CompanyContext";
 import {supabase} from "../../supabase/supabaseClient";
 
-const tables=["customers","vendors","items","sales_invoices","sales_invoice_items","purchase_invoices","purchase_invoice_items","expenses","account_groups","chart_of_accounts","accounting_vouchers","accounting_voucher_lines"];
+const tables=["customers","vendors","items","sales_invoices","purchase_invoices","expenses","account_groups","chart_of_accounts","accounting_vouchers","accounting_voucher_lines"];
 export default function CompanySettingsWorkspace(){
  const {currentCompanyId,currentCompany}=useCompany();
  const location=useLocation();
@@ -18,6 +18,20 @@ export default function CompanySettingsWorkspace(){
    if(!currentCompanyId)throw new Error("Select a company first.");
    const result={exportedAt:new Date().toISOString(),companyId:currentCompanyId,company:currentCompany||null,data:{}};
    for(const table of tables){const {data,error:e}=await supabase.from(table).select("*").eq("company_id",currentCompanyId).limit(10000);if(e)throw new Error("Backup stopped at "+table+": "+e.message);result.data[table]=data||[];}
+   // Invoice line tables are related through invoice_id and do not carry company_id.
+   const salesIds=(result.data.sales_invoices||[]).map(row=>row.id);
+   const purchaseIds=(result.data.purchase_invoices||[]).map(row=>row.id);
+   const [salesLines,purchaseLines,categories]=await Promise.all([
+    salesIds.length?supabase.from("sales_invoice_items").select("*").in("invoice_id",salesIds):Promise.resolve({data:[],error:null}),
+    purchaseIds.length?supabase.from("purchase_invoice_items").select("*").in("invoice_id",purchaseIds):Promise.resolve({data:[],error:null}),
+    supabase.from("expense_categories").select("*")
+   ]);
+   if(salesLines.error)throw new Error("Backup stopped at sales invoice items: "+salesLines.error.message);
+   if(purchaseLines.error)throw new Error("Backup stopped at purchase invoice items: "+purchaseLines.error.message);
+   if(categories.error)throw new Error("Backup stopped at expense categories: "+categories.error.message);
+   result.data.sales_invoice_items=salesLines.data||[];
+   result.data.purchase_invoice_items=purchaseLines.data||[];
+   result.data.expense_categories=categories.data||[];
    const blob=new Blob([JSON.stringify(result,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="SYD-Backup-"+(form.company_name||"Company").replace(/[^a-z0-9]+/gi,"-")+"-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(url);setNotice("Company data backup downloaded. Keep it in a secure location.");
   }catch(e){setError(e.message||"Unable to create backup.");}finally{setLoading(false);}
  };
