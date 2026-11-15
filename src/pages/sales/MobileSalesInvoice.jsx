@@ -49,6 +49,7 @@ export default function MobileSalesInvoice() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [savedInvoice, setSavedInvoice] = useState(null);
+  const [saveNotice, setSaveNotice] = useState("");
   const [printData, setPrintData] = useState(null);
   const [sourceLoadedId, setSourceLoadedId] = useState("");
   const [editingInvoiceId, setEditingInvoiceId] = useState(location.state?.editInvoiceId || "");
@@ -238,7 +239,33 @@ export default function MobileSalesInvoice() {
     }));
   };
 
-  const save = async () => {
+  const resetInvoiceForm = async () => {
+    setSavedInvoice(null);
+    setPrintData(null);
+    setEditingInvoiceId("");
+    setStep(1);
+    setInvoiceDate(todayISO());
+    setCustomerId("");
+    setSaleType("CASH");
+    setDiscountType("AMOUNT");
+    setDiscountValue("0");
+    setOtherAmount("0");
+    setRoundOff("0");
+    setPlaceOfSupply("");
+    setRemarks("");
+    setSearchItem("");
+    setLines([blankLine()]);
+    setError("");
+    setSaveNotice("Invoice saved successfully. You can create the next invoice.");
+    if (currentCompanyId) {
+      try {
+        const nextNumber = await generateInvoiceNumber(currentCompanyId, todayISO(), false);
+        setInvoiceNo(nextNumber || "");
+      } catch (err) { setInvoiceNo(""); }
+    }
+  };
+
+  const save = async (generateEwayBill = false) => {
     if (!currentCompanyId) { setError("Please select a company first."); return; }
     if (!customer) { setError("Please select a customer."); setStep(1); return; }
     if (!lines.length || lines.some(line => !line.item_name || Number(line.qty) <= 0)) {
@@ -307,7 +334,9 @@ export default function MobileSalesInvoice() {
       } else {
         invoiceId = await saveSalesInvoice(header, calculated.items);
       }
-      setSavedInvoice({ id: invoiceId, invoice_no: finalNumber, total_amount: grandTotal, customer_name: customer.customer_name, invoice_date: invoiceDate });
+      if (generateEwayBill) {
+        setSavedInvoice({ id: invoiceId, invoice_no: finalNumber, total_amount: grandTotal, customer_name: customer.customer_name, invoice_date: invoiceDate, eway_bill_requested: true });
+      }
       setInvoiceNo(finalNumber);
       const [invoice, invoiceItems, settings, companyDetails, customerDetails] = await Promise.all([
         getSalesInvoiceById(invoiceId),
@@ -317,6 +346,7 @@ export default function MobileSalesInvoice() {
         getCustomerById(customer.id),
       ]);
       setPrintData({ invoice, items: invoiceItems || [], settings, company: companyDetails, customer: customerDetails });
+      if (!generateEwayBill) await resetInvoiceForm();
     } catch (err) {
       setError(err?.message || "Unable to save invoice.");
     } finally {
@@ -338,12 +368,14 @@ export default function MobileSalesInvoice() {
       {printData && <InvoicePrint invoice={printData.invoice} items={printData.items} settings={printData.settings} company={printData.company} customer={printData.customer} onClose={() => setPrintData(null)} />}
       <section className="mobile-sales-success">
         <div className="mobile-sales-success-icon">✓</div>
-        <h1>{editingInvoiceId ? "Invoice updated successfully" : "Invoice saved successfully"}</h1>
+        <h1>{savedInvoice.eway_bill_requested ? "Invoice Saved Successfully" : editingInvoiceId ? "Invoice updated successfully" : "Invoice saved successfully"}</h1>
+        {savedInvoice.eway_bill_requested && <><p className="mobile-sales-eway-subtitle">E-Way Bill generation needs GST portal / GSP API activation</p><div className="mobile-sales-eway-status"><span className="mobile-sales-status-dot" /> E-Way Bill: Not generated yet</div><div className="mobile-sales-eway-note">Your invoice is safely saved. This account currently uses manual E-Way Bill portal entry, so no E-Way Bill number has been issued by the app.</div><a className="mobile-sales-primary mobile-sales-portal-link" href="https://ewaybillgst.gov.in/" target="_blank" rel="noreferrer">Open E-Way Bill Portal ↗</a></>}
         <p>{savedInvoice.invoice_no}</p>
         <strong>{money(savedInvoice.total_amount)}</strong>
         <span>{savedInvoice.customer_name}</span>
+        {savedInvoice.eway_bill_requested && <button className="mobile-sales-secondary" onClick={() => navigate("/app/gst/eway-bills")}>Record E-Way Bill Reference</button>}
         <button className="mobile-sales-primary" onClick={() => navigate("/app/sales-register")}>View Sales Register</button>
-        <button className="mobile-sales-secondary" onClick={() => { setSavedInvoice(null); setEditingInvoiceId(""); setStep(1); setInvoiceDate(todayISO()); setCustomerId(""); setSaleType("CASH"); setPlaceOfSupply(""); setRemarks(""); setLines([blankLine()]); }}>Create Another Invoice</button>
+        <button className="mobile-sales-secondary" onClick={resetInvoiceForm}>Create Another Invoice</button>
       </section>
     </main>
   );
@@ -357,6 +389,7 @@ export default function MobileSalesInvoice() {
       <nav className="mobile-sales-steps" aria-label="Invoice steps">
         {["Details", "Items", "Charges & Tax", "Review"].map((label, index) => <div className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><b>{step > index + 1 ? "✓" : index + 1}</b><span>{label}</span></div>)}
       </nav>
+      {saveNotice && <div className="mobile-sales-notice" role="status">{saveNotice}<button onClick={() => setSaveNotice("")}>×</button></div>}
       {error && <div className="mobile-sales-error" role="alert">{error}<button onClick={() => setError("")}>×</button></div>}
 
       {step === 1 && <section className="mobile-sales-card">
@@ -417,7 +450,7 @@ export default function MobileSalesInvoice() {
         <label>Remarks (optional)<textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={2} /></label>
         <div className="mobile-sales-grand-total"><span>Grand Total</span><strong>{money(grandTotal)}</strong></div>
         <div className="mobile-sales-amount-words"><span>Amount in Words</span><strong>{numberToWords(Number(grandTotal) || 0)}</strong></div>
-        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(3)}>Back</button><button className="mobile-sales-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save Invoice"}</button></div>
+        <div className="mobile-sales-review-actions"><button className="mobile-sales-secondary" onClick={() => setStep(3)}>Back</button><button className="mobile-sales-save-button" disabled={saving} onClick={() => save(false)}>{saving ? "Saving…" : "▣ Save Invoice"}</button><button className="mobile-sales-generate-button" disabled={saving} onClick={() => save(true)}>{saving ? "Saving…" : "▣ Save & Generate E-Way Bill"}</button></div>
       </section>}
     </main>
   );
