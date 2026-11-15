@@ -82,7 +82,7 @@ export default function MobileSalesInvoice() {
       setCustomers(customerRows || []);
       setItemsMaster(itemRows || []);
       setInvoiceSettings(settings || { invoice_auto_numbering: true });
-      setInvoiceNo(number || "");
+      if (!location.state?.editInvoiceId) setInvoiceNo(number || "");
     }).catch(err => {
       if (active) setError(err?.message || "Unable to load invoice data.");
     }).finally(() => {
