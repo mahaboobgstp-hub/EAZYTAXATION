@@ -180,8 +180,8 @@ export default function Dashboard() {
   </main>;
 }
 
-function Kpi({ icon, label, value, note, tone }) {
-  return <article className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
+function Kpi({ icon, label, value, note, tone, hidden = false }) {
+  return <article hidden={hidden} className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
 }
 function Snapshot({ icon, label, value }) {
   return <div className="dashboard-snapshot-row"><span>{icon}{label}</span><strong>{value}</strong></div>;
