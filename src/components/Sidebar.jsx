@@ -483,10 +483,15 @@ const LOCKED_HR_GROUPS = new Set([
 
 
 const ANDROID_COMMON_GROUPS = [
+  { title: "Banking", icon: FiCreditCard, links: [["Bank Overview", "/app/banking?tab=overview"], ["Bank Accounts", "/app/banking?tab=accounts"], ["Bank Transactions", "/app/banking?tab=transactions"], ["Cash & Bank Book", "/app/banking?tab=cashbook"], ["Bank Reconciliation", "/app/banking?tab=reconciliation"]] },
+  { title: "Accounting", icon: FiBookOpen, links: [["Accounting Dashboard", "/app/accounting"], ["Chart of Accounts", "/app/chart-of-accounts"], ["Journal Voucher", "/app/journal-voucher"], ["Ledger", "/app/ledger"], ["Trial Balance", "/app/trial-balance"], ["Profit & Loss", "/app/profit-loss"], ["Balance Sheet", "/app/balance-sheet"]] },
+  { title: "GST & Tax", icon: FiFileText, links: [["GST Rates", "/app/gst-rates"], ["GSTR-1", "/app/gstr1"], ["GSTR-3B", "/app/gstr3b"], ["GSTR-2B", "/app/gstr2b"], ["E-Way Bills", "/app/eway-bills"], ["E-Invoice", "/app/einvoice"]] },
+  { title: "Reports", icon: FiBarChart2, links: [["Sales Reports", "/app/sales-reports"], ["Purchase Reports", "/app/purchase-reports"], ["Expense Reports", "/app/expense-reports"], ["Customer Ledger", "/app/customer-ledger"], ["Supplier Ledger", "/app/vendor-ledger"], ["GST Reports", "/app/gst-reports"]] },
   { title: "Company Setup", icon: FiBriefcase, links: [["Company Creation", "/app/companies"], ["Company Profile", "/app/company-settings"], ["Financial Year & Tax", "/app/company-settings?tab=financial"]] },
-  { title: "Sales Masters", icon: FiDatabase, links: [["Customers", "/app/customers"], ["Items", "/app/items"], ["Units (UOM)", "/app/uom"]] },
+  { title: "Masters", icon: FiDatabase, links: [["Customers", "/app/customers"], ["Suppliers", "/app/vendors"], ["Items", "/app/items"], ["Units (UOM)", "/app/uom"], ["Expense Categories", "/app/expense-categories"]] },
   { title: "Invoice Settings", icon: FiSettings, links: [["Invoice Settings", "/app/invoice-settings"]] },
-  { title: "Administration", icon: FiUsers, links: [["User Profile", "/app/user-profile"], ["Users & Access", "/app/users-access"], ["Roles & Permissions", "/app/roles"], ["Data Backup", "/app/company-settings?tab=backup"]] },
+  { title: "User & CA Management", icon: FiUsers, links: [["Users, Roles & CA Assignment", "/app/users-access"], ["User Profile", "/app/user-profile"]] },
+  { title: "AI Assistant", icon: FiCpu, links: [["AI Assistant", "/app/ai-assistant"], ["Voice Command", "/app/ai-assistant/voice"], ["Upload Invoice", "/app/ai-assistant/document-type"]] },
 ];
 
 const LOCKED_MODULES = new Set([
