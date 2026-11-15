@@ -73,6 +73,7 @@ import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import UsersAccess from "./pages/settings/UsersAccess";
 import UserProfile from "./pages/settings/UserProfile";
+import UserProfileView from "./pages/settings/UserProfileView";
 import CompanySettingsWorkspace from "./pages/settings/CompanySettingsWorkspace";
 import CAAssignment from "./pages/settings/CAAssignment";
 import CAWorkspace from "./pages/settings/CAWorkspace";
@@ -308,6 +309,7 @@ function App() {
           <Route path="users-access" element={<UsersAccess />} />
           <Route path="users" element={<UsersAccess />} />
           <Route path="user-profile" element={<UserProfile />} />
+          <Route path="profile" element={<UserProfileView />} />
           <Route path="company-settings" element={<CompanySettingsWorkspace />} />
           <Route path="roles" element={<UsersAccess />} />
           <Route path="ca-assignment" element={<CAAssignment />} />
