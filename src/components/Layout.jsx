@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -14,6 +14,7 @@ function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
+  const desktopOnlyPath = /^\\/app\\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
 
   const toggleSidebar = () => {
     if (window.innerWidth <= 768) setMobileSidebarOpen(open => !open);
@@ -37,7 +38,7 @@ function Layout() {
         }}>
           <Header onToggleSidebar={toggleSidebar} />
           {location.pathname !== "/app/ai-assistant/voice" && <GlobalVoiceAssistant />}
-          <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}><Outlet /></div>
+          <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}>{isNativeAndroid && desktopOnlyPath ? <Navigate to="/app" replace /> : <Outlet />}</div>
           {isNativeAndroid && (
             <nav className="android-bottom-nav" aria-label="Bottom navigation">
               <NavLink to="/app" end className={({ isActive }) => isActive ? "android-bottom-nav-item active" : "android-bottom-nav-item"}><FiHome /><span>Home</span></NavLink>
