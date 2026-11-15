@@ -51,6 +51,7 @@ export default function MobileSalesInvoice() {
   const [savedInvoice, setSavedInvoice] = useState(null);
   const [printData, setPrintData] = useState(null);
   const [sourceLoadedId, setSourceLoadedId] = useState("");
+  const [editingInvoiceId, setEditingInvoiceId] = useState(location.state?.editInvoiceId || "");
 
   const customer = customers.find(item => item.id === customerId) || null;
   const intraState = Boolean(currentCompany?.state && placeOfSupply && currentCompany.state.toLowerCase() === placeOfSupply.toLowerCase());
@@ -142,9 +143,47 @@ export default function MobileSalesInvoice() {
     return () => { active = false; };
   }, [location.state, currentCompanyId, customers, sourceLoadedId]);
 
+  useEffect(() => {
+    const id = location.state?.editInvoiceId;
+    if (!id || !currentCompanyId || !customers.length || sourceLoadedId === "edit:" + id) return;
+    let active = true;
+    (async () => {
+      try {
+        const [headerResult, itemResult] = await Promise.all([
+          supabase.from("sales_invoices").select("*").eq("id", id).eq("company_id", currentCompanyId).single(),
+          supabase.from("sales_invoice_items").select("*").eq("invoice_id", id).order("line_no")
+        ]);
+        if (headerResult.error) throw headerResult.error;
+        if (itemResult.error) throw itemResult.error;
+        if (!active) return;
+        const header = headerResult.data;
+        setEditingInvoiceId(id);
+        setInvoiceNo(header.invoice_no || "");
+        setInvoiceDate(header.invoice_date || todayISO());
+        setCustomerId(header.customer_id || "");
+        setSaleType(header.sale_type || "CASH");
+        setDiscountType(header.discount_type || "AMOUNT");
+        setDiscountValue(String(header.discount_value ?? "0"));
+        setOtherAmount(String(header.other_amount ?? "0"));
+        setRoundOff(String(header.round_off ?? "0"));
+        setPlaceOfSupply(header.place_of_supply || header.customer_state || "");
+        setRemarks(header.remarks || "");
+        setLines((itemResult.data || []).map(item => ({
+          item_id: item.item_id || "", item_name: item.item_name || item.particulars || "",
+          hsn_sac: item.hsn_sac || "", unit: item.unit || "",
+          gst_rate: Number(item.gst_rate) || 0, cess_rate: Number(item.cess_rate) || 0,
+          qty: Number(item.qty) || 1, rate: Number(item.rate) || 0, amount: Number(item.amount) || 0
+        })));
+        setSourceLoadedId("edit:" + id);
+        setError("");
+      } catch (err) { if (active) setError(err.message || "Unable to load invoice for editing."); }
+    })();
+    return () => { active = false; };
+  }, [location.state, currentCompanyId, customers, sourceLoadedId]);
+
   const changeDate = async value => {
     setInvoiceDate(value);
-    if (invoiceSettings?.invoice_auto_numbering === false || !currentCompanyId) return;
+    if (editingInvoiceId || invoiceSettings?.invoice_auto_numbering === false || !currentCompanyId) return;
     try {
       const number = await generateInvoiceNumber(currentCompanyId, value, false);
       setInvoiceNo(number || "");
@@ -186,7 +225,7 @@ export default function MobileSalesInvoice() {
     setError("");
     try {
       let finalNumber = invoiceNo;
-      if (invoiceSettings?.invoice_auto_numbering !== false) {
+      if (!editingInvoiceId && invoiceSettings?.invoice_auto_numbering !== false) {
         finalNumber = await generateInvoiceNumber(currentCompanyId, invoiceDate, true);
       }
       if (!finalNumber) throw new Error("Invoice number is unavailable. Check Invoice Settings.");
@@ -222,7 +261,27 @@ export default function MobileSalesInvoice() {
         total_amount: grandTotal,
         remarks,
       };
-      const invoiceId = await saveSalesInvoice(header, calculated.items);
+      let invoiceId;
+      if (editingInvoiceId) {
+        const { error: headerError } = await supabase.from("sales_invoices").update({ ...header, invoice_no: invoiceNo, updated_at: new Date().toISOString() }).eq("id", editingInvoiceId).eq("company_id", currentCompanyId);
+        if (headerError) throw headerError;
+        const { error: deleteError } = await supabase.from("sales_invoice_items").delete().eq("invoice_id", editingInvoiceId);
+        if (deleteError) throw deleteError;
+        const itemRows = calculated.items.map((item, index) => ({
+          invoice_id: editingInvoiceId, line_no: index + 1, item_id: item.item_id || null,
+          item_name: item.item_name, particulars: item.item_name, hsn_sac: item.hsn_sac,
+          unit: item.unit, qty: Number(item.qty || 0), rate: Number(item.rate || 0),
+          gst_rate: Number(item.gst_rate || 0), amount: Number(item.amount || 0),
+          cess_rate: Number(item.cess_rate || 0), cess_amount: Number(item.cess_amount || 0),
+          additional_cess_rate: Number(item.additional_cess_rate || 0),
+          additional_cess_amount: Number(item.additional_cess_amount || 0), tax_inclusive: Boolean(item.tax_inclusive)
+        }));
+        const { error: itemError } = await supabase.from("sales_invoice_items").insert(itemRows);
+        if (itemError) throw itemError;
+        invoiceId = editingInvoiceId;
+      } else {
+        invoiceId = await saveSalesInvoice(header, calculated.items);
+      }
       setSavedInvoice({ id: invoiceId, invoice_no: finalNumber, total_amount: grandTotal, customer_name: customer.customer_name, invoice_date: invoiceDate });
       setInvoiceNo(finalNumber);
       const [invoice, invoiceItems, settings, companyDetails, customerDetails] = await Promise.all([
@@ -248,12 +307,12 @@ export default function MobileSalesInvoice() {
       {printData && <InvoicePrint invoice={printData.invoice} items={printData.items} settings={printData.settings} company={printData.company} customer={printData.customer} onClose={() => setPrintData(null)} />}
       <section className="mobile-sales-success">
         <div className="mobile-sales-success-icon">✓</div>
-        <h1>Invoice saved successfully</h1>
+        <h1>{editingInvoiceId ? "Invoice updated successfully" : "Invoice saved successfully"}</h1>
         <p>{savedInvoice.invoice_no}</p>
         <strong>{money(savedInvoice.total_amount)}</strong>
         <span>{savedInvoice.customer_name}</span>
         <button className="mobile-sales-primary" onClick={() => navigate("/app/sales-register")}>View Sales Register</button>
-        <button className="mobile-sales-secondary" onClick={() => { setSavedInvoice(null); setStep(1); setInvoiceDate(todayISO()); setCustomerId(""); setSaleType("CASH"); setPlaceOfSupply(""); setRemarks(""); setLines([blankLine()]); }}>Create Another Invoice</button>
+        <button className="mobile-sales-secondary" onClick={() => { setSavedInvoice(null); setEditingInvoiceId(""); setStep(1); setInvoiceDate(todayISO()); setCustomerId(""); setSaleType("CASH"); setPlaceOfSupply(""); setRemarks(""); setLines([blankLine()]); }}>Create Another Invoice</button>
       </section>
     </main>
   );
@@ -262,7 +321,7 @@ export default function MobileSalesInvoice() {
     <main className="mobile-sales-page">
       <header className="mobile-sales-heading">
         <button className="mobile-sales-back" onClick={() => step === 1 ? navigate("/app/dashboard") : setStep(step - 1)} aria-label="Go back">‹</button>
-        <div><small>{currentCompany?.company_name || "EAZYTAXATION"}</small><h1>Add Sales Invoice</h1></div>
+        <div><small>{currentCompany?.company_name || "EAZYTAXATION"}</small><h1>{editingInvoiceId ? "Edit Sales Invoice" : "Add Sales Invoice"}</h1></div>
       </header>
       <nav className="mobile-sales-steps" aria-label="Invoice steps">
         {["Details", "Items", "Charges & Tax", "Review"].map((label, index) => <div className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><b>{step > index + 1 ? "✓" : index + 1}</b><span>{label}</span></div>)}
@@ -270,7 +329,7 @@ export default function MobileSalesInvoice() {
       {error && <div className="mobile-sales-error" role="alert">{error}<button onClick={() => setError("")}>×</button></div>}
 
       {step === 1 && <section className="mobile-sales-card">
-        <label>Invoice Number<input value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} readOnly={invoiceSettings?.invoice_auto_numbering !== false} placeholder="Generated automatically" /></label>
+        <label>Invoice Number<input value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} readOnly={Boolean(editingInvoiceId) || invoiceSettings?.invoice_auto_numbering !== false} placeholder="Generated automatically" /></label>
         <label>Invoice Date<input type="date" value={invoiceDate} onChange={e => changeDate(e.target.value)} required /></label>
         <label>Customer<select value={customerId} onChange={e => { const selected = customers.find(row => row.id === e.target.value); setCustomerId(e.target.value); setPlaceOfSupply(selected?.state || ""); }} required><option value="">Select customer</option>{customers.map(row => <option key={row.id} value={row.id}>{row.customer_name}</option>)}</select></label>
         {customer && <div className="mobile-sales-customer-info"><strong>{customer.customer_name}</strong><span>{customer.address || "Address not available"}</span><span>{customer.state || ""}{customer.gstin ? " · GSTIN " + customer.gstin : ""}</span></div>}
