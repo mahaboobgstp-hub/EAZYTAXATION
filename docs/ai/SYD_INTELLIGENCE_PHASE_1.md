@@ -10,10 +10,11 @@ Create one shared intelligence foundation for the SYD web and Android applicatio
 - Field registry with stable IDs and deterministic validation helpers.
 - Shared intent and command contract.
 - Company context allowlist.
+- Planned tool/action catalogue with execution disabled.
 - Explicit execution policy disabling navigation, form mutation and database writes.
 - Shared frontend service calling a Supabase Edge Function.
 - Authenticated Edge Function using the OpenAI Responses API and Structured Outputs.
-- Request IDs and token-usage metadata in API responses.
+- Request IDs, token-usage metadata and privacy-conscious telemetry event helpers.
 
 ## Not included yet
 
@@ -37,7 +38,7 @@ The OpenAI API key remains in Supabase Edge Function secrets. Never put it in Vi
 - OPENAI_API_KEY — required.
 - OPENAI_MODEL — optional; defaults to gpt-4.1-mini.
 
-Supabase supplies SUPABASE_URL and SUPABASE_ANON_KEY to Edge Functions. Deploy syd-ai-intelligence after reviewing the function in the target Supabase project. A GitHub commit does not deploy a function or configure secrets.
+Supabase supplies SUPABASE_URL and SUPABASE_ANON_KEY to Edge Functions. The function is deployed to the EAZYTAXATION Supabase project. A GitHub commit does not deploy a function or configure secrets.
 
 ## Frontend usage
 
@@ -59,11 +60,15 @@ accounting_enabled true maps to billing_and_accounting; otherwise it maps to bil
 
 Company context supplied by the client is informational only. It is not proof of membership, permissions or entitlement. Before any future action can run, the backend must independently verify user identity, company membership, permissions and current company settings.
 
-## Registering screens and fields
+## Screen and field registration
 
 Register each screen only after its route and behavior have been verified in that branch. Use stable IDs, not visible labels. The service sends the registered screen catalogue to the Edge Function; the server rejects screen IDs outside that catalogue. If no destination is registered, the model must ask for clarification rather than invent a route.
 
 Use registerFieldDefinitions with the verified screen ID and actual field IDs. Each field should specify fieldId, label, type and required status, plus descriptions, options and validation only where verified. Do not expose sensitive fields. Do not register database columns until their mappings are confirmed.
+
+## Tool/action catalogue
+
+src/ai/registry/toolRegistry.js defines stable future tool contracts for navigation, company context, master lookups, form preparation, validation and transaction saving. All tools are disabled in Phase 1. Future phases must enable each tool only after its backend implementation, permission checks, company isolation and tests are complete.
 
 ## Security and safety
 
