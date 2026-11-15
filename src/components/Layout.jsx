@@ -42,7 +42,7 @@ function Layout() {
           {isNativeAndroid && (
             <nav className="android-bottom-nav" aria-label="Bottom navigation">
               <NavLink to="/app" end className={({ isActive }) => isActive ? "android-bottom-nav-item active" : "android-bottom-nav-item"}><FiHome /><span>Home</span></NavLink>
-              <NavLink to="/app/sales" className={location.pathname.startsWith("/app/sales") || location.pathname.startsWith("/app/purchases") || location.pathname.startsWith("/app/expenses") ? "android-bottom-nav-item active" : "android-bottom-nav-item"}><FiGrid /><span>Transactions</span></NavLink>
+              <NavLink to="/app/sales" className={["/app/sales","/app/sales-register","/app/sales-orders","/app/quotation","/app/delivery-challans","/app/credit-notes","/app/purchases","/app/purchase-register","/app/purchase-orders","/app/purchase-returns","/app/debit-notes","/app/expenses","/app/expense-register","/app/payments"].includes(location.pathname) ? "android-bottom-nav-item active" : "android-bottom-nav-item"}><FiGrid /><span>Transactions</span></NavLink>
               <NavLink to="/app/sales-reports" className={location.pathname.includes("reports") || location.pathname.includes("ledger") ? "android-bottom-nav-item active" : "android-bottom-nav-item"}><FiBarChart2 /><span>Reports</span></NavLink>
               <button type="button" className={mobileSidebarOpen ? "android-bottom-nav-item active" : "android-bottom-nav-item"} onClick={() => setMobileSidebarOpen(true)}><FiMoreHorizontal /><span>More</span></button>
             </nav>
