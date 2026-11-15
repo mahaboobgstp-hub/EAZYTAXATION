@@ -713,13 +713,6 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""} ${mobileOpen ? "sidebar-mobile-open" : ""}`}>
-      <div className="sidebar-topbar sidebar-compact-topbar">
-        <div className="sidebar-drawer-heading">Navigation</div>
-        <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Back to app" title="Back to app">
-          <FiArrowLeft />
-        </button>
-      </div>
-
       <div className="sidebar-account-wrap">
         <button type="button" className="sidebar-account-trigger" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen((open) => !open)}>
           <span className="sidebar-account-avatar">{accountInitials || <FiUser />}</span>
@@ -732,6 +725,13 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
           <div className="sidebar-account-menu-divider" />
           <button type="button" className="sidebar-account-logout" disabled={loggingOut} onClick={handleLogout}><FiLogOut /><span>{loggingOut ? "Logging out..." : "Logout"}</span></button>
         </div>}
+      </div>
+
+      <div className="sidebar-topbar sidebar-compact-topbar">
+        <div className="sidebar-drawer-heading">Navigation</div>
+        <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Back to app" title="Back to app">
+          <FiArrowLeft />
+        </button>
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
