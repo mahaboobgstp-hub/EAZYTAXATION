@@ -14,7 +14,7 @@ function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
-  const desktopOnlyPath = /^\\/app\\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
+  const desktopOnlyPath = /^\/app\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
 
   const toggleSidebar = () => {
     if (window.innerWidth <= 768) setMobileSidebarOpen(open => !open);
