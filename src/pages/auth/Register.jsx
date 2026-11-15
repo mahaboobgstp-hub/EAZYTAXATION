@@ -115,8 +115,7 @@ console.log("Google button clicked");
 
         <p>
 
-          Start your free trial of
-          EAZYTAXATION ERP
+          Create your SYD Billing &amp; Accounting account
 
         </p>
 
@@ -226,7 +225,7 @@ console.log("Google button clicked");
   {
     loading
       ? "Creating Account..."
-      : "Start Free Trial"
+      : "Create Account"
   }
 
 </button>
