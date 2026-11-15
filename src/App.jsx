@@ -72,6 +72,7 @@ import InvoiceSettings
 from './pages/settings/InvoiceSettings';
 import UsersAccess from "./pages/settings/UsersAccess";
 import UserProfile from "./pages/settings/UserProfile";
+import CompanySettingsWorkspace from "./pages/settings/CompanySettingsWorkspace";
 import CAAssignment from "./pages/settings/CAAssignment";
 import CAWorkspace from "./pages/settings/CAWorkspace";
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
