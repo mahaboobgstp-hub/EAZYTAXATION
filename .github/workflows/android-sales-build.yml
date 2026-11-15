@@ -1,4 +1,4 @@
-name: Android Sales Development APK
+name: Build SYD Billing & Accounting Android APK
 
 on:
   push:
@@ -7,13 +7,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: syd-android-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout branch
+      - name: Checkout Android development branch
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -30,7 +34,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: platform-tools platforms;android-35 build-tools;35.0.0
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
 
       - name: Install Montserrat font for icon rendering
         run: |
@@ -41,10 +45,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web assets
+      - name: Build React application
         run: npm run build
 
-      - name: Generate Android project if needed
+      - name: Generate Android project if missing
         run: |
           if [ ! -d android ]; then
             npx cap add android
@@ -63,17 +67,31 @@ jobs:
         run: python3 scripts/ensure-offline-speech-recognition.py
 
       - name: Build debug APK
+        working-directory: android
         run: |
-          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Verify native speech bridge inside APK
         run: python3 scripts/verify-android-speech-apk.py
 
-      - name: Upload Android test APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SYD-Billing-Accounting-Android-Test
+          name: syd-billing-accounting-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
           retention-days: 30
+
+      - name: Publish latest preview APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-preview-latest
+          name: SYD Billing & Accounting – Android Preview
+          target_commitish: android-sales-development
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          overwrite_files: true
+          make_latest: false
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
