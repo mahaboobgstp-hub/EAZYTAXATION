@@ -1,6 +1,7 @@
 import { supabase } from "../../supabase/supabaseClient";
 import {
-  buildCompanyAIContext, getScreenDefinition, listFieldDefinitions, normalizeAICommandText,
+  buildCompanyAIContext, getScreenDefinition, listScreenDefinitions,
+  listFieldDefinitions, normalizeAICommandText,
 } from "../../ai/registry";
 
 /**
@@ -13,10 +14,18 @@ export async function interpretSYDCommand({
   if (!["web","android","ios"].includes(platform)) throw new Error("Unsupported application platform.");
   const screen = currentScreenId ? getScreenDefinition(currentScreenId) : null;
   const fields = currentScreenId ? listFieldDefinitions(currentScreenId) : [];
+  const registeredScreens = listScreenDefinitions().map(item => ({
+    screenId: item.screenId, name: item.name, module: item.module,
+    route: item.route, description: item.description,
+    platformSupport: item.platformSupport,
+    requiredPermissions: item.requiredPermissions,
+    companyRequirements: item.companyRequirements,
+  }));
 
   const { data, error } = await supabase.functions.invoke("syd-ai-intelligence", {
     body: {
       command, platform, companyContext: buildCompanyAIContext(company),
+      registeredScreens,
       currentScreen: screen ? {
         screenId: screen.screenId, name: screen.name, module: screen.module,
         description: screen.description, route: screen.route,
