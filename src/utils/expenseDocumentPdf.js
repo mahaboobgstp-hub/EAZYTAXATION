@@ -4,7 +4,7 @@ const n=value=>Number(value)||0;
 const fmt=value=>`INR ${n(value).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const safe=value=>String(value??"").replace(/[\r\n]+/g," ").trim()||"—";
 
-export function downloadExpensePdf({kind="expense",record,items=[],company={}}){
+export function downloadExpensePdf({kind="expense",record,items=[],company={},returnBlob=false}){
   const pdf=new jsPDF({unit:"mm",format:"a4"});
   const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),m=14,w=pageW-m*2;
   let y=18;const payment=kind==="payment";const title=payment?"PAYMENT VOUCHER":"EXPENSE VOUCHER";
@@ -36,5 +36,6 @@ export function downloadExpensePdf({kind="expense",record,items=[],company={}}){
   pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.text("Authorized Signatory",pageW-m,y+16,{align:"right"});
   const count=pdf.getNumberOfPages();for(let p=1;p<=count;p++){pdf.setPage(p);pdf.setFontSize(8);pdf.setTextColor(100);pdf.text(`Page ${p} of ${count}`,pageW/2,pageH-8,{align:"center"});}
   const name=(docNo||"expense-document").replace(/[^a-zA-Z0-9_-]/g,"_");
-  pdf.save(`${name}.pdf`);
+  if(returnBlob) return {blob:pdf.output("blob"),fileName:name+".pdf"};
+  pdf.save(name+".pdf");
 }
