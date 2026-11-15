@@ -290,3 +290,16 @@
     font-size:14px;
 
 }
+
+/* SYD compact mobile-first login layout */
+.login-page{min-height:100dvh;padding:16px;background:linear-gradient(145deg,#0f172a,#172b49);}
+.login-card{max-width:390px;padding:28px 24px;border-radius:18px;}
+.login-card h1{color:#0f2747;font-size:34px;letter-spacing:1px;}
+.login-brand-subtitle{margin:2px 0 18px;color:#0f766e;font-size:14px;font-weight:700;}
+.login-card h2{margin:0 0 18px;font-size:20px;}
+.login-card input{margin-bottom:12px;padding:12px 14px;}
+.login-card button{padding:12px;font-size:15px;}
+.login-divider{margin:16px 0;}
+.login-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;font-size:13px;}
+.login-links a{white-space:nowrap;}
+@media(max-height:700px){.login-card{padding:20px}.login-card h1{font-size:28px}.login-card h2{margin-bottom:12px}.login-divider{margin:10px 0}.login-links{margin-top:12px}}
