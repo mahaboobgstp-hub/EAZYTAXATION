@@ -8,6 +8,27 @@
 </head>
 <body>
   <div id="root"></div>
+  <script>
+    (function () {
+      function showStartupError(message) {
+        var panel = document.getElementById('syd-startup-error');
+        if (!panel) {
+          panel = document.createElement('pre');
+          panel.id = 'syd-startup-error';
+          panel.style.cssText = 'position:fixed;inset:12px;z-index:2147483647;overflow:auto;white-space:pre-wrap;background:#fff;color:#991b1b;padding:18px;border:2px solid #dc2626;border-radius:12px;font:14px/1.5 monospace;';
+          document.addEventListener('DOMContentLoaded', function () { document.body.appendChild(panel); });
+          if (document.body) document.body.appendChild(panel);
+        }
+        panel.textContent = 'SYD APP STARTUP ERROR\\n\\n' + String(message || 'Unknown startup error');
+      }
+      window.addEventListener('error', function (event) {
+        showStartupError((event.message || 'Script error') + (event.filename ? '\\n' + event.filename + ':' + event.lineno : ''));
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        showStartupError(event.reason && (event.reason.stack || event.reason.message) || event.reason || 'Unhandled promise rejection');
+      });
+    })();
+  </script>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
