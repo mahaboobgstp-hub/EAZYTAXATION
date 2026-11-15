@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiX, FiMenu, FiChevronDown } from "react-icons/fi";
+import { FiSearch, FiX, FiMenu, FiChevronDown, FiMic } from "react-icons/fi";
 import { Capacitor } from "@capacitor/core";
 import { useCompany } from "../context/CompanyContext";
 import { MODULES, useModule } from "../context/ModuleContext";
@@ -119,7 +119,7 @@ const PAGES = [
   { label: "Backup & Restore", path: "/app/backup", module: "billing" },
 ];
 
-function Header({ onToggleSidebar }) {
+function Header({ onToggleSidebar, onOpenVoiceAssistant }) {
   const { activeModule, setActiveModule } = useModule();
   const { companies, currentCompany, changeCompany, loading: companyLoading } = useCompany();
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
@@ -208,6 +208,9 @@ function Header({ onToggleSidebar }) {
           </select>
           <FiChevronDown aria-hidden="true" />
         </label>
+        <button type="button" className="android-voice-button" onClick={onOpenVoiceAssistant} aria-label="Open voice assistant" title="Voice assistant">
+          <FiMic aria-hidden="true" />
+        </button>
       </header>
     );
   }
