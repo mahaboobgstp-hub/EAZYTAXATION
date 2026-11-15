@@ -6,7 +6,7 @@ Create one shared intelligence foundation for the SYD web and Android applicatio
 
 ## Included
 
-- Platform-neutral screen registry.
+- Platform-neutral screen registry and verified-screen allowlist.
 - Field registry with stable IDs and deterministic validation helpers.
 - Shared intent and command contract.
 - Company context allowlist.
@@ -14,7 +14,6 @@ Create one shared intelligence foundation for the SYD web and Android applicatio
 - Shared frontend service calling a Supabase Edge Function.
 - Authenticated Edge Function using the OpenAI Responses API and Structured Outputs.
 - Request IDs and token-usage metadata in API responses.
-- This implementation guide.
 
 ## Not included yet
 
@@ -29,7 +28,7 @@ These are intentional Phase 1 boundaries. Existing Android voice workflows are n
 
 ## Architecture
 
-Both web and Android import the shared service at src/services/ai/sydIntelligenceService.js. It calls the syd-ai-intelligence Supabase Edge Function. The Edge Function validates the Supabase user session and calls the OpenAI Responses API. OpenAI returns a strict JSON action plan. The response is a proposal only; application code must not execute it in Phase 1.
+Both web and Android import src/services/ai/sydIntelligenceService.js. It calls the syd-ai-intelligence Supabase Edge Function. The Edge Function validates the Supabase user session and calls the OpenAI Responses API. OpenAI returns a strict JSON action plan. The response is a proposal only; application code must not execute it in Phase 1.
 
 The OpenAI API key remains in Supabase Edge Function secrets. Never put it in Vite environment variables, browser code or the Android package.
 
@@ -38,18 +37,11 @@ The OpenAI API key remains in Supabase Edge Function secrets. Never put it in Vi
 - OPENAI_API_KEY — required.
 - OPENAI_MODEL — optional; defaults to gpt-4.1-mini.
 
-Supabase supplies SUPABASE_URL and SUPABASE_ANON_KEY to Edge Functions. Deploy syd-ai-intelligence after reviewing the function in the target Supabase project. A GitHub commit does not deploy the function or configure secrets.
+Supabase supplies SUPABASE_URL and SUPABASE_ANON_KEY to Edge Functions. Deploy syd-ai-intelligence after reviewing the function in the target Supabase project. A GitHub commit does not deploy a function or configure secrets.
 
 ## Frontend usage
 
-Import interpretSYDCommand from src/services/ai/sydIntelligenceService.js and call it with:
-- text: the user's typed or transcribed command.
-- company: the selected company object already loaded by the authenticated application context.
-- currentScreenId: a registered screen ID, or null.
-- platform: web, android or ios.
-- conversationContext: optional, minimal follow-up context.
-
-The service returns a plan, request ID, model and token usage. It does not execute the plan.
+Import interpretSYDCommand from src/services/ai/sydIntelligenceService.js and call it with text, the selected company object, currentScreenId, platform (web, android or ios) and optional minimal conversationContext. The result contains a proposed plan, request ID, model and token usage. It does not execute the plan.
 
 ## Company context
 
@@ -67,24 +59,9 @@ accounting_enabled true maps to billing_and_accounting; otherwise it maps to bil
 
 Company context supplied by the client is informational only. It is not proof of membership, permissions or entitlement. Before any future action can run, the backend must independently verify user identity, company membership, permissions and current company settings.
 
-## Registering a screen
+## Registering screens and fields
 
-Register a screen only after its route and behavior have been verified in that branch. Use stable IDs, not visible labels. Example:
-
-    registerScreenDefinition({
-      screenId: "sales_invoice",
-      name: "Sales Invoice",
-      module: "Sales",
-      route: "/app/REPLACE_WITH_VERIFIED_ROUTE",
-      description: "Create and review a sales invoice.",
-      platformSupport: ["web", "android"],
-      requiredPermissions: ["sales.create"],
-      companyRequirements: { billing: true }
-    });
-
-Replace the route placeholder with the exact verified route. Do not register assumed routes.
-
-## Registering fields
+Register each screen only after its route and behavior have been verified in that branch. Use stable IDs, not visible labels. The service sends the registered screen catalogue to the Edge Function; the server rejects screen IDs outside that catalogue. If no destination is registered, the model must ask for clarification rather than invent a route.
 
 Use registerFieldDefinitions with the verified screen ID and actual field IDs. Each field should specify fieldId, label, type and required status, plus descriptions, options and validation only where verified. Do not expose sensitive fields. Do not register database columns until their mappings are confirmed.
 
@@ -105,7 +82,7 @@ Use registerFieldDefinitions with the verified screen ID and actual field IDs. E
 2. Confirm Android branch build succeeds.
 3. Confirm unauthenticated Edge Function requests return 401.
 4. Confirm authenticated requests return a schema-shaped plan.
-5. Confirm unknown field IDs are removed from the plan.
+5. Confirm unknown screen and field IDs are removed or converted to clarification.
 6. Confirm billing-only context does not produce accounting-only actions.
 7. Confirm every response reports execution.executed false.
 8. Confirm this endpoint creates no master or transaction records.
