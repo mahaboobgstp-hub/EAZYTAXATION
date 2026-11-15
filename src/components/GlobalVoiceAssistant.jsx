@@ -6,10 +6,9 @@ import { createVoiceActivityMonitor } from "../utils/voiceActivityMonitor";
 import { processVoiceCommand, confirmVoiceDraft } from "../services/voiceCommandService";
 import "../css/GlobalVoiceAssistant.css";
 
-export default function GlobalVoiceAssistant() {
+export default function GlobalVoiceAssistant({ open, onClose }) {
   const { currentCompanyId } = useCompany();
   const location = useLocation();
-  const [open, setOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
@@ -71,10 +70,9 @@ export default function GlobalVoiceAssistant() {
   };
   const reset = () => { setResult(null); setText(""); setNotice(""); };
   return <>
-    <button className="global-voice-trigger" type="button" onClick={() => setOpen(true)} aria-label="Open voice assistant"><FiMic/><span>Voice</span></button>
-    {open && <div className="global-voice-backdrop" role="presentation" onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}>
+    {open && <div className="global-voice-backdrop" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose?.(); }}>
       <section className="global-voice-panel" role="dialog" aria-modal="true" aria-labelledby="global-voice-title">
-        <header><div><h2 id="global-voice-title">EAZYTAXATION Voice Assistant</h2><p>English · हिन्दी · తెలుగు · Mixed commands</p></div><button type="button" onClick={() => setOpen(false)} aria-label="Close"><FiX/></button></header>
+        <header><div><h2 id="global-voice-title">EAZYTAXATION Voice Assistant</h2><p>English · हिन्दी · తెలుగు · Mixed commands</p></div><button type="button" onClick={() => onClose?.()} aria-label="Close"><FiX/></button></header>
         <div className="global-voice-controls">
           <button type="button" className={recording ? "recording" : ""} disabled={busy} onClick={recording ? stopRecording : startRecording}>{recording ? <FiMicOff/> : <FiMic/>}{recording ? "Stop" : "Speak"}</button>
           <span>Tap Speak, say one or more tasks, then Stop.</span>
