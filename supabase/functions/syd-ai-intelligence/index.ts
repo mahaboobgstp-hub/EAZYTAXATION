@@ -9,10 +9,8 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { ...corsHeaders, "Content-Type": "application/json" },
 });
-
 const planSchema = {
-  type: "object",
-  additionalProperties: false,
+  type: "object", additionalProperties: false,
   properties: {
     intent: { type: "string", enum: ["navigate","prepare_form","answer_question","clarify","unsupported"] },
     screen_id: { type: ["string","null"] },
@@ -27,13 +25,11 @@ const planSchema = {
   },
   required: ["intent","screen_id","fields","missing_information","requires_confirmation","response"],
 };
-
 function safeObject(value: unknown, maxLength = 8000) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   if (JSON.stringify(value).length > maxLength) throw new Error("Context is too large.");
   return value;
 }
-
 Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID();
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -64,6 +60,9 @@ Deno.serve(async (req: Request) => {
     const currentScreen = safeObject(body?.currentScreen, 3000);
     const registeredScreens = Array.isArray(body?.registeredScreens) ? body.registeredScreens.slice(0, 150) : [];
     const fields = Array.isArray(body?.fields) ? body.fields.slice(0, 100) : [];
+    if (JSON.stringify(registeredScreens).length > 16000 || JSON.stringify(fields).length > 12000) {
+      return json({ error: "Application metadata is too large. Please reduce the registered screen or field definitions." }, 413);
+    }
     const conversationContext = safeObject(body?.conversationContext, 2000);
 
     const instructions = [
@@ -99,8 +98,7 @@ Deno.serve(async (req: Request) => {
     } finally { clearTimeout(timeout); }
 
     if (!providerResponse.ok) {
-      const detail = await providerResponse.text();
-      console.error("SYD AI provider request failed", { requestId, userId: user.id, status: providerResponse.status, detail: detail.slice(0, 500) });
+      console.error("SYD AI provider request failed", { requestId, userId: user.id, status: providerResponse.status });
       if (providerResponse.status === 429) return json({ error: "AI usage limit reached. Please try again later.", requestId }, 429);
       return json({ error: "SYD Intelligence could not process this request.", requestId }, 502);
     }
@@ -116,15 +114,27 @@ Deno.serve(async (req: Request) => {
     let plan: any;
     try { plan = JSON.parse(outputText); }
     catch { return json({ error: "AI returned an unreadable action plan.", requestId }, 502); }
-
     const allowedIntents = ["navigate","prepare_form","answer_question","clarify","unsupported"];
     if (!allowedIntents.includes(plan.intent)) return json({ error: "AI returned an unsupported intent.", requestId }, 502);
-    const knownScreenIds = new Set(registeredScreens.map((screen: any) => String(screen?.screenId || "")));
-    if (plan.screen_id && !knownScreenIds.has(String(plan.screen_id))) {
+
+    const knownScreens = new Map(registeredScreens.map((screen: any) => [String(screen?.screenId || ""), screen]));
+    const selectedScreen = plan.screen_id ? knownScreens.get(String(plan.screen_id)) : null;
+    if (plan.screen_id && !selectedScreen) {
       plan.screen_id = null;
       if (plan.intent === "navigate" || plan.intent === "prepare_form") plan.intent = "clarify";
-      plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "The requested destination is not yet registered in SYD's verified screen catalogue."];
+      plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "The requested destination is not registered in SYD's verified screen catalogue."];
     }
+    if (!plan.screen_id && (plan.intent === "navigate" || plan.intent === "prepare_form")) {
+      plan.intent = "clarify";
+      plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "A verified destination screen is required before this request can be prepared."];
+    }
+    if (selectedScreen?.companyRequirements?.accountingEnabled === true && companyContext?.accountingEnabled !== true) {
+      plan.screen_id = null;
+      plan.intent = "clarify";
+      plan.fields = [];
+      plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "This workflow requires Accounting to be enabled for the selected company."];
+    }
+
     const knownFieldIds = new Set(fields.map((field: any) => String(field?.fieldId || "")));
     plan.fields = Array.isArray(plan.fields) ? plan.fields.filter((field: any) => knownFieldIds.has(String(field?.field_id || ""))) : [];
     if (plan.intent === "prepare_form") plan.requires_confirmation = true;
