@@ -562,7 +562,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
             ? group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
             : group.title === "Purchases"
               ? group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/purchase-returns", "/app/debit-notes"].includes(path))
-              : group.links.filter(([, path]) => ["/app/expenses", "/app/expense-register", "/app/payments", "/app/expense-categories", "/app/expense-reports"].includes(path))
+              : group.links.filter(([, path]) => ["/app/expenses", "/app/expense-register", "/app/expense-categories", "/app/expense-reports"].includes(path))
         }))
     : currentModule.groups;
   const visibleCommonGroups = isNativeAndroid ? ANDROID_COMMON_GROUPS : COMMON_GROUPS;
