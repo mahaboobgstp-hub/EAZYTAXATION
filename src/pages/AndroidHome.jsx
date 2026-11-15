@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FiFileText, FiShoppingCart, FiClipboard, FiLayers, FiBarChart2, FiCpu, FiCreditCard, FiBookOpen } from "react-icons/fi";
+import { FiFileText, FiShoppingCart, FiClipboard, FiLayers, FiBarChart2, FiCpu, FiCreditCard, FiBookOpen, FiTrendingUp } from "react-icons/fi";
 import "../css/AndroidHome.css";
 
 const tiles = [
+  { title: "Business Dashboard", path: "/app/dashboard", icon: FiTrendingUp, tone: "dashboard" },
   { title: "Sales Invoice", path: "/app/sales", icon: FiFileText, tone: "sales" },
   { title: "Purchase Invoice", path: "/app/purchases", icon: FiShoppingCart, tone: "purchases" },
   { title: "Expense Entry", path: "/app/expenses", icon: FiClipboard, tone: "expenses" },
