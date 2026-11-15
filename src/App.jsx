@@ -11,6 +11,7 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ForgotUsername from "./pages/auth/ForgotUsername";
 import Layout from './components/Layout';
+import NativeEntry from "./components/NativeEntry";
 import Dashboard from "./pages/Dashboard";
 import AndroidHome from "./pages/AndroidHome";
 import AIAssistant from "./pages/ai/AIAssistant";
@@ -145,7 +146,7 @@ function App() {
 
         <Route
           path="/"
-          element={isNativeAndroid ? <Navigate to="/login" replace /> : <Landing />}
+          element={isNativeAndroid ? <NativeEntry /> : <Landing />}
         />
         <Route
     path="/features"
