@@ -303,3 +303,5 @@
 .login-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;font-size:13px;}
 .login-links a{white-space:nowrap;}
 @media(max-height:700px){.login-card{padding:20px}.login-card h1{font-size:28px}.login-card h2{margin-bottom:12px}.login-divider{margin:10px 0}.login-links{margin-top:12px}}
+
+.login-card .google-login-btn{background:#fff;color:#1f2937;border:1px solid #d1d5db;}
