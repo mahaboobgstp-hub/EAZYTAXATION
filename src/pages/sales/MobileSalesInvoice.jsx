@@ -373,7 +373,7 @@ export default function MobileSalesInvoice() {
         <p>{savedInvoice.invoice_no}</p>
         <strong>{money(savedInvoice.total_amount)}</strong>
         <span>{savedInvoice.customer_name}</span>
-        {savedInvoice.eway_bill_requested && <button className="mobile-sales-secondary" onClick={() => navigate("/app/gst/eway-bills")}>Record E-Way Bill Reference</button>}
+        {savedInvoice.eway_bill_requested && <button className="mobile-sales-secondary" onClick={() => navigate("/app/eway-bills")}>Record E-Way Bill Reference</button>}
         <button className="mobile-sales-primary" onClick={() => navigate("/app/sales-register")}>View Sales Register</button>
         <button className="mobile-sales-secondary" onClick={resetInvoiceForm}>Create Another Invoice</button>
       </section>
