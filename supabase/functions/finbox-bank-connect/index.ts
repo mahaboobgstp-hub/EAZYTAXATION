@@ -71,9 +71,10 @@ Deno.serve(async (req) => {
     if (action === "provider_health") {
       const required = [
         "FINBOX_API_KEY",
-        "FINBOX_API_BASE_URL",
-        "FINBOX_CREATE_SESSION_PATH",
-        "FINBOX_FETCH_TRANSACTIONS_PATH"
+        "FINBOX_SERVER_HASH",
+        "FINBOX_BASE_URL",
+        "FINBOX_API_VERSION",
+        "FINBOX_REDIRECT_URL"
       ];
       const configured = required.filter((key) => Boolean(Deno.env.get(key)));
       return json({
@@ -82,9 +83,9 @@ Deno.serve(async (req) => {
         credentials_present: configured.includes("FINBOX_API_KEY"),
         configuration_items_present: configured.length,
         configuration_items_required: required.length,
-        adapter_status: "awaiting_finbox_api_contract",
+        adapter_status: "awaiting_partner_confirmation",
         missing_configuration: required.filter((key) => !Deno.env.get(key)),
-        message: "The secure SYD endpoint is installed. Provider-specific request/response mapping must be completed against FinBox's current documentation before live calls."
+        message: "FinBox's public BankConnect flow is a user-initiated statement collection journey. SYD must confirm recurring daily-feed support and account-type coverage with FinBox before enabling automatic sync."
       });
     }
 
@@ -114,7 +115,7 @@ Deno.serve(async (req) => {
       // Wire these calls only after FinBox provides the tenant-specific API documentation.
       return json({
         error: "FINBOX_ADAPTER_NOT_CONFIGURED",
-        message: "The SYD bank-feed foundation is ready, but FinBox's current API contract and sandbox details are required to start consent or retrieve transactions.",
+        message: "The SYD database and secure endpoint are ready. FinBox must confirm the current session API configuration, sandbox credentials, and whether recurring daily feeds are supported before this action is enabled.",
         bank_account_id: bankAccount.id,
         bank_name: bankAccount.bank_name,
         account_type: bankAccount.account_type
