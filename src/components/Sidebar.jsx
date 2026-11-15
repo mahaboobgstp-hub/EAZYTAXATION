@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useModule } from "../context/ModuleContext";
 import { supabase } from "../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
@@ -29,6 +29,10 @@ import {
   FiRefreshCw,
   FiArrowLeft,
   FiCpu,
+  FiUser,
+  FiLogOut,
+  FiEye,
+  FiEdit2,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -513,11 +517,16 @@ const isGroupLocked = (moduleId, group) =>
 function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose }) {
   const { activeModule } = useModule();
   const location = useLocation();
+  const navigate = useNavigate();
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const effectiveModuleId = isNativeAndroid ? "billing" : activeModule;
 
   const [openMenu, setOpenMenu] = useState("");
   const [isCaUser, setIsCaUser] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [accountUser, setAccountUser] = useState(null);
+  const [accountProfile, setAccountProfile] = useState(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -541,9 +550,21 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
         if (active) setIsCaUser(false);
       }
     };
+    const loadAccountUser = async (user) => {
+      if (!active) return;
+      setAccountUser(user || null);
+      if (!user) { setAccountProfile(null); return; }
+      try {
+        const { data } = await supabase.from("profiles").select("full_name,business_name,mobile").eq("id", user.id).maybeSingle();
+        if (active) setAccountProfile(data || null);
+      } catch { if (active) setAccountProfile(null); }
+    };
+    supabase.auth.getUser().then(({ data }) => loadAccountUser(data?.user || null));
     checkCaRole();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       checkCaRole();
+      if (event === "SIGNED_OUT") { setAccountMenuOpen(false); loadAccountUser(null); }
+      else if (session?.user) loadAccountUser(session.user);
     });
     return () => {
       active = false;
@@ -570,6 +591,22 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
   const toggleMenu = (menuName) => {
     setOpenMenu((previous) => previous === menuName ? "" : menuName);
   };
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setAccountMenuOpen(false);
+      navigate("/login", { replace: true });
+      onClose?.();
+    } catch (error) { window.alert(error?.message || "Unable to log out. Please try again."); }
+    finally { setLoggingOut(false); }
+  };
+
+  const accountDisplayName = accountProfile?.full_name || accountUser?.user_metadata?.full_name || accountUser?.email?.split("@")[0] || "Logged-in User";
+  const accountInitials = accountDisplayName.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
 
   
   const renderGroup = (group, keyPrefix) => {
@@ -681,6 +718,20 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
         <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Back to app" title="Back to app">
           <FiArrowLeft />
         </button>
+      </div>
+
+      <div className="sidebar-account-wrap">
+        <button type="button" className="sidebar-account-trigger" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen((open) => !open)}>
+          <span className="sidebar-account-avatar">{accountInitials || <FiUser />}</span>
+          <span className="sidebar-account-copy"><strong>{accountDisplayName}</strong><small>{accountUser?.email || "Account"}</small></span>
+          <FiChevronDown className={"sidebar-account-chevron " + (accountMenuOpen ? "open" : "")} />
+        </button>
+        {accountMenuOpen && <div className="sidebar-account-menu">
+          <button type="button" onClick={() => { setAccountMenuOpen(false); navigate("/app/profile"); onNavigate?.(); }}><FiEye /><span>View Profile</span></button>
+          <button type="button" onClick={() => { setAccountMenuOpen(false); navigate("/app/user-profile"); onNavigate?.(); }}><FiEdit2 /><span>Edit Profile</span></button>
+          <div className="sidebar-account-menu-divider" />
+          <button type="button" className="sidebar-account-logout" disabled={loggingOut} onClick={handleLogout}><FiLogOut /><span>{loggingOut ? "Logging out..." : "Logout"}</span></button>
+        </div>}
       </div>
 
       <nav className="sidebar-menu" aria-label="Main navigation">
