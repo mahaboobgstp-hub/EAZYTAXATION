@@ -181,6 +181,31 @@ export default function MobileSalesInvoice() {
     return () => { active = false; };
   }, [location.state, currentCompanyId, customers, sourceLoadedId]);
 
+  useEffect(() => {
+    const id = location.state?.previewInvoiceId;
+    if (!id || !currentCompanyId || !customers.length || sourceLoadedId === "preview:" + id) return;
+    let active = true;
+    (async () => {
+      try {
+        const [headerResult, itemResult] = await Promise.all([
+          supabase.from("sales_invoices").select("*").eq("id", id).eq("company_id", currentCompanyId).single(),
+          supabase.from("sales_invoice_items").select("*").eq("invoice_id", id).order("line_no")
+        ]);
+        if (headerResult.error) throw headerResult.error;
+        if (itemResult.error) throw itemResult.error;
+        const header = headerResult.data;
+        const customerDetails = await getCustomerById(header.customer_id);
+        const [settings, companyDetails] = await Promise.all([
+          getInvoiceSettingsByCompany(currentCompanyId), getCompanyById(currentCompanyId)
+        ]);
+        if (!active) return;
+        setPrintData({ invoice: header, items: itemResult.data || [], settings, company: companyDetails, customer: customerDetails });
+        setSourceLoadedId("preview:" + id);
+      } catch (err) { if (active) setError(err.message || "Unable to preview invoice."); }
+    })();
+    return () => { active = false; };
+  }, [location.state, currentCompanyId, customers, sourceLoadedId]);
+
   const changeDate = async value => {
     setInvoiceDate(value);
     if (editingInvoiceId || invoiceSettings?.invoice_auto_numbering === false || !currentCompanyId) return;
@@ -301,6 +326,12 @@ export default function MobileSalesInvoice() {
 
   if (companyLoading || loading) return <main className="mobile-sales-page"><div className="mobile-sales-loading">Loading your sales workspace…</div></main>;
   if (!currentCompanyId) return <main className="mobile-sales-page"><div className="mobile-sales-empty"><h2>Select a company</h2><p>Select or create a company before creating a sales invoice.</p><button onClick={() => navigate("/app/companies")}>Company Management</button></div></main>;
+
+  if (printData && !savedInvoice) return (
+    <main className="mobile-sales-page">
+      <InvoicePrint invoice={printData.invoice} items={printData.items} settings={printData.settings} company={printData.company} customer={printData.customer} onClose={() => { setPrintData(null); navigate("/app/sales-register"); }} />
+    </main>
+  );
 
   if (savedInvoice) return (
     <main className="mobile-sales-page">
