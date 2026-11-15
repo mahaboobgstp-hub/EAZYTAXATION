@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useLocation } from "react-router-dom";
 import { FiArrowDownLeft, FiArrowUpRight, FiPlus, FiRefreshCw, FiSearch, FiDownload, FiCheck, FiX, FiCalendar, FiCreditCard, FiFileText, FiArrowRight, FiAlertCircle } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
@@ -18,7 +19,10 @@ const emptyForm = { voucher_date:today(), reference_number:"", narration:"", ban
 export default function BankingWorkspace(){
   const {currentCompany,currentCompanyId}=useCompany();
   const location=useLocation();
-  const requested=new URLSearchParams(location.search).get("tab")||"overview";
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+  const requestedTab = new URLSearchParams(location.search).get("tab") || "overview";
+  const requested = isNativeAndroid && ["receipts","payments"].includes(requestedTab) ? "overview" : requestedTab;
+  const visibleTabs = isNativeAndroid ? tabs.filter(([key]) => !["receipts","payments"].includes(key)) : tabs;
   const [tab,setTab]=useState(requested);
   const [accounts,setAccounts]=useState([]);
   const [statements,setStatements]=useState([]);
@@ -150,7 +154,7 @@ export default function BankingWorkspace(){
   return <main className="banking-page">
     <div className="banking-breadcrumb">Accounting <span>/</span> Banking <span>/</span> {title}</div>
     <header className="banking-heading"><div><div className="banking-eyebrow">SYD · CASH & BANK MANAGEMENT</div><h1>{title}</h1><p>{currentCompany?.company_name||"Selected company"} · Company-linked banking records</p></div><div className="banking-heading-actions"><button className="bank-btn bank-btn-light" onClick={load} disabled={loading}><FiRefreshCw/> Refresh</button>{tab==="accounts"&&<button className="bank-btn bank-btn-primary" onClick={()=>setShowAccountForm(true)}><FiPlus/> Link Bank Account</button>}</div></header>
-    <nav className="banking-tabs">{tabs.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</nav>
+    <nav className="banking-tabs">{visibleTabs.map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</nav>
     {error&&<div className="banking-notice" role="alert"><FiAlertCircle/><span>{error}</span><button onClick={()=>setError("")}><FiX/></button></div>}
     {notice&&<div className="banking-notice"><FiCheck/><span>{notice}</span><button onClick={()=>setNotice("")}><FiX/></button></div>}
     {loading?<section className="bank-card" style={{padding:24}}>Loading company banking records…</section>:!currentCompanyId?<section className="bank-card" style={{padding:24}}>Please select a company to view Banking.</section>:<>
