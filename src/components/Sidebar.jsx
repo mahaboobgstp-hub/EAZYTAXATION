@@ -416,6 +416,9 @@ const AVAILABLE_ROUTES = new Set([
 
   // Billing pages available for initial testing
   "/app/dashboard",
+  "/app/ai-assistant",
+  "/app/ai-assistant/voice",
+  "/app/ai-assistant/document-type",
   "/app/companies",
   "/app/customers",
   "/app/vendors",
