@@ -3,6 +3,7 @@
 create table if not exists public.bank_feed_connections (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies(id) on delete cascade,
+  unique (company_id, id),
   bank_account_id uuid,
   provider text not null default 'finbox' check (provider in ('finbox')),
   provider_connection_ref text,
