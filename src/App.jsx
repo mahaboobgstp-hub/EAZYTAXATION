@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import Landing from "./pages/landing/Landing";
 import Features from "./pages/features/Features";
@@ -144,7 +144,7 @@ function App() {
 
         <Route
           path="/"
-          element={<Landing />}
+          element={isNativeAndroid ? <Navigate to="/login" replace /> : <Landing />}
         />
         <Route
     path="/features"
