@@ -1,6 +1,9 @@
 {
   "appId": "com.eazytaxation.mobile",
   "appName": "SYD Billing & Accounting",
-  "webDir": "dist",
-  "androidScheme": "https"
+  "webDir": "android-shell",
+  "server": {
+    "url": "https://eazytaxation-mobile-test-git-android-sales-development-mahaboobs-projects-c4dc881b.vercel.app",
+    "cleartext": false
+  }
 }
