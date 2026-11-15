@@ -44,7 +44,7 @@ export default function FinBoxBankConnectPanel({ companyId }) {
       <div className="finbox-readiness-status">
         <span className={readiness?.adapter_status === "ready" ? "finbox-status-dot ready" : "finbox-status-dot"} />
         <div>
-          <b>{readiness?.adapter_status === "ready" ? "Provider adapter ready" : "Waiting for FinBox API contract"}</b>
+          <b>{readiness?.adapter_status === "ready" ? "Provider adapter ready" : "Awaiting FinBox confirmation"}</b>
           <small>{readiness?.message || "Checking secure backend configuration…"}</small>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function FinBoxBankConnectPanel({ companyId }) {
         <small className="finbox-muted">Backend secrets still required: {readiness.missing_configuration.join(", ")}</small>
       )}
       <div className="finbox-readiness-note">
-        Bank consent and live transaction fetching remain disabled until FinBox supplies its current API documentation, sandbox credentials and callback requirements. No bank password, PIN or OTP is collected by SYD.
+        FinBox's published BankConnect flow collects statements through a user-initiated journey. Automatic daily refresh is not established by the public integration guide. SYD will not promise or enable daily sync until FinBox confirms recurring retrieval and current-account / CC / OD coverage in writing. No bank password, PIN or OTP is stored by SYD.
       </div>
       {connections.length > 0 && (
         <div className="finbox-connection-list">
