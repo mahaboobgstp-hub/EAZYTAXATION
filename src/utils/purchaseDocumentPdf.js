@@ -4,7 +4,7 @@ const n = value => Number(value) || 0;
 const inr = value => `INR ${n(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const clean = value => String(value || "—").replace(/[\r\n]+/g, " ");
 
-export function downloadPurchasePdf({ kind, document, items = [], company = {} }) {
+export function downloadPurchasePdf({ kind, document, items = [], company = {}, returnBlob = false }) {
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const width = pdf.internal.pageSize.getWidth();
   const height = pdf.internal.pageSize.getHeight();
@@ -133,5 +133,6 @@ export function downloadPurchasePdf({ kind, document, items = [], company = {} }
     pdf.text(`Page ${page} of ${pageCount}`, width / 2, height - 5, { align: "center" });
   }
   const safeName = String(number).replace(/[^a-z0-9._-]/gi, "_");
-  pdf.save(`${safeName}.pdf`);
+  if (returnBlob) return { blob: pdf.output("blob"), fileName: safeName + ".pdf" };
+  pdf.save(safeName + ".pdf");
 }
