@@ -281,7 +281,7 @@ export default function SalesWorkspace({ kind }) {
 
   const registerAction = async (row, action) => {
     setMenuId(null);
-    if (action === "View") return view(row);
+    if (action === "View") return navigate("/app/sales", { state: { previewInvoiceId: row.id } });
     if (action === "Edit") return navigate("/app/sales", { state: { editInvoiceId: row.id } });
     if (action === "Print") return printInvoice(row);
     if (action === "Cancel Invoice") return deleteRow(row);
