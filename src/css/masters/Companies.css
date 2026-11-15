@@ -1,36 +1,60 @@
 .companies-page {
+  padding: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+  color: #17233b;
+}
+.companies-heading { margin-bottom: 22px; }
+.companies-heading h2 { margin: 0 0 6px; font-size: 24px; }
+.companies-heading p, .company-section-heading p { margin: 0; color: #718096; font-size: 13px; }
+.company-onboarding-form { display: flex; flex-direction: column; gap: 18px; }
+.company-form-section, .company-list-section {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
   padding: 20px;
+  box-shadow: 0 2px 8px rgba(20, 35, 60, .04);
 }
-
-.company-form {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin-bottom: 30px;
+.company-section-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.company-section-heading h3, .company-list-section h3 { margin: 0 0 4px; font-size: 17px; }
+.company-step {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%;
+  background: #eaf2f8; color: #172b4d; font-weight: 700;
 }
-
-.company-form input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+.company-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.company-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; font-size: 13px; font-weight: 600; color: #344054; }
+.company-field-wide { grid-column: 1 / -1; }
+.company-field input, .company-field select, .company-field textarea {
+  box-sizing: border-box; width: 100%; min-height: 42px; padding: 10px 12px;
+  border: 1px solid #cfd7e3; border-radius: 7px; background: #fff;
+  color: #17233b; font: inherit; font-weight: 400;
 }
-
-.company-form button {
-  padding: 10px;
-  cursor: pointer;
+.company-field textarea { resize: vertical; }
+.company-field input:focus, .company-field select:focus, .company-field textarea:focus {
+  outline: 2px solid rgba(24, 115, 130, .18); border-color: #187382;
 }
-
-.company-grid {
-  width: 100%;
-  border-collapse: collapse;
+.company-field input:disabled { background: #f4f6f8; color: #667085; }
+.company-field small { color: #7a8699; font-size: 11px; font-weight: 400; line-height: 1.5; }
+.company-choice-row { display: flex; flex-wrap: wrap; gap: 20px; padding: 8px 0; }
+.company-choice-row label { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; cursor: pointer; }
+.company-choice-row input { accent-color: #187382; }
+.company-form-actions { display: flex; justify-content: flex-end; }
+.company-form-actions button {
+  min-height: 44px; padding: 0 26px; border: 0; border-radius: 8px;
+  background: #172b4d; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
 }
-
-.company-grid th,
-.company-grid td {
-  border: 1px solid #ddd;
-  padding: 10px;
-}
-
-.company-grid th {
-  background: #f5f5f5;
+.company-form-actions button:disabled { opacity: .65; cursor: wait; }
+.company-list-section { margin-top: 26px; }
+.company-table-wrap { width: 100%; overflow-x: auto; }
+.company-grid { width: 100%; border-collapse: collapse; min-width: 760px; font-size: 12px; }
+.company-grid th, .company-grid td { border-bottom: 1px solid #e7ebf0; padding: 11px 10px; text-align: left; white-space: nowrap; }
+.company-grid th { background: #f6f8fb; color: #475467; font-weight: 700; }
+.company-grid tbody tr:hover { background: #fafbfd; }
+@media (max-width: 700px) {
+  .companies-page { padding: 14px; }
+  .company-form-section, .company-list-section { padding: 15px; }
+  .company-fields { grid-template-columns: 1fr; }
+  .company-field-wide { grid-column: auto; }
+  .company-form-actions button { width: 100%; }
 }
