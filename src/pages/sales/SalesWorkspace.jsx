@@ -4,6 +4,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
 import "../../css/sales/SalesWorkspace.css";
+import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
 
 const CONFIG = {
   register: {
@@ -60,6 +61,7 @@ export default function SalesWorkspace({ kind }) {
   const [formStep, setFormStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [menuId, setMenuId] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
   const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0" }]);
 
@@ -277,6 +279,27 @@ export default function SalesWorkspace({ kind }) {
     popup.document.close(); popup.focus(); popup.print();
   };
 
+  const registerAction = async (row, action) => {
+    setMenuId(null);
+    if (action === "View") return view(row);
+    if (action === "Edit") return navigate("/app/sales", { state: { editInvoiceId: row.id } });
+    if (action === "Print") return printInvoice(row);
+    try {
+      const { data: items, error } = await supabase.from("sales_invoice_items").select("*").eq("invoice_id", row.id).eq("company_id", currentCompanyId).order("line_no");
+      if (error) throw error;
+      const result = createSalesInvoicePdf({ document: row, items: items || [], company: currentCompany || {} });
+      if (action === "Download") {
+        const url = URL.createObjectURL(result.blob); const link = document.createElement("a");
+        link.href = url; link.download = result.fileName; link.click(); URL.revokeObjectURL(url); return;
+      }
+      if (action === "Share") {
+        const file = new File([result.blob], result.fileName, { type: "application/pdf" });
+        if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
+        else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); URL.revokeObjectURL(url); setMessage("PDF downloaded. Attach it to WhatsApp or email to share."); }
+      }
+    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
+  };
+
   const deleteRow = async row => {
     if (!window.confirm(`Delete ${row[config.number]}? This will remove it from this register.`)) return;
     const { error } = await supabase.from(config.table).update({ is_deleted: true }).eq("id", row.id).eq("company_id", currentCompanyId);
@@ -313,7 +336,7 @@ export default function SalesWorkspace({ kind }) {
           {kind === "orders" && <><td data-label="Expected delivery">{dateText(row.expected_delivery_date)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Fulfillment"><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
-          <td data-label="Actions"><div className="sw-actions"><button onClick={() => view(row)}>View</button>{kind === "register" && <button onClick={() => printInvoice(row)}>Print</button>}{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div></td>
+          <td data-label="Actions">{kind === "register" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="sw-menu">{["View","Edit","Print","Download","Share"].map(action => <button type="button" key={action} onClick={() => registerAction(row, action)}>{action}</button>)}</div>}</div> : <div className="sw-actions"><button onClick={() => view(row)}>View</button>{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div>}</td>
         </tr>;
       })}</tbody></table></div>}
     </section></>}
