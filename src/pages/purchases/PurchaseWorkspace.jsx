@@ -174,6 +174,17 @@ export default function PurchaseWorkspace({ kind }) {
     if (action === "Edit") return openEdit(row);
     if (action === "View") return openPreview(row);
     if (action === "Print") return openPreview(row, true);
+    if (action === "Share") {
+      try {
+        const lineItems = await getItems(row);
+        const vendor = vendors.find(v => v.id === row.vendor_id) || {};
+        const result = downloadPurchasePdf({ kind, document: { ...row, vendor_name: row.vendor_name || vendor.vendor_name, gstin: row.gstin || vendor.gstin, vendor_state: row.vendor_state || vendor.state }, items: lineItems, company: currentCompany, returnBlob: true });
+        const file = new File([result.blob], result.fileName, { type: "application/pdf" });
+        if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
+        else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); URL.revokeObjectURL(url); setMessage("PDF downloaded. Attach it to WhatsApp or email to share."); }
+      } catch (error) { if (error.name !== "AbortError") setMessage(error.message); }
+      return;
+    }
     if (action === "Download") {
       try {
         const lineItems = await getItems(row);
@@ -311,7 +322,7 @@ export default function PurchaseWorkspace({ kind }) {
           {kind === "orders" && <><td className="pw-docno">{row.order_no}</td><td>{dateText(row.order_date)}</td><td>{vendorName(row)}</td><td>{dateText(row.expected_delivery_date)}</td><td>{row.item_count || "—"}</td><td className="pw-money">{money(row.total_amount)}</td><td><div className="pw-progress"><span>{num(row.received_qty)} / {num(row.ordered_qty)} Units</span><i><b style={{ width: `${receipt}%` }} /></i></div></td><td><span className={`pw-status ${(row.status||"Draft").toLowerCase().replaceAll(" ","-")}`}>{row.status || "Draft"}</span></td></>}
           {kind === "returns" && <><td className="pw-docno">{row.return_no}</td><td>{dateText(row.return_date)}</td><td>{vendorName(row)}</td><td>{row.original_purchase_invoice_no || "—"}</td><td>{row.reason || "—"}</td><td className="pw-money">{money(row.taxable_value)}</td><td className="pw-money">{money(gstTotal(row))}</td><td className="pw-money"><strong>{money(row.total_credit)}</strong></td><td><span className={`pw-status ${(row.status||"Draft").toLowerCase().replaceAll(" ","-")}`}>{row.status || "Draft"}</span></td></>}
           {kind === "debits" && <><td className="pw-docno">{row.debit_note_no}</td><td>{dateText(row.debit_note_date)}</td><td>{vendorName(row)}</td><td>{row.original_purchase_invoice_no || "—"}</td><td>{row.reason || "—"}</td><td className="pw-money">{money(row.taxable_value)}</td><td className="pw-money">{money(gstTotal(row))}</td><td className="pw-money"><strong>{money(row.total_amount)}</strong></td><td><span className={`pw-status ${(row.status||"Draft").toLowerCase().replaceAll(" ","-")}`}>{row.status || "Draft"}</span></td></>}
-          <td><div className="pw-menu-wrap"><button className="pw-kebab" aria-label={`Actions for ${row[config.number]}`} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="pw-menu">{["View","Edit","Print","Download"].map(action => <button key={action} onClick={() => onAction(row, action)}>{action}</button>)}</div>}</div></td>
+          <td><div className="pw-menu-wrap"><button className="pw-kebab" aria-label={`Actions for ${row[config.number]}`} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="pw-menu">{["View","Edit","Print","Download","Share"].map(action => <button key={action} onClick={() => onAction(row, action)}>{action}</button>)}</div>}</div></td>
         </tr>;
       })}</tbody></table></div>}
       {!!filtered.length && <footer className="pw-table-footer"><span>Showing {Math.min(filtered.length,(page-1)*8+1)}–{Math.min(page*8,filtered.length)} of {filtered.length} records</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button><span>{page}</span><button disabled={page*8>=filtered.length} onClick={()=>setPage(p=>p+1)}>›</button></div></footer>}
