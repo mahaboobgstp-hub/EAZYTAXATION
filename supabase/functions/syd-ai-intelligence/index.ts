@@ -62,13 +62,15 @@ Deno.serve(async (req: Request) => {
     const platform = ["web","android","ios"].includes(body?.platform) ? body.platform : "web";
     const companyContext = safeObject(body?.companyContext, 3000);
     const currentScreen = safeObject(body?.currentScreen, 3000);
+    const registeredScreens = Array.isArray(body?.registeredScreens) ? body.registeredScreens.slice(0, 150) : [];
     const fields = Array.isArray(body?.fields) ? body.fields.slice(0, 100) : [];
     const conversationContext = safeObject(body?.conversationContext, 2000);
 
     const instructions = [
       "You are SYD Intelligence, the command-understanding layer for SYD Billing & Accounting.",
       "Understand natural-language business instructions, Indian accounting terminology and mixed-language phrasing.",
-      "Use only supplied screen and field definitions. Never invent a screen ID, field ID, route, option, company setting, tax rate, account code or application capability.",
+      "Use only supplied registeredScreens, currentScreen and field definitions. Never invent a screen ID, field ID, route, option, company setting, tax rate, account code or application capability.",
+      "Only select a screen_id that exactly matches an item in registeredScreens. If no suitable registered screen exists, use null and ask for clarification or mark unsupported.",
       "Company context is informational only; it is not proof of permissions or authorization.",
       "If operatingMode is billing_only, do not propose accounting-only workflows.",
       "If a field is not in the supplied field definitions, do not return it in fields; put the missing requirement in missing_information.",
@@ -80,7 +82,7 @@ Deno.serve(async (req: Request) => {
       "Set requires_confirmation to true for any prepare_form intent.",
     ].join(" ");
 
-    const input = JSON.stringify({ command, platform, companyContext, currentScreen, fields, conversationContext });
+    const input = JSON.stringify({ command, platform, companyContext, registeredScreens, currentScreen, fields, conversationContext });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000);
     let providerResponse: Response;
@@ -117,6 +119,12 @@ Deno.serve(async (req: Request) => {
 
     const allowedIntents = ["navigate","prepare_form","answer_question","clarify","unsupported"];
     if (!allowedIntents.includes(plan.intent)) return json({ error: "AI returned an unsupported intent.", requestId }, 502);
+    const knownScreenIds = new Set(registeredScreens.map((screen: any) => String(screen?.screenId || "")));
+    if (plan.screen_id && !knownScreenIds.has(String(plan.screen_id))) {
+      plan.screen_id = null;
+      if (plan.intent === "navigate" || plan.intent === "prepare_form") plan.intent = "clarify";
+      plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "The requested destination is not yet registered in SYD's verified screen catalogue."];
+    }
     const knownFieldIds = new Set(fields.map((field: any) => String(field?.fieldId || "")));
     plan.fields = Array.isArray(plan.fields) ? plan.fields.filter((field: any) => knownFieldIds.has(String(field?.field_id || ""))) : [];
     if (plan.intent === "prepare_form") plan.requires_confirmation = true;
