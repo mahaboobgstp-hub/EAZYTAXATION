@@ -792,3 +792,15 @@
     max-width: 200px;
   }
 }
+
+
+/* Android drawer: compact width so the workspace remains visible */
+@media(max-width:768px){
+  .sidebar,.sidebar.sidebar-mobile-open,.sidebar-collapsed{width:224px;min-width:224px;max-width:78vw;}
+  .sidebar .company-card{margin:9px;padding:9px;gap:8px;}
+  .sidebar .company-icon{width:34px;height:34px;}
+  .sidebar .menu-title{padding:9px 9px;}
+  .sidebar .menu-left{gap:8px;}
+  .sidebar .submenu{margin-left:12px;margin-right:6px;}
+  .sidebar .submenu-link{padding:8px 8px 8px 10px;font-size:11px;}
+}
