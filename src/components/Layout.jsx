@@ -13,6 +13,7 @@ function Layout() {
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
   const location = useLocation();
   const desktopOnlyPath = /^\/app\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|ca-workspace|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
 
@@ -36,8 +37,8 @@ function Layout() {
         <div className="main-container" onClick={() => {
           if (window.innerWidth <= 768 && mobileSidebarOpen) setMobileSidebarOpen(false);
         }}>
-          <Header onToggleSidebar={toggleSidebar} />
-          {location.pathname !== "/app/ai-assistant/voice" && <GlobalVoiceAssistant />}
+          <Header onToggleSidebar={toggleSidebar} onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />
+          {location.pathname !== "/app/ai-assistant/voice" && <GlobalVoiceAssistant open={voiceAssistantOpen} onClose={() => setVoiceAssistantOpen(false)} />}
           <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}>{isNativeAndroid && desktopOnlyPath ? <Navigate to="/app" replace /> : <Outlet />}</div>
           {isNativeAndroid && (
             <nav className="android-bottom-nav" aria-label="Bottom navigation">
