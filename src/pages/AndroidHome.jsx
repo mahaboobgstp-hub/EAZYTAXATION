@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiFileText, FiShoppingCart, FiClipboard, FiUsers, FiPackage,
   FiActivity, FiBarChart2, FiCpu, FiX, FiArrowRight,
-  FiCreditCard, FiUserRound, FiBriefcase, FiCalendar
+  FiCreditCard, FiUser, FiBriefcase, FiCalendar
 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
@@ -144,7 +144,7 @@ export default function AndroidHome() {
           </div>}
 
           {panel === "parties" && <div className="android-home-panel-options">
-            <button type="button" onClick={() => navigate("/app/customers")}><span className="android-panel-option-icon"><FiUserRound /></span><span><b>Customers</b><small>Customer master and details</small></span><FiArrowRight /></button>
+            <button type="button" onClick={() => navigate("/app/customers")}><span className="android-panel-option-icon"><FiUser /></span><span><b>Customers</b><small>Customer master and details</small></span><FiArrowRight /></button>
             <button type="button" onClick={() => navigate("/app/vendors")}><span className="android-panel-option-icon"><FiBriefcase /></span><span><b>Vendors</b><small>Supplier master and details</small></span><FiArrowRight /></button>
           </div>}
 
