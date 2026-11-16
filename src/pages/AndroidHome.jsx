@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiFileText, FiShoppingCart, FiClipboard, FiUsers, FiPackage, FiX, FiArrowRight,
-  FiCreditCard, FiUser, FiBriefcase, FiCalendar, FiTrendingUp, FiReceipt,
-  FiBookOpen, FiLandmark, FiClock, FiGrid, FiCpu, FiMoreVertical,
+  FiCreditCard, FiUser, FiBriefcase, FiCalendar, FiTrendingUp, FiDollarSign,
+  FiBookOpen, FiClock, FiGrid, FiCpu, FiMoreVertical,
   FiEye, FiEdit2, FiShare2, FiPrinter, FiDownload
 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
@@ -31,8 +31,8 @@ const shortcuts = [
 const reportLinks = [
   ["Sales", "/app/sales-reports", "Sales performance and invoices", FiTrendingUp, "sales"],
   ["Purchases", "/app/purchase-reports", "Supplier purchases and totals", FiShoppingCart, "purchases"],
-  ["Expenses", "/app/expense-reports", "Business expenses", FiReceipt, "expenses"],
-  ["GST", "/app/gst-reports", "GST summary and tax values", FiLandmark, "gst"],
+  ["Expenses", "/app/expense-reports", "Business expenses", FiClipboard, "expenses"],
+  ["GST", "/app/gst-reports", "GST summary and tax values", FiDollarSign, "gst"],
   ["Ledgers", "/app/customer-ledger", "Customer, vendor and item ledgers", FiBookOpen, "ledgers"],
   ["Ageing", "/app/receivables-ageing", "Receivables and payables ageing", FiClock, "ageing"]
 ];
