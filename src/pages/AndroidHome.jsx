@@ -74,7 +74,7 @@ export default function AndroidHome() {
             id: row.id,
             date: row[source.date],
             type: source.type === "Voucher" ? (row.voucher_type || "Voucher") : source.type,
-            number: row[source.number] || row.reference_number || "—",
+            number: row[source.number] || row.voucher_number || row.reference_number || "—",
             party: row[source.party] || "—",
             amount: row[source.amount] || 0,
             path: source.path
