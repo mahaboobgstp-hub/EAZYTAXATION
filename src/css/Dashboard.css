@@ -114,3 +114,6 @@
  .dashboard-widget-grid{grid-template-columns:1fr}
  .dashboard-widget-state{font-size:8px}
 }
+
+/* Keyboard and assistive-focus visibility for dashboard controls */
+.dashboard-date-trigger:focus-visible,.dashboard-configure-button:focus-visible,.dashboard-icon-button:focus-visible,.dashboard-date-group button:focus-visible,.dashboard-widget-option:focus-within{outline:3px solid rgba(37,99,235,.28);outline-offset:2px}
