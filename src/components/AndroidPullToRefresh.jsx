@@ -62,7 +62,7 @@ export default function AndroidPullToRefresh({ children, refreshKey, onRefresh }
 
   return (
     <div className="android-pull-refresh" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
-      <div className={`android-pull-refresh-indicator ${refreshing ? "is-refreshing" : ""} ${pullDistance > 0 ? "is-visible" : ""}`} style={{ height: refreshing ? 48 : Math.min(48, pullDistance * 0.55), opacity: refreshing ? 1 : Math.min(1, pullDistance / TRIGGER_DISTANCE) }} aria-live="polite">
+      <div className={`android-pull-refresh-indicator ${refreshing ? "is-refreshing" : ""} ${pullDistance > 0 ? "is-visible" : ""}`} style={{ height: refreshing || refreshBlocked ? 48 : Math.min(48, pullDistance * 0.55), opacity: refreshing || refreshBlocked ? 1 : Math.min(1, pullDistance / TRIGGER_DISTANCE) }} aria-live="polite">
         <FiRefreshCw />
         <span>{refreshBlocked ? "Save or discard changes before refreshing" : refreshing ? "Refreshing…" : pullDistance >= TRIGGER_DISTANCE ? "Release to refresh" : "Pull to refresh"}</span>
       </div>
