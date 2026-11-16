@@ -15,10 +15,8 @@
 .android-home-tile.banking .android-home-tile-icon{background:#eaf4ff;color:#1e5bb8}
 .android-home-tile.parties .android-home-tile-icon{background:#fff1f2;color:#d94865}
 .android-home-tile.items .android-home-tile-icon{background:#edf4ff;color:#2563eb}
-.android-home-tile.transactions .android-home-tile-icon{background:#e9f8f5;color:#0f8b78}
-.android-home-tile.reports .android-home-tile-icon{background:#eef5ff;color:#4386dc}
-.android-home-ai{position:fixed;right:18px;bottom:78px;z-index:850;display:flex;align-items:center;gap:8px;padding:11px 15px;border:0;border-radius:24px;background:#30215f;color:#fff;box-shadow:0 8px 22px rgba(48,33,95,.25);font:inherit;font-size:12px;font-weight:750}
-.android-home-ai svg{width:18px;height:18px}
+.android-home-tile.dashboard .android-home-tile-icon{background:#e9f8f5;color:#0f8b78}
+.android-home-tile.assistant .android-home-tile-icon{background:#f0edff;color:#6546df}
 .android-home-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-end;justify-content:center;padding:14px;background:rgba(15,23,42,.48)}
 .android-home-panel{width:min(100%,560px);max-height:min(78dvh,680px);overflow:auto;padding:18px;border:1px solid #e6eaf1;border-radius:22px 22px 18px 18px;background:#fff;box-shadow:0 18px 55px rgba(15,23,42,.2)}
 .android-home-panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
@@ -34,11 +32,24 @@
 .android-report-options{grid-template-columns:repeat(2,minmax(0,1fr))}
 .android-report-options>button{min-height:76px;gap:9px;padding:9px}
 .android-report-options .android-panel-option-icon{flex-basis:34px;width:34px;height:34px}
+.report-icon-sales{background:#eaf8f0;color:#159b69}
+.report-icon-purchases{background:#f0edff;color:#6546df}
+.report-icon-expenses{background:#fff4e7;color:#d58a2b}
+.report-icon-gst{background:#eaf4ff;color:#2864a8}
+.report-icon-ledgers{background:#fff1f2;color:#c94e73}
+.report-icon-ageing{background:#e9f8f5;color:#168b83}
 .android-recent-transactions{display:grid;gap:0}
-.android-transaction-row{display:flex;align-items:center;gap:10px;width:100%;padding:11px 2px;border:0;border-bottom:1px solid #edf0f4;background:#fff;color:#1d2939;text-align:left}
-.android-transaction-mark{flex-basis:34px;width:34px;height:34px;background:#f1f5f9;color:#52637a}
+.android-transaction-row{position:relative;display:flex;align-items:center;gap:9px;width:100%;padding:11px 0;border:0;border-bottom:1px solid #edf0f4;background:#fff;color:#1d2939;text-align:left}
+.android-transaction-mark{flex:0 0 34px;width:34px;height:34px;background:#f1f5f9;color:#52637a}
+.android-transaction-copy{flex:1;min-width:0}
 .android-transaction-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .android-transaction-row>strong{font-size:12px;white-space:nowrap}
+.android-transaction-menu-wrap{position:relative;flex:0 0 30px}
+.android-transaction-menu-button{display:grid;width:30px;height:36px;place-items:center;border:0;border-radius:9px;background:transparent;color:#667085;font-size:19px}
+.android-transaction-menu{position:absolute;right:0;top:36px;z-index:20;width:190px;padding:6px;border:1px solid #e4e9f0;border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(16,24,40,.16)}
+.android-transaction-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 9px;border:0;border-radius:8px;background:#fff;color:#263449;text-align:left;font:inherit;font-size:12px}
+.android-transaction-menu button:active{background:#f2f5fa}
+.android-transaction-menu button svg{width:16px;height:16px;color:#667085}
 .android-panel-empty,.android-panel-error{padding:20px 8px;color:#718096;font-size:13px;text-align:center}
-.android-panel-error{color:#b42318}
-@media(max-width:360px){.android-home-grid{gap:8px}.android-home-tile{min-height:102px}.android-home-tile-title{font-size:11px}.android-report-options{grid-template-columns:1fr}}
+.android-panel-error{color:#b42318}.android-action-message{padding:10px;background:#fff4e5;border-radius:9px}
+@media(max-width:360px){.android-home-grid{gap:8px}.android-home-tile{min-height:102px}.android-home-tile-title{font-size:11px}.android-report-options{grid-template-columns:1fr}.android-transaction-row{gap:6px}.android-transaction-row>strong{font-size:11px}}
