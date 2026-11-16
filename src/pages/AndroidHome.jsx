@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiFileText, FiShoppingCart, FiClipboard, FiUsers, FiPackage, FiX, FiArrowRight,
   FiCreditCard, FiUser, FiBriefcase, FiCalendar, FiTrendingUp, FiReceipt,
-  FiBookOpen, FiFileText, FiClock, FiGrid, FiCpu, FiMoreVertical,
+  FiBookOpen, FiClock, FiGrid, FiCpu, FiMoreVertical,
   FiEye, FiEdit2, FiShare2, FiPrinter, FiDownload
 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
