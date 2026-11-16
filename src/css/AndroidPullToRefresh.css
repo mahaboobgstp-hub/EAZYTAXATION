@@ -1,6 +1,6 @@
 .android-pull-refresh{position:relative;min-height:100%;overscroll-behavior-y:contain}
-.android-pull-refresh-indicator{position:absolute;z-index:5;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;overflow:hidden;color:#2458d3;font-size:12px;font-weight:600;pointer-events:none;transition:height .12s ease,opacity .12s ease}
-.android-pull-refresh-indicator svg{width:18px;height:18px;flex:0 0 auto}
+.android-pull-refresh-indicator{position:absolute;z-index:5;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;color:#2458d3;font-size:13px;font-weight:700;pointer-events:none;transition:height .16s ease,opacity .16s ease;background:linear-gradient(180deg,rgba(232,240,255,.98),rgba(248,250,252,.92));border-radius:0 0 16px 16px;box-shadow:0 5px 14px rgba(36,88,211,.08)}
+.android-pull-refresh-indicator svg{width:20px;height:20px;flex:0 0 auto;stroke-width:2.5}
 .android-pull-refresh-indicator.is-refreshing svg{animation:syd-refresh-spin .8s linear infinite}
 .android-pull-refresh-indicator:not(.is-visible):not(.is-refreshing){visibility:hidden}
 .android-pull-refresh-content{min-height:100%}
