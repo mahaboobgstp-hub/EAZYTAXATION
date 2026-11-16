@@ -54,11 +54,32 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          # Maven Central can temporarily return HTTP 429 during dependency resolution.
-          # Retry with increasing delays so transient repository throttling does not fail the APK build.
+
+          # Use Google's read-through mirror of Maven Central first. The default
+          # Maven Central endpoint was repeatedly returning HTTP 429 for this runner.
+          cat > "$RUNNER_TEMP/syd-maven-mirror.init.gradle" <<'GRADLE'
+          def sydMirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+          gradle.beforeProject { project ->
+            project.buildscript.repositories {
+              maven { name = 'SydMavenCentralMirror'; url = sydMirror }
+            }
+            project.repositories {
+              maven { name = 'SydMavenCentralMirror'; url = sydMirror }
+            }
+          }
+          gradle.settingsEvaluated { settings ->
+            settings.pluginManagement.repositories {
+              maven { name = 'SydPluginMavenMirror'; url = sydMirror }
+            }
+            settings.dependencyResolutionManagement.repositories {
+              maven { name = 'SydDependencyMavenMirror'; url = sydMirror }
+            }
+          }
+          GRADLE
+
           for attempt in 1 2 3 4; do
             echo "Android Gradle build attempt ${attempt}/4"
-            if ./gradlew assembleDebug --no-daemon; then
+            if ./gradlew assembleDebug --no-daemon --init-script "$RUNNER_TEMP/syd-maven-mirror.init.gradle"; then
               exit 0
             fi
             if [ "$attempt" -lt 4 ]; then
