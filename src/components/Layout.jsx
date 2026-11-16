@@ -8,12 +8,14 @@ import { FiHome, FiGrid, FiBarChart2, FiMoreHorizontal } from "react-icons/fi";
 import { ModuleProvider } from "../context/ModuleContext";
 import "../css/Layout.css";
 import GlobalVoiceAssistant from "./GlobalVoiceAssistant";
+import AndroidPullToRefresh from "./AndroidPullToRefresh";
 
 function Layout() {
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false);
+  const [screenRefreshKey, setScreenRefreshKey] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const desktopOnlyPath = /^\/app\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|ca-workspace|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
@@ -42,7 +44,13 @@ function Layout() {
         }}>
           <Header onToggleSidebar={toggleSidebar} onOpenVoiceAssistant={() => setVoiceAssistantOpen(true)} />
           {location.pathname !== "/app/ai-assistant/voice" && <GlobalVoiceAssistant open={voiceAssistantOpen} onClose={() => setVoiceAssistantOpen(false)} />}
-          <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}>{isNativeAndroid && desktopOnlyPath ? <Navigate to="/app" replace /> : <Outlet />}</div>
+          <div className={`page-content ${isNativeAndroid ? "android-page-content" : ""}`}>
+            {isNativeAndroid ? (
+              <AndroidPullToRefresh refreshKey={screenRefreshKey} onRefresh={() => setScreenRefreshKey(key => key + 1)}>
+                {desktopOnlyPath ? <Navigate to="/app" replace /> : <Outlet />}
+              </AndroidPullToRefresh>
+            ) : (desktopOnlyPath ? <Navigate to="/app" replace /> : <Outlet />)}
+          </div>
           {isNativeAndroid && (
             <nav className="android-bottom-nav" aria-label="Bottom navigation">
               <button type="button" className={location.pathname === "/app" ? "android-bottom-nav-item active" : "android-bottom-nav-item"} onClick={() => openHomePanel("")}><FiHome /><span>Home</span></button>
