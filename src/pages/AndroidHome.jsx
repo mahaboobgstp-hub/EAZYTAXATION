@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiFileText, FiShoppingCart, FiClipboard, FiUsers, FiPackage, FiX, FiArrowRight,
   FiCreditCard, FiUser, FiBriefcase, FiCalendar, FiTrendingUp, FiReceipt,
-  FiBookOpen, FiLandmark, FiClock, FiLayoutDashboard, FiCpu, FiMoreVertical,
+  FiBookOpen, FiFileText, FiClock, FiGrid, FiCpu, FiMoreVertical,
   FiEye, FiEdit2, FiShare2, FiPrinter, FiDownload
 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
@@ -11,6 +11,7 @@ import { supabase } from "../supabase/supabaseClient";
 import { createSalesInvoicePdf } from "../utils/salesInvoiceDocumentPdf";
 import { downloadPurchasePdf } from "../utils/purchaseDocumentPdf";
 import { downloadExpensePdf } from "../utils/expenseDocumentPdf";
+import { getExpenseById } from "../services/expenseService";
 import "../css/AndroidHome.css";
 
 const money = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
@@ -23,7 +24,7 @@ const shortcuts = [
   { title: "Receipts & Payments", panel: "money", icon: FiCreditCard, tone: "banking" },
   { title: "Parties", panel: "parties", icon: FiUsers, tone: "parties" },
   { title: "Items", path: "/app/items", icon: FiPackage, tone: "items" },
-  { title: "Business Dashboard", path: "/app/dashboard", icon: FiLayoutDashboard, tone: "dashboard" },
+  { title: "Business Dashboard", path: "/app/dashboard", icon: FiGrid, tone: "dashboard" },
   { title: "AI Assistant", path: "/app/ai-assistant", icon: FiCpu, tone: "assistant" }
 ];
 
@@ -107,8 +108,8 @@ export default function AndroidHome() {
       return result;
     }
     if (row.type === "Expense") {
-      const items = await fetchItems("expense_items", "expense_id", row.id);
-      const result = downloadExpensePdf({ kind: "expense", record, items, company: currentCompany, returnBlob: true });
+      const detail = await getExpenseById(row.id, currentCompanyId);
+      const result = downloadExpensePdf({ kind: "expense", record: detail, items: detail.items || [], company: currentCompany, returnBlob: true });
       return result;
     }
     if (row.type === "Payment") {
@@ -121,10 +122,15 @@ export default function AndroidHome() {
   const transactionAction = async (row, action) => {
     setMenuId(null); setActionMessage("");
     if (action === "View Document") {
-      if (row.type === "Sales") return navigate("/app/sales", { state: { previewInvoiceId: row.id } });
-      if (row.type === "Purchase") return navigate("/app/purchases", { state: { viewPurchaseInvoiceId: row.id } });
-      if (row.type === "Expense") return navigate("/app/expense-register", { state: { viewExpenseId: row.id } });
-      return navigate(row.path);
+      try {
+        const result = await makePdf(row);
+        if (!result?.blob) throw new Error("The document preview could not be generated.");
+        const url = URL.createObjectURL(result.blob);
+        const opened = window.open(url, "_blank");
+        if (!opened) { const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); }
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } catch (error) { setActionMessage(error.message || "Unable to open this document."); }
+      return;
     }
     if (action === "Edit Document") {
       if (row.type === "Sales") return navigate("/app/sales", { state: { editInvoiceId: row.id } });
