@@ -48,7 +48,7 @@ export default function AndroidHome() {
 
   useEffect(() => {
     const requested = searchParams.get("panel") || "";
-    if (requested) setPanel(requested);
+    setPanel(requested);
   }, [searchParams]);
 
   useEffect(() => {
