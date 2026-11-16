@@ -10,6 +10,7 @@ export default function AndroidPullToRefresh({ children, refreshKey, onRefresh }
   const pulling = useRef(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshBlocked, setRefreshBlocked] = useState(false);
 
   const isAtTop = useCallback(() => {
     const content = document.querySelector(".android-page-content");
@@ -18,6 +19,7 @@ export default function AndroidPullToRefresh({ children, refreshKey, onRefresh }
 
   const handleTouchStart = useCallback((event) => {
     if (refreshing || event.touches.length !== 1 || !isAtTop()) return;
+    setRefreshBlocked(false);
     const target = event.target;
     if (target?.closest?.("input, textarea, select, button, a, [contenteditable='true'], [data-disable-pull-refresh='true']")) return;
     startY.current = event.touches[0].clientY;
@@ -62,7 +64,7 @@ export default function AndroidPullToRefresh({ children, refreshKey, onRefresh }
     <div className="android-pull-refresh" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
       <div className={`android-pull-refresh-indicator ${refreshing ? "is-refreshing" : ""} ${pullDistance > 0 ? "is-visible" : ""}`} style={{ height: refreshing ? 48 : Math.min(48, pullDistance * 0.55), opacity: refreshing ? 1 : Math.min(1, pullDistance / TRIGGER_DISTANCE) }} aria-live="polite">
         <FiRefreshCw />
-        <span>{refreshing ? "Refreshing…" : pullDistance >= TRIGGER_DISTANCE ? "Release to refresh" : "Pull to refresh"}</span>
+        <span>{refreshBlocked ? "Save or discard changes before refreshing" : refreshing ? "Refreshing…" : pullDistance >= TRIGGER_DISTANCE ? "Release to refresh" : "Pull to refresh"}</span>
       </div>
       <div key={refreshKey} className="android-pull-refresh-content">{children}</div>
     </div>
