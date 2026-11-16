@@ -22,8 +22,8 @@ export default function BankingWorkspace(){
   const location=useLocation();
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const requestedTab = new URLSearchParams(location.search).get("tab") || "overview";
-  const requested = isNativeAndroid && ["receipts","payments"].includes(requestedTab) ? "overview" : requestedTab;
-  const visibleTabs = isNativeAndroid ? tabs.filter(([key]) => !["receipts","payments"].includes(key)) : tabs;
+  const requested = requestedTab;
+  const visibleTabs = tabs;
   const [tab,setTab]=useState(requested);
   const [accounts,setAccounts]=useState([]);
   const [statements,setStatements]=useState([]);
