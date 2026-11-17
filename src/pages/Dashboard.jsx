@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown } from "react-icons/fi";
+import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown, FiMaximize2 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/Dashboard.css";
@@ -27,12 +27,13 @@ export default function Dashboard() {
   const [customTo, setCustomTo] = useState(dateText(new Date()));
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
   const [showWidgetSettings, setShowWidgetSettings] = useState(false);
-  const defaultCardOrder = ["sales","purchases","expenses","gst","trend","balances","snapshot","bank","cash","customers","items"];
-  const [cardOrder, setCardOrder] = useState(() => { try { const saved=JSON.parse(localStorage.getItem("syd-dashboard-order")||"null"); return Array.isArray(saved) && saved.length===11 ? saved : defaultCardOrder; } catch { return defaultCardOrder; } });
+  const [expandedCard, setExpandedCard] = useState(null);
+  const defaultCardOrder = ["sales","purchases","expenses","gst","trend","balances","snapshot","bank","cash","customers","items","profit"];
+  const [cardOrder, setCardOrder] = useState(() => { try { const saved=JSON.parse(localStorage.getItem("syd-dashboard-order")||"null"); return Array.isArray(saved) && saved.length===12 && saved.includes("profit") ? saved : defaultCardOrder; } catch { return defaultCardOrder; } });
   useEffect(() => { localStorage.setItem("syd-dashboard-order", JSON.stringify(cardOrder)); }, [cardOrder]);
-  const [widgets, setWidgets] = useState(() => { try { return {sales:true,purchases:true,expenses:true,gst:true,trend:true,balances:true,snapshot:true,bank:true,cash:true,customers:true,items:true,...JSON.parse(localStorage.getItem("syd-dashboard-widgets") || "{}")}; } catch { return {sales:true,purchases:true,expenses:true,gst:true,trend:true,balances:true,snapshot:true,bank:true,cash:true,customers:true,items:true}; } });
+  const [widgets, setWidgets] = useState(() => { try { return {sales:true,purchases:true,expenses:true,gst:true,trend:true,balances:true,snapshot:true,bank:true,cash:true,customers:true,items:true,profit:true,...JSON.parse(localStorage.getItem("syd-dashboard-widgets") || "{}")}; } catch { return {sales:true,purchases:true,expenses:true,gst:true,trend:true,balances:true,snapshot:true,bank:true,cash:true,customers:true,items:true,profit:true}; } });
   useEffect(() => { localStorage.setItem("syd-dashboard-widgets", JSON.stringify(widgets)); }, [widgets]);
-  const widgetLabels = {sales:"Sales summary",purchases:"Purchase summary",expenses:"Expense summary",gst:"GST summary",trend:"Sales & purchase trend",balances:"Receivables & payables",snapshot:"Business snapshot",bank:"Bank balance",cash:"Cash balance",customers:"Top 5 customers",items:"Top 5 items"};
+  const widgetLabels = {sales:"Sales summary",purchases:"Purchase summary",expenses:"Expense summary",gst:"GST summary",trend:"Sales & purchase trend",balances:"Receivables & payables",snapshot:"Business snapshot",bank:"Bank balance",cash:"Cash balance",customers:"Top 5 customers",items:"Top 5 items",profit:"Gross Profit / Loss"};
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState({ sales: [], purchases: [], expenses: [], itemSales: [], customers: 0, vendors: 0, items: 0, groups: [], ledgers: [], vouchers: [], voucherLines: [], error: "" });
 
@@ -114,7 +115,8 @@ export default function Dashboard() {
     const gstLiability = gstOutput - gstInput - Math.max(0,gstCashLedger);
     const receivables = data.sales.reduce((sum, row) => sum + Math.max(0, amount(row, ["balance_amount", "outstanding_amount", "due_amount"]) || (amount(row, ["total_amount", "grand_total"]) - amount(row, ["paid_amount"]))), 0);
     const payables = data.purchases.reduce((sum, row) => sum + Math.max(0, amount(row, ["balance_amount", "outstanding_amount", "due_amount"]) || (amount(row, ["grand_total", "total_amount"]) - amount(row, ["paid_amount"]))), 0);
-    return { sales, salesTaxable, purchases, purchasesTaxable, expenses, gstOutput, gstInput, gstCashLedger, gstLiability, receivables, payables };
+    const grossProfitLoss = salesTaxable - purchasesTaxable - expenses;
+    return { sales, salesTaxable, purchases, purchasesTaxable, expenses, grossProfitLoss, gstOutput, gstInput, gstCashLedger, gstLiability, receivables, payables };
   }, [data]);
 
   const latestAccountingDate = useMemo(() => { const dates=[data.latestSalesDate,data.latestPurchaseDate,...data.vouchers.map(r=>r.voucher_date)].filter(Boolean).sort(); return dates.length?dates[dates.length-1]:null; },[data.latestSalesDate,data.latestPurchaseDate,data.vouchers]);
@@ -186,6 +188,7 @@ export default function Dashboard() {
         <Kpi style={{order:cardOrder.indexOf("expenses")}} hidden={!widgets.expenses} icon={<FiDollarSign/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
         <GstCard style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate}/> 
         <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiDollarSign/>} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiDollarSign/>} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
+        <Kpi style={{order:cardOrder.indexOf("profit")}} hidden={!widgets.profit} icon={<FiTrendingUp/>} label="Gross Profit / Loss" value={money(totals.grossProfitLoss)} note="Sales − purchases − expenses · before depreciation" tone={totals.grossProfitLoss>=0?"green":"rose"} onExpand={()=>setExpandedCard("profit")}/>
       </section>
 
       <section className="dashboard-middle-grid">
