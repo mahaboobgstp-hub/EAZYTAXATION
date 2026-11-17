@@ -97,3 +97,22 @@
 .sw-quotation-menu-portal{z-index:99999;min-width:190px;max-width:min(240px,calc(100vw - 16px));overscroll-behavior:contain;box-shadow:0 14px 36px rgba(15,23,42,.24)}
 .sw-quotation-menu-portal button{min-height:42px;font-size:14px;padding:11px 12px}
 .sw-quotation-menu-portal .sw-menu-status{position:sticky;top:0;background:#fff;z-index:1}
+
+/* Full-screen in-app quotation PDF preview */
+.sw-pdf-preview-backdrop{position:fixed;inset:0;z-index:100500;background:#111827;display:flex;align-items:stretch;justify-content:center}
+.sw-pdf-preview{width:100%;height:100dvh;display:flex;flex-direction:column;background:#f1f4f8;color:#172b45;overflow:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.sw-pdf-preview-header{min-height:58px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #dfe5ed;gap:12px}
+.sw-pdf-preview-header>div{display:flex;flex-direction:column;min-width:0;gap:3px}
+.sw-pdf-preview-header strong{font-size:16px;color:#17395f}
+.sw-pdf-preview-header span{font-size:11px;color:#718097;overflow-wrap:anywhere}
+.sw-pdf-preview-header>button{width:38px;height:38px;border:0;border-radius:50%;background:#eef2f7;color:#334155;font-size:25px}
+.sw-pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;padding:8px 12px;border-bottom:1px solid #dfe5ed}
+.sw-pdf-page-controls,.sw-pdf-zoom-controls{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;color:#40526b}
+.sw-pdf-toolbar button{width:34px;height:34px;border:1px solid #d8e1ed;border-radius:8px;background:#fff;color:#17395f;font-size:20px}
+.sw-pdf-toolbar button:disabled{opacity:.35}
+.sw-pdf-canvas-area{flex:1;min-height:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:14px 10px 24px;position:relative}
+.sw-pdf-canvas-area canvas{display:block;max-width:none;background:#fff;box-shadow:0 4px 18px #0f172a24}
+.sw-pdf-loading,.sw-pdf-error{position:absolute;top:18px;left:12px;right:12px;text-align:center;padding:12px;background:#fff;border-radius:9px;color:#52647b;font-size:13px;z-index:2}
+.sw-pdf-error{color:#b42318}
+.sw-pdf-preview-footer{display:flex;gap:10px;background:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #dfe5ed}
+.sw-pdf-preview-footer button{flex:1;min-height:46px;border-radius:10px;font-weight:700}
