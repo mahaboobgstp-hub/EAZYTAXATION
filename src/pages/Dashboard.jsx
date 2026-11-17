@@ -221,6 +221,22 @@ export default function Dashboard() {
         <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section></div>
     </>}
+
+    {expandedCard && <><button className="dashboard-expanded-backdrop" aria-label="Close expanded dashboard card" onClick={()=>setExpandedCard(null)}/><section className="dashboard-expanded-floating" role="dialog" aria-modal="true" aria-label={widgetLabels[expandedCard] || "Dashboard details"}><div className="dashboard-expanded-heading"><div><span>DASHBOARD DETAILS</span><h2>{widgetLabels[expandedCard] || "Dashboard details"}</h2></div><button type="button" onClick={()=>setExpandedCard(null)} aria-label="Close expanded card"><FiX/></button></div>
+      {expandedCard==="sales"&&<ExpandedMetrics rows={[["Invoice value",money(totals.sales)],["Taxable value",money(totals.salesTaxable)],["Invoices",number(data.sales.length)]]}/>}
+      {expandedCard==="purchases"&&<ExpandedMetrics rows={[["Invoice value",money(totals.purchases)],["Taxable value",money(totals.purchasesTaxable)],["Invoices",number(data.purchases.length)]]}/>}
+      {expandedCard==="expenses"&&<ExpandedMetrics rows={[["Total expenses",money(totals.expenses)],["Entries",number(data.expenses.length)]]}/>}
+      {expandedCard==="gst"&&<GstCard output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate}/>}
+      {expandedCard==="trend"&&<div className="dashboard-expanded-content">{monthly.map(row=><div className="dashboard-expanded-metric" key={row.month}><span>{row.month} · Sales / Purchases</span><strong>{money(row.sales)} / {money(row.purchases)}</strong></div>)}</div>}
+      {expandedCard==="balances"&&<ExpandedMetrics rows={[["Receivables",money(totals.receivables)],["Payables",money(totals.payables)]]}/>}
+      {expandedCard==="snapshot"&&<ExpandedMetrics rows={[["Total Sales Invoices",number(data.sales.length)],["Total Purchase Invoices",number(data.purchases.length)],["Total Customers",number(data.customers)],["Total Suppliers",number(data.vendors)],["Active Items",number(data.items)]]}/>}
+      {expandedCard==="bank"&&<ExpandedMetrics rows={[["Current bank closing balance",bankBalance?money(bankBalance):"No bank ledger balance available"]]}/>}
+      {expandedCard==="cash"&&<ExpandedMetrics rows={[["Current cash closing balance",money(cashBalance)]]}/>}
+      {expandedCard==="customers"&&<div className="dashboard-expanded-content">{topCustomers.length?topCustomers.map(([name,value])=><div className="dashboard-expanded-metric" key={name}><span>{name}</span><strong>{money(value)}</strong></div>):<Empty>No sales invoices found for this period.</Empty>}</div>}
+      {expandedCard==="items"&&<div className="dashboard-expanded-content">{topItems.length?topItems.map(([name,value])=><div className="dashboard-expanded-metric" key={name}><span>{name}</span><strong>{money(value)}</strong></div>):<Empty>No sales item records found for this period.</Empty>}</div>}
+      {expandedCard==="profit"&&<ExpandedMetrics rows={[["Sales taxable value",money(totals.salesTaxable)],["Purchases taxable value",money(totals.purchasesTaxable)],["Expenses",money(totals.expenses)],["Gross Profit / Loss",money(totals.grossProfitLoss)]]}/>}
+      <p className="dashboard-expanded-period">Reporting period: {range.from} to {range.to}</p>
+    </section></>}
   </main>;
 }
 
@@ -233,8 +249,8 @@ function ExpandedMetrics({rows}) { return <div className="dashboard-expanded-con
   return opening+debit-credit;
 }
 
-function Kpi({ icon, label, value, note, tone, hidden = false, style }){
-  return <article style={style} hidden={hidden} className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
+function Kpi({ icon, label, value, note, tone, hidden = false, style, onExpand }){
+  return <article style={style} hidden={hidden} className={`dashboard-kpi ${tone} dashboard-expandable-card`} role="button" tabIndex={0} onClick={onExpand} onKeyDown={e=>e.key==="Enter"&&onExpand?.()}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div><FiMaximize2 className="dashboard-card-expand-icon"/></article>;
 }
 function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style,onExpand}) {
   return <article style={style} hidden={hidden} className="dashboard-panel dashboard-gst-card">
