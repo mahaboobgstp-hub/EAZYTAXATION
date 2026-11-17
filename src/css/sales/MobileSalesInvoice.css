@@ -68,3 +68,9 @@
 .mobile-sales-portal-link{display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box}
 @media(max-width:380px){.mobile-sales-review-actions{grid-template-columns:1fr}.mobile-sales-review-actions .mobile-sales-secondary{grid-column:auto}}
 \n.mobile-sales-transport-section{margin-top:18px;padding:14px;border:1px solid #dce4f1;border-radius:14px;background:#f8faff}.mobile-sales-transport-section h3,.mobile-sales-review-transport h3{margin:0 0 12px;font-size:15px;color:#1e2d49}.mobile-sales-review-transport{margin-top:16px;padding-top:8px;border-top:1px solid #e7edf5}\n@media(max-width:360px){.mobile-sales-steps{padding:8px 4px;gap:1px}.mobile-sales-steps div{gap:3px;font-size:9px}.mobile-sales-steps b{width:22px;height:22px;font-size:11px}}\n
+/* Compact side-by-side billing and rate-type controls */
+.mobile-sales-billing-options{display:grid;grid-template-columns:1fr 1.35fr;gap:10px;align-items:start;margin:0 0 16px}
+.mobile-sales-billing-options .mobile-sales-choice{min-width:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mobile-sales-billing-options .mobile-sales-choice legend{grid-column:1/-1}
+.mobile-sales-billing-options .mobile-sales-choice button{min-width:0;padding:0 5px;font-size:12px;white-space:nowrap}
+@media(max-width:390px){.mobile-sales-billing-options{grid-template-columns:1fr;gap:12px}.mobile-sales-billing-options .mobile-sales-choice button{font-size:13px}}
