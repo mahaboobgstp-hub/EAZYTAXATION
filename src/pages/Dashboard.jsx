@@ -204,18 +204,14 @@ export default function Dashboard() {
         </article>
         <article style={{order:cardOrder.indexOf("snapshot")}} hidden={!widgets.snapshot} className="dashboard-panel dashboard-snapshot-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("snapshot")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("snapshot")}>
           <div className="dashboard-panel-heading"><div><h2>Business Snapshot</h2></div></div>
-          <Snapshot icon={<FiFileText/>} label="Total Invoices (Sales)" value={number(data.sales.length)}/>
-          <Snapshot icon={<FiShoppingCart/>} label="Total Purchase Invoices" value={number(data.purchases.length)}/>
-          <Snapshot icon={<FiUsers/>} label="Total Customers" value={number(data.customers)}/>
-          <Snapshot icon={<FiBriefcase/>} label="Total Suppliers" value={number(data.vendors)}/>
-          <Snapshot icon={<FiPackage/>} label="Active Items" value={number(data.items)}/>
+          <Snapshot icon={<FiFileText/>} label="Total Invoices" value={number(data.sales.length + data.purchases.length)}/>
         </article>
       </section>
 
       <section className="dashboard-bottom-grid">
         
-        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("customers")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("customers")}><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2></div></div>{topCustomers.length ? topCustomers.slice(0,3).map(([name, value],index) => <CompactRankRow key={name} name={name} value={value} rank={index+1}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
-        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("items")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("items")}><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2></div></div>{topItems.length ? topItems.slice(0,3).map(([name, value],index) => <CompactRankRow key={name} name={name} value={value} rank={index+1}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("customers")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("customers")}><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2></div></div>{topCustomers.length ? <CompactRankRow name={topCustomers[0][0]} value={topCustomers[0][1]} eyebrow="#1 Customer"/> : <Empty>No sales invoices found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("items")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("items")}><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2></div></div>{topItems.length ? <CompactRankRow name={topItems[0][0]} value={topItems[0][1]} eyebrow="#1 Item"/> : <Empty>No sales item records found for this period.</Empty>}</article>
       </section></div>
     </>}
 
@@ -277,7 +273,11 @@ function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style,
 function Snapshot({ icon, label, value }) {
   return <div className="dashboard-snapshot-row"><span>{icon}{label}</span><strong>{value}</strong></div>;
 }
-function CompactRankRow({ name, value }) {
-  return <div className="dashboard-compact-rank-row" title={name}><span>{name}</span><strong>{money(value)}</strong></div>;
+function CompactRankRow({ name, value, eyebrow }) {
+  return <div className="dashboard-compact-rank-row dashboard-compact-featured" title={name}>
+    {eyebrow && <small>{eyebrow}</small>}
+    <span>{name}</span>
+    <strong>{money(value)}</strong>
+  </div>;
 }
 function Empty({ children }) { return <div className="dashboard-empty">{children}</div>; }
