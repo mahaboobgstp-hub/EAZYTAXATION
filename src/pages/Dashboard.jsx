@@ -66,7 +66,7 @@ export default function Dashboard() {
     }
     setRefreshing(true);
     try {
-      const [sales, purchases, expenses, customers, vendors, items, groups, ledgers, vouchers, voucherLines] = await Promise.all([
+      const [sales, purchases, expenses, customers, vendors, items, groups, ledgers, vouchers, voucherLines, latestSales, latestPurchases] = await Promise.all([
         supabase.from("sales_invoices").select("*").eq("company_id", currentCompanyId).eq("is_deleted", false).gte("invoice_date", range.from).lte("invoice_date", range.to).order("invoice_date", { ascending: true }),
         supabase.from("purchase_invoices").select("*").eq("company_id", currentCompanyId).eq("is_deleted", false).gte("invoice_date", range.from).lte("invoice_date", range.to).order("invoice_date", { ascending: true }),
         supabase.from("expenses").select("*").eq("company_id", currentCompanyId).gte("expense_date", range.from).lte("expense_date", range.to),
@@ -76,9 +76,11 @@ export default function Dashboard() {
         supabase.from("account_groups").select("id,group_name,account_nature,normal_balance").eq("company_id", currentCompanyId),
         supabase.from("chart_of_accounts").select("id,ledger_name,group_id,opening_balance,opening_balance_type,opening_date,party_type,is_active").eq("company_id", currentCompanyId).eq("is_active",true),
         supabase.from("accounting_vouchers").select("id,voucher_date,status").eq("company_id", currentCompanyId).eq("status","Posted").lte("voucher_date",dateText(new Date())),
-        supabase.from("accounting_voucher_lines").select("voucher_id,ledger_id,debit,credit").eq("company_id", currentCompanyId)
+        supabase.from("accounting_voucher_lines").select("voucher_id,ledger_id,debit,credit").eq("company_id", currentCompanyId),
+        supabase.from("sales_invoices").select("invoice_date").eq("company_id",currentCompanyId).eq("is_deleted",false).order("invoice_date",{ascending:false}).limit(1),
+        supabase.from("purchase_invoices").select("invoice_date").eq("company_id",currentCompanyId).eq("is_deleted",false).order("invoice_date",{ascending:false}).limit(1)
       ]);
-      const firstError = [sales, purchases, expenses, customers, vendors, items, groups, ledgers, vouchers, voucherLines].find(result => result.error);
+      const firstError = [sales, purchases, expenses, customers, vendors, items, groups, ledgers, vouchers, voucherLines, latestSales, latestPurchases].find(result => result.error);
       if (firstError) throw firstError.error;
       const invoiceIds = (sales.data || []).map(row => row.id).filter(Boolean);
       const itemResult = invoiceIds.length
@@ -89,7 +91,7 @@ export default function Dashboard() {
         sales: sales.data || [], purchases: purchases.data || [], expenses: expenses.data || [],
         itemSales: itemResult.data || [],
         customers: customers.count || 0, vendors: vendors.count || 0, items: items.count || 0,
-        groups: groups.data || [], ledgers: ledgers.data || [], vouchers: vouchers.data || [], voucherLines: voucherLines.data || [], error: ""
+        groups: groups.data || [], ledgers: ledgers.data || [], vouchers: vouchers.data || [], voucherLines: voucherLines.data || [], latestSalesDate: latestSales.data?.[0]?.invoice_date || null, latestPurchaseDate: latestPurchases.data?.[0]?.invoice_date || null, error: ""
       });
     } catch (error) {
       setData(previous => ({ ...previous, error: error.message || "Unable to load dashboard information." }));
@@ -115,7 +117,7 @@ export default function Dashboard() {
     return { sales, salesTaxable, purchases, purchasesTaxable, expenses, gstOutput, gstInput, gstCashLedger, gstLiability, receivables, payables };
   }, [data]);
 
-  const latestAccountingDate = useMemo(() => { const dates=[...data.sales.map(r=>r.invoice_date),...data.purchases.map(r=>r.invoice_date),...data.vouchers.map(r=>r.voucher_date)].filter(Boolean).sort(); return dates.length?dates[dates.length-1]:null; },[data.sales,data.purchases,data.vouchers]);
+  const latestAccountingDate = useMemo(() => { const dates=[data.latestSalesDate,data.latestPurchaseDate,...data.vouchers.map(r=>r.voucher_date)].filter(Boolean).sort(); return dates.length?dates[dates.length-1]:null; },[data.latestSalesDate,data.latestPurchaseDate,data.vouchers]);
   const currentLedgerBalances = useMemo(() => data.ledgers.map(ledger=>({ledger,balance:ledgerClosingBalance(ledger,data)})),[data.ledgers,data.vouchers,data.voucherLines]);
   const cashBalance = currentLedgerBalances.filter(x=>/cash/i.test(x.ledger.ledger_name)).reduce((sum,x)=>sum+x.balance,0);
   const bankBalance = currentLedgerBalances.filter(x=>x.ledger.party_type==="Bank" || /bank/i.test(x.ledger.ledger_name)).reduce((sum,x)=>sum+x.balance,0);
@@ -211,7 +213,7 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard-bottom-grid">
-        <article hidden={!widgets.bank} style={{order:cardOrder.indexOf("bank")}} className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiDollarSign/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
+        
         <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
         <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section></div>
@@ -235,9 +237,9 @@ function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style}
   return <article style={style} hidden={hidden} className="dashboard-panel dashboard-gst-card">
     <div className="dashboard-panel-heading"><div><h2>GST Summary</h2><p>Calculated from SYD accounting records</p></div></div>
     <div className="dashboard-gst-metric"><span>GST Output</span><strong>{money(output)}</strong></div>
-    <div className="dashboard-gst-metric"><span>Eligible Input GST</span><strong>{money(input)}</strong></div>
+    <div className="dashboard-gst-metric"><span>Purchase GST Input (Books)</span><strong>{money(input)}</strong></div>
     <div className="dashboard-gst-metric"><span>GST Cash Ledger</span><strong>{money(cashLedger)}</strong></div>
-    <div className="dashboard-gst-liability"><span>Estimated Net GST Liability</span><strong>{money(liability)}</strong></div>
+    <div className="dashboard-gst-liability"><span>Estimated Net GST Payable</span><strong>{money(liability)}</strong></div>
     <p className="dashboard-gst-updated">Accounting entries updated through: <b>{updatedThrough || "No posted accounting entries"}</b></p>
     <p className="dashboard-gst-disclaimer">Indicative book balance only. Reconcile with GST portal before filing.</p>
   </article>;
