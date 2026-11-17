@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown, FiGripVertical, FiWallet, FiLandmark } from "react-icons/fi";
+import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown, FiGripVertical, FiWallet, FiBriefcase } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/Dashboard.css";
@@ -185,7 +185,7 @@ export default function Dashboard() {
         <Kpi style={{order:cardOrder.indexOf("purchases")}} hidden={!widgets.purchases} icon={<FiShoppingCart/>} label="Purchases" value={money(totals.purchases)} note={`Taxable ${money(totals.purchasesTaxable)} · ${number(data.purchases.length)} invoices`} tone="blue"/>
         <Kpi style={{order:cardOrder.indexOf("expenses")}} hidden={!widgets.expenses} icon={<FiDollarSign/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
         <GstCard style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate}/> 
-        <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiLandmark/>} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiWallet/>} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
+        <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiBriefcase/>} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiWallet/>} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
       </section>
 
       <section className="dashboard-middle-grid">
