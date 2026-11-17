@@ -240,7 +240,9 @@ export default function Dashboard() {
   </main>;
 }
 
-function ExpandedMetrics({rows}) { return <div className="dashboard-expanded-content">{rows.map(([label,value])=><div className="dashboard-expanded-metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>; }\n\nfunction ledgerClosingBalance(ledger, data) {
+function ExpandedMetrics({rows}) { return <div className="dashboard-expanded-content">{rows.map(([label,value])=><div className="dashboard-expanded-metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>; }
+
+function ledgerClosingBalance(ledger, data) {
   const posted = new Set((data.vouchers||[]).filter(v=>v.status==="Posted").map(v=>v.id));
   const lines=(data.voucherLines||[]).filter(line=>line.ledger_id===ledger.id && posted.has(line.voucher_id));
   const debit=lines.reduce((sum,line)=>sum+Number(line.debit||0),0);
