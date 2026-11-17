@@ -5,6 +5,7 @@ import { supabase } from "../../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
 import "../../css/sales/SalesWorkspace.css";
 import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
+import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
 
 const CONFIG = {
   register: {
@@ -15,7 +16,7 @@ const CONFIG = {
   quotations: {
     title: "Quotations", table: "quotations", date: "invoice_date", number: "invoice_no",
     metrics: ["Total quotations", "Awaiting response", "Accepted"],
-    columns: ["Quotation No.", "Date", "Valid until", "Customer", "Total", "Status"],
+    columns: ["Quotation No.", "Date", "Customer", "Valid until", "Total", "Status"],
   },
   orders: {
     title: "Sales Orders", table: "sales_orders", date: "order_date", number: "order_no",
@@ -62,8 +63,8 @@ export default function SalesWorkspace({ kind }) {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
   const [menuId, setMenuId] = useState(null);
-  const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
-  const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0" }]);
+  const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
+  const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
 
   const load = async () => {
     if (!currentCompanyId) { setRows([]); setLoading(false); return; }
@@ -122,6 +123,7 @@ export default function SalesWorkspace({ kind }) {
       unit: item?.unit || "",
       rate: String(item?.sales_rate || 0),
       gstRate: String(item?.gst_rate || 0),
+      cessRate: String(item?.cess_rate || 0),
     } : line));
   };
 
@@ -189,13 +191,13 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const openCreate = () => {
-    setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "" });
-    setLines([{ description: "", qty: "1", rate: "0", gstRate: "0" }]);
+    setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
+    setLines([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
     setMessage(""); setFormStep(1); setDialog(true);
   };
 
   const save = async event => {
-    event.preventDefault();
+    if (event?.preventDefault) event.preventDefault();
     if (!currentCompanyId) { setMessage("Select a company before creating a document."); return; }
     setSaving(true); setMessage("");
     try {
@@ -209,14 +211,15 @@ export default function SalesWorkspace({ kind }) {
       const documentNo = `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
       const validLines = lines.filter(line => line.description.trim() && (!isNativeAndroid || num(line.qty) > 0));
       if (!validLines.length) throw new Error("Add at least one item or description.");
-      const taxableValue = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)), 0) * 100) / 100;
-      const taxAmount = Math.round(validLines.reduce((sum, line) => sum + Math.max(0, num(line.qty)) * Math.max(0, num(line.rate)) * Math.max(0, num(line.gstRate)) / 100, 0) * 100) / 100;
+      const taxableValue = Math.round(validLines.reduce((sum, line) => { const combinedRate = num(line.gstRate) + num(line.cessRate); const base = form.taxInclusive ? num(line.rate) / (1 + combinedRate / 100) : num(line.rate); return sum + Math.max(0, num(line.qty)) * Math.max(0, base); }, 0) * 100) / 100;
+      const taxAmount = Math.round(validLines.reduce((sum, line) => { const combinedRate = num(line.gstRate) + num(line.cessRate); const base = form.taxInclusive ? num(line.rate) / (1 + combinedRate / 100) : num(line.rate); return sum + Math.max(0, num(line.qty)) * Math.max(0, base) * Math.max(0, num(line.gstRate)) / 100; }, 0) * 100) / 100;
+      const cessAmount = Math.round(validLines.reduce((sum, line) => { const combinedRate = num(line.gstRate) + num(line.cessRate); const base = form.taxInclusive ? num(line.rate) / (1 + combinedRate / 100) : num(line.rate); return sum + Math.max(0, num(line.qty)) * Math.max(0, base) * Math.max(0, num(line.cessRate)) / 100; }, 0) * 100) / 100;
       const intraState = Boolean(currentCompany?.state && customer.state && currentCompany.state.toLowerCase() === customer.state.toLowerCase());
       const cgst = intraState ? Math.round(taxAmount / 2 * 100) / 100 : 0;
       const sgst = intraState ? Math.round((taxAmount - cgst) * 100) / 100 : 0;
       const igst = intraState ? 0 : taxAmount;
-      const amount = Math.round((taxableValue + taxAmount) * 100) / 100;
-      const common = { company_id: currentCompanyId, customer_id: customer.id, customer_name: customer.customer_name, taxable_value: taxableValue, cgst, sgst, igst, total_amount: amount, created_at: new Date().toISOString() };
+      const amount = Math.round((taxableValue + taxAmount + cessAmount) * 100) / 100;
+      const common = { company_id: currentCompanyId, customer_id: customer.id, customer_name: customer.customer_name, taxable_value: taxableValue, cgst, sgst, igst, cess_amount: cessAmount, tax_inclusive: kind === "quotations" ? Boolean(form.taxInclusive) : false, total_amount: amount, created_at: new Date().toISOString() };
       let table, header, itemTable, parentField, id;
       if (kind === "quotations") {
         table = "quotations"; itemTable = "quotation_items"; parentField = "invoice_id";
@@ -241,7 +244,8 @@ export default function SalesWorkspace({ kind }) {
         qty: Math.max(0, num(line.qty)),
         rate: Math.max(0, num(line.rate)),
         gst_rate: Math.max(0, num(line.gstRate)),
-        amount: Math.round((Math.max(0, num(line.qty)) * Math.max(0, num(line.rate))) * (1 + Math.max(0, num(line.gstRate)) / 100) * 100) / 100
+        cess_rate: Math.max(0, num(line.cessRate)),
+        amount: Math.round((Math.max(0, num(line.qty)) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate))) * (1 + (Math.max(0, num(line.gstRate)) + Math.max(0, num(line.cessRate))) / 100) * 100) / 100
       }));
       const { error: itemError } = await supabase.from(itemTable).insert(itemsToInsert);
       if (itemError) { await supabase.from(table).delete().eq("id", id); throw itemError; }
@@ -254,6 +258,18 @@ export default function SalesWorkspace({ kind }) {
     const table = config.table;
     const { error } = await supabase.from(table).update({ [field]: value }).eq("id", row.id).eq("company_id", currentCompanyId);
     if (error) setMessage(errorText(error)); else setRows(prev => prev.map(item => item.id === row.id ? { ...item, [field]: value } : item));
+  };
+
+  const downloadQuotation = async row => {
+    try {
+      const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
+      if (error) throw error;
+      const result = createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement("a");
+      link.href = url; link.download = result.fileName; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { setMessage(errorText(error)); }
   };
 
   const view = async row => {
@@ -334,26 +350,27 @@ export default function SalesWorkspace({ kind }) {
         return <tr key={row.id}>
           <td className="sw-docno" data-label={config.columns[0]}>{row[config.number] || "—"}</td><td data-label={config.columns[1]}>{dateText(row[config.date])}</td><td data-label={config.columns[2]}>{row.customer_name || "—"}</td>
           {kind === "register" && <><td data-label="Type"><span className="sw-type">{row.sale_type === "CASH" ? "Cash sale" : "Credit sale"}</span></td><td data-label="Payment status"><span className={`sw-status ${status.toLowerCase()}`}>{status}</span></td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Paid" className="sw-money">{currency(balance === 0 ? row.total_amount : 0)}</td><td data-label="Balance" className="sw-money">{currency(balance)}</td></>}
-          {kind === "quotations" && <><td data-label="Valid until">{dateText(row.valid_until)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
+          {kind === "quotations" && <><td data-label="Customer">{row.customer_name || "—"}</td><td data-label="Valid until">{dateText(row.valid_until)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "orders" && <><td data-label="Expected delivery">{dateText(row.expected_delivery_date)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Fulfillment"><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
-          <td data-label="Actions">{kind === "register" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="sw-menu">{["View","Edit","Print","Download","Share","Cancel Invoice"].map(action => <button type="button" key={action} onClick={() => registerAction(row, action)}>{action}</button>)}</div>}</div> : <div className="sw-actions"><button onClick={() => view(row)}>View</button>{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div>}</td>
+          <td data-label="Actions">{kind === "quotations" ? <div className="sw-actions"><button onClick={() => view(row)}>View</button><button onClick={() => downloadQuotation(row)}>Download</button><button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button></div> : kind === "register" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="sw-menu">{["View","Edit","Print","Download","Share","Cancel Invoice"].map(action => <button type="button" key={action} onClick={() => registerAction(row, action)}>{action}</button>)}</div>}</div> : <div className="sw-actions"><button onClick={() => view(row)}>View</button>{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div>}</td>
         </tr>;
       })}</tbody></table></div>}
     </section></>}
-    {dialog && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setDialog(false); }}><section className="sw-modal" role="dialog" aria-modal="true" aria-labelledby="sw-modal-title"><header><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales</p><h2 id="sw-modal-title">{actionLabel}</h2></div><button className="sw-close" onClick={() => setDialog(false)} aria-label="Close">×</button></header><form onSubmit={save}>
+    {dialog && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setDialog(false); }}><section className="sw-modal" role="dialog" aria-modal="true" aria-labelledby="sw-modal-title"><header><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales</p><h2 id="sw-modal-title">{actionLabel}</h2></div><button className="sw-close" onClick={() => setDialog(false)} aria-label="Close">×</button></header><form onSubmit={e => { e.preventDefault(); }} noValidate>
       {isNativeAndroid && <nav className="sw-mobile-steps" aria-label="Document creation steps"><span className={formStep === 1 ? "active" : formStep > 1 ? "complete" : ""}>1. Details</span><span className={formStep === 2 ? "active" : formStep > 2 ? "complete" : ""}>2. Items</span><span className={formStep === 3 ? "active" : ""}>3. Review</span></nav>}
       {(!isNativeAndroid || formStep === 1) && <>
       <label>Company<input value={currentCompany?.company_name || ""} readOnly /></label>
       {kind === "credits" && <label>Original sales invoice<select required value={form.originalInvoiceId} onChange={e => isNativeAndroid ? handleOriginalInvoiceChange(e.target.value) : (() => { const invoice = invoices.find(i => i.id === e.target.value); setForm({ ...form, originalInvoiceId: e.target.value, customerId: invoice?.customer_id || form.customerId }); })()}><option value="">Select invoice</option>{invoices.map(i => <option key={i.id} value={i.id}>{i.invoice_no} · {i.customer_name} · {currency(i.total_amount)}</option>)}</select></label>}
       <div className="sw-form-grid"><label>Customer<select required value={form.customerId} onChange={e => setForm({ ...form, customerId: e.target.value })}><option value="">Select customer</option>{customers.map(c => <option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></label><label>{kind === "orders" ? "Order date" : kind === "credits" ? "Credit note date" : "Quotation date"}<input required type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></label>{kind !== "credits" && <label>{kind === "orders" ? "Expected delivery" : "Valid until"}<input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} /></label>}</div>
+      {kind === "quotations" && <fieldset className="sw-rate-type"><legend>Rate Type</legend><label><input type="radio" name="quotationRateType" checked={!form.taxInclusive} onChange={() => setForm(prev => ({ ...prev, taxInclusive: false }))} /> Without Tax</label><label><input type="radio" name="quotationRateType" checked={Boolean(form.taxInclusive)} onChange={() => setForm(prev => ({ ...prev, taxInclusive: true }))} /> With Tax</label></fieldset>}
       {kind === "credits" && <label>Reason<input required value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Reason for issuing credit" /></label>}
       </>}
-      {(!isNativeAndroid || formStep === 2) && <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong>{!(isNativeAndroid && kind === "credits") && <button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0", gstRate: "0" }])}>＋ Add line</button>}</div>{lines.map((line, index) => <div className="sw-line-row" key={index}>{isNativeAndroid && kind !== "credits" ? <label>Item<select value={line.item_id || ""} onChange={e => handleLineItemChange(index, e.target.value)}><option value="">Select item</option>{itemsMaster.map(item => <option key={item.id} value={item.id}>{item.item_name}</option>)}</select></label> : isNativeAndroid && kind === "credits" ? <label>Original invoice item<input value={line.description} readOnly /></label> : <label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label>}<label>{kind === "credits" && isNativeAndroid ? "Return quantity" : "Quantity"}<input type="number" min="0" max={kind === "credits" && isNativeAndroid ? line.maxQty : undefined} step="0.01" value={line.qty} disabled={kind === "credits" && isNativeAndroid && Number(line.maxQty) <= 0} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} readOnly={isNativeAndroid && kind === "credits"} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><label>GST %<select value={line.gstRate} disabled={isNativeAndroid && kind === "credits"} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, gstRate: e.target.value } : item))}>{["0", "5", "12", "18", "28"].map(rate => <option key={rate} value={rate}>{rate}%</option>)}</select></label>{kind === "credits" && isNativeAndroid && <small className="sw-note">Invoiced: {line.originalQty || 0} · Previously returned: {line.returnedQty || 0} · Returnable: {line.maxQty || 0}</small>}<strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
+      {(!isNativeAndroid || formStep === 2) && <div className="sw-line-items"><div className="sw-line-heading"><strong>Items</strong>{!(isNativeAndroid && kind === "credits") && <button type="button" className="sw-add-line" onClick={() => setLines(prev => [...prev, { description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }])}>＋ Add line</button>}</div>{lines.map((line, index) => <div className="sw-line-row" key={index}>{isNativeAndroid && kind !== "credits" ? <label>Item<select value={line.item_id || ""} onChange={e => handleLineItemChange(index, e.target.value)}><option value="">Select item</option>{itemsMaster.map(item => <option key={item.id} value={item.id}>{item.item_name}</option>)}</select></label> : isNativeAndroid && kind === "credits" ? <label>Original invoice item<input value={line.description} readOnly /></label> : <label>Item / description<input value={line.description} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, description: e.target.value } : item))} placeholder="Enter item or service" /></label>}<label>{kind === "credits" && isNativeAndroid ? "Return quantity" : "Quantity"}<input type="number" min="0" max={kind === "credits" && isNativeAndroid ? line.maxQty : undefined} step="0.01" value={line.qty} disabled={kind === "credits" && isNativeAndroid && Number(line.maxQty) <= 0} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, qty: e.target.value } : item))} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} readOnly={isNativeAndroid && kind === "credits"} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, rate: e.target.value } : item))} /></label><div className="sw-tax-fields"><label>GST %<select value={line.gstRate} disabled={isNativeAndroid && kind === "credits"} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, gstRate: e.target.value } : item))}>{["0", "5", "12", "18", "28"].map(rate => <option key={rate} value={rate}>{rate}%</option>)}</select></label><label>CESS %<select value={line.cessRate || "0"} disabled={isNativeAndroid && kind === "credits"} onChange={e => setLines(prev => prev.map((item, i) => i === index ? { ...item, cessRate: e.target.value } : item))}>{["0", "1", "5", "10", "12", "15", "20", "25", "30", "60", "100", "160"].map(rate => <option key={rate} value={rate}>{rate}%</option>)}</select></label></div>{kind === "credits" && isNativeAndroid && <small className="sw-note">Invoiced: {line.originalQty || 0} · Previously returned: {line.returnedQty || 0} · Returnable: {line.maxQty || 0}</small>}<strong className="sw-line-amount">{currency(num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100))}</strong>{lines.length > 1 && <button type="button" className="sw-remove-line" onClick={() => setLines(prev => prev.filter((_, i) => i !== index))} aria-label="Remove item">×</button>}</div>)}</div>
       }
       {(!isNativeAndroid || formStep === 3) && <>
-      <div className="sw-total-breakdown"><div>Subtotal<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate), 0))}</strong></div><div>GST<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate) * num(line.gstRate) / 100, 0))}</strong></div><div>Grand total<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * num(line.rate) * (1 + num(line.gstRate) / 100), 0))}</strong></div></div>
+      <div className="sw-total-breakdown"><div>Taxable Value<strong>{currency(lines.reduce((sum, line) => sum + num(line.qty) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate)), 0))}</strong></div><div>GST<strong>{currency(lines.reduce((sum, line) => { const base = num(line.qty) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate)); return sum + base * num(line.gstRate) / 100; }, 0))}</strong></div><div>CESS<strong>{currency(lines.reduce((sum, line) => { const base = num(line.qty) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate)); return sum + base * num(line.cessRate) / 100; }, 0))}</strong></div><div>Grand total<strong>{currency(lines.reduce((sum, line) => { const base = num(line.qty) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate)); return sum + base * (1 + (num(line.gstRate) + num(line.cessRate)) / 100); }, 0))}</strong></div></div>
       <p className="sw-note">GST is split using the company and customer state. Saving the document does not post ledger entries, change invoice balances, or update stock.</p>
       </>}
       <footer>
@@ -361,7 +378,7 @@ export default function SalesWorkspace({ kind }) {
           <button type="button" className="sw-secondary" onClick={() => formStep === 1 ? setDialog(false) : setFormStep(step => step - 1)}>{formStep === 1 ? "Cancel" : "Back"}</button>
           {formStep < 3
             ? <button type="button" className="sw-primary" onClick={() => { if (formStep === 1 && (!form.customerId || (kind === "credits" && (!form.originalInvoiceId || !form.reason.trim())))) { setMessage("Complete the required document details first."); return; } if (formStep === 2 && !lines.some(line => line.description.trim() && num(line.qty) > 0)) { setMessage("Add at least one item with a valid quantity."); return; } setMessage(""); setFormStep(step => step + 1); }}>Next: {formStep === 1 ? "Add Items" : "Review"} →</button>
-            : <button disabled={saving} className="sw-primary">{saving ? "Saving…" : `Save ${kind === "orders" ? "Sales Order" : kind === "credits" ? "Credit Note" : "Quotation"}`}</button>}
+            : <button type="button" disabled={saving} className="sw-primary" onClick={() => save()}>{saving ? "Saving…" : `Save ${kind === "orders" ? "Sales Order" : kind === "credits" ? "Credit Note" : "Quotation"}`}</button>}
         </> : <>
           <button type="button" className="sw-secondary" onClick={() => setDialog(false)}>Cancel</button>
           <button disabled={saving} className="sw-primary">{saving ? "Saving…" : `Save ${kind === "orders" ? "Sales Order" : kind === "credits" ? "Credit Note" : "Quotation"}`}</button>
