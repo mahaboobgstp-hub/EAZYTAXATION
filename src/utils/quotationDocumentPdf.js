@@ -102,7 +102,6 @@ export function createQuotationPdf({ document, items = [], company = {} }) {
   y += 13;
   setText(7.5, "normal", [100, 113, 131]);
   pdf.text("Rate mode: " + (document.tax_inclusive ? "Tax inclusive" : "Tax exclusive"), margin, y);
-  pdf.text("Status: " + clean(document.status || "Draft"), width - margin, y, { align: "right" });
   y += 9;
 
   drawTableHeader();
