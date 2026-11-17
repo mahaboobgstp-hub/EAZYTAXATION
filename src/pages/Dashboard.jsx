@@ -178,29 +178,29 @@ export default function Dashboard() {
       {data.error && <div className="dashboard-error">{data.error} <button onClick={loadDashboard}>Retry</button></div>}
       <div className="dashboard-company-line"><FiBriefcase/> <strong>{currentCompany?.company_name || "Selected company"}</strong><span>·</span><span>{range.from} to {range.to}</span></div>
 
-      <section className="dashboard-kpis">
-        <Kpi hidden={!widgets.sales} icon={<FiTrendingUp/>} label="Sales (Invoice Value)" value={money(totals.sales)} note={`${number(data.sales.length)} invoices`} tone="green"/>
-        <Kpi hidden={!widgets.purchases} icon={<FiShoppingCart/>} label="Purchases" value={money(totals.purchases)} note={`${number(data.purchases.length)} invoices`} tone="blue"/>
-        <Kpi hidden={!widgets.expenses} icon={<FiDollarSign/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
-        <Kpi hidden={!widgets.gst} icon={<FiFileText/>} label="GST Output" value={money(totals.gst)} note="From sales invoices" tone="purple"/>
-        <Kpi hidden={!widgets.bank} icon={<FiDollarSign/>} label="Bank Balance" value="Not connected" note="Bank account integration pending" tone="rose"/>
+      <div className="dashboard-all-cards"><section className="dashboard-kpis">
+        <Kpi style={{order:cardOrder.indexOf("sales")}} hidden={!widgets.sales} icon={<FiTrendingUp/>} label="Sales" value={money(totals.sales)} note={`Taxable ${money(totals.salesTaxable)} · ${number(data.sales.length)} invoices`} tone="green"/>
+        <Kpi style={{order:cardOrder.indexOf("purchases")}} hidden={!widgets.purchases} icon={<FiShoppingCart/>} label="Purchases" value={money(totals.purchases)} note={`Taxable ${money(totals.purchasesTaxable)} · ${number(data.purchases.length)} invoices`} tone="blue"/>
+        <Kpi style={{order:cardOrder.indexOf("expenses")}} hidden={!widgets.expenses} icon={<FiDollarSign/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
+        <GstCard style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate}/> 
+        <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiLandmark/>} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiWallet/>} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
       </section>
 
       <section className="dashboard-middle-grid">
-        <article hidden={!widgets.trend} className="dashboard-panel dashboard-trend-panel">
+        <article style={{order:cardOrder.indexOf("trend")}} hidden={!widgets.trend} className="dashboard-panel dashboard-trend-panel">
           <div className="dashboard-panel-heading"><div><h2>Sales vs Purchases Trend</h2><p>Month-wise invoice values</p></div><div className="dashboard-legend"><span><i className="sales-dot"/>Sales</span><span><i className="purchase-dot"/>Purchases</span></div></div>
           <div className="dashboard-chart">
             <div className="dashboard-ylabels"><span>{money(maxTrend)}</span><span>{money(maxTrend * .75)}</span><span>{money(maxTrend * .5)}</span><span>{money(maxTrend * .25)}</span><span>₹0</span></div>
             <div className="dashboard-bars">{monthly.map(row => <div className="dashboard-month" key={row.month}><div className="dashboard-bar-pair"><span className="dashboard-bar sales-bar" style={{height: `${Math.max(2, row.sales / maxTrend * 100)}%`}} title={`Sales ${money(row.sales)}`}/><span className="dashboard-bar purchase-bar" style={{height: `${Math.max(2, row.purchases / maxTrend * 100)}%`}} title={`Purchases ${money(row.purchases)}`}/></div><small>{row.month}</small></div>)}</div>
           </div>
         </article>
-        <article hidden={!widgets.balances} className="dashboard-panel dashboard-balance-panel">
+        <article style={{order:cardOrder.indexOf("balances")}} hidden={!widgets.balances} className="dashboard-panel dashboard-balance-panel">
           <div className="dashboard-panel-heading"><div><h2>Receivables & Payables</h2><p>Outstanding invoice balances</p></div></div>
           <div className="dashboard-balance-card receivable"><span><FiArrowDownRight/> Receivables (To Receive)</span><strong>{money(totals.receivables)}</strong></div>
           <div className="dashboard-balance-card payable"><span><FiArrowUpRight/> Payables (To Pay)</span><strong>{money(totals.payables)}</strong></div>
           <p className="dashboard-note">Calculated from available invoice balance and payment fields.</p>
         </article>
-        <article hidden={!widgets.snapshot} className="dashboard-panel dashboard-snapshot-panel">
+        <article style={{order:cardOrder.indexOf("snapshot")}} hidden={!widgets.snapshot} className="dashboard-panel dashboard-snapshot-panel">
           <div className="dashboard-panel-heading"><div><h2>Business Snapshot</h2><p>Current company records</p></div></div>
           <Snapshot icon={<FiFileText/>} label="Total Invoices (Sales)" value={number(data.sales.length)}/>
           <Snapshot icon={<FiShoppingCart/>} label="Total Purchase Invoices" value={number(data.purchases.length)}/>
@@ -211,10 +211,10 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard-bottom-grid">
-        <article hidden={!widgets.bank} className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiDollarSign/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
-        <article hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
-        <article hidden={!widgets.items} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
-      </section>
+        <article hidden={!widgets.bank} style={{order:cardOrder.indexOf("bank")}} className="dashboard-panel dashboard-bank-panel"><div className="dashboard-panel-heading"><div><h2>Cash & Bank Position</h2><p>Account balances</p></div></div><div className="dashboard-bank-empty"><span><FiDollarSign/></span><strong>Bank balances are not connected yet</strong><p>Once bank account balances are linked to the accounting ledger, this section will show the live consolidated position.</p></div></article>
+        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
+      </section></div>
     </>}
   </main>;
 }
@@ -228,8 +228,19 @@ function ledgerClosingBalance(ledger, data) {
   return opening+debit-credit;
 }
 
-function Kpi({ icon, label, value, note, tone, hidden = false }){
-  return <article hidden={hidden} className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
+function Kpi({ icon, label, value, note, tone, hidden = false, style }){
+  return <article style={style} hidden={hidden} className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
+}
+function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style}) {
+  return <article style={style} hidden={hidden} className="dashboard-panel dashboard-gst-card">
+    <div className="dashboard-panel-heading"><div><h2>GST Summary</h2><p>Calculated from SYD accounting records</p></div></div>
+    <div className="dashboard-gst-metric"><span>GST Output</span><strong>{money(output)}</strong></div>
+    <div className="dashboard-gst-metric"><span>Eligible Input GST</span><strong>{money(input)}</strong></div>
+    <div className="dashboard-gst-metric"><span>GST Cash Ledger</span><strong>{money(cashLedger)}</strong></div>
+    <div className="dashboard-gst-liability"><span>Estimated Net GST Liability</span><strong>{money(liability)}</strong></div>
+    <p className="dashboard-gst-updated">Accounting entries updated through: <b>{updatedThrough || "No posted accounting entries"}</b></p>
+    <p className="dashboard-gst-disclaimer">Indicative book balance only. Reconcile with GST portal before filing.</p>
+  </article>;
 }
 function Snapshot({ icon, label, value }) {
   return <div className="dashboard-snapshot-row"><span>{icon}{label}</span><strong>{value}</strong></div>;
