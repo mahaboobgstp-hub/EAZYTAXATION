@@ -15,7 +15,7 @@ const TEXT = [35, 47, 66], MUTED = [91, 105, 125], BORDER = [205, 216, 232];
 async function loadImage(url) {
   if (!url) return null;
   try {
-    if (String(url).startsWith("data:image/")) return { data: url, format: /image\\/png/i.test(url) ? "PNG" : "JPEG" };
+    if (String(url).startsWith("data:image/")) return { data: url, format: /image\/png/i.test(url) ? "PNG" : "JPEG" };
     const response = await fetch(url, { mode: "cors" });
     if (!response.ok) return null;
     const blob = await response.blob();
