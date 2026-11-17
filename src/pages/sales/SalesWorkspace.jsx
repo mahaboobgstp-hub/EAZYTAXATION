@@ -72,6 +72,7 @@ export default function SalesWorkspace({ kind }) {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
   const [quotationPreview, setQuotationPreview] = useState(null);
+  const [downloadNotice, setDownloadNotice] = useState(null);
   const [menuId, setMenuId] = useState(null);
   const [menuPosition, setMenuPosition] = useState(null);
   const [editingQuotationId, setEditingQuotationId] = useState(null);
@@ -358,8 +359,9 @@ export default function SalesWorkspace({ kind }) {
       if (isNativeAndroid) {
         const uri = await writeQuotationPdf(result, Directory.Documents);
         setMessageType("success");
-        setMessage("Download complete. Saved to Documents/Quotations/" + result.fileName);
-        window.alert("Quotation PDF downloaded successfully.\\n\\nSaved in: Documents/Quotations/" + result.fileName);
+        setMessage("Quotation PDF downloaded successfully.");
+        setDownloadNotice({ fileName: result.fileName, location: "Documents/Quotations", uri });
+        setMenuId(null); setMenuPosition(null);
         return uri;
       }
       const url = URL.createObjectURL(result.blob);
@@ -367,6 +369,7 @@ export default function SalesWorkspace({ kind }) {
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       setMessageType("success");
       setMessage("Quotation PDF download started: " + result.fileName);
+      setDownloadNotice({ fileName: result.fileName, location: "your browser's Downloads folder", uri: null });
     } catch (error) { setMessageType("error"); setMessage(errorText(error)); }
   };
 
@@ -496,6 +499,7 @@ export default function SalesWorkspace({ kind }) {
         </>}
       </footer>
     </form></section></div>}
+    {downloadNotice && <div className="sw-download-confirmation-backdrop" role="presentation"><section className="sw-download-confirmation" role="dialog" aria-modal="true" aria-label="PDF download complete"><div className="sw-download-confirmation-icon">✓</div><h2>PDF downloaded</h2><p><strong>{downloadNotice.fileName}</strong></p><p>Saved in: <b>{downloadNotice.location}</b></p><button type="button" className="sw-primary" onClick={() => setDownloadNotice(null)}>Done</button></section></div>}
     {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} onClose={() => setQuotationPreview(null)} onDownload={() => downloadQuotation(quotationPreview.row)} onShare={() => shareQuotation(quotationPreview.row)} />}
     {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
   </main>;
