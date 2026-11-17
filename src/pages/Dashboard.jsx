@@ -192,20 +192,20 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard-middle-grid">
-        <article style={{order:cardOrder.indexOf("trend")}} hidden={!widgets.trend} className="dashboard-panel dashboard-trend-panel">
+        <article style={{order:cardOrder.indexOf("trend")}} hidden={!widgets.trend} className="dashboard-panel dashboard-trend-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("trend")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("trend")}>
           <div className="dashboard-panel-heading"><div><h2>Sales vs Purchases Trend</h2><p>Month-wise invoice values</p></div><div className="dashboard-legend"><span><i className="sales-dot"/>Sales</span><span><i className="purchase-dot"/>Purchases</span></div></div>
           <div className="dashboard-chart">
             <div className="dashboard-ylabels"><span>{money(maxTrend)}</span><span>{money(maxTrend * .75)}</span><span>{money(maxTrend * .5)}</span><span>{money(maxTrend * .25)}</span><span>₹0</span></div>
             <div className="dashboard-bars">{monthly.map(row => <div className="dashboard-month" key={row.month}><div className="dashboard-bar-pair"><span className="dashboard-bar sales-bar" style={{height: `${Math.max(2, row.sales / maxTrend * 100)}%`}} title={`Sales ${money(row.sales)}`}/><span className="dashboard-bar purchase-bar" style={{height: `${Math.max(2, row.purchases / maxTrend * 100)}%`}} title={`Purchases ${money(row.purchases)}`}/></div><small>{row.month}</small></div>)}</div>
           </div>
         </article>
-        <article style={{order:cardOrder.indexOf("balances")}} hidden={!widgets.balances} className="dashboard-panel dashboard-balance-panel">
+        <article style={{order:cardOrder.indexOf("balances")}} hidden={!widgets.balances} className="dashboard-panel dashboard-balance-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("balances")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("balances")}>
           <div className="dashboard-panel-heading"><div><h2>Receivables & Payables</h2><p>Outstanding invoice balances</p></div></div>
           <div className="dashboard-balance-card receivable"><span><FiArrowDownRight/> Receivables (To Receive)</span><strong>{money(totals.receivables)}</strong></div>
           <div className="dashboard-balance-card payable"><span><FiArrowUpRight/> Payables (To Pay)</span><strong>{money(totals.payables)}</strong></div>
           <p className="dashboard-note">Calculated from available invoice balance and payment fields.</p>
         </article>
-        <article style={{order:cardOrder.indexOf("snapshot")}} hidden={!widgets.snapshot} className="dashboard-panel dashboard-snapshot-panel">
+        <article style={{order:cardOrder.indexOf("snapshot")}} hidden={!widgets.snapshot} className="dashboard-panel dashboard-snapshot-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("snapshot")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("snapshot")}>
           <div className="dashboard-panel-heading"><div><h2>Business Snapshot</h2><p>Current company records</p></div></div>
           <Snapshot icon={<FiFileText/>} label="Total Invoices (Sales)" value={number(data.sales.length)}/>
           <Snapshot icon={<FiShoppingCart/>} label="Total Purchase Invoices" value={number(data.purchases.length)}/>
@@ -217,8 +217,8 @@ export default function Dashboard() {
 
       <section className="dashboard-bottom-grid">
         
-        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
-        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel"><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("customers")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("customers")}><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("items")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("items")}><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section></div>
     </>}
 
