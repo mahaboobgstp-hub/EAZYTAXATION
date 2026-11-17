@@ -110,7 +110,7 @@ export default function Dashboard() {
     const expenses = data.expenses.reduce((sum, row) => sum + amount(row, ["total_amount", "grand_total", "amount"]), 0);
     const gstOutput = data.sales.reduce((sum,row)=>sum+amount(row,["cgst"])+amount(row,["sgst"])+amount(row,["igst"])+amount(row,["cess_amount"])+amount(row,["additional_cess_amount"]),0);
     const gstInput = data.purchases.reduce((sum,row)=>sum+amount(row,["cgst"])+amount(row,["sgst"])+amount(row,["igst"]),0);
-    const gstCashLedger = data.ledgers.filter(l=>/gst.*cash|cash.*gst/i.test(l.ledger_name)).reduce((sum,l)=>sum+ledgerClosingBalance(l,data),0);
+    const gstCashLedger = data.ledgers.filter(l=>/gst.*cash|cash.*gst|electronic cash/i.test(l.ledger_name)).reduce((sum,l)=>sum+ledgerClosingBalance(l,data),0);
     const gstLiability = gstOutput - gstInput - Math.max(0,gstCashLedger);
     const receivables = data.sales.reduce((sum, row) => sum + Math.max(0, amount(row, ["balance_amount", "outstanding_amount", "due_amount"]) || (amount(row, ["total_amount", "grand_total"]) - amount(row, ["paid_amount"]))), 0);
     const payables = data.purchases.reduce((sum, row) => sum + Math.max(0, amount(row, ["balance_amount", "outstanding_amount", "due_amount"]) || (amount(row, ["grand_total", "total_amount"]) - amount(row, ["paid_amount"]))), 0);
