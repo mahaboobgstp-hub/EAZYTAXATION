@@ -144,3 +144,13 @@
  .sw-quotation-filters{grid-template-columns:minmax(112px,.8fr) minmax(0,1.5fr)!important}
  .sw-quotation-date-trigger{font-size:12px;padding:0 9px}
 }
+
+/* Explicit, unmistakable confirmation after a quotation PDF is saved */
+.sw-download-confirmation-backdrop{position:fixed;inset:0;z-index:100700;background:rgba(12,26,43,.58);display:flex;align-items:center;justify-content:center;padding:22px}
+.sw-download-confirmation{width:min(390px,100%);background:#fff;border-radius:18px;padding:25px 22px 20px;box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center;color:#263b59}
+.sw-download-confirmation-icon{width:54px;height:54px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e8f7ef;color:#16804a;font-size:30px;font-weight:800}
+.sw-download-confirmation h2{margin:0 0 10px;color:#17395f;font-size:21px}
+.sw-download-confirmation p{margin:7px 0;color:#617189;font-size:13px;overflow-wrap:anywhere}
+.sw-download-confirmation p strong{color:#263b59}
+.sw-download-confirmation p b{color:#173e70}
+.sw-download-confirmation .sw-primary{width:100%;min-height:46px;margin-top:16px}
