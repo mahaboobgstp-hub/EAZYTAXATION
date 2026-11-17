@@ -62,6 +62,7 @@ export default function SalesWorkspace({ kind }) {
   const [placeOfSupplyFilter, setPlaceOfSupplyFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [quotationDateRange, setQuotationDateRange] = useState("all");
   const [dialog, setDialog] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -100,8 +101,19 @@ export default function SalesWorkspace({ kind }) {
       (!customerFilter || row.customer_id === customerFilter) &&
       (kind !== "register" || billingTypeFilter === "All" || (row.sale_type === "CASH" ? "Cash" : "Credit") === billingTypeFilter) &&
       (!placeOfSupplyFilter || row.place_of_supply === placeOfSupplyFilter) &&
-      (!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo);
-  }), [rows, search, statusFilter, customerFilter, billingTypeFilter, placeOfSupplyFilter, dateFrom, dateTo, config, kind]);
+      (kind === "quotations" ? (() => {
+        if (quotationDateRange === "all") return true;
+        const today = new Date(); today.setHours(0,0,0,0);
+        const date = new Date(row[config.date] + "T00:00:00");
+        if (Number.isNaN(date.getTime())) return false;
+        const start = new Date(today);
+        if (quotationDateRange === "today") return date.getTime() === today.getTime();
+        if (quotationDateRange === "7days") start.setDate(start.getDate() - 6);
+        else if (quotationDateRange === "month") start.setDate(1);
+        else if (quotationDateRange === "year") start.setMonth(0,1);
+        return date >= start && date <= today;
+      })() : ((!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo)));
+  }), [rows, search, statusFilter, customerFilter, billingTypeFilter, placeOfSupplyFilter, dateFrom, dateTo, quotationDateRange, config, kind]);
 
   const metrics = useMemo(() => {
     const metricRows = isNativeAndroid ? filtered : rows;
@@ -417,16 +429,21 @@ export default function SalesWorkspace({ kind }) {
     <header className="sw-heading"><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p><h1>{config.title}</h1><p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p></div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
     {message && <div className="sw-alert" role="alert">{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
-    <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>
-    <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
-      {kind !== "quotations" && <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>}{isNativeAndroid && kind === "register" && <>
+    {kind !== "quotations" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
+    {kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
+      <select aria-label="Filter quotations by date" value={quotationDateRange} onChange={e => setQuotationDateRange(e.target.value)}>
+        <option value="all">All dates</option><option value="today">Today</option><option value="7days">Last 7 days</option><option value="month">This month</option><option value="year">This year</option>
+      </select>
+      <label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search quotations" /></label>
+    </section> : <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
+      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{isNativeAndroid && kind === "register" && <>
       <select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}><option value="">All customers</option>{customers.map(customer => <option key={customer.id} value={customer.id}>{customer.customer_name}</option>)}</select>
       <select value={billingTypeFilter} onChange={e => setBillingTypeFilter(e.target.value)}><option value="All">All billing types</option><option value="Cash">Cash</option><option value="Credit">Credit</option></select>
       <select value={placeOfSupplyFilter} onChange={e => setPlaceOfSupplyFilter(e.target.value)}><option value="">All states</option>{[...new Set(rows.map(row => row.place_of_supply).filter(Boolean))].sort().map(state => <option key={state} value={state}>{state}</option>)}</select>
     </>}
       <label>From <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>To <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
       <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setCustomerFilter(""); setBillingTypeFilter("All"); setPlaceOfSupplyFilter(""); setDateFrom(""); setDateTo(""); }}>Reset</button>
-    </section>
+    </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
       <div className="sw-table-scroll"><table className={kind === "quotations" ? "sw-quotation-table" : ""}><thead><tr>{config.columns.map(c => <th key={c}>{c}</th>)}<th>Actions</th></tr></thead><tbody>{filtered.map(row => {
