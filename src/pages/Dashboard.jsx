@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
+import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown, FiGripVertical, FiWallet, FiLandmark } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/Dashboard.css";
@@ -27,11 +27,14 @@ export default function Dashboard() {
   const [customTo, setCustomTo] = useState(dateText(new Date()));
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
   const [showWidgetSettings, setShowWidgetSettings] = useState(false);
+  const defaultCardOrder = ["sales","purchases","expenses","gst","trend","balances","snapshot","bank","cash","customers","items"];
+  const [cardOrder, setCardOrder] = useState(() => { try { const saved=JSON.parse(localStorage.getItem("syd-dashboard-order")||"null"); return Array.isArray(saved) && saved.length===11 ? saved : defaultCardOrder; } catch { return defaultCardOrder; } });
+  useEffect(() => { localStorage.setItem("syd-dashboard-order", JSON.stringify(cardOrder)); }, [cardOrder]);
   const [widgets, setWidgets] = useState(() => { try { return {sales:true,purchases:true,expenses:true,gst:true,trend:true,balances:true,snapshot:true,bank:true,customers:true,items:true,...JSON.parse(localStorage.getItem("syd-dashboard-widgets") || "{}")}; } catch { return {sales:true,purchases:true,expenses:true,gst:true,trend:true,balances:true,snapshot:true,bank:true,customers:true,items:true}; } });
   useEffect(() => { localStorage.setItem("syd-dashboard-widgets", JSON.stringify(widgets)); }, [widgets]);
-  const widgetLabels = {sales:"Sales summary",purchases:"Purchase summary",expenses:"Expense summary",gst:"GST summary",trend:"Sales & purchase trend",balances:"Receivables & payables",snapshot:"Business snapshot",bank:"Cash & bank position",customers:"Top customers",items:"Top items"};
+  const widgetLabels = {sales:"Sales summary",purchases:"Purchase summary",expenses:"Expense summary",gst:"GST summary",trend:"Sales & purchase trend",balances:"Receivables & payables",snapshot:"Business snapshot",bank:"Bank balance",cash:"Cash balance",customers:"Top 5 customers",items:"Top 5 items"};
   const [refreshing, setRefreshing] = useState(false);
-  const [data, setData] = useState({ sales: [], purchases: [], expenses: [], itemSales: [], customers: 0, vendors: 0, items: 0, error: "" });
+  const [data, setData] = useState({ sales: [], purchases: [], expenses: [], itemSales: [], customers: 0, vendors: 0, items: 0, groups: [], ledgers: [], vouchers: [], voucherLines: [], error: "" });
 
   const range = useMemo(() => {
     const now = new Date();
@@ -63,15 +66,19 @@ export default function Dashboard() {
     }
     setRefreshing(true);
     try {
-      const [sales, purchases, expenses, customers, vendors, items] = await Promise.all([
+      const [sales, purchases, expenses, customers, vendors, items, groups, ledgers, vouchers, voucherLines] = await Promise.all([
         supabase.from("sales_invoices").select("*").eq("company_id", currentCompanyId).eq("is_deleted", false).gte("invoice_date", range.from).lte("invoice_date", range.to).order("invoice_date", { ascending: true }),
         supabase.from("purchase_invoices").select("*").eq("company_id", currentCompanyId).eq("is_deleted", false).gte("invoice_date", range.from).lte("invoice_date", range.to).order("invoice_date", { ascending: true }),
         supabase.from("expenses").select("*").eq("company_id", currentCompanyId).gte("expense_date", range.from).lte("expense_date", range.to),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId),
         supabase.from("vendors").select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId),
-        supabase.from("items").select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId)
+        supabase.from("items").select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId),
+        supabase.from("account_groups").select("id,group_name,account_nature,normal_balance").eq("company_id", currentCompanyId),
+        supabase.from("chart_of_accounts").select("id,ledger_name,group_id,opening_balance,opening_balance_type,opening_date,party_type,is_active").eq("company_id", currentCompanyId).eq("is_active",true),
+        supabase.from("accounting_vouchers").select("id,voucher_date,status").eq("company_id", currentCompanyId).eq("status","Posted").lte("voucher_date",dateText(new Date())),
+        supabase.from("accounting_voucher_lines").select("voucher_id,ledger_id,debit,credit").eq("company_id", currentCompanyId)
       ]);
-      const firstError = [sales, purchases, expenses, customers, vendors, items].find(result => result.error);
+      const firstError = [sales, purchases, expenses, customers, vendors, items, groups, ledgers, vouchers, voucherLines].find(result => result.error);
       if (firstError) throw firstError.error;
       const invoiceIds = (sales.data || []).map(row => row.id).filter(Boolean);
       const itemResult = invoiceIds.length
@@ -81,7 +88,8 @@ export default function Dashboard() {
       setData({
         sales: sales.data || [], purchases: purchases.data || [], expenses: expenses.data || [],
         itemSales: itemResult.data || [],
-        customers: customers.count || 0, vendors: vendors.count || 0, items: items.count || 0, error: ""
+        customers: customers.count || 0, vendors: vendors.count || 0, items: items.count || 0,
+        groups: groups.data || [], ledgers: ledgers.data || [], vouchers: vouchers.data || [], voucherLines: voucherLines.data || [], error: ""
       });
     } catch (error) {
       setData(previous => ({ ...previous, error: error.message || "Unable to load dashboard information." }));
@@ -94,13 +102,23 @@ export default function Dashboard() {
 
   const totals = useMemo(() => {
     const sales = data.sales.reduce((sum, row) => sum + amount(row, ["total_amount", "grand_total", "invoice_value"]), 0);
+    const salesTaxable = data.sales.reduce((sum,row)=>sum+amount(row,["taxable_value"]),0);
     const purchases = data.purchases.reduce((sum, row) => sum + amount(row, ["grand_total", "total_amount", "invoice_value"]), 0);
+    const purchasesTaxable = data.purchases.reduce((sum,row)=>sum+amount(row,["taxable","taxable_value"]),0);
     const expenses = data.expenses.reduce((sum, row) => sum + amount(row, ["total_amount", "grand_total", "amount"]), 0);
-    const gst = data.sales.reduce((sum, row) => sum + amount(row, ["cgst"]) + amount(row, ["sgst"]) + amount(row, ["igst"]) + amount(row, ["cess_amount"]) + amount(row, ["additional_cess_amount"]), 0);
+    const gstOutput = data.sales.reduce((sum,row)=>sum+amount(row,["cgst"])+amount(row,["sgst"])+amount(row,["igst"])+amount(row,["cess_amount"])+amount(row,["additional_cess_amount"]),0);
+    const gstInput = data.purchases.reduce((sum,row)=>sum+amount(row,["cgst"])+amount(row,["sgst"])+amount(row,["igst"]),0);
+    const gstCashLedger = data.ledgers.filter(l=>/gst.*cash|cash.*gst/i.test(l.ledger_name)).reduce((sum,l)=>sum+ledgerClosingBalance(l,data),0);
+    const gstLiability = gstOutput - gstInput - Math.max(0,gstCashLedger);
     const receivables = data.sales.reduce((sum, row) => sum + Math.max(0, amount(row, ["balance_amount", "outstanding_amount", "due_amount"]) || (amount(row, ["total_amount", "grand_total"]) - amount(row, ["paid_amount"]))), 0);
     const payables = data.purchases.reduce((sum, row) => sum + Math.max(0, amount(row, ["balance_amount", "outstanding_amount", "due_amount"]) || (amount(row, ["grand_total", "total_amount"]) - amount(row, ["paid_amount"]))), 0);
-    return { sales, purchases, expenses, gst, receivables, payables };
+    return { sales, salesTaxable, purchases, purchasesTaxable, expenses, gstOutput, gstInput, gstCashLedger, gstLiability, receivables, payables };
   }, [data]);
+
+  const latestAccountingDate = useMemo(() => { const dates=[...data.sales.map(r=>r.invoice_date),...data.purchases.map(r=>r.invoice_date),...data.vouchers.map(r=>r.voucher_date)].filter(Boolean).sort(); return dates.length?dates[dates.length-1]:null; },[data.sales,data.purchases,data.vouchers]);
+  const currentLedgerBalances = useMemo(() => data.ledgers.map(ledger=>({ledger,balance:ledgerClosingBalance(ledger,data)})),[data.ledgers,data.vouchers,data.voucherLines]);
+  const cashBalance = currentLedgerBalances.filter(x=>/cash/i.test(x.ledger.ledger_name)).reduce((sum,x)=>sum+x.balance,0);
+  const bankBalance = currentLedgerBalances.filter(x=>x.ledger.party_type==="Bank" || /bank/i.test(x.ledger.ledger_name)).reduce((sum,x)=>sum+x.balance,0);
 
   const monthly = useMemo(() => MONTHS.map((month, index) => {
     const fy = getFinancialYear(new Date());
@@ -155,7 +173,7 @@ export default function Dashboard() {
       </div>
     </div>
 
-    {showWidgetSettings && <section className="dashboard-config-panel"><div className="dashboard-config-heading"><div><span className="dashboard-config-icon"><FiSettings/></span><div><h2>Customize dashboard</h2><p>Choose which information panels are visible.</p></div></div><button onClick={()=>setShowWidgetSettings(false)} aria-label="Close configuration"><FiX/></button></div><div className="dashboard-widget-grid">{Object.entries(widgetLabels).map(([key,label]) => <label key={key} className={`dashboard-widget-option ${widgets[key]?"is-enabled":""}`}><input type="checkbox" checked={!!widgets[key]} onChange={e=>setWidgets(prev=>({...prev,[key]:e.target.checked}))}/><span className="dashboard-widget-check">{widgets[key]&&<FiCheck/>}</span><span className="dashboard-widget-label">{label}</span><span className="dashboard-widget-state">{widgets[key]?"Shown":"Hidden"}</span></label>)}</div></section>}
+    {showWidgetSettings && <><button className="dashboard-config-backdrop" onClick={()=>setShowWidgetSettings(false)} aria-label="Close dashboard configuration"/><section className="dashboard-config-popover" role="dialog" aria-modal="true" aria-label="Customize dashboard"><div className="dashboard-config-heading"><div><span className="dashboard-config-icon"><FiSettings/></span><div><h2>Customize dashboard</h2><p>Choose visibility and card order.</p></div></div><button onClick={()=>setShowWidgetSettings(false)} aria-label="Close configuration"><FiX/></button></div><label className="dashboard-select-all"><input type="checkbox" checked={Object.keys(widgetLabels).every(key=>widgets[key])} onChange={e=>setWidgets(prev=>Object.fromEntries(Object.keys(widgetLabels).map(key=>[key,e.target.checked])))}/><span>Select all dashboard items</span></label><div className="dashboard-widget-grid">{cardOrder.map((key,index)=><div key={key} className={`dashboard-widget-option ${widgets[key]?"is-enabled":""}`}><label className="dashboard-widget-toggle"><input type="checkbox" checked={!!widgets[key]} onChange={e=>setWidgets(prev=>({...prev,[key]:e.target.checked}))}/><span className="dashboard-widget-check">{widgets[key]&&<FiCheck/>}</span><span className="dashboard-widget-label">{widgetLabels[key]}</span></label><div className="dashboard-widget-movers"><button type="button" disabled={index===0} onClick={()=>setCardOrder(prev=>{const next=[...prev];[next[index-1],next[index]]=[next[index],next[index-1]];return next;})} aria-label={`Move ${widgetLabels[key]} up`}><FiChevronUp/></button><button type="button" disabled={index===cardOrder.length-1} onClick={()=>setCardOrder(prev=>{const next=[...prev];[next[index+1],next[index]]=[next[index],next[index+1]];return next;})} aria-label={`Move ${widgetLabels[key]} down`}><FiMoveDown/></button></div></div>)}</div><button className="dashboard-config-done" onClick={()=>setShowWidgetSettings(false)}>Done</button></section></>}
     {companyLoading ? <div className="dashboard-message">Loading company information…</div> : !currentCompanyId ? <div className="dashboard-message"><FiBriefcase/><div><strong>Select a company to view its dashboard</strong><span>Choose a company from the sidebar. Dashboard figures are always restricted to the selected company.</span></div></div> : <>
       {data.error && <div className="dashboard-error">{data.error} <button onClick={loadDashboard}>Retry</button></div>}
       <div className="dashboard-company-line"><FiBriefcase/> <strong>{currentCompany?.company_name || "Selected company"}</strong><span>·</span><span>{range.from} to {range.to}</span></div>
@@ -201,7 +219,16 @@ export default function Dashboard() {
   </main>;
 }
 
-function Kpi({ icon, label, value, note, tone, hidden = false }) {
+function ledgerClosingBalance(ledger, data) {
+  const posted = new Set((data.vouchers||[]).filter(v=>v.status==="Posted").map(v=>v.id));
+  const lines=(data.voucherLines||[]).filter(line=>line.ledger_id===ledger.id && posted.has(line.voucher_id));
+  const debit=lines.reduce((sum,line)=>sum+Number(line.debit||0),0);
+  const credit=lines.reduce((sum,line)=>sum+Number(line.credit||0),0);
+  const opening=Number(ledger.opening_balance||0)*(ledger.opening_balance_type==="Credit"?-1:1);
+  return opening+debit-credit;
+}
+
+function Kpi({ icon, label, value, note, tone, hidden = false }){
   return <article hidden={hidden} className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
 }
 function Snapshot({ icon, label, value }) {
