@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown, FiGripVertical, FiWallet, FiBriefcase } from "react-icons/fi";
+import { FiDollarSign, FiArrowDownRight, FiArrowUpRight, FiBriefcase, FiCalendar, FiFileText, FiPackage, FiRefreshCw, FiShoppingCart, FiTrendingUp, FiUsers, FiSettings, FiCheck, FiChevronDown, FiX, FiChevronUp, FiChevronDown as FiMoveDown, FiWallet, FiBriefcase } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import "../css/Dashboard.css";
