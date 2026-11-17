@@ -40,6 +40,11 @@ export default function MobileSalesInvoice() {
   const [discountType, setDiscountType] = useState("AMOUNT");
   const [discountValue, setDiscountValue] = useState("0");
   const [otherAmount, setOtherAmount] = useState("0");
+  const [invoiceCess, setInvoiceCess] = useState("0");
+  const [transporterName, setTransporterName] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [lrNumber, setLrNumber] = useState("");
+  const [transportCharges, setTransportCharges] = useState("0");
   const [roundOff, setRoundOff] = useState("0");
   const [placeOfSupply, setPlaceOfSupply] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -66,7 +71,7 @@ export default function MobileSalesInvoice() {
     roundOff,
   }), [lines, intraState, discountType, discountValue, otherAmount, roundOff]);
   const totals = calculated.totals;
-  const grandTotal = totals.grandTotal;
+  const grandTotal = Number((totals.grandTotal + (Number(invoiceCess) || 0) + (Number(transportCharges) || 0)).toFixed(2));
   const visibleItems = itemsMaster.filter(item => !searchItem || (item.item_name || "").toLowerCase().includes(searchItem.toLowerCase()) || (item.hsn_sac || "").toLowerCase().includes(searchItem.toLowerCase()));
 
   useEffect(() => {
@@ -166,6 +171,15 @@ export default function MobileSalesInvoice() {
         setDiscountType(header.discount_type || "AMOUNT");
         setDiscountValue(String(header.discount_value ?? "0"));
         setOtherAmount(String(header.other_amount ?? "0"));
+        setInvoiceCess(String(header.additional_cess_amount ?? "0"));
+        const transportMeta = String(header.remarks || "").match(/\[Transport Details\]([\s\S]*)$/);
+        if (transportMeta) {
+          const getMeta = key => (transportMeta[1].match(new RegExp("^" + key + ":\\s*(.*)$","m")) || [,""])[1];
+          setTransporterName(getMeta("Transporter") || "");
+          setVehicleNumber(getMeta("Vehicle") || "");
+          setLrNumber(getMeta("LR/E-Way Bill") || "");
+          setTransportCharges(getMeta("Transport Charges") || "0");
+        }
         setRoundOff(String(header.round_off ?? "0"));
         setPlaceOfSupply(header.place_of_supply || header.customer_state || "");
         setRemarks(header.remarks || "");
@@ -250,6 +264,11 @@ export default function MobileSalesInvoice() {
     setDiscountType("AMOUNT");
     setDiscountValue("0");
     setOtherAmount("0");
+    setInvoiceCess("0");
+    setTransporterName("");
+    setVehicleNumber("");
+    setLrNumber("");
+    setTransportCharges("0");
     setRoundOff("0");
     setPlaceOfSupply("");
     setRemarks("");
@@ -311,7 +330,7 @@ export default function MobileSalesInvoice() {
         sgst: totals.sgst,
         igst: totals.igst,
         total_amount: grandTotal,
-        remarks,
+        remarks: [remarks, `[Transport Details]\nTransporter: ${transporterName}\nVehicle: ${vehicleNumber}\nLR/E-Way Bill: ${lrNumber}\nTransport Charges: ${Number(transportCharges) || 0}`].filter(Boolean).join("\n\n"),
       };
       let invoiceId;
       if (editingInvoiceId) {
@@ -387,7 +406,7 @@ export default function MobileSalesInvoice() {
         <div><small>{currentCompany?.company_name || "EAZYTAXATION"}</small><h1>{editingInvoiceId ? "Edit Sales Invoice" : "Add Sales Invoice"}</h1></div>
       </header>
       <nav className="mobile-sales-steps" aria-label="Invoice steps">
-        {["Details", "Items", "Charges & Tax", "Review"].map((label, index) => <div className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><b>{step > index + 1 ? "✓" : index + 1}</b><span>{label}</span></div>)}
+        {["Details", "Items", "Taxes & Transport", "Review"].map((label, index) => <div className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><b>{step > index + 1 ? "✓" : index + 1}</b><span>{label}</span></div>)}
       </nav>
       {saveNotice && <div className="mobile-sales-notice" role="status">{saveNotice}<button onClick={() => setSaveNotice("")}>×</button></div>}
       {error && <div className="mobile-sales-error" role="alert">{error}<button onClick={() => setError("")}>×</button></div>}
@@ -412,7 +431,7 @@ export default function MobileSalesInvoice() {
           <div className="mobile-sales-line-total">Line amount <strong>{money(Number(line.qty) * Number(line.rate))}</strong></div>
         </article>)}
         <button className="mobile-sales-add" type="button" onClick={() => setLines(prev => [...prev, blankLine()])}>＋ Add Another Item</button>
-        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(1)}>Back</button><button className="mobile-sales-primary" onClick={() => { if (lines.some(line => !line.item_id || Number(line.qty) <= 0)) { setError("Select an item and enter a valid quantity in every row."); return; } setError(""); setStep(3); }}>Next: Charges & Tax →</button></div>
+        <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(1)}>Back</button><button className="mobile-sales-primary" onClick={() => { if (lines.some(line => !line.item_id || Number(line.qty) <= 0)) { setError("Select an item and enter a valid quantity in every row."); return; } setError(""); setStep(3); }}>Next: Taxes & Transport →</button></div>
       </section>}
 
       {step === 3 && <section className="mobile-sales-card">
@@ -420,11 +439,11 @@ export default function MobileSalesInvoice() {
         <p>Review the calculated GST and apply invoice-level adjustments before final review.</p>
         <label>Discount Type<select value={discountType} onChange={e => setDiscountType(e.target.value)}><option value="AMOUNT">Amount (₹)</option><option value="PERCENT">Percentage (%)</option></select></label>
         <label>Discount {discountType === "PERCENT" ? "(%)" : "(₹)"}<input type="number" min="0" step="0.01" value={discountValue} onChange={e => setDiscountValue(e.target.value)} /></label>
-        <label>Other Charges (₹)<input type="number" min="0" step="0.01" value={otherAmount} onChange={e => setOtherAmount(e.target.value)} /></label>
+        <label>CESS (₹)<input type="number" min="0" step="0.01" value={invoiceCess} onChange={e => setInvoiceCess(e.target.value)} /></label>
         <label>Round Off (₹)<input type="number" step="0.01" value={roundOff} onChange={e => setRoundOff(e.target.value)} /></label>
         <div className="mobile-sales-summary-row"><span>Gross Taxable Value</span><strong>{money(totals.subtotal)}</strong></div>
         <div className="mobile-sales-summary-row"><span>Discount</span><strong>{money(totals.discount)}</strong></div>
-        <div className="mobile-sales-summary-row"><span>Taxable Amount</span><strong>{money(totals.taxable)}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Gross Taxable Value</span><strong>{money(totals.subtotal)}</strong></div>\n        <div className="mobile-sales-summary-row"><span>Taxable Amount</span><strong>{money(totals.taxable)}</strong></div>
         {intraState ? <><div className="mobile-sales-summary-row"><span>CGST</span><strong>{money(totals.cgst)}</strong></div><div className="mobile-sales-summary-row"><span>SGST</span><strong>{money(totals.sgst)}</strong></div></> : <div className="mobile-sales-summary-row"><span>IGST</span><strong>{money(totals.igst)}</strong></div>}
         {totals.cess > 0 && <div className="mobile-sales-summary-row"><span>Cess</span><strong>{money(totals.cess)}</strong></div>}
         <div className="mobile-sales-summary-row"><span>Other Charges</span><strong>{money(totals.otherAmount)}</strong></div>
@@ -437,7 +456,7 @@ export default function MobileSalesInvoice() {
         <h2>Review Sales Invoice</h2>
         <div className="mobile-sales-summary-row"><span>Invoice No.</span><strong>{invoiceNo || "—"}</strong></div>
         <div className="mobile-sales-summary-row"><span>Invoice Date</span><strong>{invoiceDate}</strong></div>
-        <div className="mobile-sales-summary-row"><span>Customer</span><strong>{customer?.customer_name || "—"}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Customer</span><strong>{customer?.customer_name || "—"}</strong></div>\n        <div className="mobile-sales-summary-row"><span>Place of Supply</span><strong>{placeOfSupply || customer?.state || "—"}</strong></div>
         <div className="mobile-sales-summary-row"><span>Billing Type</span><strong>{saleType === "CASH" ? "Cash" : "Credit"}</strong></div>
         <h3>Items ({lines.length})</h3>
         {calculated.items.map((line, index) => <div className="mobile-sales-summary-item" key={index}><span>{line.item_name} · {line.qty} × {money(line.rate)}</span><strong>{money(line.taxable_amount + line.cgst_amount + line.sgst_amount + line.igst_amount + line.cess_amount)}</strong></div>)}
@@ -447,7 +466,7 @@ export default function MobileSalesInvoice() {
         <div className="mobile-sales-summary-row"><span>Discount</span><strong>{money(totals.discount)}</strong></div>
         <div className="mobile-sales-summary-row"><span>Other Charges</span><strong>{money(totals.otherAmount)}</strong></div>
         <div className="mobile-sales-summary-row"><span>Round Off</span><strong>{money(totals.roundOff)}</strong></div>
-        <label>Remarks (optional)<textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={2} /></label>
+        <div className="mobile-sales-review-transport"><h3>Transport Details</h3><div className="mobile-sales-summary-row"><span>Transporter</span><strong>{transporterName || "—"}</strong></div><div className="mobile-sales-summary-row"><span>Vehicle Number</span><strong>{vehicleNumber || "—"}</strong></div><div className="mobile-sales-summary-row"><span>LR / E-Way Bill Number</span><strong>{lrNumber || "—"}</strong></div><div className="mobile-sales-summary-row"><span>Transport Charges</span><strong>{money(transportCharges)}</strong></div></div>\n        <label>Remarks (optional)<textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={2} /></label>
         <div className="mobile-sales-grand-total"><span>Grand Total</span><strong>{money(grandTotal)}</strong></div>
         <div className="mobile-sales-amount-words"><span>Amount in Words</span><strong>{numberToWords(Number(grandTotal) || 0)}</strong></div>
         <div className="mobile-sales-review-actions"><button className="mobile-sales-secondary" onClick={() => setStep(3)}>Back</button><button className="mobile-sales-save-button" disabled={saving} onClick={() => save(false)}>{saving ? "Saving…" : "▣ Save Invoice"}</button><button className="mobile-sales-generate-button" disabled={saving} onClick={() => save(true)}>{saving ? "Saving…" : "▣ Save & Generate E-Way Bill"}</button></div>
