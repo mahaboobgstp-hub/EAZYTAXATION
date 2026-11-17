@@ -224,3 +224,37 @@
  .dashboard-expanded-floating{width:calc(100vw - 24px);max-height:78vh;padding:16px;border-radius:19px}
  .dashboard-expanded-heading h2{font-size:17px}
 }
+
+
+/* Dashboard card sizing correction: Sales KPI is the mobile size reference */
+@media(max-width:760px){
+  .dashboard-all-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:190px!important;gap:10px!important;align-items:stretch!important}
+  .dashboard-all-cards>.dashboard-kpis,.dashboard-all-cards>.dashboard-middle-grid,.dashboard-all-cards>.dashboard-bottom-grid{display:contents!important}
+  .dashboard-all-cards .dashboard-kpi,.dashboard-all-cards .dashboard-panel{box-sizing:border-box!important;width:100%!important;min-width:0!important;min-height:0!important;height:190px!important;max-height:190px!important;margin:0!important;overflow:hidden!important;align-self:stretch!important}
+  .dashboard-all-cards .dashboard-kpi{display:flex!important;align-items:flex-start!important;gap:10px!important;padding:13px!important}
+  .dashboard-all-cards .dashboard-kpi>div{min-width:0!important;flex:1!important}
+  .dashboard-all-cards .dashboard-kpi strong{display:block!important;overflow-wrap:anywhere!important;white-space:normal!important}
+  .dashboard-all-cards .dashboard-panel{padding:13px!important}
+  .dashboard-all-cards .dashboard-trend-panel{grid-column:auto!important}
+  .dashboard-all-cards .dashboard-chart{height:112px!important;min-height:112px!important}
+  .dashboard-all-cards .dashboard-panel-heading h2{font-size:12px!important;line-height:1.3!important}
+  .dashboard-all-cards .dashboard-panel-heading p{font-size:9px!important}
+  .dashboard-all-cards .dashboard-gst-metric{padding:5px 0!important;font-size:9px!important}
+  .dashboard-all-cards .dashboard-gst-metric strong{font-size:10px!important}
+  .dashboard-all-cards .dashboard-gst-liability{margin-top:6px!important;padding:7px!important;font-size:9px!important}
+  .dashboard-all-cards .dashboard-gst-liability strong{font-size:12px!important}
+  .dashboard-all-cards .dashboard-gst-updated{margin-top:6px!important;font-size:8px!important}
+  .dashboard-all-cards .dashboard-gst-disclaimer{font-size:7px!important}
+  .dashboard-all-cards .dashboard-snapshot-row{padding:5px 0!important;font-size:9px!important}
+  .dashboard-all-cards .dashboard-snapshot-row strong{font-size:10px!important}
+  .dashboard-all-cards .dashboard-rank-row{padding:6px 0!important;gap:4px!important}
+  .dashboard-all-cards .dashboard-rank-row>span,.dashboard-all-cards .dashboard-rank-row>strong{font-size:9px!important}
+  .dashboard-all-cards .dashboard-rank-row>i{height:5px!important}
+  .dashboard-all-cards .dashboard-balance-card{padding:8px!important;margin-bottom:6px!important}
+  .dashboard-all-cards .dashboard-note{font-size:8px!important}
+}
+@media(max-width:380px){
+  .dashboard-all-cards{grid-auto-rows:178px!important;gap:8px!important}
+  .dashboard-all-cards .dashboard-kpi,.dashboard-all-cards .dashboard-panel{height:178px!important;max-height:178px!important}
+  .dashboard-all-cards .dashboard-kpi,.dashboard-all-cards .dashboard-panel{padding:10px!important}
+}
