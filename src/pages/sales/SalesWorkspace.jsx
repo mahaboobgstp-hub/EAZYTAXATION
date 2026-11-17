@@ -9,6 +9,7 @@ import { Share } from "@capacitor/share";
 import "../../css/sales/SalesWorkspace.css";
 import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
 import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
+import QuotationPdfPreview from "../../components/QuotationPdfPreview";
 
 const CONFIG = {
   register: {
@@ -18,7 +19,7 @@ const CONFIG = {
   },
   quotations: {
     title: "Quotations", table: "quotations", date: "invoice_date", number: "invoice_no",
-    metrics: ["Total quotations", "Awaiting response", "Accepted"],
+    metrics: ["Total quotations"],
     columns: ["Date", "Customer", "Amount"],
   },
   orders: {
@@ -65,8 +66,8 @@ export default function SalesWorkspace({ kind }) {
   const [formStep, setFormStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [quotationPreview, setQuotationPreview] = useState(null);
   const [menuId, setMenuId] = useState(null);
-  const [statusMenuId, setStatusMenuId] = useState(null);
   const [menuPosition, setMenuPosition] = useState(null);
   const [editingQuotationId, setEditingQuotationId] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
@@ -95,7 +96,7 @@ export default function SalesWorkspace({ kind }) {
     const text = [row[config.number], row.customer_name, row.reason, row.vehicle_no, row.status].join(" ").toLowerCase();
     const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
     return (!search || text.includes(search.toLowerCase())) &&
-      (statusFilter === "All statuses" || status.toLowerCase() === statusFilter.toLowerCase()) &&
+      (kind === "quotations" || statusFilter === "All statuses" || status.toLowerCase() === statusFilter.toLowerCase()) &&
       (!customerFilter || row.customer_id === customerFilter) &&
       (kind !== "register" || billingTypeFilter === "All" || (row.sale_type === "CASH" ? "Cash" : "Credit") === billingTypeFilter) &&
       (!placeOfSupplyFilter || row.place_of_supply === placeOfSupplyFilter) &&
@@ -109,7 +110,7 @@ export default function SalesWorkspace({ kind }) {
       const outstanding = metricRows.filter(r => r.sale_type !== "CASH").reduce((s, r) => s + num(r.total_amount), 0);
       return [metricRows.length, currency(metricRows.reduce((s, r) => s + num(r.total_amount), 0)), currency(paid), currency(outstanding)];
     }
-    if (kind === "quotations") return [metricRows.length, metricRows.filter(r => !["accepted", "rejected", "expired"].includes((r.status || "draft").toLowerCase())).length, metricRows.filter(r => (r.status || "").toLowerCase() === "accepted").length];
+    if (kind === "quotations") return [metricRows.length];
     if (kind === "orders") return [metricRows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(metricRows.reduce((s, r) => s + num(r.total_amount), 0)), metricRows.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
     if (kind === "challans") return [
       metricRows.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
@@ -276,12 +277,12 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const toggleQuotationMenu = (event, rowId) => {
-    if (menuId === rowId) { setMenuId(null); setStatusMenuId(null); setMenuPosition(null); return; }
+    if (menuId === rowId) { setMenuId(null); setMenuPosition(null); return; }
     const rect = event.currentTarget.getBoundingClientRect();
     const menuHeight = 300;
     const top = Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 10));
     setMenuPosition({ top, right: Math.max(8, window.innerWidth - rect.right), maxHeight: Math.max(160, window.innerHeight - top - 12) });
-    setMenuId(rowId); setStatusMenuId(null);
+    setMenuId(rowId);
   };
 
   const updateStatus = async (row, value, field = "status") => {
@@ -304,22 +305,27 @@ export default function SalesWorkspace({ kind }) {
   const makeQuotationPdf = async row => {
     const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
     if (error) throw error;
-    return createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
+    if (!items?.length) throw new Error("This quotation has no saved item lines. Please edit and save it before generating a PDF.");
+    const result = createQuotationPdf({ document: row, items, company: currentCompany || {} });
+    if (!result?.blob || result.blob.size < 100) throw new Error("The quotation PDF could not be generated. Please try again.");
+    return result;
   };
 
-  const writeQuotationPdf = async (result, directory = Directory.Cache) => {
+  const writeQuotationPdf = async (result, directory = Directory.Documents) => {
     const bytes = new Uint8Array(await result.blob.arrayBuffer());
     let binary = "";
-    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-    }
-    const saved = await Filesystem.writeFile({
-      path: result.fileName,
-      data: btoa(binary),
-      directory,
-      recursive: true,
-    });
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    const saved = await Filesystem.writeFile({ path: "Quotations/" + result.fileName, data: btoa(binary), directory, recursive: true });
     return saved.uri;
+  };
+
+  const openQuotationPreview = async row => {
+    try {
+      setMessage("");
+      const result = await makeQuotationPdf(row);
+      setQuotationPreview({ ...result, row });
+      setMenuId(null); setMenuPosition(null);
+    } catch (error) { setMessage(errorText(error)); }
   };
 
   const shareQuotation = async row => {
@@ -327,33 +333,11 @@ export default function SalesWorkspace({ kind }) {
       const result = await makeQuotationPdf(row);
       if (isNativeAndroid) {
         const uri = await writeQuotationPdf(result, Directory.Cache);
-        await Share.share({ title: result.fileName, files: [uri], dialogTitle: "Share quotation PDF" });
-        return;
-      }
-      const file = new File([result.blob], result.fileName, { type: "application/pdf" });
-      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-        await navigator.share({ title: result.fileName, files: [file] });
+        await Share.share({ title: result.fileName, text: "Quotation " + (row.invoice_no || ""), files: [uri], dialogTitle: "Share quotation PDF" });
       } else {
-        const url = URL.createObjectURL(result.blob);
-        const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      }
-    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
-  };
-
-  const printQuotation = async row => {
-    try {
-      const result = await makeQuotationPdf(row);
-      if (isNativeAndroid) {
-        const uri = await writeQuotationPdf(result, Directory.Cache);
-        await Share.share({ title: result.fileName, files: [uri], dialogTitle: "Open or print quotation PDF" });
-      } else {
-        const url = URL.createObjectURL(result.blob);
-        const popup = window.open(url, "_blank");
-        if (!popup) {
-          const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
-        }
-        setTimeout(() => URL.revokeObjectURL(url), 120000);
+        const file = new File([result.blob], result.fileName, { type: "application/pdf" });
+        if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
+        else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
       }
     } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
   };
@@ -362,14 +346,14 @@ export default function SalesWorkspace({ kind }) {
     try {
       const result = await makeQuotationPdf(row);
       if (isNativeAndroid) {
-        await writeQuotationPdf(result, Directory.Documents);
-        setMessage("Quotation PDF saved to your phone's Documents folder: " + result.fileName);
-      } else {
-        const url = URL.createObjectURL(result.blob);
-        const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        setMessage("Quotation PDF download started.");
+        const uri = await writeQuotationPdf(result, Directory.Documents);
+        setMessage("PDF saved in Documents/Quotations: " + result.fileName);
+        return uri;
       }
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement("a"); link.href = url; link.download = result.fileName; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setMessage("Quotation PDF download started.");
     } catch (error) { setMessage(errorText(error)); }
   };
 
@@ -435,7 +419,7 @@ export default function SalesWorkspace({ kind }) {
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
     <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>
     <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
-      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{isNativeAndroid && kind === "register" && <>
+      {kind !== "quotations" && <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>}{isNativeAndroid && kind === "register" && <>
       <select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}><option value="">All customers</option>{customers.map(customer => <option key={customer.id} value={customer.id}>{customer.customer_name}</option>)}</select>
       <select value={billingTypeFilter} onChange={e => setBillingTypeFilter(e.target.value)}><option value="All">All billing types</option><option value="Cash">Cash</option><option value="Credit">Credit</option></select>
       <select value={placeOfSupplyFilter} onChange={e => setPlaceOfSupplyFilter(e.target.value)}><option value="">All states</option>{[...new Set(rows.map(row => row.place_of_supply).filter(Boolean))].sort().map(state => <option key={state} value={state}>{state}</option>)}</select>
@@ -443,7 +427,7 @@ export default function SalesWorkspace({ kind }) {
       <label>From <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>To <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
       <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setCustomerFilter(""); setBillingTypeFilter("All"); setPlaceOfSupplyFilter(""); setDateFrom(""); setDateTo(""); }}>Reset</button>
     </section>
-    <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div><button className="sw-export" onClick={() => window.print()}>Print list</button></div>
+    <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
       <div className="sw-table-scroll"><table className={kind === "quotations" ? "sw-quotation-table" : ""}><thead><tr>{config.columns.map(c => <th key={c}>{c}</th>)}<th>Actions</th></tr></thead><tbody>{filtered.map(row => {
         const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
@@ -451,7 +435,7 @@ export default function SalesWorkspace({ kind }) {
         return <tr key={row.id} className={kind === "quotations" ? "sw-quotation-row" : ""}>
           {kind === "quotations" ? <><td data-label="Date">{dateText(row[config.date])}</td><td data-label="Customer" className="sw-quotation-customer">{row.customer_name || "—"}</td></> : <><td className="sw-docno" data-label={config.columns[0]}>{row[config.number] || "—"}</td><td data-label={config.columns[1]}>{dateText(row[config.date])}</td><td data-label={config.columns[2]}>{row.customer_name || "—"}</td></>}
           {kind === "register" && <><td data-label="Type"><span className="sw-type">{row.sale_type === "CASH" ? "Cash sale" : "Credit sale"}</span></td><td data-label="Payment status"><span className={`sw-status ${status.toLowerCase()}`}>{status}</span></td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Paid" className="sw-money">{currency(balance === 0 ? row.total_amount : 0)}</td><td data-label="Balance" className="sw-money">{currency(balance)}</td></>}
-          {kind === "quotations" && <td data-label="Amount" className="sw-money sw-quotation-amount"><div className="sw-quotation-amount-inner"><strong>{currency(row.total_amount)}</strong><div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setStatusMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" className="sw-menu-status" onClick={() => setStatusMenuId(statusMenuId === row.id ? null : row.id)}>Status <span>{status}⌄</span></button>{statusMenuId === row.id && <div className="sw-status-popover"><select aria-label="Change quotation status" autoFocus value={status} onChange={e => { updateStatus(row, e.target.value); setStatusMenuId(null); setMenuId(null); }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></div>}<button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); setMenuPosition(null); printQuotation(row); }}>View PDF</button><button type="button" onClick={() => editQuotation(row)}>Edit</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); shareQuotation(row); }}>Share</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); downloadQuotation(row); }}>Download</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); printQuotation(row); }}>Print</button></div></>, document.body)}}</div></div></td>}
+          {kind === "quotations" && <td data-label="Amount" className="sw-money sw-quotation-amount"><div className="sw-quotation-amount-inner"><strong>{currency(row.total_amount)}</strong><div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" onClick={() => openQuotationPreview(row)}>View PDF</button><button type="button" onClick={() => editQuotation(row)}>Edit</button><button type="button" onClick={() => shareQuotation(row)}>Share</button><button type="button" onClick={() => downloadQuotation(row)}>Download</button></div></>, document.body)}</div></div></td>}
           {kind === "orders" && <><td data-label="Expected delivery">{dateText(row.expected_delivery_date)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Fulfillment"><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
@@ -486,6 +470,7 @@ export default function SalesWorkspace({ kind }) {
         </>}
       </footer>
     </form></section></div>}
+    {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} onClose={() => setQuotationPreview(null)} onDownload={() => downloadQuotation(quotationPreview.row)} onShare={() => shareQuotation(quotationPreview.row)} />}
     {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
   </main>;
 }
