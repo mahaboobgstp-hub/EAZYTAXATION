@@ -226,7 +226,7 @@ export default function SalesWorkspace({ kind }) {
       let table, header, itemTable, parentField, id;
       if (kind === "quotations") {
         table = "quotations"; itemTable = "quotation_items"; parentField = "invoice_id";
-        header = { ...common, invoice_no: documentNo, invoice_date: form.date, valid_until: form.dueDate || null, status: "Draft" };
+        header = { ...common, invoice_no: documentNo, invoice_date: form.date, valid_until: form.dueDate || null, status: editingQuotationId ? (rows.find(row => row.id === editingQuotationId)?.status || "Draft") : "Draft" };
       } else if (kind === "orders") {
         table = "sales_orders"; itemTable = "sales_order_items"; parentField = "order_id";
         header = { ...common, order_no: documentNo, order_date: form.date, expected_delivery_date: form.dueDate || null, status: "Open", fulfillment_status: "Pending" };
