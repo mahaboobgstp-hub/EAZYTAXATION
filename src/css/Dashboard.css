@@ -396,3 +396,43 @@
   .dashboard-all-cards .dashboard-snapshot-panel .dashboard-panel-heading{margin-bottom:3px!important}
   .dashboard-all-cards .dashboard-snapshot-row{padding:5px 0!important}
 }
+
+
+/* Compact dashboard header: remove greeting and repeated company/date details */
+.dashboard-heading-compact{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+  margin:0 0 16px;
+}
+.dashboard-heading-compact .dashboard-heading-copy{
+  flex:0 0 auto;
+  min-width:0;
+}
+.dashboard-heading-compact .dashboard-heading-copy h1{
+  margin:0;
+  color:#172033;
+  font-size:22px;
+  line-height:1.2;
+  font-weight:800;
+}
+.dashboard-heading-compact .dashboard-actions{
+  flex:1 1 360px;
+  min-width:0;
+}
+@media(max-width:760px){
+  .dashboard-heading-compact{
+    align-items:center;
+    flex-direction:row;
+    gap:10px;
+    margin:0 0 13px;
+  }
+  .dashboard-heading-compact .dashboard-heading-copy h1{font-size:20px}
+  .dashboard-heading-compact .dashboard-actions{
+    width:auto;
+    flex:1 1 100%;
+    min-width:0;
+  }
+}
