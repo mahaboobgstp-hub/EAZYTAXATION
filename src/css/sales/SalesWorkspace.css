@@ -91,3 +91,9 @@
   .sw-quotation-menu{right:0;top:36px}
   .sw-quotation-customer{font-weight:600;color:#33445c}
 }
+
+/* Quotation actions are portalled to the viewport so cards and scroll areas cannot clip them */
+.sw-menu-dismiss{position:fixed;inset:0;z-index:99998;background:transparent}
+.sw-quotation-menu-portal{z-index:99999;min-width:190px;max-width:min(240px,calc(100vw - 16px));overscroll-behavior:contain;box-shadow:0 14px 36px rgba(15,23,42,.24)}
+.sw-quotation-menu-portal button{min-height:42px;font-size:14px;padding:11px 12px}
+.sw-quotation-menu-portal .sw-menu-status{position:sticky;top:0;background:#fff;z-index:1}
