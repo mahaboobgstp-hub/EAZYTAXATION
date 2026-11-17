@@ -116,3 +116,11 @@
 .sw-pdf-error{color:#b42318}
 .sw-pdf-preview-footer{display:flex;gap:10px;background:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #dfe5ed}
 .sw-pdf-preview-footer button{flex:1;min-height:46px;border-radius:10px;font-weight:700}
+
+/* Compact two-control quotation filter row */
+@media(max-width:640px){
+ .sw-quotation-filters{display:grid!important;grid-template-columns:minmax(112px,.8fr) minmax(0,1.5fr)!important;align-items:center;gap:8px!important;padding:10px!important;margin-bottom:12px!important}
+ .sw-quotation-filters>select,.sw-quotation-filters .sw-search{width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;flex:none!important}
+ .sw-quotation-filters .sw-search{display:flex!important;align-items:center;gap:7px;padding:0 10px!important}
+ .sw-quotation-filters .sw-search input{width:100%;min-width:0;height:40px!important;min-height:40px!important;border:0!important;padding:0 3px!important;font-size:12px!important}
+}
