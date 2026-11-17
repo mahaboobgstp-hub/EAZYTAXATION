@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
@@ -64,6 +65,7 @@ export default function SalesWorkspace({ kind }) {
   const [selected, setSelected] = useState(null);
   const [menuId, setMenuId] = useState(null);
   const [statusMenuId, setStatusMenuId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const [editingQuotationId, setEditingQuotationId] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
   const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
@@ -271,6 +273,15 @@ export default function SalesWorkspace({ kind }) {
     finally { setSaving(false); }
   };
 
+  const toggleQuotationMenu = (event, rowId) => {
+    if (menuId === rowId) { setMenuId(null); setStatusMenuId(null); setMenuPosition(null); return; }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 300;
+    const top = Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 10));
+    setMenuPosition({ top, right: Math.max(8, window.innerWidth - rect.right), maxHeight: Math.max(160, window.innerHeight - top - 12) });
+    setMenuId(rowId); setStatusMenuId(null);
+  };
+
   const updateStatus = async (row, value, field = "status") => {
     const table = config.table;
     const { error } = await supabase.from(table).update({ [field]: value }).eq("id", row.id).eq("company_id", currentCompanyId);
@@ -300,15 +311,24 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const printQuotation = async row => {
+    const popup = window.open("about:blank", "_blank");
     try {
       const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
       if (error) throw error;
       const result = createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
       const url = URL.createObjectURL(result.blob);
-      const popup = window.open(url, "_blank");
-      if (!popup) { const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); }
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch (error) { setMessage(errorText(error)); }
+      if (popup) {
+        popup.location.href = url;
+        setTimeout(() => URL.revokeObjectURL(url), 120000);
+      } else {
+        const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        setMessage("PDF preview could not open. The PDF has been downloaded instead.");
+      }
+    } catch (error) {
+      if (popup && !popup.closed) popup.close();
+      setMessage(errorText(error));
+    }
   };
 
   const downloadQuotation = async row => {
@@ -401,7 +421,7 @@ export default function SalesWorkspace({ kind }) {
         return <tr key={row.id} className={kind === "quotations" ? "sw-quotation-row" : ""}>
           {kind === "quotations" ? <><td data-label="Date">{dateText(row[config.date])}</td><td data-label="Customer" className="sw-quotation-customer">{row.customer_name || "—"}</td></> : <><td className="sw-docno" data-label={config.columns[0]}>{row[config.number] || "—"}</td><td data-label={config.columns[1]}>{dateText(row[config.date])}</td><td data-label={config.columns[2]}>{row.customer_name || "—"}</td></>}
           {kind === "register" && <><td data-label="Type"><span className="sw-type">{row.sale_type === "CASH" ? "Cash sale" : "Credit sale"}</span></td><td data-label="Payment status"><span className={`sw-status ${status.toLowerCase()}`}>{status}</span></td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Paid" className="sw-money">{currency(balance === 0 ? row.total_amount : 0)}</td><td data-label="Balance" className="sw-money">{currency(balance)}</td></>}
-          {kind === "quotations" && <td data-label="Amount" className="sw-money sw-quotation-amount"><div className="sw-quotation-amount-inner"><strong>{currency(row.total_amount)}</strong><div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => { setMenuId(menuId === row.id ? null : row.id); setStatusMenuId(null); }}>⋮</button>{menuId === row.id && <div className="sw-menu sw-quotation-menu"><button type="button" className="sw-menu-status" onClick={() => setStatusMenuId(statusMenuId === row.id ? null : row.id)}>Status <span>{status}⌄</span></button>{statusMenuId === row.id && <div className="sw-status-popover"><select aria-label="Change quotation status" autoFocus value={status} onChange={e => { updateStatus(row, e.target.value); setStatusMenuId(null); setMenuId(null); }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></div>}<button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); view(row); }}>View</button><button type="button" onClick={() => editQuotation(row)}>Edit</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); shareQuotation(row); }}>Share</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); downloadQuotation(row); }}>Download</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); printQuotation(row); }}>Print</button></div>}</div></div></td>}
+          {kind === "quotations" && <td data-label="Amount" className="sw-money sw-quotation-amount"><div className="sw-quotation-amount-inner"><strong>{currency(row.total_amount)}</strong><div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setStatusMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" className="sw-menu-status" onClick={() => setStatusMenuId(statusMenuId === row.id ? null : row.id)}>Status <span>{status}⌄</span></button>{statusMenuId === row.id && <div className="sw-status-popover"><select aria-label="Change quotation status" autoFocus value={status} onChange={e => { updateStatus(row, e.target.value); setStatusMenuId(null); setMenuId(null); }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></div>}<button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); setMenuPosition(null); printQuotation(row); }}>View PDF</button><button type="button" onClick={() => editQuotation(row)}>Edit</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); shareQuotation(row); }}>Share</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); downloadQuotation(row); }}>Download</button><button type="button" onClick={() => { setMenuId(null); setStatusMenuId(null); printQuotation(row); }}>Print</button></div></>, document.body)}}
           {kind === "orders" && <><td data-label="Expected delivery">{dateText(row.expected_delivery_date)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Fulfillment"><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
