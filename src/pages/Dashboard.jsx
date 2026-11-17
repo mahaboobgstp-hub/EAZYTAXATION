@@ -232,12 +232,25 @@ export default function Dashboard() {
       {expandedCard==="snapshot"&&<ExpandedMetrics rows={[["Total Sales Invoices",number(data.sales.length)],["Total Purchase Invoices",number(data.purchases.length)],["Total Customers",number(data.customers)],["Total Suppliers",number(data.vendors)],["Active Items",number(data.items)]]}/>}
       {expandedCard==="bank"&&<ExpandedMetrics rows={[["Current bank closing balance",bankBalance?money(bankBalance):"No bank ledger balance available"]]}/>}
       {expandedCard==="cash"&&<ExpandedMetrics rows={[["Current cash closing balance",money(cashBalance)]]}/>}
-      {expandedCard==="customers"&&<div className="dashboard-expanded-content">{topCustomers.length?topCustomers.map(([name,value])=><div className="dashboard-expanded-metric" key={name}><span>{name}</span><strong>{money(value)}</strong></div>):<Empty>No sales invoices found for this period.</Empty>}</div>}
-      {expandedCard==="items"&&<div className="dashboard-expanded-content">{topItems.length?topItems.map(([name,value])=><div className="dashboard-expanded-metric" key={name}><span>{name}</span><strong>{money(value)}</strong></div>):<Empty>No sales item records found for this period.</Empty>}</div>}
+      {expandedCard==="customers"&&<div className="dashboard-expanded-content">{topCustomers.length?<><ExpandedRankChart rows={topCustomers} color="blue"/><div className="dashboard-expanded-section-title">Customer sales ranking</div>{topCustomers.map(([name,value],index)=><div className="dashboard-expanded-rank" key={name}><span><b className="dashboard-rank-number">{index+1}</b>{name}</span><strong>{money(value)}</strong></div>)}</>:<Empty>No sales invoices found for this period.</Empty>}</div>}
+      {expandedCard==="items"&&<div className="dashboard-expanded-content">{topItems.length?<><ExpandedRankChart rows={topItems} color="teal"/><div className="dashboard-expanded-section-title">Item sales ranking</div>{topItems.map(([name,value],index)=><div className="dashboard-expanded-rank" key={name}><span><b className="dashboard-rank-number">{index+1}</b>{name}</span><strong>{money(value)}</strong></div>)}</>:<Empty>No sales item records found for this period.</Empty>}</div>}
       {expandedCard==="profit"&&<ExpandedMetrics rows={[["Sales taxable value",money(totals.salesTaxable)],["Purchases taxable value",money(totals.purchasesTaxable)],["Expenses",money(totals.expenses)],["Gross Profit / Loss",money(totals.grossProfitLoss)]]}/>}
       <p className="dashboard-expanded-period">Reporting period: {range.from} to {range.to}</p>
     </section></>}
   </main>;
+}
+
+function ExpandedRankChart({rows,color="blue"}) {
+  const max=Math.max(1,...rows.map(([,value])=>value));
+  const total=rows.reduce((sum,[,value])=>sum+value,0);
+  return <div className={`dashboard-expanded-chart ${color}`}>
+    <div className="dashboard-chart-summary"><span>Total represented</span><strong>{money(total)}</strong></div>
+    {rows.map(([name,value],index)=><div className="dashboard-chart-row" key={name}>
+      <div className="dashboard-chart-row-label"><span><b>{index+1}</b>{name}</span><strong>{money(value)}</strong></div>
+      <div className="dashboard-chart-track"><i style={{width:`${Math.max(1,value/max*100)}%`}}/></div>
+      <small>{total?((value/total)*100).toFixed(1):"0.0"}% of top five</small>
+    </div>)}
+  </div>;
 }
 
 function ExpandedMetrics({rows}) { return <div className="dashboard-expanded-content">{rows.map(([label,value])=><div className="dashboard-expanded-metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>; }
