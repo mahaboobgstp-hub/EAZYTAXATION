@@ -361,3 +361,38 @@
   .dashboard-expanded-chart{padding:12px;gap:11px}
   .dashboard-expanded-heading{margin-bottom:13px}
 }
+
+/* Approved SYD dashboard refinements: keep compact cards focused on key figures */
+.dashboard-trend-summary{display:grid;gap:9px;margin-top:3px}
+.dashboard-trend-summary>div{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:9px;background:#f2f6fd;color:#536176;font-size:11px}
+.dashboard-trend-summary>div:first-child{background:#eef8f2}
+.dashboard-trend-summary>div strong{color:#172033;font-size:13px;white-space:nowrap}
+.dashboard-balance-compact{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:9px 10px;margin:7px 0}
+.dashboard-balance-compact span{font-size:10px;font-weight:650}
+.dashboard-balance-compact strong{margin:0;color:#172033;font-size:14px;white-space:nowrap}
+.dashboard-compact-rank-row{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;padding:7px 0;border-bottom:1px solid #edf0f4}
+.dashboard-compact-rank-row:last-child{border-bottom:0}
+.dashboard-compact-rank-row span{min-width:0;overflow:hidden;color:#344054;font-size:10px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-compact-rank-row strong{flex:0 0 auto;color:#172033;font-size:10px;font-weight:750;white-space:nowrap}
+.dashboard-gst-card-compact .dashboard-panel-heading{margin-bottom:5px}
+.dashboard-gst-card-compact .dashboard-gst-metric{padding:5px 0;font-size:10px}
+.dashboard-gst-card-compact .dashboard-gst-metric strong{font-size:11px}
+.dashboard-gst-card-compact .dashboard-gst-net-compact{margin-top:5px;padding:7px 8px;font-size:10px}
+.dashboard-gst-card-compact .dashboard-gst-net-compact strong{font-size:12px}
+@media(max-width:760px){
+  .dashboard-all-cards .dashboard-trend-summary{gap:7px;margin-top:5px}
+  .dashboard-all-cards .dashboard-trend-summary>div{padding:8px 9px;font-size:10px}
+  .dashboard-all-cards .dashboard-trend-summary>div strong{font-size:12px}
+  .dashboard-all-cards .dashboard-balance-compact{padding:8px 9px;margin:7px 0}
+  .dashboard-all-cards .dashboard-balance-compact span{font-size:9px}
+  .dashboard-all-cards .dashboard-balance-compact strong{font-size:12px}
+  .dashboard-all-cards .dashboard-compact-rank-row{gap:5px;padding:6px 0}
+  .dashboard-all-cards .dashboard-compact-rank-row span{font-size:9px}
+  .dashboard-all-cards .dashboard-compact-rank-row strong{font-size:9px}
+  .dashboard-all-cards .dashboard-gst-card-compact .dashboard-gst-metric{padding:5px 0;font-size:9px}
+  .dashboard-all-cards .dashboard-gst-card-compact .dashboard-gst-metric strong{font-size:10px}
+  .dashboard-all-cards .dashboard-gst-card-compact .dashboard-gst-net-compact{padding:6px 7px;font-size:9px}
+  .dashboard-all-cards .dashboard-gst-card-compact .dashboard-gst-net-compact strong{font-size:11px}
+  .dashboard-all-cards .dashboard-snapshot-panel .dashboard-panel-heading{margin-bottom:3px!important}
+  .dashboard-all-cards .dashboard-snapshot-row{padding:5px 0!important}
+}
