@@ -183,11 +183,11 @@ export default function Dashboard() {
       <div className="dashboard-company-line"><FiBriefcase/> <strong>{currentCompany?.company_name || "Selected company"}</strong><span>·</span><span>{range.from} to {range.to}</span></div>
 
       <div className="dashboard-all-cards"><section className="dashboard-kpis">
-        <Kpi style={{order:cardOrder.indexOf("sales")}} hidden={!widgets.sales} icon={<FiTrendingUp/>} label="Sales" value={money(totals.sales)} note={`Taxable ${money(totals.salesTaxable)} · ${number(data.sales.length)} invoices`} tone="green"/>
-        <Kpi style={{order:cardOrder.indexOf("purchases")}} hidden={!widgets.purchases} icon={<FiShoppingCart/>} label="Purchases" value={money(totals.purchases)} note={`Taxable ${money(totals.purchasesTaxable)} · ${number(data.purchases.length)} invoices`} tone="blue"/>
-        <Kpi style={{order:cardOrder.indexOf("expenses")}} hidden={!widgets.expenses} icon={<FiDollarSign/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
-        <GstCard style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate}/> 
-        <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiDollarSign/>} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiDollarSign/>} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
+        <Kpi style={{order:cardOrder.indexOf("sales")}} hidden={!widgets.sales} icon={<FiTrendingUp onExpand={()=>setExpandedCard("sales")}/>} label="Sales" value={money(totals.sales)} note={`Taxable ${money(totals.salesTaxable)} · ${number(data.sales.length)} invoices`} tone="green"/>
+        <Kpi style={{order:cardOrder.indexOf("purchases")}} hidden={!widgets.purchases} icon={<FiShoppingCart onExpand={()=>setExpandedCard("purchases")}/>} label="Purchases" value={money(totals.purchases)} note={`Taxable ${money(totals.purchasesTaxable)} · ${number(data.purchases.length)} invoices`} tone="blue"/>
+        <Kpi style={{order:cardOrder.indexOf("expenses")}} hidden={!widgets.expenses} icon={<FiDollarSign onExpand={()=>setExpandedCard("expenses")}/>} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
+        <GstCard style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate} onExpand={()=>setExpandedCard("gst")}/> 
+        <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiDollarSign onExpand={()=>setExpandedCard("bank")}/>} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiDollarSign onExpand={()=>setExpandedCard("cash")}/>} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
         <Kpi style={{order:cardOrder.indexOf("profit")}} hidden={!widgets.profit} icon={<FiTrendingUp/>} label="Gross Profit / Loss" value={money(totals.grossProfitLoss)} note="Sales − purchases − expenses · before depreciation" tone={totals.grossProfitLoss>=0?"green":"rose"} onExpand={()=>setExpandedCard("profit")}/>
       </section>
 
@@ -224,7 +224,7 @@ export default function Dashboard() {
   </main>;
 }
 
-function ledgerClosingBalance(ledger, data) {
+function ExpandedMetrics({rows}) { return <div className="dashboard-expanded-content">{rows.map(([label,value])=><div className="dashboard-expanded-metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>; }\n\nfunction ledgerClosingBalance(ledger, data) {
   const posted = new Set((data.vouchers||[]).filter(v=>v.status==="Posted").map(v=>v.id));
   const lines=(data.voucherLines||[]).filter(line=>line.ledger_id===ledger.id && posted.has(line.voucher_id));
   const debit=lines.reduce((sum,line)=>sum+Number(line.debit||0),0);
@@ -236,7 +236,7 @@ function ledgerClosingBalance(ledger, data) {
 function Kpi({ icon, label, value, note, tone, hidden = false, style }){
   return <article style={style} hidden={hidden} className={`dashboard-kpi ${tone}`}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div></article>;
 }
-function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style}) {
+function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style,onExpand}) {
   return <article style={style} hidden={hidden} className="dashboard-panel dashboard-gst-card">
     <div className="dashboard-panel-heading"><div><h2>GST Summary</h2><p>Calculated from SYD accounting records</p></div></div>
     <div className="dashboard-gst-metric"><span>GST Output</span><strong>{money(output)}</strong></div>
