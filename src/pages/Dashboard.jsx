@@ -186,27 +186,26 @@ export default function Dashboard() {
         <Kpi style={{order:cardOrder.indexOf("sales")}} hidden={!widgets.sales} icon={<FiTrendingUp/>} onExpand={()=>setExpandedCard("sales")} label="Sales" value={money(totals.sales)} note={`Taxable ${money(totals.salesTaxable)} · ${number(data.sales.length)} invoices`} tone="green"/>
         <Kpi style={{order:cardOrder.indexOf("purchases")}} hidden={!widgets.purchases} icon={<FiShoppingCart/>} onExpand={()=>setExpandedCard("purchases")} label="Purchases" value={money(totals.purchases)} note={`Taxable ${money(totals.purchasesTaxable)} · ${number(data.purchases.length)} invoices`} tone="blue"/>
         <Kpi style={{order:cardOrder.indexOf("expenses")}} hidden={!widgets.expenses} icon={<FiDollarSign/>} onExpand={()=>setExpandedCard("expenses")} label="Expenses" value={money(totals.expenses)} note={`${number(data.expenses.length)} entries`} tone="amber"/>
-        <GstCard style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate} onExpand={()=>setExpandedCard("gst")}/> 
+        <GstCard compact style={{order:cardOrder.indexOf("gst")}} hidden={!widgets.gst} output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate} onExpand={()=>setExpandedCard("gst")}/> 
         <Kpi style={{order:cardOrder.indexOf("bank")}} hidden={!widgets.bank} icon={<FiDollarSign/>} onExpand={()=>setExpandedCard("bank")} label="Bank Balance" value={bankBalance ? money(bankBalance) : "—"} note={bankBalance ? "Current closing balance" : "No bank ledger balance available"} tone="rose"/><Kpi style={{order:cardOrder.indexOf("cash")}} hidden={!widgets.cash} icon={<FiDollarSign/>} onExpand={()=>setExpandedCard("cash")} label="Cash in Hand" value={money(cashBalance)} note="Current closing balance" tone="amber"/>
         <Kpi style={{order:cardOrder.indexOf("profit")}} hidden={!widgets.profit} icon={<FiTrendingUp/>} label="Gross Profit / Loss" value={money(totals.grossProfitLoss)} note="Sales − purchases − expenses · before depreciation" tone={totals.grossProfitLoss>=0?"green":"rose"} onExpand={()=>setExpandedCard("profit")}/>
       </section>
 
       <section className="dashboard-middle-grid">
         <article style={{order:cardOrder.indexOf("trend")}} hidden={!widgets.trend} className="dashboard-panel dashboard-trend-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("trend")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("trend")}>
-          <div className="dashboard-panel-heading"><div><h2>Sales vs Purchases Trend</h2><p>Month-wise invoice values</p></div><div className="dashboard-legend"><span><i className="sales-dot"/>Sales</span><span><i className="purchase-dot"/>Purchases</span></div></div>
-          <div className="dashboard-chart">
-            <div className="dashboard-ylabels"><span>{money(maxTrend)}</span><span>{money(maxTrend * .75)}</span><span>{money(maxTrend * .5)}</span><span>{money(maxTrend * .25)}</span><span>₹0</span></div>
-            <div className="dashboard-bars">{monthly.map(row => <div className="dashboard-month" key={row.month}><div className="dashboard-bar-pair"><span className="dashboard-bar sales-bar" style={{height: `${Math.max(2, row.sales / maxTrend * 100)}%`}} title={`Sales ${money(row.sales)}`}/><span className="dashboard-bar purchase-bar" style={{height: `${Math.max(2, row.purchases / maxTrend * 100)}%`}} title={`Purchases ${money(row.purchases)}`}/></div><small>{row.month}</small></div>)}</div>
+          <div className="dashboard-panel-heading"><div><h2>Sales vs Purchases</h2></div></div>
+          <div className="dashboard-trend-summary">
+            <div><span>Sales</span><strong>{money(totals.sales)}</strong></div>
+            <div><span>Purchases</span><strong>{money(totals.purchases)}</strong></div>
           </div>
         </article>
         <article style={{order:cardOrder.indexOf("balances")}} hidden={!widgets.balances} className="dashboard-panel dashboard-balance-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("balances")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("balances")}>
-          <div className="dashboard-panel-heading"><div><h2>Receivables & Payables</h2><p>Outstanding invoice balances</p></div></div>
-          <div className="dashboard-balance-card receivable"><span><FiArrowDownRight/> Receivables (To Receive)</span><strong>{money(totals.receivables)}</strong></div>
-          <div className="dashboard-balance-card payable"><span><FiArrowUpRight/> Payables (To Pay)</span><strong>{money(totals.payables)}</strong></div>
-          <p className="dashboard-note">Calculated from available invoice balance and payment fields.</p>
+          <div className="dashboard-panel-heading"><div><h2>Receivables & Payables</h2></div></div>
+          <div className="dashboard-balance-card receivable dashboard-balance-compact"><span>Receivables</span><strong>{money(totals.receivables)}</strong></div>
+          <div className="dashboard-balance-card payable dashboard-balance-compact"><span>Payables</span><strong>{money(totals.payables)}</strong></div>
         </article>
         <article style={{order:cardOrder.indexOf("snapshot")}} hidden={!widgets.snapshot} className="dashboard-panel dashboard-snapshot-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("snapshot")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("snapshot")}>
-          <div className="dashboard-panel-heading"><div><h2>Business Snapshot</h2><p>Current company records</p></div></div>
+          <div className="dashboard-panel-heading"><div><h2>Business Snapshot</h2></div></div>
           <Snapshot icon={<FiFileText/>} label="Total Invoices (Sales)" value={number(data.sales.length)}/>
           <Snapshot icon={<FiShoppingCart/>} label="Total Purchase Invoices" value={number(data.purchases.length)}/>
           <Snapshot icon={<FiUsers/>} label="Total Customers" value={number(data.customers)}/>
@@ -217,8 +216,8 @@ export default function Dashboard() {
 
       <section className="dashboard-bottom-grid">
         
-        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("customers")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("customers")}><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2><p>By sales value in selected period</p></div></div>{topCustomers.length ? topCustomers.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxCustomer}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
-        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("items")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("items")}><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2><p>By sales value</p></div></div>{topItems.length ? topItems.map(([name, value]) => <RankRow key={name} name={name} value={value} max={maxItem}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("customers")}} hidden={!widgets.customers} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("customers")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("customers")}><div className="dashboard-panel-heading"><div><h2>Top 5 Customers</h2></div></div>{topCustomers.length ? topCustomers.slice(0,3).map(([name, value],index) => <CompactRankRow key={name} name={name} value={value} rank={index+1}/>) : <Empty>No sales invoices found for this period.</Empty>}</article>
+        <article style={{order:cardOrder.indexOf("items")}} hidden={!widgets.items} className="dashboard-panel dashboard-list-panel dashboard-expandable-card" role="button" tabIndex={0} onClick={()=>setExpandedCard("items")} onKeyDown={e=>e.key==="Enter"&&setExpandedCard("items")}><div className="dashboard-panel-heading"><div><h2>Top 5 Items</h2></div></div>{topItems.length ? topItems.slice(0,3).map(([name, value],index) => <CompactRankRow key={name} name={name} value={value} rank={index+1}/>) : <Empty>No sales item records found for this period.</Empty>}</article>
       </section></div>
     </>}
 
@@ -227,13 +226,13 @@ export default function Dashboard() {
       {expandedCard==="purchases"&&<ExpandedMetrics rows={[["Invoice value",money(totals.purchases)],["Taxable value",money(totals.purchasesTaxable)],["Invoices",number(data.purchases.length)]]}/>}
       {expandedCard==="expenses"&&<ExpandedMetrics rows={[["Total expenses",money(totals.expenses)],["Entries",number(data.expenses.length)]]}/>}
       {expandedCard==="gst"&&<GstCard output={totals.gstOutput} input={totals.gstInput} cashLedger={totals.gstCashLedger} liability={totals.gstLiability} updatedThrough={latestAccountingDate}/>}
-      {expandedCard==="trend"&&<div className="dashboard-expanded-content">{monthly.map(row=><div className="dashboard-expanded-metric" key={row.month}><span>{row.month} · Sales / Purchases</span><strong>{money(row.sales)} / {money(row.purchases)}</strong></div>)}</div>}
+      {expandedCard==="trend"&&<div className="dashboard-expanded-content">{monthly.map(row=><div className="dashboard-expanded-metric" key={row.month}><span>{row.month} · Sales / Purchases</span><strong>{money(row.sales)} / {money(row.purchases)}</strong></div>)}<div className="dashboard-expanded-section-title">Period totals</div><div className="dashboard-expanded-metric"><span>Total Sales</span><strong>{money(totals.sales)}</strong></div><div className="dashboard-expanded-metric"><span>Total Purchases</span><strong>{money(totals.purchases)}</strong></div></div>}
       {expandedCard==="balances"&&<ExpandedMetrics rows={[["Receivables",money(totals.receivables)],["Payables",money(totals.payables)]]}/>}
       {expandedCard==="snapshot"&&<ExpandedMetrics rows={[["Total Sales Invoices",number(data.sales.length)],["Total Purchase Invoices",number(data.purchases.length)],["Total Customers",number(data.customers)],["Total Suppliers",number(data.vendors)],["Active Items",number(data.items)]]}/>}
       {expandedCard==="bank"&&<ExpandedMetrics rows={[["Current bank closing balance",bankBalance?money(bankBalance):"No bank ledger balance available"]]}/>}
       {expandedCard==="cash"&&<ExpandedMetrics rows={[["Current cash closing balance",money(cashBalance)]]}/>}
-      {expandedCard==="customers"&&<div className="dashboard-expanded-content">{topCustomers.length?<><ExpandedRankChart rows={topCustomers} color="blue"/><div className="dashboard-expanded-section-title">Customer sales ranking</div>{topCustomers.map(([name,value],index)=><div className="dashboard-expanded-rank" key={name}><span><b className="dashboard-rank-number">{index+1}</b>{name}</span><strong>{money(value)}</strong></div>)}</>:<Empty>No sales invoices found for this period.</Empty>}</div>}
-      {expandedCard==="items"&&<div className="dashboard-expanded-content">{topItems.length?<><ExpandedRankChart rows={topItems} color="teal"/><div className="dashboard-expanded-section-title">Item sales ranking</div>{topItems.map(([name,value],index)=><div className="dashboard-expanded-rank" key={name}><span><b className="dashboard-rank-number">{index+1}</b>{name}</span><strong>{money(value)}</strong></div>)}</>:<Empty>No sales item records found for this period.</Empty>}</div>}
+      {expandedCard==="customers"&&<div className="dashboard-expanded-content">{topCustomers.length?<ExpandedRankChart rows={topCustomers} color="blue"/>:<Empty>No sales invoices found for this period.</Empty>}</div>}
+      {expandedCard==="items"&&<div className="dashboard-expanded-content">{topItems.length?<ExpandedRankChart rows={topItems} color="teal"/>:<Empty>No sales item records found for this period.</Empty>}</div>}
       {expandedCard==="profit"&&<ExpandedMetrics rows={[["Sales taxable value",money(totals.salesTaxable)],["Purchases taxable value",money(totals.purchasesTaxable)],["Expenses",money(totals.expenses)],["Gross Profit / Loss",money(totals.grossProfitLoss)]]}/>}
       <p className="dashboard-expanded-period">Reporting period: {range.from} to {range.to}</p>
     </section></>}
@@ -267,21 +266,20 @@ function ledgerClosingBalance(ledger, data) {
 function Kpi({ icon, label, value, note, tone, hidden = false, style, onExpand }){
   return <article style={style} hidden={hidden} className={`dashboard-kpi ${tone} dashboard-expandable-card`} role="button" tabIndex={0} onClick={onExpand} onKeyDown={e=>e.key==="Enter"&&onExpand?.()}><span className="dashboard-kpi-icon">{icon}</span><div><span className="dashboard-kpi-label">{label}</span><strong>{value}</strong><small>{note}</small></div><FiMaximize2 className="dashboard-card-expand-icon"/></article>;
 }
-function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style,onExpand}) {
-  return <article style={style} hidden={hidden} className="dashboard-panel dashboard-gst-card dashboard-expandable-card" role="button" tabIndex={0} onClick={onExpand} onKeyDown={e=>e.key==="Enter"&&onExpand?.()}>
-    <div className="dashboard-panel-heading"><div><h2>GST Summary</h2><p>Calculated from SYD accounting records</p></div></div>
+function GstCard({output,input,cashLedger,liability,updatedThrough,hidden,style,onExpand,compact=false}) {
+  return <article style={style} hidden={hidden} className={"dashboard-panel dashboard-gst-card dashboard-expandable-card"+(compact?" dashboard-gst-card-compact":"")} role="button" tabIndex={0} onClick={onExpand} onKeyDown={e=>e.key==="Enter"&&onExpand?.()}>
+    <div className="dashboard-panel-heading"><div><h2>GST Summary</h2>{!compact&&<p>Calculated from SYD accounting records</p>}</div></div>
     <div className="dashboard-gst-metric"><span>GST Output</span><strong>{money(output)}</strong></div>
-    <div className="dashboard-gst-metric"><span>Purchase GST Input (Books)</span><strong>{money(input)}</strong></div>
-    <div className="dashboard-gst-metric"><span>GST Cash Ledger</span><strong>{money(cashLedger)}</strong></div>
-    <div className="dashboard-gst-liability"><span>Estimated Net GST Payable</span><strong>{money(liability)}</strong></div>
-    <p className="dashboard-gst-updated">Accounting entries updated through: <b>{updatedThrough || "No posted accounting entries"}</b></p>
-    <p className="dashboard-gst-disclaimer">Indicative book balance only. Reconcile with GST portal before filing.</p>
+    <div className="dashboard-gst-metric"><span>{compact?"GST Input":"Purchase GST Input (Books)"}</span><strong>{money(input)}</strong></div>
+    {!compact&&<div className="dashboard-gst-metric"><span>GST Cash Ledger</span><strong>{money(cashLedger)}</strong></div>}
+    <div className={"dashboard-gst-liability"+(compact?" dashboard-gst-net-compact":"")}><span>{compact?"Net GST":"Estimated Net GST Payable"}</span><strong>{money(liability)}</strong></div>
+    {!compact&&<><p className="dashboard-gst-updated">Accounting entries updated through: <b>{updatedThrough || "No posted accounting entries"}</b></p><p className="dashboard-gst-disclaimer">Indicative book balance only. Reconcile with GST portal before filing.</p></>}
   </article>;
 }
 function Snapshot({ icon, label, value }) {
   return <div className="dashboard-snapshot-row"><span>{icon}{label}</span><strong>{value}</strong></div>;
 }
-function RankRow({ name, value, max }) {
-  return <div className="dashboard-rank-row"><span title={name}>{name}</span><i><b style={{width: `${value / max * 100}%`}}/></i><strong>{money(value)}</strong></div>;
+function CompactRankRow({ name, value }) {
+  return <div className="dashboard-compact-rank-row" title={name}><span>{name}</span><strong>{money(value)}</strong></div>;
 }
 function Empty({ children }) { return <div className="dashboard-empty">{children}</div>; }
