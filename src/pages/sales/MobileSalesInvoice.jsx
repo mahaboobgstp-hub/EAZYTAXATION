@@ -63,7 +63,6 @@ export default function MobileSalesInvoice() {
   const customer = customers.find(item => item.id === customerId) || null;
   const intraState = Boolean(currentCompany?.state && placeOfSupply && currentCompany.state.toLowerCase() === placeOfSupply.toLowerCase());
   const calculated = useMemo(() => calculateSalesInvoiceTax({
-    items: lines,
     taxInclusive,
     items: lines.map(line => ({ ...line, tax_inclusive: taxInclusive })),
     discountType,
