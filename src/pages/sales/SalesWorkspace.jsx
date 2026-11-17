@@ -224,6 +224,7 @@ export default function SalesWorkspace({ kind }) {
       const amount = Math.round((taxableValue + taxAmount + cessAmount) * 100) / 100;
       const common = { company_id: currentCompanyId, customer_id: customer.id, customer_name: customer.customer_name, taxable_value: taxableValue, cgst, sgst, igst, ...(kind === "quotations" ? { cess_amount: cessAmount, tax_inclusive: Boolean(form.taxInclusive) } : {}), total_amount: amount, created_at: new Date().toISOString() };
       let table, header, itemTable, parentField, id;
+      let previousItemIds = [];
       if (kind === "quotations") {
         table = "quotations"; itemTable = "quotation_items"; parentField = "invoice_id";
         header = { ...common, invoice_no: documentNo, invoice_date: form.date, valid_until: form.dueDate || null, status: editingQuotationId ? (rows.find(row => row.id === editingQuotationId)?.status || "Draft") : "Draft" };
@@ -239,8 +240,9 @@ export default function SalesWorkspace({ kind }) {
         id = editingQuotationId;
         const { error } = await supabase.from(table).update(header).eq("id", id).eq("company_id", currentCompanyId);
         if (error) throw error;
-        const { error: deleteItemsError } = await supabase.from(itemTable).delete().eq(parentField, id);
-        if (deleteItemsError) throw deleteItemsError;
+        const { data: oldItems, error: oldItemsError } = await supabase.from(itemTable).select("id").eq(parentField, id);
+        if (oldItemsError) throw oldItemsError;
+        previousItemIds = (oldItems || []).map(item => item.id);
       } else {
         const { data, error } = await supabase.from(table).insert(header).select("id").single();
         if (error) throw error;
@@ -259,7 +261,11 @@ export default function SalesWorkspace({ kind }) {
         amount: Math.round((Math.max(0, num(line.qty)) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate))) * (1 + (Math.max(0, num(line.gstRate)) + Math.max(0, num(line.cessRate))) / 100) * 100) / 100
       }));
       const { error: itemError } = await supabase.from(itemTable).insert(itemsToInsert);
-      if (itemError) { await supabase.from(table).delete().eq("id", id); throw itemError; }
+      if (itemError) { if (!editingQuotationId) await supabase.from(table).delete().eq("id", id).eq("company_id", currentCompanyId); throw itemError; }
+      if (editingQuotationId && previousItemIds.length) {
+        const { error: cleanupError } = await supabase.from(itemTable).delete().in("id", previousItemIds);
+        if (cleanupError) throw cleanupError;
+      }
       setDialog(false); setEditingQuotationId(null); await load();
     } catch (error) { setMessage(errorText(error)); }
     finally { setSaving(false); }
