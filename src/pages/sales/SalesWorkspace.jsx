@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import "../../css/sales/SalesWorkspace.css";
 import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
 import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
@@ -299,47 +301,75 @@ export default function SalesWorkspace({ kind }) {
     } catch (error) { setMessage(errorText(error)); }
   };
 
+  const makeQuotationPdf = async row => {
+    const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
+    if (error) throw error;
+    return createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
+  };
+
+  const writeQuotationPdf = async (result, directory = Directory.Cache) => {
+    const bytes = new Uint8Array(await result.blob.arrayBuffer());
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    const saved = await Filesystem.writeFile({
+      path: result.fileName,
+      data: btoa(binary),
+      directory,
+      recursive: true,
+    });
+    return saved.uri;
+  };
+
   const shareQuotation = async row => {
     try {
-      const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
-      if (error) throw error;
-      const result = createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
+      const result = await makeQuotationPdf(row);
+      if (isNativeAndroid) {
+        const uri = await writeQuotationPdf(result, Directory.Cache);
+        await Share.share({ title: result.fileName, files: [uri], dialogTitle: "Share quotation PDF" });
+        return;
+      }
       const file = new File([result.blob], result.fileName, { type: "application/pdf" });
-      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
-      else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); setMessage("PDF downloaded. Attach it to WhatsApp or email to share."); }
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({ title: result.fileName, files: [file] });
+      } else {
+        const url = URL.createObjectURL(result.blob);
+        const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
     } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
   };
 
   const printQuotation = async row => {
-    const popup = window.open("about:blank", "_blank");
     try {
-      const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
-      if (error) throw error;
-      const result = createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
-      const url = URL.createObjectURL(result.blob);
-      if (popup) {
-        popup.location.href = url;
-        setTimeout(() => URL.revokeObjectURL(url), 120000);
+      const result = await makeQuotationPdf(row);
+      if (isNativeAndroid) {
+        const uri = await writeQuotationPdf(result, Directory.Cache);
+        await Share.share({ title: result.fileName, files: [uri], dialogTitle: "Open or print quotation PDF" });
       } else {
-        const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        setMessage("PDF preview could not open. The PDF has been downloaded instead.");
+        const url = URL.createObjectURL(result.blob);
+        const popup = window.open(url, "_blank");
+        if (!popup) {
+          const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 120000);
       }
-    } catch (error) {
-      if (popup && !popup.closed) popup.close();
-      setMessage(errorText(error));
-    }
+    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
   };
 
   const downloadQuotation = async row => {
     try {
-      const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
-      if (error) throw error;
-      const result = createQuotationPdf({ document: row, items: items || [], company: currentCompany || {} });
-      const url = URL.createObjectURL(result.blob);
-      const link = document.createElement("a");
-      link.href = url; link.download = result.fileName; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const result = await makeQuotationPdf(row);
+      if (isNativeAndroid) {
+        await writeQuotationPdf(result, Directory.Documents);
+        setMessage("Quotation PDF saved to your phone's Documents folder: " + result.fileName);
+      } else {
+        const url = URL.createObjectURL(result.blob);
+        const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        setMessage("Quotation PDF download started.");
+      }
     } catch (error) { setMessage(errorText(error)); }
   };
 
