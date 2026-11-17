@@ -43,7 +43,21 @@ jobs:
           fc-cache -f
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          for attempt in 1 2 3 4; do
+            echo "npm dependency install attempt ${attempt}/4"
+            if npm install --no-audit --no-fund; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              npm cache clean --force
+              delay=$((attempt * 20))
+              echo "npm install failed; retrying in ${delay}s."
+              sleep "$delay"
+            fi
+          done
+          echo "npm dependency installation failed after 4 attempts."
+          exit 1
 
       - name: Build complete React application for Android
         run: |
