@@ -37,6 +37,7 @@ export default function MobileSalesInvoice() {
   const [invoiceDate, setInvoiceDate] = useState(todayISO());
   const [customerId, setCustomerId] = useState("");
   const [saleType, setSaleType] = useState("CASH");
+  const [taxInclusive, setTaxInclusive] = useState(false);
   const [discountType, setDiscountType] = useState("AMOUNT");
   const [discountValue, setDiscountValue] = useState("0");
   const [otherAmount, setOtherAmount] = useState("0");
@@ -63,13 +64,14 @@ export default function MobileSalesInvoice() {
   const intraState = Boolean(currentCompany?.state && placeOfSupply && currentCompany.state.toLowerCase() === placeOfSupply.toLowerCase());
   const calculated = useMemo(() => calculateSalesInvoiceTax({
     items: lines,
-    taxInclusive: false,
+    taxInclusive,
+    items: lines.map(line => ({ ...line, tax_inclusive: taxInclusive })),
     discountType,
     discountValue,
     intraState,
     otherAmount,
     roundOff,
-  }), [lines, intraState, discountType, discountValue, otherAmount, roundOff]);
+  }), [lines, intraState, discountType, discountValue, otherAmount, roundOff, taxInclusive]);
   const totals = calculated.totals;
   const grandTotal = Number((totals.grandTotal + (Number(invoiceCess) || 0) + (Number(transportCharges) || 0)).toFixed(2));
   const visibleItems = itemsMaster.filter(item => !searchItem || (item.item_name || "").toLowerCase().includes(searchItem.toLowerCase()) || (item.hsn_sac || "").toLowerCase().includes(searchItem.toLowerCase()));
@@ -168,6 +170,7 @@ export default function MobileSalesInvoice() {
         setInvoiceDate(header.invoice_date || todayISO());
         setCustomerId(header.customer_id || "");
         setSaleType(header.sale_type || "CASH");
+        setTaxInclusive(Boolean(header.tax_inclusive || (itemResult.data || []).some(item => item.tax_inclusive)));
         setDiscountType(header.discount_type || "AMOUNT");
         setDiscountValue(String(header.discount_value ?? "0"));
         setOtherAmount(String(header.other_amount ?? "0"));
@@ -261,6 +264,7 @@ export default function MobileSalesInvoice() {
     setInvoiceDate(todayISO());
     setCustomerId("");
     setSaleType("CASH");
+    setTaxInclusive(false);
     setDiscountType("AMOUNT");
     setDiscountValue("0");
     setOtherAmount("0");
@@ -317,7 +321,7 @@ export default function MobileSalesInvoice() {
         place_of_supply: placeOfSupply || customer.state || "",
         gst_type: intraState ? "INTRA_STATE" : "INTER_STATE",
         sale_type: saleType,
-        tax_inclusive: false,
+        tax_inclusive: taxInclusive,
         discount_type: discountType,
         discount_value: Number(discountValue) || 0,
         discount_amount: totals.discount,
@@ -416,7 +420,7 @@ export default function MobileSalesInvoice() {
         <label>Invoice Date<input type="date" value={invoiceDate} onChange={e => changeDate(e.target.value)} required /></label>
         <label>Customer<select value={customerId} onChange={e => { const selected = customers.find(row => row.id === e.target.value); setCustomerId(e.target.value); setPlaceOfSupply(selected?.state || ""); }} required><option value="">Select customer</option>{customers.map(row => <option key={row.id} value={row.id}>{row.customer_name}</option>)}</select></label>
         {customer && <div className="mobile-sales-customer-info"><strong>{customer.customer_name}</strong><span>{customer.address || "Address not available"}</span><span>{customer.state || ""}{customer.gstin ? " · GSTIN " + customer.gstin : ""}</span></div>}
-        <fieldset className="mobile-sales-choice"><legend>Billing Type</legend><button type="button" className={saleType === "CASH" ? "selected" : ""} onClick={() => setSaleType("CASH")}>Cash</button><button type="button" className={saleType === "CREDIT" ? "selected" : ""} onClick={() => setSaleType("CREDIT")}>Credit</button></fieldset>
+        <div className="mobile-sales-billing-options"><fieldset className="mobile-sales-choice"><legend>Billing Type</legend><button type="button" className={saleType === "CASH" ? "selected" : ""} onClick={() => setSaleType("CASH")}>Cash</button><button type="button" className={saleType === "CREDIT" ? "selected" : ""} onClick={() => setSaleType("CREDIT")}>Credit</button></fieldset><fieldset className="mobile-sales-choice mobile-sales-rate-choice"><legend>Rate Type</legend><button type="button" className={!taxInclusive ? "selected" : ""} onClick={() => setTaxInclusive(false)}>Without Tax</button><button type="button" className={taxInclusive ? "selected" : ""} onClick={() => setTaxInclusive(true)}>With Tax</button></fieldset></div>
         <label>Place of Supply<select value={placeOfSupply} onChange={e => setPlaceOfSupply(e.target.value)}><option value="">Use customer state</option>{[...new Set([...(customers.map(row => row.state).filter(Boolean)), currentCompany?.state].filter(Boolean))].map(state => <option key={state} value={state}>{state}</option>)}</select></label>
         <button className="mobile-sales-primary" onClick={() => { if (!customerId) { setError("Select a customer to continue."); return; } setError(""); setStep(2); }}>Next: Add Items →</button>
       </section>}
@@ -428,7 +432,7 @@ export default function MobileSalesInvoice() {
           <label>Item<select value={line.item_id} onChange={e => updateLine(index, "item_id", e.target.value)}><option value="">Select item</option>{visibleItems.map(item => <option key={item.id} value={item.id}>{item.item_name}</option>)}</select></label>
           {line.item_name && <p className="mobile-sales-item-meta">HSN: {line.hsn_sac || "—"} · GST: {line.gst_rate}% · Unit: {line.unit || "—"}</p>}
           <div className="mobile-sales-two-fields"><label>Quantity<input type="number" min="0.01" step="0.01" value={line.qty} onChange={e => updateLine(index, "qty", e.target.value)} /></label><label>Rate (₹)<input type="number" min="0" step="0.01" value={line.rate} onChange={e => updateLine(index, "rate", e.target.value)} /></label></div>
-          <div className="mobile-sales-line-total">Line amount <strong>{money(Number(line.qty) * Number(line.rate))}</strong></div>
+          <div className="mobile-sales-line-total">{taxInclusive ? "Entered amount (incl. tax)" : "Entered amount (excl. tax)"} <strong>{money(Number(line.qty) * Number(line.rate))}</strong></div>
         </article>)}
         <button className="mobile-sales-add" type="button" onClick={() => setLines(prev => [...prev, blankLine()])}>＋ Add Another Item</button>
         <div className="mobile-sales-actions"><button className="mobile-sales-secondary" onClick={() => setStep(1)}>Back</button><button className="mobile-sales-primary" onClick={() => { if (lines.some(line => !line.item_id || Number(line.qty) <= 0)) { setError("Select an item and enter a valid quantity in every row."); return; } setError(""); setStep(3); }}>Next: Taxes & Transport →</button></div>
@@ -458,6 +462,7 @@ export default function MobileSalesInvoice() {
         <div className="mobile-sales-summary-row"><span>Customer</span><strong>{customer?.customer_name || "—"}</strong></div>
         <div className="mobile-sales-summary-row"><span>Place of Supply</span><strong>{placeOfSupply || customer?.state || "—"}</strong></div>
         <div className="mobile-sales-summary-row"><span>Billing Type</span><strong>{saleType === "CASH" ? "Cash" : "Credit"}</strong></div>
+        <div className="mobile-sales-summary-row"><span>Rate Type</span><strong>{taxInclusive ? "With Tax (inclusive)" : "Without Tax (exclusive)"}</strong></div>
         <h3>Items ({lines.length})</h3>
         {calculated.items.map((line, index) => <div className="mobile-sales-summary-item" key={index}><span>{line.item_name} · {line.qty} × {money(line.rate)}</span><strong>{money(line.taxable_amount + line.cgst_amount + line.sgst_amount + line.igst_amount + line.cess_amount)}</strong></div>)}
         <h3>GST &amp; Invoice Summary</h3>
