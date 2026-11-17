@@ -3,9 +3,9 @@
 .mobile-sales-heading h1{font-size:21px;margin:3px 0 0;font-weight:750}
 .mobile-sales-heading small{color:#64748b;font-size:12px}
 .mobile-sales-back{border:0;background:#e8edff;color:#123eae;width:42px;height:42px;border-radius:14px;font-size:30px;line-height:1}
-.mobile-sales-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;background:#fff;border:1px solid #e1e7f2;border-radius:16px;padding:12px}
-.mobile-sales-steps div{display:flex;align-items:center;gap:7px;color:#64748b;font-size:12px;font-weight:650}
-.mobile-sales-steps b{width:27px;height:27px;display:grid;place-items:center;border-radius:50%;background:#e2e8f0;color:#64748b;flex:none}
+.mobile-sales-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin-bottom:14px;background:#fff;border:1px solid #e1e7f2;border-radius:16px;padding:9px 6px;align-items:stretch}
+.mobile-sales-steps div{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;color:#64748b;font-size:clamp(9px,2.7vw,12px);font-weight:700;line-height:1.15;text-align:left}
+.mobile-sales-steps b{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#e2e8f0;color:#64748b;flex:none;font-size:12px}
 .mobile-sales-steps .active{color:#1748bf}.mobile-sales-steps .active b,.mobile-sales-steps .complete b{background:#1748bf;color:white}
 .mobile-sales-card{background:#fff;border:1px solid #e1e7f2;border-radius:18px;padding:16px;box-shadow:0 5px 20px rgba(15,35,80,.05)}
 .mobile-sales-card label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:650;color:#263550;margin:0 0 15px}
@@ -67,3 +67,4 @@
 .mobile-sales-eway-note{padding:13px;border:1px solid #f1d8a6;border-radius:12px;background:#fffbf2;color:#6b542c;font-size:12px;line-height:1.55;text-align:left}
 .mobile-sales-portal-link{display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box}
 @media(max-width:380px){.mobile-sales-review-actions{grid-template-columns:1fr}.mobile-sales-review-actions .mobile-sales-secondary{grid-column:auto}}
+\n.mobile-sales-transport-section{margin-top:18px;padding:14px;border:1px solid #dce4f1;border-radius:14px;background:#f8faff}.mobile-sales-transport-section h3,.mobile-sales-review-transport h3{margin:0 0 12px;font-size:15px;color:#1e2d49}.mobile-sales-review-transport{margin-top:16px;padding-top:8px;border-top:1px solid #e7edf5}\n@media(max-width:360px){.mobile-sales-steps{padding:8px 4px;gap:1px}.mobile-sales-steps div{gap:3px;font-size:9px}.mobile-sales-steps b{width:22px;height:22px;font-size:11px}}\n
