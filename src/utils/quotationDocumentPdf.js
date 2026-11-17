@@ -1,193 +1,253 @@
 import jsPDF from "jspdf";
+import { supabase } from "../supabase/supabaseClient";
 
 const n = value => Number(value) || 0;
 const clean = value => String(value ?? "").replace(/[\\r\\n]+/g, " ").trim();
-const money = value => "₹ " + n(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = value => "INR " + n(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const date = value => {
   if (!value) return "—";
   const parsed = new Date(String(value).slice(0, 10) + "T00:00:00");
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-const NAVY = [13, 48, 98], BLUE = [35, 92, 205], PALE = [235, 242, 253];
-const TEXT = [35, 47, 66], MUTED = [91, 105, 125], BORDER = [205, 216, 232];
+const NAVY = [20, 43, 74], BLUE = [31, 91, 190], PALE = [239, 244, 250];
+const TEXT = [37, 51, 70], MUTED = [99, 113, 132], BORDER = [218, 226, 236], WHITE = [255,255,255];
 
-async function loadImage(url) {
-  if (!url) return null;
+function storageObjectFromUrl(value) {
   try {
-    if (String(url).startsWith("data:image/")) return { data: url, format: /image\/png/i.test(url) ? "PNG" : "JPEG" };
-    const response = await fetch(url, { mode: "cors" });
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    const data = await new Promise((resolve, reject) => {
+    const url = new URL(value);
+    const marker = "/storage/v1/object/public/";
+    const index = url.pathname.indexOf(marker);
+    if (index < 0) return null;
+    const parts = decodeURIComponent(url.pathname.slice(index + marker.length)).split("/");
+    const bucket = parts.shift();
+    return bucket && parts.length ? { bucket, path: parts.join("/") } : null;
+  } catch { return null; }
+}
+
+async function blobToImage(blob) {
+  if (!blob) return null;
+  let data;
+  try {
+    data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-    return { data, format: blob.type.toLowerCase().includes("png") ? "PNG" : "JPEG" };
+    let width = 1, height = 1;
+    if (typeof createImageBitmap === "function") {
+      const bitmap = await createImageBitmap(blob);
+      width = bitmap.width; height = bitmap.height; bitmap.close();
+    }
+    let format = blob.type.toLowerCase().includes("png") ? "PNG" : "JPEG";
+    if (!["image/png", "image/jpeg"].includes(blob.type.toLowerCase())) {
+      const image = new Image();
+      image.src = data;
+      await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+      canvas.getContext("2d").drawImage(image, 0, 0);
+      data = canvas.toDataURL("image/png"); format = "PNG";
+      width = canvas.width; height = canvas.height;
+    }
+    return { data, format, width, height };
+  } catch (error) {
+    console.warn("Quotation image conversion failed:", error);
+    return null;
+  }
+}
+
+async function loadImage(url) {
+  if (!url) return null;
+  try {
+    if (String(url).startsWith("data:image/")) {
+      const response = await fetch(url);
+      return blobToImage(await response.blob());
+    }
+    const object = storageObjectFromUrl(String(url));
+    if (object) {
+      const { data, error } = await supabase.storage.from(object.bucket).download(object.path);
+      if (!error && data) return await blobToImage(data);
+      console.warn("Quotation image storage download failed:", error);
+    }
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Image request returned " + response.status);
+    return await blobToImage(await response.blob());
   } catch (error) {
     console.warn("Quotation branding image could not be loaded:", error);
     return null;
   }
 }
-function addImage(pdf, image, x, y, w, h) {
+
+function addImageFit(pdf, image, x, y, width, height) {
   if (!image?.data) return;
-  try { pdf.addImage(image.data, image.format, x, y, w, h, undefined, "FAST"); } catch (error) { console.warn("Quotation image render failed", error); }
+  const scale = Math.min(width / image.width, height / image.height);
+  const w = image.width * scale, h = image.height * scale;
+  try { pdf.addImage(image.data, image.format, x + (width-w)/2, y + (height-h)/2, w, h, undefined, "FAST"); }
+  catch (error) { console.warn("Quotation image render failed:", error); }
 }
-function wrapped(pdf, value, x, y, width, size = 7, color = TEXT, bold = false) {
+
+function writeWrapped(pdf, value, x, y, width, size = 8, color = TEXT, bold = false, maxLines = 20) {
   const text = clean(value);
   if (!text) return y;
   pdf.setFont("helvetica", bold ? "bold" : "normal");
   pdf.setFontSize(size);
   pdf.setTextColor(...color);
-  const lines = pdf.splitTextToSize(text, width);
+  const lines = pdf.splitTextToSize(text, width).slice(0, maxLines);
   pdf.text(lines, x, y);
-  return y + lines.length * (size * .42 + .2);
+  return y + lines.length * (size * 0.43 + 0.9);
 }
 
 export async function createQuotationPdf({ document, items = [], company = {}, customer = {}, settings = {} }) {
   const [logo, signature] = await Promise.all([
-    settings.show_logo ? loadImage(settings.logo_url) : Promise.resolve(null),
-    settings.show_signature ? loadImage(settings.signature_url) : Promise.resolve(null)
+    settings.show_logo && settings.logo_url ? loadImage(settings.logo_url) : Promise.resolve(null),
+    settings.show_signature && settings.signature_url ? loadImage(settings.signature_url) : Promise.resolve(null)
   ]);
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
-  const W = 210, H = 297, M = 13, CW = W - M * 2;
-  const name = String(document.invoice_no || "quotation").replace(/[^a-z0-9._-]/gi, "_") + ".pdf";
+  const W = 210, H = 297, M = 13, CW = W - 2 * M;
+  const fileName = String(document.invoice_no || "quotation").replace(/[^a-z0-9._-]/gi, "_") + ".pdf";
   pdf.setProperties({ title: "Quotation " + clean(document.invoice_no), subject: "Sales quotation", author: clean(company.company_name || "SYD Billing & Accounting") });
-  let y = 13, pageNo = 1;
-  const footer = () => {
-    pdf.setDrawColor(...BORDER); pdf.setLineWidth(.25); pdf.line(M, 286, W - M, 286);
-    const footerText = settings.show_footer && clean(settings.invoice_footer) ? clean(settings.invoice_footer) : "This quotation is not a tax invoice.";
-    pdf.setFont("helvetica", "normal"); pdf.setFontSize(6.3); pdf.setTextColor(...MUTED);
-    pdf.text(pdf.splitTextToSize(footerText, CW - 25).slice(0, 1), M, 291);
-    pdf.text("Page " + pageNo, W - M, 291, { align: "right" });
+  let y = 13;
+  const footer = page => {
+    pdf.setDrawColor(...BORDER); pdf.setLineWidth(.25); pdf.line(M, 285, W-M, 285);
+    const footerText = settings.show_footer && clean(settings.invoice_footer) ? clean(settings.invoice_footer) : "This quotation is an offer only and is not a tax invoice.";
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(6.8); pdf.setTextColor(...MUTED);
+    pdf.text(pdf.splitTextToSize(footerText, CW-25).slice(0,1), M, 290);
+    pdf.text("Page " + page, W-M, 290, { align: "right" });
   };
-  const nextPage = () => { footer(); pdf.addPage(); pageNo += 1; y = 15; };
-  const ensure = height => { if (y + height > 275) nextPage(); };
+  const addPage = () => {
+    footer(pdf.getNumberOfPages());
+    pdf.addPage();
+    y = 15;
+    pdf.setFont("helvetica","bold"); pdf.setFontSize(8); pdf.setTextColor(...NAVY);
+    pdf.text(clean(company.company_name || "Company"), M, y);
+    pdf.setDrawColor(...BORDER); pdf.line(M,y+3,W-M,y+3);
+    y += 12;
+  };
+  const ensure = height => { if (y + height > 274) addPage(); };
 
-  // Branded company header, matching the SYD sales-invoice design language.
-  addImage(pdf, logo, M, 12, 25, 22);
-  const companyX = logo ? 43 : M;
-  const companyW = W - M - companyX;
-  y = wrapped(pdf, company.company_name || "Company", companyX, 17, companyW, 13, NAVY, true) + 1;
-  y = wrapped(pdf, company.address, companyX, y, companyW, 7.2, MUTED);
+  // Branded business header: use the same stored logo/signature configured for sales invoices.
+  if (logo) addImageFit(pdf, logo, M, y, 27, 22);
+  const textX = logo ? M + 32 : M;
+  const textW = W - M - textX;
+  let headerY = y + 5;
+  headerY = writeWrapped(pdf, company.company_name || "Company", textX, headerY, textW, 14, NAVY, true, 2) + 1;
+  const address = [company.address, company.address_line1, company.city, company.state, company.pincode].filter(Boolean).join(", ");
+  headerY = writeWrapped(pdf, address, textX, headerY, textW, 7.3, MUTED, false, 2);
   const contact = [company.mobile ? "Phone: " + company.mobile : "", company.email ? "Email: " + company.email : ""].filter(Boolean).join("   |   ");
-  y = wrapped(pdf, contact, companyX, y + 1, companyW, 6.5, MUTED);
-  const companyTax = [company.gstin ? "GSTIN: " + company.gstin : "", company.pan ? "PAN: " + company.pan : ""].filter(Boolean).join("   |   ");
-  y = wrapped(pdf, companyTax, companyX, y + 1, companyW, 6.5, TEXT, true);
-  y = Math.max(y + 3, 39);
-  pdf.setDrawColor(...BLUE); pdf.setLineWidth(.5); pdf.line(M, y, W - M, y);
-  y += 4;
-  pdf.setFillColor(...NAVY); pdf.roundedRect(M, y, CW, 11, 1.8, 1.8, "F");
-  pdf.setFont("helvetica", "bold"); pdf.setFontSize(13); pdf.setTextColor(255,255,255);
-  pdf.text("QUOTATION", W / 2, y + 7.2, { align: "center" });
-  y += 17;
+  headerY = writeWrapped(pdf, contact, textX, headerY, textW, 7, MUTED, false, 2);
+  const gstin = company.gstin || company.gst_number || company.gst_no || "";
+  const pan = company.pan || company.pan_number || "";
+  writeWrapped(pdf, [gstin ? "GSTIN: " + gstin : "", pan ? "PAN: " + pan : ""].filter(Boolean).join("   |   "), textX, headerY, textW, 7, TEXT, true, 1);
+  y = Math.max(y + 25, headerY + 5);
+  pdf.setDrawColor(...BLUE); pdf.setLineWidth(.7); pdf.line(M,y,W-M,y);
+  y += 5;
+  pdf.setFillColor(...NAVY); pdf.roundedRect(M,y,CW,12,2,2,"F");
+  pdf.setFont("helvetica","bold"); pdf.setFontSize(14); pdf.setTextColor(...WHITE);
+  pdf.text("QUOTATION",W/2,y+7.8,{align:"center"});
+  y += 18;
 
-  // Document and customer cards.
-  const gap = 4, cardW = (CW - gap) / 2, cardH = 34, rightX = M + cardW + gap;
+  // Quote reference and customer details.
+  const gap = 5, cardW = (CW-gap)/2, cardH = 37, rightX = M+cardW+gap;
   pdf.setFillColor(...PALE); pdf.setDrawColor(...BORDER);
-  pdf.roundedRect(M, y, cardW, cardH, 2, 2, "FD");
-  pdf.roundedRect(rightX, y, cardW, cardH, 2, 2, "FD");
-  pdf.setFont("helvetica", "bold"); pdf.setFontSize(7.2); pdf.setTextColor(...NAVY);
-  pdf.text("QUOTATION DETAILS", M + 3, y + 5);
-  pdf.text("QUOTATION FOR", rightX + 3, y + 5);
-  let ly = y + 11;
-  [["Quotation No.", document.invoice_no], ["Date", date(document.invoice_date)], ["Valid Until", date(document.valid_until)]].forEach(([label,value]) => {
-    pdf.setFont("helvetica", "normal"); pdf.setFontSize(6.5); pdf.setTextColor(...MUTED); pdf.text(label, M + 3, ly);
-    pdf.setFont("helvetica", "bold"); pdf.setTextColor(...TEXT); pdf.text(clean(value || "—"), M + 31, ly, { maxWidth: cardW - 34 }); ly += 6;
+  pdf.roundedRect(M,y,cardW,cardH,2,2,"FD");
+  pdf.roundedRect(rightX,y,cardW,cardH,2,2,"FD");
+  pdf.setFont("helvetica","bold"); pdf.setFontSize(7.5); pdf.setTextColor(...BLUE);
+  pdf.text("QUOTATION DETAILS",M+4,y+6);
+  pdf.text("QUOTATION FOR",rightX+4,y+6);
+  let ly=y+13;
+  [["Quotation No.",document.invoice_no],["Date",date(document.invoice_date)],["Valid Until",date(document.valid_until)]].forEach(([label,value])=>{
+    pdf.setFont("helvetica","normal"); pdf.setFontSize(7); pdf.setTextColor(...MUTED); pdf.text(label,M+4,ly);
+    pdf.setFont("helvetica","bold"); pdf.setTextColor(...TEXT); pdf.text(clean(value || "—"),M+32,ly,{maxWidth:cardW-36}); ly+=7;
   });
-  let ry = y + 11;
   const customerName = customer.customer_name || document.customer_name || "—";
-  ry = wrapped(pdf, customerName, rightX + 3, ry, cardW - 6, 8.2, TEXT, true) + 1;
+  let cy = writeWrapped(pdf,customerName,rightX+4,y+14,cardW-8,9,TEXT,true,2);
   const customerAddress = customer.billing_address || customer.address || customer.customer_address || customer.address_line1 || "";
-  ry = wrapped(pdf, customerAddress, rightX + 3, ry, cardW - 6, 6.4, MUTED);
-  const customerTax = [customer.gstin ? "GSTIN: " + customer.gstin : "", customer.state ? "State: " + customer.state : ""].filter(Boolean).join("  |  ");
-  wrapped(pdf, customerTax, rightX + 3, ry + 1, cardW - 6, 6.1, MUTED, true);
-  y += cardH + 7;
+  cy = writeWrapped(pdf,customerAddress,rightX+4,cy+1,cardW-8,7,MUTED,false,2);
+  const customerGstin = customer.gstin || customer.gst_number || "";
+  const customerState = customer.state || customer.state_name || "";
+  writeWrapped(pdf,[customerGstin ? "GSTIN: "+customerGstin : "",customerState ? "State: "+customerState : ""].filter(Boolean).join("   |   "),rightX+4,cy+1,cardW-8,6.8,TEXT,true,1);
+  y += cardH+8;
 
-  // Item table with HSN/SAC and GST rates.
-  const widths = [7, 48, 18, 10, 10, 22, 14, 11, 44];
-  const headers = ["#", "Description", "HSN/SAC", "Unit", "Qty", "Rate (₹)", "GST", "CESS", "Amount (₹)"];
-  const drawHeader = () => {
-    pdf.setFillColor(...NAVY); pdf.rect(M, y, CW, 8, "F");
-    pdf.setFont("helvetica", "bold"); pdf.setFontSize(6.2); pdf.setTextColor(255,255,255);
-    let x = M; headers.forEach((h,i) => { pdf.text(h, x + (i === 1 ? 2 : widths[i] / 2), y + 5.2, { align: i === 1 ? "left" : "center", maxWidth: widths[i] - 1 }); x += widths[i]; });
-    y += 8;
+  // Readable line-item table. GST and CESS rates are shown separately.
+  const widths = [8, 58, 20, 12, 22, 22, 18, 24];
+  const headers = ["#","Description","HSN/SAC","Qty","Rate (INR)","GST %","CESS %","Amount (INR)"];
+  const drawTableHeader = () => {
+    pdf.setFillColor(...NAVY); pdf.rect(M,y,CW,9,"F");
+    pdf.setFont("helvetica","bold"); pdf.setFontSize(6.8); pdf.setTextColor(...WHITE);
+    let x=M;
+    headers.forEach((label,i)=>{pdf.text(label,x+(i===1?2:widths[i]/2),y+5.8,{align:i===1?"left":"center",maxWidth:widths[i]-1});x+=widths[i];});
+    y+=9;
   };
-  drawHeader();
-  items.forEach((item,index) => {
-    const desc = clean(item.item_name || item.particulars || item.description || "—");
-    const descLines = pdf.splitTextToSize(desc, widths[1] - 3);
-    const rowH = Math.max(9, descLines.length * 3.4 + 3);
-    if (y + rowH > 266) { nextPage(); drawHeader(); }
-    if (index % 2 === 0) { pdf.setFillColor(248,250,253); pdf.rect(M,y,CW,rowH,"F"); }
-    pdf.setDrawColor(...BORDER); pdf.setLineWidth(.18); pdf.rect(M,y,CW,rowH);
-    let x = M; for (let i=1;i<widths.length;i++){ x += widths[i-1]; pdf.line(x,y,x,y+rowH); }
-    const values = [String(index+1), desc, clean(item.hsn_sac), clean(item.unit), String(n(item.qty)), money(item.rate).replace("₹ ",""), n(item.gst_rate)+"%", n(item.cess_rate)+"%", money(item.amount)];
-    x = M;
-    values.forEach((value,i) => {
-      pdf.setFont("helvetica", i===1 ? "normal" : "normal"); pdf.setFontSize(6.4); pdf.setTextColor(...TEXT);
-      if (i===1) pdf.text(descLines.slice(0,5), x+2, y+4.2);
-      else pdf.text(value, x+widths[i]/2, y+rowH/2+1, {align:"center", maxWidth:widths[i]-1});
-      x += widths[i];
+  drawTableHeader();
+  items.forEach((item,index)=>{
+    const description = clean(item.item_name || item.particulars || item.description || "—");
+    const descLines = pdf.splitTextToSize(description,widths[1]-4);
+    const rowH = Math.max(11,descLines.length*4+4);
+    ensure(rowH+1);
+    if (y===15) drawTableHeader();
+    if (index%2===0) {pdf.setFillColor(248,250,253);pdf.rect(M,y,CW,rowH,"F");}
+    pdf.setDrawColor(...BORDER);pdf.setLineWidth(.2);pdf.rect(M,y,CW,rowH);
+    let x=M;for(let i=1;i<widths.length;i++){x+=widths[i-1];pdf.line(x,y,x,y+rowH);}
+    const values=[String(index+1),description,clean(item.hsn_sac || item.hsn_code),String(n(item.qty)),money(item.rate).replace("INR ",""),n(item.gst_rate)+"%",n(item.cess_rate)+"%",money(item.amount).replace("INR ","")];
+    x=M;
+    values.forEach((value,i)=>{
+      pdf.setFont("helvetica","normal");pdf.setFontSize(6.8);pdf.setTextColor(...TEXT);
+      if(i===1) pdf.text(descLines.slice(0,4),x+2,y+5);
+      else pdf.text(value,x+widths[i]/2,y+rowH/2+1,{align:"center",maxWidth:widths[i]-1});
+      x+=widths[i];
     });
-    y += rowH;
+    y+=rowH;
   });
-  y += 7;
-  const totals = [["Taxable Value", document.taxable_value], ["CGST", document.cgst], ["SGST", document.sgst], ["IGST", document.igst], ["CESS", document.cess_amount]];
-  const showTax = totals.some(([,v]) => n(v) !== 0) || items.some(item => n(item.gst_rate) || n(item.cess_rate));
-  if (showTax) {
+  y+=7;
+
+  // Tax calculation summary.
+  const taxRows=[["Taxable value",document.taxable_value],["CGST",document.cgst],["SGST",document.sgst],["IGST",document.igst],["CESS",document.cess_amount]];
+  const showTax=taxRows.some(([,value])=>n(value)!==0)||items.some(item=>n(item.gst_rate)!==0||n(item.cess_rate)!==0);
+  if(showTax){
     ensure(43);
-    pdf.setFillColor(247,249,253); pdf.setDrawColor(...BORDER); pdf.roundedRect(W-M-82,y-2,82,39,2,2,"FD");
-    totals.forEach(([label,value]) => {
-      pdf.setFont("helvetica","normal"); pdf.setFontSize(7); pdf.setTextColor(...MUTED);
-      pdf.text(label,W-M-78,y+4);
-      pdf.setFont("helvetica","normal"); pdf.setTextColor(...TEXT);
-      pdf.text(money(value),W-M-4,y+4,{align:"right"});
-      y += 6;
+    pdf.setFillColor(...PALE);pdf.setDrawColor(...BORDER);pdf.roundedRect(W-M-83,y-2,83,39,2,2,"FD");
+    taxRows.forEach(([label,value])=>{
+      pdf.setFont("helvetica","normal");pdf.setFontSize(7.2);pdf.setTextColor(...MUTED);pdf.text(label,W-M-79,y+4);
+      pdf.setTextColor(...TEXT);pdf.text(money(value),W-M-4,y+4,{align:"right"});y+=6;
     });
   }
-  ensure(17);
-  pdf.setFillColor(...NAVY); pdf.roundedRect(W-M-82,y-1,82,11,1.5,1.5,"F");
-  pdf.setFont("helvetica","bold"); pdf.setFontSize(9); pdf.setTextColor(255,255,255);
-  pdf.text("GRAND TOTAL",W-M-78,y+6.2);
-  pdf.text(money(document.total_amount),W-M-4,y+6.2,{align:"right"});
-  y += 17;
+  ensure(16);
+  pdf.setFillColor(...NAVY);pdf.roundedRect(W-M-83,y-1,83,12,1.5,1.5,"F");
+  pdf.setFont("helvetica","bold");pdf.setFontSize(9.2);pdf.setTextColor(...WHITE);
+  pdf.text("GRAND TOTAL",W-M-79,y+6.8);
+  pdf.text(money(document.total_amount),W-M-4,y+6.8,{align:"right"});
+  y+=18;
 
-  const terms = settings.show_terms_conditions ? clean(settings.terms_conditions) : "";
-  const bank = settings.show_bank_details ? [["Bank",settings.bank_name],["A/C No.",settings.account_number],["IFSC",settings.ifsc_code],["UPI",settings.upi_id]].filter(([,v]) => clean(v)) : [];
-  const notesHeight = Math.max(28, bank.length ? 30 : 0, terms ? Math.min(38, pdf.splitTextToSize(terms, 82).length * 3 + 12) : 0);
-  ensure(notesHeight + 12);
-  if (terms || bank.length) {
-    const half = (CW - 5) / 2;
-    pdf.setFillColor(248,250,253); pdf.setDrawColor(...BORDER);
-    if (terms) {
-      pdf.roundedRect(M,y,half,notesHeight,2,2,"FD");
-      pdf.setFont("helvetica","bold"); pdf.setFontSize(7); pdf.setTextColor(...NAVY); pdf.text("TERMS & CONDITIONS",M+3,y+5);
-      wrapped(pdf,terms,M+3,y+10,half-6,6.2,MUTED);
+  const terms=settings.show_terms_conditions ? clean(settings.terms_conditions) : "";
+  const bank=settings.show_bank_details ? [["Bank",settings.bank_name],["Account",settings.account_number],["IFSC",settings.ifsc_code],["UPI",settings.upi_id]].filter(([,value])=>clean(value)) : [];
+  const termsLines=terms ? pdf.splitTextToSize(terms,82) : [];
+  const notesHeight=Math.max(terms ? Math.min(42,termsLines.length*3.8+12) : 0,bank.length ? 31 : 0,0);
+  if(terms || bank.length){
+    ensure(notesHeight+12);
+    const half=(CW-5)/2;
+    if(terms){
+      pdf.setFillColor(248,250,253);pdf.setDrawColor(...BORDER);pdf.roundedRect(M,y,half,notesHeight,2,2,"FD");
+      pdf.setFont("helvetica","bold");pdf.setFontSize(7.2);pdf.setTextColor(...BLUE);pdf.text("TERMS & CONDITIONS",M+4,y+6);
+      writeWrapped(pdf,terms,M+4,y+12,half-8,6.8,MUTED,false,8);
     }
-    if (bank.length) {
-      const bx = M + half + 5;
-      pdf.roundedRect(bx,y,half,notesHeight,2,2,"FD");
-      pdf.setFont("helvetica","bold"); pdf.setFontSize(7); pdf.setTextColor(...NAVY); pdf.text("BANK DETAILS",bx+3,y+5);
-      let by = y+10; bank.forEach(([label,value]) => { pdf.setFont("helvetica","normal"); pdf.setFontSize(6.2); pdf.setTextColor(...MUTED); pdf.text(label,bx+3,by); pdf.setTextColor(...TEXT); pdf.text(clean(value),bx+25,by,{maxWidth:half-28}); by += 4.5; });
+    if(bank.length){
+      const bx=M+half+5;
+      pdf.setFillColor(248,250,253);pdf.setDrawColor(...BORDER);pdf.roundedRect(bx,y,half,notesHeight,2,2,"FD");
+      pdf.setFont("helvetica","bold");pdf.setFontSize(7.2);pdf.setTextColor(...BLUE);pdf.text("BANK DETAILS",bx+4,y+6);
+      let by=y+13;bank.forEach(([label,value])=>{pdf.setFont("helvetica","normal");pdf.setFontSize(6.6);pdf.setTextColor(...MUTED);pdf.text(label,bx+4,by);pdf.setTextColor(...TEXT);pdf.text(clean(value),bx+26,by,{maxWidth:half-30});by+=5;});
     }
-    y += notesHeight + 6;
+    y+=notesHeight+7;
   }
-  if (settings.show_signature && signature?.data) {
-    ensure(25);
-    const sx = W - M - 55;
-    addImage(pdf, signature, sx + 9, y, 37, 13);
-    pdf.setDrawColor(...BORDER); pdf.line(sx, y+16, W-M, y+16);
-    pdf.setFont("helvetica","bold"); pdf.setFontSize(7); pdf.setTextColor(...TEXT);
-    pdf.text("Authorized Signatory",W-M-27.5,y+21,{align:"center"});
-  } else {
-    ensure(18);
-    const sx = W-M-55; pdf.setDrawColor(...BORDER); pdf.line(sx,y+10,W-M,y+10);
-    pdf.setFont("helvetica","normal"); pdf.setFontSize(6.5); pdf.setTextColor(...MUTED);
-    pdf.text("Authorized Signatory",W-M-27.5,y+15,{align:"center"});
-  }
-  for(let p=1;p<=pdf.getNumberOfPages();p++){ pdf.setPage(p); if(p===pdf.getNumberOfPages()) footer(); else footer(); }
-  return { blob: pdf.output("blob"), fileName: name };
+
+  ensure(28);
+  if(signature) addImageFit(pdf,signature,W-M-49,y,42,15);
+  const signY=y+18;
+  pdf.setDrawColor(...BORDER);pdf.line(W-M-55,signY,W-M,signY);
+  pdf.setFont("helvetica","bold");pdf.setFontSize(7.2);pdf.setTextColor(...TEXT);
+  pdf.text("Authorized Signatory",W-M-27.5,signY+5,{align:"center"});
+
+  for(let page=1;page<=pdf.getNumberOfPages();page++){pdf.setPage(page);footer(page);}
+  return { blob: pdf.output("blob"), fileName };
 }
