@@ -6,6 +6,7 @@ import { supabase } from "../../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { getInvoiceSettings } from "../../services/invoiceSettingsService";
 import "../../css/sales/SalesWorkspace.css";
 import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
 import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
@@ -55,6 +56,7 @@ export default function SalesWorkspace({ kind }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("error");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All statuses");
   const [customerFilter, setCustomerFilter] = useState("");
@@ -62,7 +64,9 @@ export default function SalesWorkspace({ kind }) {
   const [placeOfSupplyFilter, setPlaceOfSupplyFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [quotationDateRange, setQuotationDateRange] = useState("all");
+  const [showQuotationDatePopover, setShowQuotationDatePopover] = useState(false);
+  const [draftDateFrom, setDraftDateFrom] = useState("");
+  const [draftDateTo, setDraftDateTo] = useState("");
   const [dialog, setDialog] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -101,19 +105,8 @@ export default function SalesWorkspace({ kind }) {
       (!customerFilter || row.customer_id === customerFilter) &&
       (kind !== "register" || billingTypeFilter === "All" || (row.sale_type === "CASH" ? "Cash" : "Credit") === billingTypeFilter) &&
       (!placeOfSupplyFilter || row.place_of_supply === placeOfSupplyFilter) &&
-      (kind === "quotations" ? (() => {
-        if (quotationDateRange === "all") return true;
-        const today = new Date(); today.setHours(0,0,0,0);
-        const date = new Date(row[config.date] + "T00:00:00");
-        if (Number.isNaN(date.getTime())) return false;
-        const start = new Date(today);
-        if (quotationDateRange === "today") return date.getTime() === today.getTime();
-        if (quotationDateRange === "7days") start.setDate(start.getDate() - 6);
-        else if (quotationDateRange === "month") start.setDate(1);
-        else if (quotationDateRange === "year") start.setMonth(0,1);
-        return date >= start && date <= today;
-      })() : ((!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo)));
-  }), [rows, search, statusFilter, customerFilter, billingTypeFilter, placeOfSupplyFilter, dateFrom, dateTo, quotationDateRange, config, kind]);
+      ((!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo));
+  }), [rows, search, statusFilter, customerFilter, billingTypeFilter, placeOfSupplyFilter, dateFrom, dateTo, config, kind]);
 
   const metrics = useMemo(() => {
     const metricRows = isNativeAndroid ? filtered : rows;
@@ -315,10 +308,15 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const makeQuotationPdf = async row => {
-    const { data: items, error } = await supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no");
-    if (error) throw error;
-    if (!items?.length) throw new Error("This quotation has no saved item lines. Please edit and save it before generating a PDF.");
-    const result = createQuotationPdf({ document: row, items, company: currentCompany || {} });
+    const [itemsResult, customerResult, settings] = await Promise.all([
+      supabase.from("quotation_items").select("*").eq("invoice_id", row.id).order("line_no"),
+      row.customer_id ? supabase.from("customers").select("*").eq("id", row.customer_id).eq("company_id", currentCompanyId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+      getInvoiceSettings(currentCompanyId)
+    ]);
+    if (itemsResult.error) throw itemsResult.error;
+    if (customerResult.error) throw customerResult.error;
+    if (!itemsResult.data?.length) throw new Error("This quotation has no saved item lines. Please edit and save it before generating a PDF.");
+    const result = await createQuotationPdf({ document: row, items: itemsResult.data, company: currentCompany || {}, customer: customerResult.data || {}, settings: settings || {} });
     if (!result?.blob || result.blob.size < 100) throw new Error("The quotation PDF could not be generated. Please try again.");
     return result;
   };
@@ -359,14 +357,17 @@ export default function SalesWorkspace({ kind }) {
       const result = await makeQuotationPdf(row);
       if (isNativeAndroid) {
         const uri = await writeQuotationPdf(result, Directory.Documents);
-        setMessage("PDF saved in Documents/Quotations: " + result.fileName);
+        setMessageType("success");
+        setMessage("Download complete. Saved to Documents/Quotations/" + result.fileName);
+        window.alert("Quotation PDF downloaded successfully.\\n\\nSaved in: Documents/Quotations/" + result.fileName);
         return uri;
       }
       const url = URL.createObjectURL(result.blob);
       const link = document.createElement("a"); link.href = url; link.download = result.fileName; document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
-      setMessage("Quotation PDF download started.");
-    } catch (error) { setMessage(errorText(error)); }
+      setMessageType("success");
+      setMessage("Quotation PDF download started: " + result.fileName);
+    } catch (error) { setMessageType("error"); setMessage(errorText(error)); }
   };
 
   const view = async row => {
@@ -427,13 +428,21 @@ export default function SalesWorkspace({ kind }) {
 
   return <main className="sales-workspace">
     <header className="sw-heading"><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p><h1>{config.title}</h1><p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p></div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
-    {message && <div className="sw-alert" role="alert">{message}<button onClick={() => setMessage("")}>×</button></div>}
+    {message && <div className={`sw-alert ${messageType === "success" ? "sw-alert-success" : ""}`} role={messageType === "success" ? "status" : "alert"}>{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
     {kind !== "quotations" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
     {kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
-      <select aria-label="Filter quotations by date" value={quotationDateRange} onChange={e => setQuotationDateRange(e.target.value)}>
-        <option value="all">All dates</option><option value="today">Today</option><option value="7days">Last 7 days</option><option value="month">This month</option><option value="year">This year</option>
-      </select>
+      <div className="sw-quotation-date-wrap">
+        <button type="button" className="sw-quotation-date-trigger" onClick={() => { setDraftDateFrom(dateFrom); setDraftDateTo(dateTo); setShowQuotationDatePopover(value => !value); }}>
+          <span>▦</span><span>{dateFrom || dateTo ? "Custom period" : "All dates"}</span><span>⌄</span>
+        </button>
+        {showQuotationDatePopover && <><button type="button" className="sw-date-popover-dismiss" aria-label="Close date filter" onClick={() => setShowQuotationDatePopover(false)} /><div className="sw-quotation-date-popover">
+          <strong>Custom date range</strong>
+          <label>From<input type="date" value={draftDateFrom} max={draftDateTo || undefined} onChange={e => setDraftDateFrom(e.target.value)} /></label>
+          <label>To<input type="date" value={draftDateTo} min={draftDateFrom || undefined} onChange={e => setDraftDateTo(e.target.value)} /></label>
+          <div><button type="button" className="sw-date-clear" onClick={() => { setDraftDateFrom(""); setDraftDateTo(""); setDateFrom(""); setDateTo(""); setShowQuotationDatePopover(false); }}>Clear</button><button type="button" className="sw-date-apply" onClick={() => { setDateFrom(draftDateFrom); setDateTo(draftDateTo); setShowQuotationDatePopover(false); }}>Apply</button></div>
+        </div></>}
+      </div>
       <label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search quotations" /></label>
     </section> : <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
       <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{isNativeAndroid && kind === "register" && <>
