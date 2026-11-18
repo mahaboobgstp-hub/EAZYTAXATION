@@ -1,27 +1,42 @@
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { Capacitor } from "@capacitor/core";
 
 /**
- * Show a native Android notification for a PDF saved on the device.
- * The file URI is carried in notification.extra and handled by the app-level
- * notification listener so tapping the notification opens the exact PDF.
+ * Post a native Android notification for a PDF already saved on-device.
+ * The notification carries the exact file URI so App.jsx can open it on tap.
  */
 export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "PDF" }) {
-  if (!fileUri || !fileName) return false;
+  if (!fileUri || !fileName) {
+    return { ok: false, reason: "missing-file", message: "The PDF file location is missing." };
+  }
+
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
+    return { ok: false, reason: "not-android", message: "Native Android notifications are available only in the installed Android app." };
+  }
 
   try {
-    const permission = await LocalNotifications.checkPermissions();
+    let permission = await LocalNotifications.checkPermissions();
     if (permission.display !== "granted") {
-      const requested = await LocalNotifications.requestPermissions();
-      if (requested.display !== "granted") return false;
+      permission = await LocalNotifications.requestPermissions();
+    }
+
+    if (permission.display !== "granted") {
+      return {
+        ok: false,
+        reason: "permission-denied",
+        permission: permission.display,
+        message: "Android notification permission is disabled. Enable notifications for SYD Billing & Accounting in Android Settings."
+      };
     }
 
     await LocalNotifications.createChannel({
       id: "pdf-downloads",
       name: "PDF downloads",
-      description: "Download notifications for invoices and quotations",
-      importance: 4,
+      description: "Notifications when sales invoice PDFs are downloaded",
+      importance: 5,
       visibility: 1,
-      sound: "default"
+      sound: "default",
+      vibration: true
     });
 
     const notificationId = Math.max(1, Date.now() % 2147483647);
@@ -33,13 +48,24 @@ export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "
         largeBody: fileName,
         channelId: "pdf-downloads",
         autoCancel: true,
-        extra: { fileUri, fileName, mimeType: "application/pdf" },
-        schedule: { at: new Date(Date.now() + 700) }
+        ongoing: false,
+        extra: {
+          fileUri,
+          fileName,
+          mimeType: "application/pdf",
+          notificationType: "downloaded-pdf"
+        },
+        schedule: { at: new Date(Date.now() + 1000), allowWhileIdle: true }
       }]
     });
-    return true;
+
+    return { ok: true, notificationId };
   } catch (error) {
-    console.warn("PDF download notification could not be displayed:", error);
-    return false;
+    console.error("Native PDF notification failed:", error);
+    return {
+      ok: false,
+      reason: "notification-error",
+      message: error?.message || "Android could not post the download notification."
+    };
   }
 }
