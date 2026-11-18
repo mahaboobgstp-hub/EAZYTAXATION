@@ -581,6 +581,28 @@ function formatQuantity(value) {
   return numeric.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
+export async function buildSalesInvoicePdf({ invoice, items = [], settings, company, customer }) {
+  const itemList = Array.isArray(items) ? items : [];
+  const pages = paginateItems(itemList);
+  const amountWords = numberToWords(Number(invoice?.total_amount || 0));
+  const [logo, signature] = await Promise.all([
+    settings?.show_logo ? loadImage(settings?.logo_url) : Promise.resolve(null),
+    settings?.show_signature ? loadImage(settings?.signature_url) : Promise.resolve(null)
+  ]);
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  pdf.setProperties({
+    title: "Tax Invoice " + safeText(invoice?.invoice_no),
+    subject: "GST tax invoice",
+    author: safeText(company?.company_name)
+  });
+  pages.forEach((pageItems, pageIndex) => {
+    if (pageIndex > 0) pdf.addPage("a4", "portrait");
+    drawPdfPage(pdf, pageItems, pageIndex, pages.length, itemList, invoice, settings, company, customer, logo, signature, amountWords);
+  });
+  const fileName = (safeText(invoice?.invoice_no) || "sales-invoice").replace(/[^a-zA-Z0-9._-]+/g, "_") + ".pdf";
+  return { pdf, blob: pdf.output("blob"), fileName };
+}
+
 function InvoicePrint({ invoice, items = [], settings, company, customer, onClose }) {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -618,22 +640,8 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
   const cessTotal = Number(invoice.cess_amount) || cessFromItems;
 
   const buildInvoicePdf = async () => {
-    const [logo, signature] = await Promise.all([
-      settings?.show_logo ? loadImage(settings?.logo_url) : Promise.resolve(null),
-      settings?.show_signature ? loadImage(settings?.signature_url) : Promise.resolve(null)
-    ]);
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
-    pdf.setProperties({
-      title: "Tax Invoice " + safeText(invoice.invoice_no),
-      subject: "GST tax invoice",
-      author: safeText(company?.company_name)
-    });
-    pages.forEach((pageItems, pageIndex) => {
-      if (pageIndex > 0) pdf.addPage("a4", "portrait");
-      drawPdfPage(pdf, pageItems, pageIndex, pages.length, itemList, invoice, settings, company, customer, logo, signature, amountWords);
-    });
-    const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^a-zA-Z0-9._-]+/g, "_") + ".pdf";
-    return { pdf, filename };
+    const result = await buildSalesInvoicePdf({ invoice, items: itemList, settings, company, customer });
+    return { pdf: result.pdf, filename: result.fileName };
   };
 
   const blobToBase64 = async blob => {
