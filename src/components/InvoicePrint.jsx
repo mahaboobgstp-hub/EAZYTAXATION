@@ -677,21 +677,20 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
             recursive: true
           }), "Saving PDF to app storage");
         }
-        setDownloadMessage("PDF saved successfully. " + savedLocation + ".");
-        notifyPdfDownloaded({
+        // Successful Android downloads are announced by the native Android
+        // notification shade, not by an in-app success banner.
+        setDownloadMessage("");
+        const notification = await notifyPdfDownloaded({
           fileUri: saved.uri,
           fileName: filename,
           documentLabel: "Sales invoice PDF"
-        }).then(result => {
-          if (result?.ok) {
-            setDownloadMessage("PDF saved to " + savedLocation + ". Android notification sent — tap it to open the PDF.");
-          } else {
-            setDownloadMessage("PDF saved to " + savedLocation + ". " + (result?.message || "Android notification could not be displayed."));
-          }
-        }).catch(error => {
-          console.error("PDF notification could not be displayed:", error);
-          setDownloadMessage("PDF saved to " + savedLocation + ". Notification error: " + (error?.message || "unknown error"));
         });
+        if (!notification?.ok) {
+          setDownloadMessage(
+            "PDF saved to " + savedLocation + ", but the Android system notification could not be posted. " +
+            (notification?.message || "Please check Android notification settings.")
+          );
+        }
       } else {
         pdf.save(filename);
         setDownloadMessage("PDF download started: " + filename);
