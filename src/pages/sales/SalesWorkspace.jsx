@@ -11,6 +11,7 @@ import "../../css/sales/SalesWorkspace.css";
 import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
 import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
 import { notifyPdfDownloaded } from "../../utils/pdfDownloadNotification";
+import { saveDocumentToPublicStorage } from "../../services/nativeDocumentStorage";
 import QuotationPdfPreview from "../../components/QuotationPdfPreview";
 import InvoicePrint from "../../components/InvoicePrint";
 
@@ -328,6 +329,15 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const writeQuotationPdf = async (result, directory = Directory.Documents) => {
+    if (directory === Directory.Documents && isNativeAndroid) {
+      const saved = await saveDocumentToPublicStorage({
+        blob: result.blob,
+        fileName: result.fileName,
+        folder: "Quotations",
+        mimeType: "application/pdf"
+      });
+      return saved.uri;
+    }
     const bytes = new Uint8Array(await result.blob.arrayBuffer());
     let binary = "";
     for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
@@ -406,6 +416,15 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const writeSalesInvoicePdf = async (result, directory = Directory.Documents) => {
+    if (directory === Directory.Documents && isNativeAndroid) {
+      const saved = await saveDocumentToPublicStorage({
+        blob: result.blob,
+        fileName: result.fileName,
+        folder: "Sales Invoices",
+        mimeType: "application/pdf"
+      });
+      return saved.uri;
+    }
     const bytes = new Uint8Array(await result.blob.arrayBuffer());
     let binary = "";
     for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
