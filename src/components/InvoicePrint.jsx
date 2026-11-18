@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import jsPDF from "jspdf";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { notifyPdfDownloaded } from "../utils/pdfDownloadNotification";
 import "../css/sales/InvoicePrint.css";
 import { numberToWords } from "../utils/numberToWords";
 import { formatAmount } from "../utils/amountFormatter";
@@ -633,8 +636,24 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
         drawPdfPage(pdf, pageItems, pageIndex, pages.length, itemList, invoice, settings, company, customer, logo, signature, amountWords);
       });
 
-      const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^\w.-]+/g, "_") + ".pdf";
-      pdf.save(filename);
+      const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^\\w.-]+/g, "_") + ".pdf";
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
+        const blob = pdf.output("blob");
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        let binary = "";
+        for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+          binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+        }
+        const saved = await Filesystem.writeFile({
+          path: "Sales Invoices/" + filename,
+          data: btoa(binary),
+          directory: Directory.Documents,
+          recursive: true
+        });
+        await notifyPdfDownloaded({ fileUri: saved.uri, fileName: filename, documentLabel: "Sales invoice PDF" });
+      } else {
+        pdf.save(filename);
+      }
     } catch (error) {
       console.error("Unable to generate invoice PDF:", error);
       alert("Unable to generate the invoice PDF. " + (error?.message || ""));
