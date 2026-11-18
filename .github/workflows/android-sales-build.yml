@@ -66,12 +66,14 @@ jobs:
           import json
           from pathlib import Path
           config = json.loads(Path('capacitor.config.json').read_text())
-          assert 'server' not in config or 'url' not in config.get('server', {}), 'APK must not depend on a remote website.'
-          assert config.get('webDir') == 'dist', 'APK must bundle the complete React production build.'
+          remote_url = config.get('server', {}).get('url', '').rstrip('/')
+          expected_url = 'https://syd-android-development.vercel.app'
+          assert remote_url == expected_url, f'Android shell must load the approved remote app: {expected_url}'
+          allowed = config.get('server', {}).get('allowNavigation', [])
+          assert 'syd-android-development.vercel.app' in allowed, 'Remote app host must be in Capacitor allowNavigation.'
+          assert config.get('webDir') == 'dist', 'Capacitor fallback webDir must remain dist.'
           assert Path('dist/index.html').is_file(), 'React production index.html is missing.'
-          assets = list(Path('dist/assets').glob('*')) if Path('dist/assets').exists() else []
-          assert assets, 'Compiled React assets are missing from dist/assets.'
-          print(f'Local APK bundle verified: {len(assets)} compiled assets. No remote server URL configured.')
+          print(f'Remote-shell APK verified: {remote_url}. Native Android capabilities are bundled in this APK.')
           PY
 
       - name: Generate Android project if missing
@@ -91,6 +93,22 @@ jobs:
 
       - name: Register native speech plugin after Capacitor sync
         run: python3 scripts/ensure-offline-speech-recognition.py
+
+      - name: Add Android 13+ notification permissions after Capacitor sync
+        run: python3 scripts/ensure-android-notification-permissions.py
+
+      - name: Verify notification and PDF native plugins
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml').read_text()
+          gradle = Path('android/app/capacitor.build.gradle').read_text()
+          assert 'android.permission.POST_NOTIFICATIONS' in manifest, 'POST_NOTIFICATIONS is missing from AndroidManifest.xml'
+          assert 'android.permission.VIBRATE' in manifest, 'VIBRATE is missing from AndroidManifest.xml'
+          assert 'capacitor-local-notifications' in gradle, 'Capacitor Local Notifications plugin is not registered.'
+          assert 'capacitor-community-file-opener' in gradle, 'Capacitor File Opener plugin is not registered.'
+          print('Verified Android notification permission and both native PDF notification/opening plugins.')
+          PY
 
       - name: Build debug APK
         working-directory: android
