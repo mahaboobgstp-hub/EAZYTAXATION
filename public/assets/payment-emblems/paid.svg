@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="72" viewBox="0 0 220 72" role="img" aria-label="Paid">
+  <defs>
+    <linearGradient id="mint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d7fff0"/>
+      <stop offset=".22" stop-color="#8ff0c9"/>
+      <stop offset=".58" stop-color="#45dba4"/>
+      <stop offset="1" stop-color="#16b982"/>
+    </linearGradient>
+    <linearGradient id="mintEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8ffe4"/>
+      <stop offset="1" stop-color="#0c9d70"/>
+    </linearGradient>
+    <filter id="soft3d" x="-20%" y="-30%" width="140%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="blur"/>
+      <feOffset in="blur" dx="0" dy="3" result="shadow"/>
+      <feColorMatrix in="shadow" type="matrix" values="0 0 0 0 .04 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .32 0" result="shadowColor"/>
+      <feMerge><feMergeNode in="shadowColor"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g transform="rotate(-2 110 36)" filter="url(#soft3d)" stroke-linejoin="round" paint-order="stroke fill">
+    <text x="110" y="56" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="900" letter-spacing="-2" fill="#0aa876" stroke="#0aa876" stroke-width="7">PAID</text>
+    <text x="110" y="52" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="900" letter-spacing="-2" fill="url(#mint)" stroke="url(#mintEdge)" stroke-width="1.8">PAID</text>
+    <text x="110" y="48" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="900" letter-spacing="-2" fill="#ffffff" opacity=".22">PAID</text>
+  </g>
+</svg>
