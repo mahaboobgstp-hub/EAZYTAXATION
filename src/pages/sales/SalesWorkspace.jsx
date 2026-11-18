@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
@@ -82,6 +83,7 @@ export default function SalesWorkspace({ kind }) {
   const [menuId, setMenuId] = useState(null);
   const [menuPosition, setMenuPosition] = useState(null);
   const [editingQuotationId, setEditingQuotationId] = useState(null);
+  const [editingOrderId, setEditingOrderId] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
   const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
 
@@ -211,6 +213,7 @@ export default function SalesWorkspace({ kind }) {
 
   const openCreate = () => {
     setEditingQuotationId(null);
+    setEditingOrderId(null);
     setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
     setLines([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
     setMessage(""); setFormStep(1); setDialog(true);
@@ -228,7 +231,7 @@ export default function SalesWorkspace({ kind }) {
       const prefix = kind === "quotations" ? "QT" : kind === "orders" ? "SO" : "CN";
       const existing = await supabase.from(config.table).select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId);
       if (existing.error) throw existing.error;
-      const documentNo = editingQuotationId ? rows.find(row => row.id === editingQuotationId)?.invoice_no : `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
+      const documentNo = editingQuotationId ? rows.find(row => row.id === editingQuotationId)?.invoice_no : editingOrderId ? rows.find(row => row.id === editingOrderId)?.order_no : `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
       const validLines = lines.filter(line => line.description.trim() && (!isNativeAndroid || num(line.qty) > 0));
       if (!validLines.length) throw new Error("Add at least one item or description.");
       const taxableValue = Math.round(validLines.reduce((sum, line) => { const combinedRate = num(line.gstRate) + num(line.cessRate); const base = form.taxInclusive ? num(line.rate) / (1 + combinedRate / 100) : num(line.rate); return sum + Math.max(0, num(line.qty)) * Math.max(0, base); }, 0) * 100) / 100;
@@ -247,7 +250,8 @@ export default function SalesWorkspace({ kind }) {
         header = { ...common, invoice_no: documentNo, invoice_date: form.date, valid_until: form.dueDate || null, status: editingQuotationId ? (rows.find(row => row.id === editingQuotationId)?.status || "Draft") : "Draft" };
       } else if (kind === "orders") {
         table = "sales_orders"; itemTable = "sales_order_items"; parentField = "order_id";
-        header = { ...common, order_no: documentNo, order_date: form.date, expected_delivery_date: form.dueDate || null, status: "Open", fulfillment_status: "Pending" };
+        const existingOrder = editingOrderId ? rows.find(row => row.id === editingOrderId) : null;
+        header = { ...common, order_no: documentNo, order_date: form.date, expected_delivery_date: form.dueDate || null, status: existingOrder?.status || "Open", fulfillment_status: existingOrder?.fulfillment_status || "Pending" };
       } else {
         table = "credit_notes"; itemTable = "credit_note_items"; parentField = "credit_note_id";
         header = { ...common, credit_note_no: documentNo, credit_note_date: form.date, original_invoice_id: form.originalInvoiceId || null, original_invoice_no: invoices.find(i => i.id === form.originalInvoiceId)?.invoice_no || null, reason: form.reason.trim(), status: "Issued" };
@@ -255,6 +259,13 @@ export default function SalesWorkspace({ kind }) {
       }
       if (editingQuotationId && kind === "quotations") {
         id = editingQuotationId;
+        const { error } = await supabase.from(table).update(header).eq("id", id).eq("company_id", currentCompanyId);
+        if (error) throw error;
+        const { data: oldItems, error: oldItemsError } = await supabase.from(itemTable).select("id").eq(parentField, id);
+        if (oldItemsError) throw oldItemsError;
+        previousItemIds = (oldItems || []).map(item => item.id);
+      } else if (editingOrderId && kind === "orders") {
+        id = editingOrderId;
         const { error } = await supabase.from(table).update(header).eq("id", id).eq("company_id", currentCompanyId);
         if (error) throw error;
         const { data: oldItems, error: oldItemsError } = await supabase.from(itemTable).select("id").eq(parentField, id);
@@ -279,11 +290,11 @@ export default function SalesWorkspace({ kind }) {
       }));
       const { error: itemError } = await supabase.from(itemTable).insert(itemsToInsert);
       if (itemError) { if (!editingQuotationId) await supabase.from(table).delete().eq("id", id).eq("company_id", currentCompanyId); throw itemError; }
-      if (editingQuotationId && previousItemIds.length) {
+      if ((editingQuotationId || editingOrderId) && previousItemIds.length) {
         const { error: cleanupError } = await supabase.from(itemTable).delete().in("id", previousItemIds);
         if (cleanupError) throw cleanupError;
       }
-      setDialog(false); setEditingQuotationId(null); await load();
+      setDialog(false); setEditingQuotationId(null); setEditingOrderId(null); await load();
     } catch (error) { setMessage(errorText(error)); }
     finally { setSaving(false); }
   };
@@ -312,6 +323,82 @@ export default function SalesWorkspace({ kind }) {
       setLines((items || []).map(item => ({ item_id: item.item_id || "", description: item.item_name || item.particulars || "", hsn_sac: item.hsn_sac || "", unit: item.unit || "", qty: String(item.qty ?? 1), rate: String(item.rate ?? 0), gstRate: String(item.gst_rate ?? 0), cessRate: String(item.cess_rate ?? 0) })));
       setFormStep(1); setMessage(""); setDialog(true); setMenuId(null); 
     } catch (error) { setMessage(errorText(error)); }
+  };
+
+  const editSalesOrder = async row => {
+    try {
+      const { data: items, error } = await supabase.from("sales_order_items").select("*").eq("order_id", row.id).order("line_no");
+      if (error) throw error;
+      setEditingOrderId(row.id);
+      setEditingQuotationId(null);
+      setForm({ date: row.order_date || new Date().toISOString().slice(0, 10), dueDate: row.expected_delivery_date || "", customerId: row.customer_id || "", originalInvoiceId: "", reason: "", taxInclusive: false });
+      setLines((items || []).map(item => ({ item_id: item.item_id || "", description: item.item_name || item.description || "", hsn_sac: item.hsn_sac || "", unit: item.unit || "", qty: String(item.qty ?? 1), rate: String(item.rate ?? 0), gstRate: String(item.gst_rate ?? 0), cessRate: String(item.cess_rate ?? 0) })));
+      setFormStep(1); setMessage(""); setDialog(true); setMenuId(null); setMenuPosition(null);
+    } catch (error) { setMessage(errorText(error)); }
+  };
+
+  const makeSalesOrderPdf = async row => {
+    const { data: items, error } = await supabase.from("sales_order_items").select("*").eq("order_id", row.id).order("line_no");
+    if (error) throw error;
+    const pdf = new jsPDF();
+    const companyName = currentCompany?.company_name || "Company";
+    pdf.setFontSize(18); pdf.text("SALES ORDER", 14, 20);
+    pdf.setFontSize(11); pdf.text(companyName, 14, 29);
+    pdf.setFontSize(10);
+    pdf.text("Order No: " + (row.order_no || "—"), 14, 42);
+    pdf.text("Order Date: " + dateText(row.order_date), 14, 49);
+    pdf.text("Customer: " + (row.customer_name || "—"), 14, 56);
+    pdf.text("Expected Delivery: " + dateText(row.expected_delivery_date), 14, 63);
+    let y = 78;
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Item / Description", 14, y); pdf.text("Qty", 118, y); pdf.text("Rate", 143, y); pdf.text("Amount", 174, y);
+    pdf.setFont("helvetica", "normal"); y += 8;
+    (items || []).forEach(item => {
+      if (y > 270) { pdf.addPage(); y = 20; }
+      const label = String(item.item_name || item.description || "—").slice(0, 55);
+      pdf.text(label, 14, y); pdf.text(String(num(item.qty)), 118, y); pdf.text(currency(item.rate), 143, y); pdf.text(currency(item.amount), 174, y, { align: "right" }); y += 8;
+    });
+    y += 8; pdf.setFont("helvetica", "bold"); pdf.text("Order Total: " + currency(row.total_amount), 14, y);
+    return { blob: pdf.output("blob"), fileName: (row.order_no || "Sales-Order") + ".pdf" };
+  };
+
+  const salesOrderAction = async (row, action) => {
+    setMenuId(null); setMenuPosition(null);
+    if (action === "View") return view(row);
+    if (action === "Edit") return editSalesOrder(row);
+    if (action === "Cancel") {
+      if (!window.confirm("Cancel sales order " + (row.order_no || "") + "?")) return;
+      await updateStatus(row, "Cancelled");
+      return;
+    }
+    try {
+      const result = await makeSalesOrderPdf(row);
+      if (!result.blob || result.blob.size < 100) throw new Error("The sales order PDF could not be generated.");
+      if (action === "Download") {
+        if (isNativeAndroid) {
+          const saved = await saveDocumentToPublicStorage({ blob: result.blob, fileName: result.fileName, folder: "Sales Orders", mimeType: "application/pdf" });
+          const notification = await notifyPdfDownloaded({ fileUri: saved.uri, fileName: result.fileName, documentLabel: "Sales order PDF" });
+          if (!notification?.ok) setMessage("Sales order PDF saved, but its notification could not be posted. " + (notification?.message || ""));
+          else setMessage("");
+        } else {
+          const url = URL.createObjectURL(result.blob); const link = document.createElement("a");
+          link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+        }
+        return;
+      }
+      if (action === "Share") {
+        if (isNativeAndroid) {
+          const bytes = new Uint8Array(await result.blob.arrayBuffer()); let binary = "";
+          for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+          const saved = await Filesystem.writeFile({ path: "Sales Orders/" + result.fileName, data: btoa(binary), directory: Directory.Cache, recursive: true });
+          await Share.share({ title: result.fileName, text: "Sales Order " + (row.order_no || ""), files: [saved.uri], dialogTitle: "Share sales order PDF" });
+        } else {
+          const file = new File([result.blob], result.fileName, { type: "application/pdf" });
+          if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
+          else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
+        }
+      }
+    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
   };
 
   const makeQuotationPdf = async row => {
@@ -534,11 +621,11 @@ export default function SalesWorkspace({ kind }) {
   const activeRegisterFilterCount = [statusFilter !== "All statuses", Boolean(customerFilter), billingTypeFilter !== "All", Boolean(placeOfSupplyFilter), Boolean(dateFrom), Boolean(dateTo)].filter(Boolean).length;
 
   return <main className={`sales-workspace ${kind === "register" ? "sw-register-workspace" : ""}`} >
-    <header className="sw-heading"><div>{kind !== "register" && <p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p>}<h1>{config.title}</h1>{kind !== "register" && <p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p>}</div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
+    <header className="sw-heading"><div>{kind !== "register" && kind !== "orders" && <p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p>}<h1>{config.title}</h1>{kind !== "register" && kind !== "orders" && <p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p>}</div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
     {message && <div className={`sw-alert ${messageType === "success" ? "sw-alert-success" : ""}`} role={messageType === "success" ? "status" : "alert"}>{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
-    {kind !== "quotations" && kind !== "register" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
-    {kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
+    {kind !== "quotations" && kind !== "register" && kind !== "orders" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
+    {kind === "orders" ? <section className="sw-filters sw-order-filters"><select aria-label="Universal sales order filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sales orders" /></label></section> : kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
       <div className="sw-quotation-date-wrap">
         <button type="button" className="sw-quotation-date-trigger" onClick={() => { setDraftDateFrom(dateFrom); setDraftDateTo(dateTo); setShowQuotationDatePopover(value => !value); }}>
           <span>▦</span><span>{dateFrom || dateTo ? "Custom period" : "All dates"}</span><span>⌄</span>
@@ -574,7 +661,7 @@ export default function SalesWorkspace({ kind }) {
     </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
-      kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
+      kind === "orders" ? <div className="sw-order-card-list">{filtered.map(row => <article className="sw-order-transaction-card" key={row.id}><div className="sw-order-card-top"><strong>{row.order_no || "—"}</strong><time dateTime={row.order_date || ""}>{dateText(row.order_date)}</time></div><div className="sw-order-card-bottom"><span>{row.customer_name || currentCompany?.company_name || "—"}</span><div className="sw-order-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.order_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-order-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => salesOrderAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
         const paymentStatus = String(row.payment_status || "").trim().toLowerCase();
         const isPaid = paymentStatus ? ["paid", "fully paid", "settled", "complete", "completed"].includes(paymentStatus) : row.sale_type === "CASH";
         return <article className="sw-register-transaction-card" key={row.id}>
@@ -606,7 +693,7 @@ export default function SalesWorkspace({ kind }) {
           {kind === "quotations" ? <><td data-label="Date">{dateText(row[config.date])}</td><td data-label="Customer" className="sw-quotation-customer">{row.customer_name || "—"}</td></> : <><td className="sw-docno" data-label={config.columns[0]}>{row[config.number] || "—"}</td><td data-label={config.columns[1]}>{dateText(row[config.date])}</td><td data-label={config.columns[2]}>{row.customer_name || "—"}</td></>}
           {kind === "register" && <><td data-label="Type"><span className="sw-type">{row.sale_type === "CASH" ? "Cash sale" : "Credit sale"}</span></td><td data-label="Payment status"><span className={`sw-status ${status.toLowerCase()}`}>{status}</span></td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Paid" className="sw-money">{currency(balance === 0 ? row.total_amount : 0)}</td><td data-label="Balance" className="sw-money">{currency(balance)}</td></>}
           {kind === "quotations" && <td data-label="Amount" className="sw-money sw-quotation-amount"><div className="sw-quotation-amount-inner"><strong>{currency(row.total_amount)}</strong><div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" onClick={() => openQuotationPreview(row)}>View PDF</button><button type="button" onClick={() => editQuotation(row)}>Edit</button><button type="button" onClick={() => shareQuotation(row)}>Share</button><button type="button" onClick={() => downloadQuotation(row)}>Download</button></div></>, document.body)}</div></div></td>}
-          {kind === "orders" && <><td data-label="Expected delivery">{dateText(row.expected_delivery_date)}</td><td data-label="Total" className="sw-money">{currency(row.total_amount)}</td><td data-label="Fulfillment"><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
+          {kind === "orders" && <></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           <td data-label="Actions">{kind === "quotations" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" onClick={() => openQuotationPreview(row)}>View PDF</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); editQuotation(row); }}>Edit</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); shareQuotation(row); }}>Share</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); downloadQuotation(row); }}>Download</button></div></>, document.body)}</div> : kind === "register" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="sw-menu">{["View","Edit","Print","Download","Share","Cancel Invoice"].map(action => <button type="button" key={action} onClick={() => registerAction(row, action)}>{action}</button>)}</div>}</div> : <div className="sw-actions"><button onClick={() => view(row)}>View</button>{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div>}</td>
@@ -644,6 +731,6 @@ export default function SalesWorkspace({ kind }) {
     {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} onClose={() => setQuotationPreview(null)} onDownload={() => downloadQuotation(quotationPreview.row)} onShare={() => shareQuotation(quotationPreview.row)} />}
     {invoicePreviewLoading && <div className="invoice-preview-loading" role="status">Preparing invoice preview…</div>}
     {invoicePreview && createPortal(<InvoicePrint invoice={invoicePreview.invoice} items={invoicePreview.items} settings={invoicePreview.settings} company={invoicePreview.company} customer={invoicePreview.customer} onClose={() => setInvoicePreview(null)} />, document.body)}
-    {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
+    {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "orders" && <><button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { salesOrderId: id } }); }}>Create Challan</button><button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { sourceType: "orders", sourceId: id } }); }}>Convert to Invoice</button></>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
   </main>;
 }
