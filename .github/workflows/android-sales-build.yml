@@ -123,14 +123,19 @@ jobs:
           assert 'CameraPermissionPlugin.class' in Path('android/app/src/main/java/com/eazytaxation/mobile/MainActivity.java').read_text(), 'Camera permission plugin is not registered in MainActivity.'
           assert 'capacitor-local-notifications' in gradle, 'Capacitor Local Notifications plugin is not registered.'
           assert 'capacitor-community-file-opener' in gradle, 'Capacitor File Opener plugin is not registered.'
+          assert 'syd-document-storage' in gradle, 'SYD native document storage plugin is not registered.'
           assert Path('android/capacitor.settings.gradle').is_file(), 'Capacitor native plugin settings file is missing.'
           settings = Path('android/capacitor.settings.gradle').read_text()
           assert 'capacitor-local-notifications' in settings, 'Local Notifications Gradle project is not included.'
+          assert 'syd-document-storage' in settings, 'SYD native document storage Gradle project is not included.'
           assert Path('node_modules/@capacitor/local-notifications/android').is_dir(), 'Local Notifications Android implementation is missing from node_modules.'
+          assert Path('node_modules/syd-document-storage/android/src/main/java/com/syd/documentstorage/DocumentStoragePlugin.java').is_file(), 'SYD MediaStore implementation is missing from node_modules.'
           registry_path = Path('android/app/src/main/assets/capacitor.plugins.json')
           assert registry_path.is_file(), 'Capacitor runtime plugin registry is missing.'
-          assert 'LocalNotificationsPlugin' in registry_path.read_text(), 'LocalNotificationsPlugin is missing from the Capacitor runtime plugin registry.'
-          print('Verified notification permission, native implementation, Gradle inclusion, Capacitor runtime registration and PDF file opener.')
+          registry = registry_path.read_text()
+          assert 'LocalNotificationsPlugin' in registry, 'LocalNotificationsPlugin is missing from the Capacitor runtime plugin registry.'
+          assert 'DocumentStoragePlugin' in registry, 'DocumentStoragePlugin is missing from the Capacitor runtime plugin registry.'
+          print('Verified notification and document-storage native implementations, Gradle inclusion, runtime registration and PDF file opener.')
           PY
 
       - name: Clean and build debug APK
@@ -155,7 +160,12 @@ jobs:
             cat /tmp/syd-apk-dex-packages.txt
             exit 1
           fi
-          echo "Verified com.capacitorjs.plugins.localnotifications is compiled into the final APK."
+          if ! grep -q "com.syd.documentstorage" /tmp/syd-apk-dex-packages.txt; then
+            echo "ERROR: SYD MediaStore document storage native Java package is missing from the final APK."
+            cat /tmp/syd-apk-dex-packages.txt
+            exit 1
+          fi
+          echo "Verified Local Notifications and SYD MediaStore document storage native classes are compiled into the final APK."
 
       - name: Verify native speech bridge and notification permissions inside APK
         run: |
