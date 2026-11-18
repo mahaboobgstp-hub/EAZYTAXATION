@@ -13,7 +13,7 @@ const emptyForm = () => ({
 });
 
 export default function SalesReturns() {
-  const { currentCompanyId } = useCompany();
+  const { currentCompanyId, currentCompany } = useCompany();
   const [rows, setRows] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -54,7 +54,8 @@ export default function SalesReturns() {
   const totals = useMemo(() => {
     const taxable = form.lines.reduce((sum, line) => sum + clean(line.qty) * clean(line.rate), 0);
     const tax = form.lines.reduce((sum, line) => sum + clean(line.qty) * clean(line.rate) * clean(line.gstRate) / 100, 0);
-    const intra = form.lines.length && form.lines.every(line => line.intraState);
+    const customer = customers.find(row => row.id === form.customerId);
+    const intra = Boolean(currentCompany?.state && customer?.state && currentCompany.state.toLowerCase() === customer.state.toLowerCase());
     const cgst = intra ? tax / 2 : 0;
     const sgst = intra ? tax / 2 : 0;
     const igst = intra ? 0 : tax;
@@ -82,7 +83,7 @@ export default function SalesReturns() {
         originalInvoiceItemId: item.id, itemId: item.item_id || "", itemName: item.item_name || item.particulars || "",
         hsn: item.hsn_sac || "", unit: item.unit || "", originalQty, previouslyReturned: returned,
         maxQty: Math.max(0, originalQty - returned), qty: "0", acceptedQty: "0", rate: String(originalQty ? clean(item.amount) / originalQty : clean(item.rate)),
-        gstRate: String(clean(item.gst_rate)), reason: "Quality issue", disposition: "usable"
+        gstRate: String(clean(item.gst_rate)), reason: "Quality issue", disposition: "usable", intraState: Boolean(currentCompany?.state && customers.find(c => c.id === invoice?.customer_id)?.state && currentCompany.state.toLowerCase() === customers.find(c => c.id === invoice?.customer_id).state.toLowerCase())
       };
     });
     setForm(prev => ({ ...prev, invoiceId, customerId: invoice?.customer_id || prev.customerId, lines }));
