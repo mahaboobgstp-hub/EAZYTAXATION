@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { notifyPdfDownloaded } from "../utils/pdfDownloadNotification";
 import "../css/sales/InvoicePrint.css";
 import { numberToWords } from "../utils/numberToWords";
@@ -582,6 +583,9 @@ function formatQuantity(value) {
 
 function InvoicePrint({ invoice, items = [], settings, company, customer, onClose }) {
   const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const pinchStartRef = useRef(null);
   const paperStackRef = useRef(null);
   const [previewScale, setPreviewScale] = useState(() => typeof window === "undefined" ? 1 : Math.min(1, Math.max(.35, (window.innerWidth - 40) / 793.7)));
 
@@ -612,41 +616,42 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
   const subtotal = (Number(invoice.taxable_value) || 0) + discountAmount;
   const cessTotal = Number(invoice.cess_amount) || cessFromItems;
 
+  const buildInvoicePdf = async () => {
+    const [logo, signature] = await Promise.all([
+      settings?.show_logo ? loadImage(settings?.logo_url) : Promise.resolve(null),
+      settings?.show_signature ? loadImage(settings?.signature_url) : Promise.resolve(null)
+    ]);
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+    pdf.setProperties({
+      title: "Tax Invoice " + safeText(invoice.invoice_no),
+      subject: "GST tax invoice",
+      author: safeText(company?.company_name)
+    });
+    pages.forEach((pageItems, pageIndex) => {
+      if (pageIndex > 0) pdf.addPage("a4", "portrait");
+      drawPdfPage(pdf, pageItems, pageIndex, pages.length, itemList, invoice, settings, company, customer, logo, signature, amountWords);
+    });
+    const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^a-zA-Z0-9._-]+/g, "_") + ".pdf";
+    return { pdf, filename };
+  };
+
+  const blobToBase64 = async blob => {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    return btoa(binary);
+  };
+
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
-      const [logo, signature] = await Promise.all([
-        settings?.show_logo ? loadImage(settings?.logo_url) : Promise.resolve(null),
-        settings?.show_signature ? loadImage(settings?.signature_url) : Promise.resolve(null)
-      ]);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true
-      });
-      pdf.setProperties({
-        title: "Tax Invoice " + safeText(invoice.invoice_no),
-        subject: "GST tax invoice",
-        author: safeText(company?.company_name)
-      });
-
-      pages.forEach((pageItems, pageIndex) => {
-        if (pageIndex > 0) pdf.addPage("a4", "portrait");
-        drawPdfPage(pdf, pageItems, pageIndex, pages.length, itemList, invoice, settings, company, customer, logo, signature, amountWords);
-      });
-
-      const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^a-zA-Z0-9._-]+/g, "_") + ".pdf";
+      const { pdf, filename } = await buildInvoicePdf();
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
-        const blob = pdf.output("blob");
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        let binary = "";
-        for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-          binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-        }
         const saved = await Filesystem.writeFile({
           path: "Sales Invoices/" + filename,
-          data: btoa(binary),
+          data: await blobToBase64(pdf.output("blob")),
           directory: Directory.Documents,
           recursive: true
         });
@@ -660,6 +665,65 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
     } finally {
       setDownloading(false);
     }
+  };
+
+  const handleSharePDF = async () => {
+    setSharing(true);
+    try {
+      const { pdf, filename } = await buildInvoicePdf();
+      const blob = pdf.output("blob");
+      if (Capacitor.isNativePlatform()) {
+        const saved = await Filesystem.writeFile({
+          path: "Shared Invoices/" + filename,
+          data: await blobToBase64(blob),
+          directory: Directory.Cache,
+          recursive: true
+        });
+        await Share.share({
+          title: filename,
+          text: "Sales invoice " + safeText(invoice.invoice_no),
+          url: saved.uri,
+          dialogTitle: "Share sales invoice"
+        });
+      } else if (typeof navigator !== "undefined" && navigator.share && typeof File !== "undefined") {
+        const file = new File([blob], filename, { type: "application/pdf" });
+        if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: filename, files: [file] });
+        } else {
+          pdf.save(filename);
+        }
+      } else {
+        pdf.save(filename);
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        console.error("Unable to share invoice PDF:", error);
+        alert("Unable to share the invoice PDF. " + (error?.message || ""));
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const touchDistance = touches => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+  const handlePreviewTouchStart = event => {
+    if (event.touches.length === 2) {
+      pinchStartRef.current = { distance: touchDistance(event.touches), zoom: previewZoom };
+    }
+  };
+  const handlePreviewTouchMove = event => {
+    if (event.touches.length === 2 && pinchStartRef.current) {
+      event.preventDefault();
+      const ratio = touchDistance(event.touches) / Math.max(1, pinchStartRef.current.distance);
+      setPreviewZoom(Math.min(3, Math.max(1, pinchStartRef.current.zoom * ratio)));
+    }
+  };
+  const handlePreviewTouchEnd = event => {
+    if (event.touches.length < 2) pinchStartRef.current = null;
   };
 
   const renderRows = (pageItems, pageIndex) => {
@@ -684,20 +748,20 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
       <div className="invoice-print">
         <div className="invoice-actions">
           <button type="button" onClick={onClose}>Close</button>
-          <button type="button" onClick={() => window.print()}>Print Invoice</button>
+          <button type="button" onClick={handleSharePDF} disabled={sharing}>{sharing ? "Preparing…" : "Share"}</button>
           <button type="button" onClick={handleDownloadPDF} disabled={downloading}>
             {downloading ? "Preparing PDF..." : "Download PDF"}
           </button>
         </div>
 
-        <div id="invoice-content" className="invoice-paper-stack" ref={paperStackRef}>
+        <div id="invoice-content" className="invoice-paper-stack" ref={paperStackRef} onTouchStart={handlePreviewTouchStart} onTouchMove={handlePreviewTouchMove} onTouchEnd={handlePreviewTouchEnd} onTouchCancel={handlePreviewTouchEnd}>
           {pages.map((pageItems, pageIndex) => {
             const first = pageIndex === 0;
             const last = pageIndex === pages.length - 1;
             const rowOffset = pages.slice(0, pageIndex).reduce((sum, page) => sum + page.length, 0);
             return (
-              <div className="invoice-pdf-page-shell" style={{ width: (793.7 * previewScale) + "px", height: (1122.5 * previewScale) + "px" }}>
-              <article className="invoice-pdf-page" key={pageIndex} style={{ transform: "scale(" + previewScale + ")", transformOrigin: "top left" }}>
+              <div className="invoice-pdf-page-shell" style={{ width: (793.7 * previewScale * previewZoom) + "px", height: (1122.5 * previewScale * previewZoom) + "px" }}>
+              <article className="invoice-pdf-page" key={pageIndex} style={{ transform: "scale(" + (previewScale * previewZoom) + ")", transformOrigin: "top left" }}>
                 <header className="invoice-pdf-company-header">
                   <div className="invoice-pdf-brand">
                     {settings?.show_logo && settings?.logo_url && <img src={settings.logo_url} alt="" />}
