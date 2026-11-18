@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import "../css/sales/InvoicePrint.css";
 import { numberToWords } from "../utils/numberToWords";
@@ -579,6 +579,26 @@ function formatQuantity(value) {
 
 function InvoicePrint({ invoice, items = [], settings, company, customer, onClose }) {
   const [downloading, setDownloading] = useState(false);
+  const paperStackRef = useRef(null);
+  const [previewScale, setPreviewScale] = useState(() => typeof window === "undefined" ? 1 : Math.min(1, Math.max(.35, (window.innerWidth - 40) / 793.7)));
+
+  useEffect(() => {
+    const stack = paperStackRef.current;
+    if (!stack) return undefined;
+    const updateScale = () => {
+      const availableWidth = stack.clientWidth - 20;
+      setPreviewScale(Math.min(1, Math.max(.35, availableWidth / 793.7)));
+    };
+    updateScale();
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(updateScale);
+      observer.observe(stack);
+      return () => observer.disconnect();
+    }
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
   if (!invoice) return null;
 
   const itemList = Array.isArray(items) ? items : [];
@@ -651,13 +671,14 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
           </button>
         </div>
 
-        <div id="invoice-content" className="invoice-paper-stack">
+        <div id="invoice-content" className="invoice-paper-stack" ref={paperStackRef}>
           {pages.map((pageItems, pageIndex) => {
             const first = pageIndex === 0;
             const last = pageIndex === pages.length - 1;
             const rowOffset = pages.slice(0, pageIndex).reduce((sum, page) => sum + page.length, 0);
             return (
-              <article className="invoice-pdf-page" key={pageIndex}>
+              <div className="invoice-pdf-page-shell" style={{ width: (793.7 * previewScale) + "px", height: (1122.5 * previewScale) + "px" }}>
+              <article className="invoice-pdf-page" key={pageIndex} style={{ transform: "scale(" + previewScale + ")", transformOrigin: "top left" }}>
                 <header className="invoice-pdf-company-header">
                   <div className="invoice-pdf-brand">
                     {settings?.show_logo && settings?.logo_url && <img src={settings.logo_url} alt="" />}
@@ -768,6 +789,7 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
                   <span className="invoice-pdf-page-number">Page {pageIndex + 1} of {pages.length}</span>
                 </footer>
               </article>
+              </div>
             );
           })}
         </div>
