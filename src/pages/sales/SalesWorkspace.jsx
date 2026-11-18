@@ -10,6 +10,7 @@ import { getInvoiceSettings } from "../../services/invoiceSettingsService";
 import "../../css/sales/SalesWorkspace.css";
 import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
 import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
+import { notifyPdfDownloaded } from "../../utils/pdfDownloadNotification";
 import QuotationPdfPreview from "../../components/QuotationPdfPreview";
 
 const CONFIG = {
@@ -359,6 +360,7 @@ export default function SalesWorkspace({ kind }) {
       const result = await makeQuotationPdf(row);
       if (isNativeAndroid) {
         const uri = await writeQuotationPdf(result, Directory.Documents);
+        await notifyPdfDownloaded({ fileUri: uri, fileName: result.fileName, documentLabel: "Quotation PDF" });
         setMessageType("success");
         setMessage("Quotation PDF downloaded successfully.");
         setDownloadNotice({ fileName: result.fileName, location: "Documents/Quotations", uri });
@@ -418,6 +420,7 @@ export default function SalesWorkspace({ kind }) {
       if (action === "Download") {
         if (isNativeAndroid) {
           const uri = await writeSalesInvoicePdf(result, Directory.Documents);
+          await notifyPdfDownloaded({ fileUri: uri, fileName: result.fileName, documentLabel: "Sales invoice PDF" });
           setMessageType("success");
           setMessage("Sales invoice PDF downloaded successfully.");
           setDownloadNotice({ fileName: result.fileName, location: "Documents/Sales Invoices", uri });
