@@ -1,393 +1,86 @@
-.sales-workspace{max-width:1600px;margin:0 auto;padding:26px 30px 48px;color:#17243b}.sw-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:4px 0 25px}.sw-heading h1{margin:4px 0 7px;font-size:30px;letter-spacing:-.6px;color:#142b4c}.sw-breadcrumb{font-size:12px;color:#6c7c92;margin:0}.sw-subtitle{color:#66768c;margin:0;font-size:14px}.sw-primary,.sw-secondary,.sw-export,.sw-reset{border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer}.sw-primary{background:#155eef;color:white;box-shadow:0 5px 14px #155eef2e}.sw-primary:hover{background:#0d4fd2}.sw-secondary,.sw-export{background:#edf3fb;color:#173b69}.sw-metrics{display:grid;gap:15px;margin-bottom:21px}.sw-metrics-3{grid-template-columns:repeat(3,minmax(0,1fr))}.sw-metrics-4{grid-template-columns:repeat(4,minmax(0,1fr))}.sw-metric{padding:19px 21px;border:1px solid #e2eaf3;border-radius:13px;background:#fff;box-shadow:0 3px 10px #182f4a08}.sw-metric span{display:block;color:#708097;font-size:13px;font-weight:600;margin-bottom:10px}.sw-metric strong{font-size:24px;color:#173c6b}.sw-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid #e2eaf3;border-radius:13px;padding:14px;margin-bottom:18px}.sw-filters select,.sw-filters input{height:40px;border:1px solid #dbe3ed;border-radius:8px;padding:0 11px;color:#26364e;background:white}.sw-filters>label{display:flex;align-items:center;gap:8px;color:#6e7d91;font-size:12px}.sw-search{display:flex;align-items:center;gap:8px;border:1px solid #dbe3ed;border-radius:8px;height:40px;padding:0 10px;flex:1 1 250px}.sw-search span{font-size:22px;color:#7c8ba0}.sw-search input{border:0!important;outline:none;flex:1;min-width:120px;padding:0!important}.sw-reset{background:transparent;color:#155eef;padding:9px}.sw-table-card{background:#fff;border:1px solid #e2eaf3;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px #182f4a08}.sw-table-top{display:flex;justify-content:space-between;align-items:center;padding:19px 21px;border-bottom:1px solid #edf1f6}.sw-table-top>div{display:flex;gap:12px;align-items:baseline}.sw-table-top h2{font-size:18px;margin:0;color:#193657}.sw-table-top span{font-size:12px;color:#718097}.sw-table-scroll{overflow:auto}.sw-table-scroll table{width:100%;border-collapse:collapse;min-width:850px}.sw-table-scroll th{background:#f4f7fb;color:#65758a;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:13px 14px;white-space:nowrap}.sw-table-scroll td{border-top:1px solid #edf1f6;padding:14px;color:#33445c;font-size:13px;white-space:nowrap}.sw-table-scroll tbody tr:hover{background:#f8fbff}.sw-docno{font-weight:700;color:#173e70!important}.sw-money{text-align:right;font-variant-numeric:tabular-nums}.sw-type{background:#eef4ff;color:#2459a6;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700}.sw-status{display:inline-flex;padding:5px 10px;border-radius:99px;background:#eef3f8;color:#53657b;font-size:11px;font-weight:700}.sw-status.paid,.sw-status.accepted,.sw-status.delivered,.sw-status.applied{background:#e8f7ef;color:#177245}.sw-status.outstanding,.sw-status.sent,.sw-status.in.transit{background:#fff5de;color:#986400}.sw-status-select{border:1px solid #e0e7f0;border-radius:7px;padding:7px;background:#fff;color:#33445c;font-size:12px}.sw-actions{display:flex;gap:7px}.sw-actions button{border:0;background:#eef4ff;color:#155eef;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700}.sw-actions .sw-delete{background:#fff0ef;color:#b42318}.sw-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:48px 20px;color:#77869a;text-align:center}.sw-empty strong{font-size:16px;color:#344963}.sw-alert{background:#fff4f2;border:1px solid #ffd8d2;color:#a33025;border-radius:9px;padding:12px 15px;margin:0 0 16px;display:flex;justify-content:space-between}.sw-alert button{border:0;background:transparent;font-size:20px;color:inherit;cursor:pointer}.sw-modal-backdrop{position:fixed;inset:0;background:#0c1a2b8c;z-index:1000;display:flex;justify-content:center;align-items:center;padding:20px}.sw-modal{width:min(720px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:17px;box-shadow:0 25px 80px #091b3380;padding:24px}.sw-modal>header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}.sw-modal h2{margin:5px 0 0;color:#17395f;font-size:23px}.sw-close{border:0;background:#eff3f8;width:34px;height:34px;border-radius:50%;font-size:23px;color:#56677d;cursor:pointer}.sw-modal form{display:grid;gap:15px}.sw-modal label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#40526b}.sw-modal input,.sw-modal select{width:100%;height:42px;border:1px solid #dbe3ed;border-radius:8px;padding:0 11px;font:inherit;color:#26364e;background:#fff}.sw-modal input[readonly]{background:#f5f7fa;color:#687a91}.sw-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.sw-modal-total{display:flex;justify-content:space-between;background:#f2f6fc;padding:13px 15px;border-radius:9px;color:#40526b}.sw-modal-total strong{color:#173e70;font-size:17px}.sw-modal footer{display:flex;justify-content:flex-end;gap:10px;margin-top:5px}.sw-modal footer button:disabled{opacity:.6;cursor:wait}.sw-note{font-size:11px;color:#78879b;margin:0}.sw-view-modal{width:min(760px,100%)}.sw-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px}.sw-detail-grid div{padding:13px;background:#f5f8fc;border-radius:9px}.sw-detail-grid dt{font-size:11px;color:#73829a;margin-bottom:6px}.sw-detail-grid dd{margin:0;font-weight:700;color:#263b58}.sw-view-modal footer{margin-top:18px}@media(max-width:900px){.sales-workspace{padding:20px 16px}.sw-metrics-3,.sw-metrics-4{grid-template-columns:repeat(2,minmax(0,1fr))}.sw-heading{align-items:flex-start}.sw-form-grid{grid-template-columns:1fr 1fr}}@media(max-width:560px){.sw-heading{flex-direction:column}.sw-heading h1{font-size:25px}.sw-heading .sw-primary{width:100%}.sw-metrics-3,.sw-metrics-4{grid-template-columns:1fr 1fr}.sw-metric{padding:14px}.sw-metric strong{font-size:18px}.sw-form-grid,.sw-detail-grid{grid-template-columns:1fr}.sw-filters>*{flex:1 1 100%}.sw-search{flex:1 1 100%}.sw-modal{padding:18px}.sw-modal footer{flex-wrap:wrap}}@media print{.sw-heading button,.sw-filters,.sw-table-top button,.sw-actions,.sw-status-select{display:none!important}.sales-workspace{padding:0}.sw-table-card{border:0}.sw-table-scroll{overflow:visible}.sw-table-scroll table{min-width:0}.sw-table-scroll td,.sw-table-scroll th{font-size:10px;padding:7px}}
-.sw-line-items{border:1px solid #e2eaf3;border-radius:10px;padding:13px}.sw-line-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;color:#314764}.sw-add-line{border:0;background:#edf4ff;color:#155eef;padding:8px 11px;border-radius:7px;font-weight:700;cursor:pointer}.sw-line-row{display:grid;grid-template-columns:minmax(180px,1fr) 100px 130px 115px 30px;align-items:end;gap:10px;padding:8px 0;border-top:1px solid #edf1f6}.sw-line-amount{padding-bottom:12px;text-align:right;color:#173e70;font-size:13px}.sw-remove-line{border:0;background:#fff0ef;color:#b42318;border-radius:7px;height:32px;font-size:20px;cursor:pointer}.sw-line-items label{margin:0}@media(max-width:640px){.sw-line-row{grid-template-columns:1fr 1fr;align-items:end}.sw-line-row label:first-child{grid-column:1/-1}.sw-line-amount{text-align:left;padding:8px 0}.sw-remove-line{justify-self:end}}
-.sw-line-row{grid-template-columns:minmax(180px,1fr) 82px 110px 78px 105px 30px}.sw-total-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:#f2f6fc;padding:13px 15px;border-radius:9px;color:#53657b;font-size:12px}.sw-total-breakdown div{display:flex;flex-direction:column;gap:5px}.sw-total-breakdown strong{color:#173e70;font-size:14px}@media(max-width:640px){.sw-total-breakdown{grid-template-columns:1fr}}
-/* Android / narrow-screen Sales workspace */
-@media(max-width:640px){
-  .sales-workspace{padding:12px 10px 30px}
-  .sw-heading{gap:12px;margin:2px 0 16px}
-  .sw-heading h1{font-size:22px}
-  .sw-subtitle{font-size:12px;line-height:1.45}
-  .sw-heading .sw-primary{width:100%;min-height:46px}
-  .sw-metrics{gap:8px;margin-bottom:12px}
-  .sw-metric{padding:12px 10px;border-radius:12px}
-  .sw-metric span{font-size:10px;margin-bottom:6px}
-  .sw-metric strong{font-size:15px;overflow-wrap:anywhere}
-  .sw-filters{padding:11px;gap:9px;border-radius:12px}
-  .sw-filters select,.sw-filters input{min-height:44px;height:44px;font-size:13px}
-  .sw-filters>label{width:100%;justify-content:space-between}
-  .sw-filters>label input{flex:1;max-width:68%}
-  .sw-table-card{border-radius:12px}
-  .sw-table-top{padding:14px}
-  .sw-table-top h2{font-size:15px}
-  .sw-table-scroll{overflow:visible;padding:0 8px 8px}
-  .sw-table-scroll table{min-width:0;width:100%;display:block}
-  .sw-table-scroll thead{display:none}
-  .sw-table-scroll tbody{display:grid;gap:10px}
-  .sw-table-scroll tbody tr{display:block;background:#fff;border:1px solid #e1e8f2;border-radius:12px;padding:7px 11px;box-shadow:0 2px 8px #17243b08}
-  .sw-table-scroll td{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;white-space:normal;text-align:right;padding:9px 0;border-top:1px solid #f0f3f8;font-size:12px}
-  .sw-table-scroll td:first-child{border-top:0;font-size:14px}
-  .sw-table-scroll td::before{content:attr(data-label);flex:0 0 42%;text-align:left;color:#718097;font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.02em}
-  .sw-table-scroll td.sw-docno::before{content:attr(data-label)}
-  .sw-table-scroll td:last-child{justify-content:flex-end}
-  .sw-table-scroll td:last-child::before{display:none}
-  .sw-actions{flex-wrap:wrap;justify-content:flex-end}
-  .sw-actions button{min-height:36px}
-  .sw-status-select{max-width:58%;min-height:38px}
-  .sw-modal-backdrop{padding:0;align-items:stretch}
-  .sw-modal{width:100%;max-height:100dvh;height:100dvh;border-radius:0;padding:16px 14px calc(20px + env(safe-area-inset-bottom))}
-  .sw-modal>header{position:sticky;top:-16px;background:#fff;padding:8px 0 12px;z-index:2}
-  .sw-modal h2{font-size:20px}
-  .sw-modal form{gap:13px}
-  .sw-modal input,.sw-modal select{min-height:46px;height:46px;font-size:14px}
-  .sw-form-grid{grid-template-columns:1fr}
-  .sw-line-row{grid-template-columns:1fr 1fr;gap:9px}
-  .sw-line-row label:first-child{grid-column:1/-1}
-  .sw-line-row label{min-width:0}
-  .sw-line-row input,.sw-line-row select{min-width:0}
-  .sw-line-amount{grid-column:1/-1;text-align:left;padding:3px 0}
-  .sw-total-breakdown{grid-template-columns:1fr;gap:8px}
-  .sw-modal footer{position:sticky;bottom:-20px;background:#fff;padding:12px 0 calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr}
-  .sw-modal footer button{min-height:46px}
-  .sw-detail-grid{grid-template-columns:1fr}
-}
+import React, { useEffect, useRef, useState } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-.sw-mobile-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;background:#f4f7fc;border-radius:11px;color:#77869a;font-size:12px;font-weight:700}
-.sw-mobile-steps span{padding:9px 5px;text-align:center;border-radius:8px}
-.sw-mobile-steps span.active{background:#e4edff;color:#155eef}
-.sw-mobile-steps span.complete{background:#e8f7ef;color:#177245}
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-/* Compact three-dot transaction actions in Sales Register */
-.sw-menu-wrap{position:relative;display:inline-flex;justify-content:center;min-width:34px}.sw-kebab{width:34px;height:34px;border:1px solid #d8e1ed;border-radius:9px;background:#fff;color:#263b59;font-size:22px;line-height:1;cursor:pointer}.sw-menu{position:absolute;right:0;top:38px;z-index:30;min-width:142px;padding:5px;background:#fff;border:1px solid #e0e7ef;border-radius:10px;box-shadow:0 12px 28px rgba(15,23,42,.16);display:flex;flex-direction:column}.sw-menu button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:7px;color:#263b59;font-size:13px;cursor:pointer}.sw-menu button:hover{background:#eef4ff}
+export default function QuotationPdfPreview({ blob, fileName, onClose, onDownload, onShare, documentTitle = "Quotation" }) {
+  const canvasRef = useRef(null);
+  const [pdf, setPdf] = useState(null);
+  const [page, setPage] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-/* Quotation rate mode and paired GST / CESS inputs */
-.sw-rate-type{display:flex;align-items:center;gap:18px;border:1px solid #dbe3ed;border-radius:10px;padding:12px 14px;margin:0}
-.sw-rate-type legend{font-size:12px;font-weight:700;color:#40526b;padding:0 5px}
-.sw-rate-type label{display:flex;align-items:center;gap:7px;margin:0;font-size:13px}
-.sw-rate-type input[type=radio]{width:17px;height:17px;min-height:17px;accent-color:#155eef}
-.sw-tax-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px;min-width:0}
-.sw-tax-fields label{min-width:0}
-@media(max-width:640px){.sw-tax-fields{grid-column:1/-1}.sw-rate-type{flex-wrap:wrap}}
+  useEffect(() => {
+    let active = true;
+    let task;
+    setLoading(true); setError(""); setPdf(null);
+    blob.arrayBuffer().then(data => {
+      if (!active) return;
+      task = pdfjsLib.getDocument({ data: new Uint8Array(data) });
+      return task.promise;
+    }).then(document => {
+      if (!active || !document) return;
+      setPdf(document); setPage(1); setLoading(false);
+    }).catch(err => {
+      if (active) { setError(err?.message || "Unable to open this PDF."); setLoading(false); }
+    });
+    return () => { active = false; if (task) task.destroy(); };
+  }, [blob]);
 
-/* Compact quotation register: date, customer, amount + contextual menu */
-.sw-quotation-table{min-width:0!important}
-.sw-quotation-table thead th:last-child{display:none}
-.sw-quotation-amount-inner{display:flex;align-items:center;justify-content:flex-end;gap:8px}
-.sw-quotation-amount-inner>strong{font-size:13px;color:#173e70;white-space:nowrap}
-.sw-quotation-menu{min-width:170px}
-.sw-quotation-menu .sw-menu-status{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700;color:#155eef}
-.sw-quotation-menu .sw-menu-status span{color:#53657b;font-size:11px}
-.sw-status-popover{padding:5px 6px 8px;border-bottom:1px solid #edf1f6}
-.sw-status-popover select{width:100%;min-height:38px;border:1px solid #dbe3ed;border-radius:7px;padding:6px;background:#f8fbff;color:#263b59}
-@media(max-width:640px){
-  .sw-quotation-table tbody{gap:0!important}
-  .sw-quotation-table tbody tr.sw-quotation-row{display:grid!important;grid-template-columns:minmax(76px,.8fr) minmax(0,1.25fr) minmax(116px,1.15fr);align-items:center;gap:8px;padding:10px 8px;border:0;border-bottom:1px solid #e8edf4;border-radius:0;box-shadow:none;min-height:66px}
-  .sw-quotation-table tbody tr.sw-quotation-row td{display:block!important;border:0!important;padding:4px 0!important;min-width:0;text-align:left!important;font-size:11px!important;overflow-wrap:anywhere}
-  .sw-quotation-table tbody tr.sw-quotation-row td::before{display:none!important;content:none!important}
-  .sw-quotation-table tbody tr.sw-quotation-row td.sw-quotation-amount{text-align:right!important}
-  .sw-quotation-amount-inner{gap:4px}
-  .sw-quotation-amount-inner>strong{font-size:11px}
-  .sw-quotation-table tbody tr.sw-quotation-row td:last-child:not(.sw-quotation-amount){display:none!important}
-  .sw-quotation-table .sw-kebab{width:30px;height:32px;min-height:32px;padding:0;font-size:21px}
-  .sw-quotation-menu{right:0;top:36px}
-  .sw-quotation-customer{font-weight:600;color:#33445c}
-}
+  useEffect(() => {
+    if (!pdf || !canvasRef.current) return;
+    let active = true;
+    let renderTask;
+    setLoading(true); setError("");
+    pdf.getPage(page).then(pdfPage => {
+      if (!active) return;
+      const base = pdfPage.getViewport({ scale: 1 });
+      const fit = Math.min(1.8, Math.max(.5, (window.innerWidth - 32) / base.width));
+      const viewport = pdfPage.getViewport({ scale: zoom * fit });
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * ratio);
+      canvas.height = Math.floor(viewport.height * ratio);
+      canvas.style.width = viewport.width + "px";
+      canvas.style.height = viewport.height + "px";
+      renderTask = pdfPage.render({ canvasContext: context, viewport, transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null });
+      return renderTask.promise;
+    }).then(() => { if (active) setLoading(false); }).catch(err => {
+      if (active && err?.name !== "RenderingCancelledException") { setError(err?.message || "PDF page could not be rendered."); setLoading(false); }
+    });
+    return () => { active = false; if (renderTask) renderTask.cancel(); };
+  }, [pdf, page, zoom]);
 
-/* Quotation actions are portalled to the viewport so cards and scroll areas cannot clip them */
-.sw-menu-dismiss{position:fixed;inset:0;z-index:99998;background:transparent}
-.sw-quotation-menu-portal{z-index:99999;min-width:190px;max-width:min(240px,calc(100vw - 16px));overscroll-behavior:contain;box-shadow:0 14px 36px rgba(15,23,42,.24)}
-.sw-quotation-menu-portal button{min-height:42px;font-size:14px;padding:11px 12px}
-.sw-quotation-menu-portal .sw-menu-status{position:sticky;top:0;background:#fff;z-index:1}
-
-/* Full-screen in-app quotation PDF preview */
-.sw-pdf-preview-backdrop{position:fixed;inset:0;z-index:100500;background:#111827;display:flex;align-items:stretch;justify-content:center}
-.sw-pdf-preview{width:100%;height:100dvh;display:flex;flex-direction:column;background:#f1f4f8;color:#172b45;overflow:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-.sw-pdf-preview-header{min-height:58px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #dfe5ed;gap:12px}
-.sw-pdf-preview-header>div{display:flex;flex-direction:column;min-width:0;gap:3px}
-.sw-pdf-preview-header strong{font-size:16px;color:#17395f}
-.sw-pdf-preview-header span{font-size:11px;color:#718097;overflow-wrap:anywhere}
-.sw-pdf-preview-header>button{width:38px;height:38px;border:0;border-radius:50%;background:#eef2f7;color:#334155;font-size:25px}
-.sw-pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;padding:8px 12px;border-bottom:1px solid #dfe5ed}
-.sw-pdf-page-controls,.sw-pdf-zoom-controls{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;color:#40526b}
-.sw-pdf-toolbar button{width:34px;height:34px;border:1px solid #d8e1ed;border-radius:8px;background:#fff;color:#17395f;font-size:20px}
-.sw-pdf-toolbar button:disabled{opacity:.35}
-.sw-pdf-canvas-area{flex:1;min-height:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:14px 10px 24px;position:relative}
-.sw-pdf-canvas-area canvas{display:block;max-width:none;background:#fff;box-shadow:0 4px 18px #0f172a24}
-.sw-pdf-loading,.sw-pdf-error{position:absolute;top:18px;left:12px;right:12px;text-align:center;padding:12px;background:#fff;border-radius:9px;color:#52647b;font-size:13px;z-index:2}
-.sw-pdf-error{color:#b42318}
-.sw-pdf-preview-footer{display:flex;gap:10px;background:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #dfe5ed}
-.sw-pdf-preview-footer button{flex:1;min-height:46px;border-radius:10px;font-weight:700}
-
-/* Compact two-control quotation filter row */
-@media(max-width:640px){
- .sw-quotation-filters{display:grid!important;grid-template-columns:minmax(112px,.8fr) minmax(0,1.5fr)!important;align-items:center;gap:8px!important;padding:10px!important;margin-bottom:12px!important}
- .sw-quotation-filters>select,.sw-quotation-filters .sw-search{width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;flex:none!important}
- .sw-quotation-filters .sw-search{display:flex!important;align-items:center;gap:7px;padding:0 10px!important}
- .sw-quotation-filters .sw-search input{width:100%;min-width:0;height:40px!important;min-height:40px!important;border:0!important;padding:0 3px!important;font-size:12px!important}
-}
-
-/* Quotation custom date range floating panel */
-.sw-quotation-date-wrap{position:relative;min-width:0}
-.sw-quotation-date-trigger{width:100%;height:44px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:7px;padding:0 12px;border:1px solid #d8e1ed;border-radius:10px;background:#fff;color:#263b59;font-size:13px;font-weight:600;white-space:nowrap}
-.sw-quotation-date-trigger span:first-child{color:#6d7f96}
-.sw-quotation-date-popover{position:absolute;top:calc(100% + 9px);left:0;width:min(310px,calc(100vw - 36px));z-index:100020;padding:15px;background:#fff;border:1px solid #dce4ee;border-radius:14px;box-shadow:0 18px 48px rgba(15,23,42,.24);display:flex;flex-direction:column;gap:11px}
-.sw-quotation-date-popover>strong{font-size:14px;color:#17395f}
-.sw-quotation-date-popover label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#53657b}
-.sw-quotation-date-popover input{width:100%;height:42px;min-height:42px;border:1px solid #d8e1ed;border-radius:8px;padding:0 10px;background:#fff;color:#263b59;font-size:14px}
-.sw-quotation-date-popover>div{display:flex;justify-content:flex-end;gap:8px;padding-top:3px}
-.sw-quotation-date-popover button{min-height:38px;padding:0 15px;border-radius:8px;font-weight:700}
-.sw-date-clear{border:1px solid #d8e1ed;background:#fff;color:#40526b}
-.sw-date-apply{border:1px solid #155eef;background:#155eef;color:#fff}
-.sw-date-popover-dismiss{position:fixed;inset:0;z-index:100019;background:transparent;border:0}
-.sw-alert-success{background:#ecfdf3!important;border:1px solid #abefc6!important;color:#067647!important}
-.sw-alert-success button{color:#067647!important}
-@media(max-width:640px){
- .sw-quotation-filters{grid-template-columns:minmax(112px,.8fr) minmax(0,1.5fr)!important}
- .sw-quotation-date-trigger{font-size:12px;padding:0 9px}
-}
-
-/* Explicit, unmistakable confirmation after a quotation PDF is saved */
-.sw-download-confirmation-backdrop{position:fixed;inset:0;z-index:100700;background:rgba(12,26,43,.58);display:flex;align-items:center;justify-content:center;padding:22px}
-.sw-download-confirmation{width:min(390px,100%);background:#fff;border-radius:18px;padding:25px 22px 20px;box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center;color:#263b59}
-.sw-download-confirmation-icon{width:54px;height:54px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e8f7ef;color:#16804a;font-size:30px;font-weight:800}
-.sw-download-confirmation h2{margin:0 0 10px;color:#17395f;font-size:21px}
-.sw-download-confirmation p{margin:7px 0;color:#617189;font-size:13px;overflow-wrap:anywhere}
-.sw-download-confirmation p strong{color:#263b59}
-.sw-download-confirmation p b{color:#173e70}
-.sw-download-confirmation .sw-primary{width:100%;min-height:46px;margin-top:16px}
-
-
-/* Android Sales Register: compact header, expandable filters and safe card spacing */
-.sales-workspace.sw-register-workspace{padding-bottom:48px}
-.sw-register-filters{display:block!important;min-width:0;box-sizing:border-box}
-.sw-register-filter-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-width:0}
-.sw-register-filter-toolbar .sw-search{width:100%;min-width:0;max-width:none;box-sizing:border-box}
-.sw-register-filter-toolbar .sw-search input{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
-.sw-register-filter-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 14px;border:1px solid #dbe3ed;border-radius:9px;background:#fff;color:#263b59;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
-.sw-register-filter-toggle.active{border-color:#b8cdfb;background:#f3f7ff;color:#155eef}
-.sw-register-filter-chevron{font-size:16px;line-height:1}
-.sw-register-filter-count{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;border-radius:20px;background:#e8efff;color:#155eef;font-size:11px}
-.sw-register-filter-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:13px;padding-top:13px;border-top:1px solid #edf1f6;min-width:0}
-.sw-register-filter-field{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;color:#66768c;font-size:12px;font-weight:650}
-.sw-register-filter-field>span{display:block}
-.sw-register-filter-field select,.sw-register-filter-field input{display:block;width:100%;min-width:0;max-width:100%;height:44px;min-height:44px;box-sizing:border-box;border:1px solid #dbe3ed;border-radius:9px;padding:0 10px;background:#fff;color:#26364e;font:inherit;font-size:13px}
-.sw-register-filter-actions{grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center}
-.sw-register-filter-actions .sw-reset{min-height:40px}
-@media(max-width:640px){
- .sales-workspace.sw-register-workspace{padding:12px 10px calc(132px + env(safe-area-inset-bottom,0px))}
- .sw-register-workspace .sw-heading{display:flex;flex-direction:row;align-items:center;gap:10px;margin:2px 0 14px}
- .sw-register-workspace .sw-heading h1{font-size:23px;margin:0}
- .sw-register-workspace .sw-heading .sw-primary{width:auto;min-width:0;min-height:42px;padding:9px 12px;font-size:12px;white-space:nowrap}
- .sw-register-filter-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:8px}
- .sw-register-filter-toolbar .sw-search{height:44px;min-height:44px;padding:0 9px}
- .sw-register-filter-toolbar .sw-search input{height:40px!important;min-height:40px!important;font-size:12px!important}
- .sw-register-filter-toggle{min-height:44px;padding:0 10px;font-size:12px}
- .sw-register-filter-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
- .sw-register-filter-field{min-width:0;width:100%}
- .sw-register-filter-field select,.sw-register-filter-field input{width:100%;max-width:100%;min-width:0;font-size:12px}
- .sw-register-filter-actions{grid-column:1/-1}
-}
-@media(max-width:360px){
- .sw-register-filter-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:6px}
- .sw-register-filter-toggle{padding:0 8px;gap:4px;font-size:11px}
- .sw-register-workspace .sw-heading .sw-primary{font-size:11px;padding:8px 9px}
-}
-
-
-/* Sales Register redesigned transaction summary cards */
-.sw-register-card-list{display:grid;gap:11px;padding:10px 12px 14px}
-.sw-register-transaction-card{position:relative;min-width:0;padding:16px 15px;border:1px solid #dfe7f1;border-radius:15px;background:linear-gradient(145deg,#fff 0%,#fbfdff 65%,#f7faff 100%);box-shadow:0 4px 14px rgba(21,48,83,.055);overflow:visible}
-.sw-register-card-main{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0}
-.sw-register-card-details{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0}
-.sw-register-card-details time{font-size:12px;font-weight:650;color:#75849a;letter-spacing:.01em}
-.sw-register-card-details>strong{max-width:100%;font-size:14px;line-height:1.4;font-weight:750;color:#253b59;overflow-wrap:anywhere}
-.sw-register-card-right{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
-.sw-register-card-amount{font-size:17px;font-weight:800;color:#173e70;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sw-register-card-right .sw-kebab{width:38px;height:40px;min-width:38px;border-radius:11px;font-size:24px;box-shadow:0 2px 5px rgba(15,23,42,.04)}
-.sw-payment-stamp{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:78px;min-height:27px;padding:3px 11px;border:1.5px solid currentColor;border-radius:5px;font-size:10px;line-height:1;font-weight:900;letter-spacing:.13em;transform:rotate(-2deg);isolation:isolate;overflow:hidden}
-.sw-payment-stamp::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.48;background-image:radial-gradient(circle at 18% 24%,rgba(255,255,255,.95) 0 1px,transparent 1.7px),radial-gradient(circle at 76% 62%,rgba(255,255,255,.9) 0 1px,transparent 1.8px),linear-gradient(115deg,transparent 0 28%,rgba(255,255,255,.42) 44%,transparent 56% 100%);background-size:13px 11px,17px 13px,100% 100%}
-.sw-payment-stamp.is-paid{color:#087c45;background:linear-gradient(135deg,#d9fbe8 0%,#a8efc8 42%,#d6ffea 70%,#8fe0b5 100%);border-color:#0b9658;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 7px rgba(16,130,76,.16),0 0 0 2px rgba(20,164,94,.08);text-shadow:0 1px 0 rgba(255,255,255,.85)}
-.sw-payment-stamp.is-unpaid{color:#a43b32;background:linear-gradient(135deg,#fff0ed 0%,#ffd8d1 48%,#fff0ed 100%);border-color:#d66a5e;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 7px rgba(180,55,43,.1);text-shadow:0 1px 0 rgba(255,255,255,.8)}
-.sw-register-action-menu{min-width:178px}
-.sw-register-action-menu button{min-height:44px;font-size:14px;padding:11px 13px}
-.sw-register-action-menu .sw-register-delete-action{color:#b42318;border-top:1px solid #f0e6e5;margin-top:3px}
-@media(max-width:640px){
- .sw-register-card-list{gap:10px;padding:9px 9px 14px}
- .sw-register-transaction-card{padding:14px 12px;border-radius:14px}
- .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto;gap:8px}
- .sw-register-card-details{gap:6px}
- .sw-register-card-details time{font-size:11px}
- .sw-register-card-details>strong{font-size:13px;line-height:1.35}
- .sw-register-card-right{gap:7px}
- .sw-register-card-amount{font-size:15px}
- .sw-register-card-right .sw-kebab{width:36px;height:38px;min-width:36px}
- .sw-payment-stamp{min-width:72px;min-height:25px;font-size:9px}
-}
-@media(max-width:360px){
- .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto;gap:6px}
- .sw-register-card-amount{font-size:13px}
- .sw-register-card-right{gap:4px}
- .sw-register-card-right .sw-kebab{width:33px;height:36px;min-width:33px}
-}
-
-
-/* Final Sales Register card proportions with shared transparent payment emblem assets */
-.sw-register-card-main{display:grid;grid-template-columns:minmax(0,1fr) auto auto 38px;align-items:center;column-gap:clamp(7px,2vw,14px);min-width:0}
-.sw-register-card-details{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-.sw-register-card-details>strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
-.sw-register-payment-emblem{display:block;flex:none;object-fit:contain;height:21px;width:auto;max-width:none;transform:translateY(-3px);filter:drop-shadow(0 1px 1px rgba(20,35,45,.10))}
-.sw-register-payment-emblem.is-paid{width:64px}
-.sw-register-payment-emblem.is-unpaid{width:82px}
-.sw-register-card-amount{font-size:15px;font-weight:800;color:#173e70;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sw-register-card-menu-button{width:36px;height:38px;min-width:36px;border-radius:10px;font-size:23px}
-@media(max-width:640px){
- .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto auto 34px;column-gap:7px}
- .sw-register-card-details time{font-size:11px}
- .sw-register-card-details>strong{font-size:12px;line-height:1.3}
- .sw-register-payment-emblem{height:19px;transform:translateY(-3px)}
- .sw-register-payment-emblem.is-paid{width:57px}
- .sw-register-payment-emblem.is-unpaid{width:72px}
- .sw-register-card-amount{font-size:13px}
- .sw-register-card-menu-button{width:33px;height:36px;min-width:33px}
-}
-@media(max-width:360px){
- .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto auto 30px;column-gap:5px}
- .sw-register-payment-emblem.is-paid{width:51px}
- .sw-register-payment-emblem.is-unpaid{width:64px}
- .sw-register-card-amount{font-size:12px}
- .sw-register-card-menu-button{width:30px;height:34px;min-width:30px}
-}
-
-
-/* Approved Android Sales Register card hierarchy:
-   customer + amount first, payment status secondary, date + invoice on one line */
-.sw-register-card-main{
-  grid-template-columns:minmax(0,1fr) auto 38px;
-  align-items:start;
-  column-gap:clamp(7px,2vw,14px);
-}
-.sw-register-card-details{
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:5px;
-}
-.sw-register-card-details .sw-register-customer-name{
-  max-width:100%;
-  font-size:13px;
-  line-height:1.35;
-  font-weight:750;
-  color:#253b59;
-  overflow-wrap:anywhere;
-}
-.sw-register-payment-emblem{
-  height:18px;
-  width:auto;
-  max-width:82px;
-  transform:none;
-  margin-top:0;
-}
-.sw-register-payment-emblem.is-paid{width:57px}
-.sw-register-payment-emblem.is-unpaid{width:72px}
-.sw-register-card-meta{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:7px;
-  min-width:0;
-  color:#75849a;
-  font-size:11px;
-  line-height:1.35;
-  font-weight:550;
-}
-.sw-register-card-meta time{font-size:inherit;color:inherit;font-weight:inherit}
-.sw-register-card-meta>span[aria-hidden="true"]{color:#a0aaba}
-.sw-register-invoice-number{overflow-wrap:anywhere}
-.sw-register-card-amount{
-  align-self:start;
-  padding-top:1px;
-  font-size:14px;
-}
-.sw-register-card-menu-button{align-self:start}
-@media(max-width:640px){
-  .sw-register-card-main{
-    grid-template-columns:minmax(0,1fr) auto 32px;
-    align-items:start;
-    column-gap:7px;
-  }
-  .sw-register-card-details{gap:5px}
-  .sw-register-card-details .sw-register-customer-name{font-size:12px;line-height:1.3}
-  .sw-register-payment-emblem{height:17px}
-  .sw-register-payment-emblem.is-paid{width:53px}
-  .sw-register-payment-emblem.is-unpaid{width:67px}
-  .sw-register-card-meta{font-size:10px;gap:5px}
-  .sw-register-card-amount{font-size:12px}
-  .sw-register-card-menu-button{width:32px;height:34px;min-width:32px}
-}
-@media(max-width:360px){
-  .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto 29px;column-gap:5px}
-  .sw-register-card-amount{font-size:11px}
-  .sw-register-card-menu-button{width:29px;height:32px;min-width:29px}
-  .sw-register-card-meta{font-size:9px;gap:4px}
-}
-
-
-/* Android Sales Orders: compact single-row filters and compact transaction cards */
-@media(max-width:640px){
-  .sw-order-filters{display:grid!important;grid-template-columns:minmax(112px,.85fr) minmax(0,1.5fr)!important;align-items:center;gap:8px!important;padding:10px!important;margin:0 0 12px!important}
-  .sw-order-filters>select,.sw-order-filters .sw-search{width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;box-sizing:border-box}
-  .sw-order-filters>select{padding:0 9px!important;font-size:12px!important}
-  .sw-order-filters .sw-search{display:flex!important;align-items:center;gap:7px;padding:0 10px!important}
-  .sw-order-filters .sw-search input{width:100%;min-width:0;height:40px!important;min-height:40px!important;border:0!important;padding:0 3px!important;font-size:12px!important}
-}
-.sw-order-card-list{display:grid;gap:9px;padding:10px 12px 14px}
-.sw-order-transaction-card{min-width:0;padding:13px 14px;border:1px solid #dfe7f1;border-radius:13px;background:#fff;box-shadow:0 3px 10px rgba(21,48,83,.045)}
-.sw-order-card-top,.sw-order-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
-.sw-order-card-top{padding-bottom:8px;border-bottom:1px solid #edf1f6}
-.sw-order-card-top>strong{font-size:14px;font-weight:800;color:#173e70;overflow-wrap:anywhere}
-.sw-order-card-top>time{flex:none;font-size:12px;color:#65758b}
-.sw-order-card-bottom{padding-top:9px}
-.sw-order-card-bottom>span{min-width:0;font-size:13px;font-weight:650;color:#3d4e64;overflow-wrap:anywhere}
-.sw-order-card-actions{display:flex;align-items:center;gap:8px;flex:none}
-.sw-order-card-actions>strong{font-size:14px;font-weight:800;color:#173e70;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sw-order-card-actions .sw-kebab{width:34px;height:36px;min-width:34px;border-radius:9px}
-.sw-order-action-menu{min-width:160px}
-.sw-order-action-menu button{min-height:42px;font-size:14px;padding:10px 12px}
-@media(max-width:360px){
-  .sw-order-card-list{padding:8px}
-  .sw-order-transaction-card{padding:11px 10px}
-  .sw-order-card-top>strong{font-size:12px}
-  .sw-order-card-top>time{font-size:11px}
-  .sw-order-card-bottom>span{font-size:12px}
-  .sw-order-card-actions>strong{font-size:12px}
-}
-
-/* Android Credit Notes: one-row universal filter/search and compact transaction cards */
-@media(max-width:640px){
-  .sw-credit-filters{display:grid!important;grid-template-columns:minmax(112px,.85fr) minmax(0,1.5fr)!important;align-items:center;gap:8px!important;padding:10px!important;margin:0 0 12px!important}
-  .sw-credit-filters>select,.sw-credit-filters .sw-search{width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;box-sizing:border-box}
-  .sw-credit-filters>select{padding:0 9px!important;font-size:12px!important}
-  .sw-credit-filters .sw-search{display:flex!important;align-items:center;gap:7px;padding:0 10px!important}
-  .sw-credit-filters .sw-search input{width:100%;min-width:0;height:40px!important;min-height:40px!important;border:0!important;padding:0 3px!important;font-size:12px!important}
-}
-.sw-credit-card-list{display:grid;gap:9px;padding:10px 12px 14px}
-.sw-credit-transaction-card{min-width:0;padding:13px 14px;border:1px solid #dfe7f1;border-radius:13px;background:#fff;box-shadow:0 3px 10px rgba(21,48,83,.045)}
-.sw-credit-card-top,.sw-credit-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
-.sw-credit-card-top{padding-bottom:8px;border-bottom:1px solid #edf1f6}
-.sw-credit-card-top>strong{font-size:14px;font-weight:800;color:#173e70;overflow-wrap:anywhere}
-.sw-credit-card-top>time{flex:none;font-size:12px;color:#65758b}
-.sw-credit-card-bottom{padding-top:9px}
-.sw-credit-card-bottom>span{min-width:0;font-size:13px;font-weight:650;color:#3d4e64;overflow-wrap:anywhere}
-.sw-credit-card-actions{display:flex;align-items:center;gap:8px;flex:none}
-.sw-credit-card-actions>strong{font-size:14px;font-weight:800;color:#173e70;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sw-credit-card-actions .sw-kebab{width:34px;height:36px;min-width:34px;border-radius:9px}
-.sw-credit-action-menu{min-width:160px}
-.sw-credit-action-menu button{min-height:42px;font-size:14px;padding:10px 12px}
-@media(max-width:360px){
-  .sw-credit-card-list{padding:8px}
-  .sw-credit-transaction-card{padding:11px 10px}
-  .sw-credit-card-top>strong{font-size:12px}
-  .sw-credit-card-top>time{font-size:11px}
-  .sw-credit-card-bottom>span{font-size:12px}
-  .sw-credit-card-actions>strong{font-size:12px}
+  return <div className="sw-pdf-preview-backdrop">
+    <section className="sw-pdf-preview" role="dialog" aria-modal="true" aria-label={documentTitle + " PDF preview"}>
+      <header className="sw-pdf-preview-header">
+        <div><strong>{documentTitle} Preview</strong><span>{fileName}</span></div>
+        <button type="button" onClick={onClose} aria-label="Close PDF preview">×</button>
+      </header>
+      <div className="sw-pdf-toolbar">
+        <div className="sw-pdf-page-controls">
+          <button type="button" disabled={!pdf || page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>‹</button>
+          <span>{pdf ? page + " / " + pdf.numPages : "— / —"}</span>
+          <button type="button" disabled={!pdf || page >= pdf.numPages} onClick={() => setPage(p => Math.min(pdf.numPages, p + 1))}>›</button>
+        </div>
+        <div className="sw-pdf-zoom-controls">
+          <button type="button" onClick={() => setZoom(z => Math.max(.7, +(z - .15).toFixed(2)))} disabled={zoom <= .7}>−</button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button type="button" onClick={() => setZoom(z => Math.min(2, +(z + .15).toFixed(2)))} disabled={zoom >= 2}>+</button>
+        </div>
+      </div>
+      <div className="sw-pdf-canvas-area">
+        {loading && <div className="sw-pdf-loading">Preparing PDF page…</div>}
+        {error && <div className="sw-pdf-error">{error}</div>}
+        <canvas ref={canvasRef} aria-label={documentTitle + " PDF page " + page}/>
+      </div>
+      <footer className="sw-pdf-preview-footer">
+        <button type="button" className="sw-secondary" onClick={onShare}>Share</button>
+        <button type="button" className="sw-primary" onClick={onDownload}>Download PDF</button>
+      </footer>
+    </section>
+  </div>;
 }
