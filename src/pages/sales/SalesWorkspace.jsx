@@ -8,7 +8,7 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { getInvoiceSettings } from "../../services/invoiceSettingsService";
 import "../../css/sales/SalesWorkspace.css";
-import { createSalesInvoicePdf } from "../../utils/salesInvoiceDocumentPdf";
+import { buildSalesInvoicePdf } from "../../components/InvoicePrint";
 import { createQuotationPdf } from "../../utils/quotationDocumentPdf";
 import { notifyPdfDownloaded } from "../../utils/pdfDownloadNotification";
 import { saveDocumentToPublicStorage } from "../../services/nativeDocumentStorage";
@@ -463,9 +463,22 @@ export default function SalesWorkspace({ kind }) {
     if (action === "Edit") return navigate("/app/sales", { state: { editInvoiceId: row.id } });
     if (action === "Delete" || action === "Cancel Invoice") return deleteRow(row);
     try {
-      const { data: items, error } = await supabase.from("sales_invoice_items").select("*").eq("invoice_id", row.id).order("line_no");
-      if (error) throw error;
-      const result = createSalesInvoicePdf({ document: row, items: items || [], company: currentCompany || {} });
+      const [itemResult, customerResult, settings] = await Promise.all([
+        supabase.from("sales_invoice_items").select("*").eq("invoice_id", row.id).order("line_no"),
+        row.customer_id
+          ? supabase.from("customers").select("*").eq("id", row.customer_id).eq("company_id", currentCompanyId).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        getInvoiceSettings(currentCompanyId)
+      ]);
+      if (itemResult.error) throw itemResult.error;
+      if (customerResult.error) throw customerResult.error;
+      const result = await buildSalesInvoicePdf({
+        invoice: row,
+        items: itemResult.data || [],
+        settings,
+        company: currentCompany || {},
+        customer: customerResult.data || null
+      });
       if (!result?.blob || result.blob.size < 100) throw new Error("The sales invoice PDF could not be generated. Please try again.");
       if (action === "Download") {
         if (isNativeAndroid) {
