@@ -4,7 +4,7 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-export default function QuotationPdfPreview({ blob, fileName, onClose, onDownload, onShare }) {
+export default function QuotationPdfPreview({ blob, fileName, onClose, onDownload, onShare, documentTitle = "Quotation" }) {
   const canvasRef = useRef(null);
   const [pdf, setPdf] = useState(null);
   const [page, setPage] = useState(1);
@@ -24,7 +24,7 @@ export default function QuotationPdfPreview({ blob, fileName, onClose, onDownloa
       if (!active || !document) return;
       setPdf(document); setPage(1); setLoading(false);
     }).catch(err => {
-      if (active) { setError(err?.message || "Unable to open this quotation PDF."); setLoading(false); }
+      if (active) { setError(err?.message || "Unable to open this PDF."); setLoading(false); }
     });
     return () => { active = false; if (task) task.destroy(); };
   }, [blob]);
@@ -55,9 +55,9 @@ export default function QuotationPdfPreview({ blob, fileName, onClose, onDownloa
   }, [pdf, page, zoom]);
 
   return <div className="sw-pdf-preview-backdrop">
-    <section className="sw-pdf-preview" role="dialog" aria-modal="true" aria-label="Quotation PDF preview">
+    <section className="sw-pdf-preview" role="dialog" aria-modal="true" aria-label={documentTitle + " PDF preview"}>
       <header className="sw-pdf-preview-header">
-        <div><strong>Quotation Preview</strong><span>{fileName}</span></div>
+        <div><strong>{documentTitle} Preview</strong><span>{fileName}</span></div>
         <button type="button" onClick={onClose} aria-label="Close PDF preview">×</button>
       </header>
       <div className="sw-pdf-toolbar">
@@ -75,7 +75,7 @@ export default function QuotationPdfPreview({ blob, fileName, onClose, onDownloa
       <div className="sw-pdf-canvas-area">
         {loading && <div className="sw-pdf-loading">Preparing PDF page…</div>}
         {error && <div className="sw-pdf-error">{error}</div>}
-        <canvas ref={canvasRef} aria-label={"Quotation PDF page " + page}/>
+        <canvas ref={canvasRef} aria-label={documentTitle + " PDF page " + page}/>
       </div>
       <footer className="sw-pdf-preview-footer">
         <button type="button" className="sw-secondary" onClick={onShare}>Share</button>

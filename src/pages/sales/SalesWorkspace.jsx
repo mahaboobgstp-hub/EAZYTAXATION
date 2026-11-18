@@ -84,6 +84,7 @@ export default function SalesWorkspace({ kind }) {
   const [menuPosition, setMenuPosition] = useState(null);
   const [editingQuotationId, setEditingQuotationId] = useState(null);
   const [editingOrderId, setEditingOrderId] = useState(null);
+  const [editingCreditNoteId, setEditingCreditNoteId] = useState(null);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
   const [lines, setLines] = useState([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
 
@@ -111,10 +112,10 @@ export default function SalesWorkspace({ kind }) {
     const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
     return (!search || text.includes(search.toLowerCase())) &&
       (kind === "quotations" || statusFilter === "All statuses" || status.toLowerCase() === statusFilter.toLowerCase()) &&
-      (!customerFilter || row.customer_id === customerFilter) &&
+      (kind === "credits" || !customerFilter || row.customer_id === customerFilter) &&
       (kind !== "register" || billingTypeFilter === "All" || (row.sale_type === "CASH" ? "Cash" : "Credit") === billingTypeFilter) &&
-      (!placeOfSupplyFilter || row.place_of_supply === placeOfSupplyFilter) &&
-      ((!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo));
+      (kind === "credits" || !placeOfSupplyFilter || row.place_of_supply === placeOfSupplyFilter) &&
+      (kind === "credits" || ((!dateFrom || row[config.date] >= dateFrom) && (!dateTo || row[config.date] <= dateTo)));
   }), [rows, search, statusFilter, customerFilter, billingTypeFilter, placeOfSupplyFilter, dateFrom, dateTo, config, kind]);
 
   const metrics = useMemo(() => {
@@ -214,6 +215,7 @@ export default function SalesWorkspace({ kind }) {
   const openCreate = () => {
     setEditingQuotationId(null);
     setEditingOrderId(null);
+    setEditingCreditNoteId(null);
     setForm({ date: new Date().toISOString().slice(0, 10), dueDate: "", customerId: "", originalInvoiceId: "", reason: "", taxInclusive: false });
     setLines([{ description: "", qty: "1", rate: "0", gstRate: "0", cessRate: "0" }]);
     setMessage(""); setFormStep(1); setDialog(true);
@@ -231,7 +233,7 @@ export default function SalesWorkspace({ kind }) {
       const prefix = kind === "quotations" ? "QT" : kind === "orders" ? "SO" : "CN";
       const existing = await supabase.from(config.table).select("id", { count: "exact", head: true }).eq("company_id", currentCompanyId);
       if (existing.error) throw existing.error;
-      const documentNo = editingQuotationId ? rows.find(row => row.id === editingQuotationId)?.invoice_no : editingOrderId ? rows.find(row => row.id === editingOrderId)?.order_no : `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
+      const documentNo = editingQuotationId ? rows.find(row => row.id === editingQuotationId)?.invoice_no : editingOrderId ? rows.find(row => row.id === editingOrderId)?.order_no : editingCreditNoteId ? rows.find(row => row.id === editingCreditNoteId)?.credit_note_no : `${prefix}-${new Date(form.date).getFullYear()}-${String((existing.count || 0) + 1).padStart(5, "0")}`;
       const validLines = lines.filter(line => line.description.trim() && (!isNativeAndroid || num(line.qty) > 0));
       if (!validLines.length) throw new Error("Add at least one item or description.");
       const taxableValue = Math.round(validLines.reduce((sum, line) => { const combinedRate = num(line.gstRate) + num(line.cessRate); const base = form.taxInclusive ? num(line.rate) / (1 + combinedRate / 100) : num(line.rate); return sum + Math.max(0, num(line.qty)) * Math.max(0, base); }, 0) * 100) / 100;
@@ -254,7 +256,8 @@ export default function SalesWorkspace({ kind }) {
         header = { ...common, order_no: documentNo, order_date: form.date, expected_delivery_date: form.dueDate || null, status: existingOrder?.status || "Open", fulfillment_status: existingOrder?.fulfillment_status || "Pending" };
       } else {
         table = "credit_notes"; itemTable = "credit_note_items"; parentField = "credit_note_id";
-        header = { ...common, credit_note_no: documentNo, credit_note_date: form.date, original_invoice_id: form.originalInvoiceId || null, original_invoice_no: invoices.find(i => i.id === form.originalInvoiceId)?.invoice_no || null, reason: form.reason.trim(), status: "Issued" };
+        const existingCredit = editingCreditNoteId ? rows.find(row => row.id === editingCreditNoteId) : null;
+        header = { ...common, created_at: existingCredit?.created_at || common.created_at, credit_note_no: documentNo, credit_note_date: form.date, original_invoice_id: form.originalInvoiceId || null, original_invoice_no: invoices.find(i => i.id === form.originalInvoiceId)?.invoice_no || null, reason: form.reason.trim(), status: existingCredit?.status || "Issued" };
         if (!header.reason) throw new Error("Enter a reason for this credit note.");
       }
       if (editingQuotationId && kind === "quotations") {
@@ -266,6 +269,13 @@ export default function SalesWorkspace({ kind }) {
         previousItemIds = (oldItems || []).map(item => item.id);
       } else if (editingOrderId && kind === "orders") {
         id = editingOrderId;
+        const { error } = await supabase.from(table).update(header).eq("id", id).eq("company_id", currentCompanyId);
+        if (error) throw error;
+        const { data: oldItems, error: oldItemsError } = await supabase.from(itemTable).select("id").eq(parentField, id);
+        if (oldItemsError) throw oldItemsError;
+        previousItemIds = (oldItems || []).map(item => item.id);
+      } else if (editingCreditNoteId && kind === "credits") {
+        id = editingCreditNoteId;
         const { error } = await supabase.from(table).update(header).eq("id", id).eq("company_id", currentCompanyId);
         if (error) throw error;
         const { data: oldItems, error: oldItemsError } = await supabase.from(itemTable).select("id").eq(parentField, id);
@@ -289,12 +299,12 @@ export default function SalesWorkspace({ kind }) {
         amount: Math.round((Math.max(0, num(line.qty)) * (form.taxInclusive ? num(line.rate) / (1 + (num(line.gstRate) + num(line.cessRate)) / 100) : num(line.rate))) * (1 + (Math.max(0, num(line.gstRate)) + Math.max(0, num(line.cessRate))) / 100) * 100) / 100
       }));
       const { error: itemError } = await supabase.from(itemTable).insert(itemsToInsert);
-      if (itemError) { if (!editingQuotationId) await supabase.from(table).delete().eq("id", id).eq("company_id", currentCompanyId); throw itemError; }
-      if ((editingQuotationId || editingOrderId) && previousItemIds.length) {
+      if (itemError) { if (!editingQuotationId && !editingOrderId && !editingCreditNoteId) await supabase.from(table).delete().eq("id", id).eq("company_id", currentCompanyId); throw itemError; }
+      if ((editingQuotationId || editingOrderId || editingCreditNoteId) && previousItemIds.length) {
         const { error: cleanupError } = await supabase.from(itemTable).delete().in("id", previousItemIds);
         if (cleanupError) throw cleanupError;
       }
-      setDialog(false); setEditingQuotationId(null); setEditingOrderId(null); await load();
+      setDialog(false); setEditingQuotationId(null); setEditingOrderId(null); setEditingCreditNoteId(null); await load();
     } catch (error) { setMessage(errorText(error)); }
     finally { setSaving(false); }
   };
@@ -392,6 +402,96 @@ export default function SalesWorkspace({ kind }) {
           for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
           const saved = await Filesystem.writeFile({ path: "Sales Orders/" + result.fileName, data: btoa(binary), directory: Directory.Cache, recursive: true });
           await Share.share({ title: result.fileName, text: "Sales Order " + (row.order_no || ""), files: [saved.uri], dialogTitle: "Share sales order PDF" });
+        } else {
+          const file = new File([result.blob], result.fileName, { type: "application/pdf" });
+          if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
+          else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
+        }
+      }
+    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
+  };
+
+  const editCreditNote = async row => {
+    try {
+      const { data: items, error } = await supabase.from("credit_note_items").select("*").eq("credit_note_id", row.id).order("line_no");
+      if (error) throw error;
+      setEditingCreditNoteId(row.id); setEditingQuotationId(null); setEditingOrderId(null);
+      setForm({ date: row.credit_note_date || new Date().toISOString().slice(0, 10), dueDate: "", customerId: row.customer_id || "", originalInvoiceId: row.original_invoice_id || "", reason: row.reason || "", taxInclusive: false });
+      setLines((items || []).map(item => ({ item_id: item.item_id || "", description: item.item_name || item.description || "", hsn_sac: item.hsn_sac || "", unit: item.unit || "", qty: String(item.qty ?? 0), rate: String(item.rate ?? 0), gstRate: String(item.gst_rate ?? 0), cessRate: "0", originalQty: Number(item.qty) || 0, returnedQty: 0, maxQty: Number(item.qty) || 0 })));
+      setFormStep(1); setMessage(""); setDialog(true); setMenuId(null); setMenuPosition(null);
+    } catch (error) { setMessage(errorText(error)); }
+  };
+
+  const makeCreditNotePdf = async row => {
+    const { data: items, error } = await supabase.from("credit_note_items").select("*").eq("credit_note_id", row.id).order("line_no");
+    if (error) throw error;
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    pdf.setTextColor(23, 57, 95); pdf.setFont("helvetica", "bold"); pdf.setFontSize(18); pdf.text("CREDIT NOTE", 14, 20);
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(10); pdf.text(currentCompany?.company_name || "Company", 14, 28);
+    pdf.setDrawColor(215, 225, 237); pdf.line(14, 33, 196, 33); pdf.setTextColor(38, 59, 89);
+    pdf.text("Credit Note No: " + (row.credit_note_no || "—"), 14, 42);
+    pdf.text("Date: " + dateText(row.credit_note_date), 14, 49);
+    pdf.text("Customer: " + (row.customer_name || "—"), 14, 56);
+    pdf.text("Original Invoice: " + (row.original_invoice_no || "—"), 14, 63);
+    const reasonLines = pdf.splitTextToSize("Reason: " + (row.reason || "—"), 178);
+    pdf.text(reasonLines, 14, 70);
+    let y = 76 + reasonLines.length * 5;
+    pdf.setFillColor(239, 244, 250); pdf.rect(14, y, 182, 9, "F");
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(9);
+    pdf.text("Item / Description", 17, y + 6); pdf.text("Qty", 125, y + 6); pdf.text("Rate", 148, y + 6); pdf.text("Amount", 193, y + 6, { align: "right" });
+    y += 15; pdf.setFont("helvetica", "normal");
+    (items || []).forEach(item => {
+      const itemLines = pdf.splitTextToSize(String(item.item_name || item.description || "—"), 100);
+      const rowHeight = Math.max(8, itemLines.length * 4.5);
+      if (y + rowHeight > 270) { pdf.addPage(); y = 20; }
+      pdf.text(itemLines, 17, y); pdf.text(String(num(item.qty)), 125, y); pdf.text(currency(item.rate), 148, y); pdf.text(currency(item.amount), 193, y, { align: "right" });
+      y += rowHeight + 3; pdf.setDrawColor(235, 239, 244); pdf.line(14, y - 1, 196, y - 1);
+    });
+    y += 7; if (y > 270) { pdf.addPage(); y = 22; }
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+    pdf.text("Taxable Value: " + currency(row.taxable_value), 14, y); y += 7;
+    pdf.text("CGST: " + currency(row.cgst), 14, y); y += 7;
+    pdf.text("SGST: " + currency(row.sgst), 14, y); y += 7;
+    pdf.text("IGST: " + currency(row.igst), 14, y); y += 9;
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(12); pdf.text("Credit Note Total: " + currency(row.total_amount), 14, y);
+    return { blob: pdf.output("blob"), fileName: (row.credit_note_no || "Credit-Note") + ".pdf" };
+  };
+
+  const creditNoteAction = async (row, action) => {
+    setMenuId(null); setMenuPosition(null);
+    if (action === "View") {
+      try {
+        const result = await makeCreditNotePdf(row);
+        if (!result?.blob || result.blob.size < 100) throw new Error("The credit note PDF could not be generated.");
+        setQuotationPreview({ ...result, row, documentType: "credit-note" });
+      } catch (error) { setMessage(errorText(error)); }
+      return;
+    }
+    if (action === "Edit") return editCreditNote(row);
+    if (action === "Cancel") {
+      if (!window.confirm("Cancel credit note " + (row.credit_note_no || "") + "? It will be marked as void.")) return;
+      await updateStatus(row, "Void"); return;
+    }
+    try {
+      const result = await makeCreditNotePdf(row);
+      if (!result?.blob || result.blob.size < 100) throw new Error("The credit note PDF could not be generated.");
+      if (action === "Download") {
+        if (isNativeAndroid) {
+          const saved = await saveDocumentToPublicStorage({ blob: result.blob, fileName: result.fileName, folder: "Credit Notes", mimeType: "application/pdf" });
+          const notice = await notifyPdfDownloaded({ fileUri: saved.uri, fileName: result.fileName, documentLabel: "Credit note PDF" });
+          if (!notice?.ok) setMessage("Credit note PDF saved, but its notification could not be posted. " + (notice?.message || ""));
+          else setMessage("");
+        } else {
+          const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+        }
+        return;
+      }
+      if (action === "Share") {
+        if (isNativeAndroid) {
+          const bytes = new Uint8Array(await result.blob.arrayBuffer()); let binary = "";
+          for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+          const saved = await Filesystem.writeFile({ path: "Credit Notes/" + result.fileName, data: btoa(binary), directory: Directory.Cache, recursive: true });
+          await Share.share({ title: result.fileName, text: "Credit Note " + (row.credit_note_no || ""), files: [saved.uri], dialogTitle: "Share credit note PDF" });
         } else {
           const file = new File([result.blob], result.fileName, { type: "application/pdf" });
           if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
@@ -624,8 +724,8 @@ export default function SalesWorkspace({ kind }) {
     <header className="sw-heading"><div>{kind !== "register" && kind !== "orders" && <p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p>}<h1>{config.title}</h1>{kind !== "register" && kind !== "orders" && <p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p>}</div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
     {message && <div className={`sw-alert ${messageType === "success" ? "sw-alert-success" : ""}`} role={messageType === "success" ? "status" : "alert"}>{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
-    {kind !== "quotations" && kind !== "register" && kind !== "orders" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
-    {kind === "orders" ? <section className="sw-filters sw-order-filters"><select aria-label="Universal sales order filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sales orders" /></label></section> : kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
+    {kind !== "quotations" && kind !== "register" && kind !== "orders" && kind !== "credits" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
+    {kind === "credits" ? <section className="sw-filters sw-credit-filters"><select aria-label="Universal credit note filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search credit notes" /></label></section> : kind === "orders" ? <section className="sw-filters sw-order-filters"><select aria-label="Universal sales order filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sales orders" /></label></section> : kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
       <div className="sw-quotation-date-wrap">
         <button type="button" className="sw-quotation-date-trigger" onClick={() => { setDraftDateFrom(dateFrom); setDraftDateTo(dateTo); setShowQuotationDatePopover(value => !value); }}>
           <span>▦</span><span>{dateFrom || dateTo ? "Custom period" : "All dates"}</span><span>⌄</span>
@@ -661,7 +761,7 @@ export default function SalesWorkspace({ kind }) {
     </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
-      kind === "orders" ? <div className="sw-order-card-list">{filtered.map(row => <article className="sw-order-transaction-card" key={row.id}><div className="sw-order-card-top"><strong>{row.order_no || "—"}</strong><time dateTime={row.order_date || ""}>{dateText(row.order_date)}</time></div><div className="sw-order-card-bottom"><span>{row.customer_name || currentCompany?.company_name || "—"}</span><div className="sw-order-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.order_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-order-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => salesOrderAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
+      kind === "credits" ? <div className="sw-credit-card-list">{filtered.map(row => <article className="sw-credit-transaction-card" key={row.id}><div className="sw-credit-card-top"><strong>{row.credit_note_no || "—"}</strong><time dateTime={row.credit_note_date || ""}>{dateText(row.credit_note_date)}</time></div><div className="sw-credit-card-bottom"><span>{row.customer_name || "—"}</span><div className="sw-credit-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.credit_note_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-credit-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => creditNoteAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "orders" ? <div className="sw-order-card-list">{filtered.map(row => <article className="sw-order-transaction-card" key={row.id}><div className="sw-order-card-top"><strong>{row.order_no || "—"}</strong><time dateTime={row.order_date || ""}>{dateText(row.order_date)}</time></div><div className="sw-order-card-bottom"><span>{row.customer_name || currentCompany?.company_name || "—"}</span><div className="sw-order-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.order_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-order-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => salesOrderAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
         const paymentStatus = String(row.payment_status || "").trim().toLowerCase();
         const isPaid = paymentStatus ? ["paid", "fully paid", "settled", "complete", "completed"].includes(paymentStatus) : row.sale_type === "CASH";
         return <article className="sw-register-transaction-card" key={row.id}>
@@ -695,7 +795,7 @@ export default function SalesWorkspace({ kind }) {
           {kind === "quotations" && <td data-label="Amount" className="sw-money sw-quotation-amount"><div className="sw-quotation-amount-inner"><strong>{currency(row.total_amount)}</strong><div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" onClick={() => openQuotationPreview(row)}>View PDF</button><button type="button" onClick={() => editQuotation(row)}>Edit</button><button type="button" onClick={() => shareQuotation(row)}>Share</button><button type="button" onClick={() => downloadQuotation(row)}>Download</button></div></>, document.body)}</div></div></td>}
           {kind === "orders" && <></>}
           {kind === "challans" && <><td data-label="Sales order">{row.sales_order_no || "—"}</td><td data-label="Vehicle">{row.vehicle_no || "—"}</td><td data-label="Dispatch status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
-          {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
+          {kind === "credits" && <></>}
           <td data-label="Actions">{kind === "quotations" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" onClick={() => openQuotationPreview(row)}>View PDF</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); editQuotation(row); }}>Edit</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); shareQuotation(row); }}>Share</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); downloadQuotation(row); }}>Download</button></div></>, document.body)}</div> : kind === "register" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="sw-menu">{["View","Edit","Print","Download","Share","Cancel Invoice"].map(action => <button type="button" key={action} onClick={() => registerAction(row, action)}>{action}</button>)}</div>}</div> : <div className="sw-actions"><button onClick={() => view(row)}>View</button>{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div>}</td>
         </tr>;
       })}</tbody></table></div>}
@@ -728,7 +828,7 @@ export default function SalesWorkspace({ kind }) {
       </footer>
     </form></section></div>}
     {downloadNotice && <div className="sw-download-confirmation-backdrop" role="presentation"><section className="sw-download-confirmation" role="dialog" aria-modal="true" aria-label="PDF download complete"><div className="sw-download-confirmation-icon">✓</div><h2>PDF downloaded</h2><p><strong>{downloadNotice.fileName}</strong></p><p>Saved in: <b>{downloadNotice.location}</b></p><button type="button" className="sw-primary" onClick={() => setDownloadNotice(null)}>Done</button></section></div>}
-    {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} onClose={() => setQuotationPreview(null)} onDownload={() => downloadQuotation(quotationPreview.row)} onShare={() => shareQuotation(quotationPreview.row)} />}
+    {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} documentTitle={quotationPreview.documentType === "credit-note" ? "Credit Note" : "Quotation"} onClose={() => setQuotationPreview(null)} onDownload={() => quotationPreview.documentType === "credit-note" ? creditNoteAction(quotationPreview.row, "Download") : downloadQuotation(quotationPreview.row)} onShare={() => quotationPreview.documentType === "credit-note" ? creditNoteAction(quotationPreview.row, "Share") : shareQuotation(quotationPreview.row)} />}
     {invoicePreviewLoading && <div className="invoice-preview-loading" role="status">Preparing invoice preview…</div>}
     {invoicePreview && createPortal(<InvoicePrint invoice={invoicePreview.invoice} items={invoicePreview.items} settings={invoicePreview.settings} company={invoicePreview.company} customer={invoicePreview.customer} onClose={() => setInvoicePreview(null)} />, document.body)}
     {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "orders" && <><button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { salesOrderId: id } }); }}>Create Challan</button><button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { sourceType: "orders", sourceId: id } }); }}>Convert to Invoice</button></>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
