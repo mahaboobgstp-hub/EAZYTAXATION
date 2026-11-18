@@ -171,6 +171,7 @@ function App() {
     <BrowserRouter>
 
       <CompanyProvider>
+      <NativePdfNotificationHandler />
       <Routes>
 
         {/* ===========================
