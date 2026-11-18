@@ -511,10 +511,14 @@ export default function SalesWorkspace({ kind }) {
         return <article className="sw-register-transaction-card" key={row.id}>
           <div className="sw-register-card-main">
             <div className="sw-register-card-details">
-              <time dateTime={row.invoice_date || ""}>{dateText(row.invoice_date)}</time>
-              <strong>{row.customer_name || "—"}</strong>
+              <strong className="sw-register-customer-name">{row.customer_name || "—"}</strong>
+              <img className={"sw-register-payment-emblem " + (isPaid ? "is-paid" : "is-unpaid")} src={isPaid ? "/assets/payment-emblems/paid.svg" : "/assets/payment-emblems/unpaid.svg"} alt={isPaid ? "Paid" : "Unpaid"} />
+              <div className="sw-register-card-meta">
+                <time dateTime={row.invoice_date || ""}>{dateText(row.invoice_date)}</time>
+                <span aria-hidden="true">·</span>
+                <span className="sw-register-invoice-number">{row.invoice_no || "—"}</span>
+              </div>
             </div>
-            <img className={"sw-register-payment-emblem " + (isPaid ? "is-paid" : "is-unpaid")} src={isPaid ? "/assets/payment-emblems/paid.svg" : "/assets/payment-emblems/unpaid.svg"} alt={isPaid ? "Paid" : "Unpaid"} />
             <strong className="sw-register-card-amount">{currency(row.total_amount)}</strong>
             <button type="button" className="sw-kebab sw-register-card-menu-button" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>
           </div>
