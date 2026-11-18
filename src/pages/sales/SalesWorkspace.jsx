@@ -407,10 +407,9 @@ export default function SalesWorkspace({ kind }) {
 
   const registerAction = async (row, action) => {
     setMenuId(null);
-    if (action === "View") return navigate("/app/sales", { state: { previewInvoiceId: row.id } });
+    if (action === "Preview" || action === "View") return navigate("/app/sales", { state: { previewInvoiceId: row.id } });
     if (action === "Edit") return navigate("/app/sales", { state: { editInvoiceId: row.id } });
-    if (action === "Print") return printInvoice(row);
-    if (action === "Cancel Invoice") return deleteRow(row);
+    if (action === "Delete" || action === "Cancel Invoice") return deleteRow(row);
     try {
       const { data: items, error } = await supabase.from("sales_invoice_items").select("*").eq("invoice_id", row.id).order("line_no");
       if (error) throw error;
@@ -453,7 +452,7 @@ export default function SalesWorkspace({ kind }) {
   };
 
   const deleteRow = async row => {
-    const prompt = kind === "register" ? `Cancel invoice ${row[config.number]}? The invoice number will remain reserved and the record will be excluded from active registers.` : `Delete ${row[config.number]}? This will remove it from this register.`;
+    const prompt = kind === "register" ? `Delete invoice ${row[config.number]}? The invoice number will remain reserved and the record will be removed from the active Sales Register.` : `Delete ${row[config.number]}? This will remove it from this register.`;
     if (!window.confirm(prompt)) return;
     const { error } = await supabase.from(config.table).update({ is_deleted: true }).eq("id", row.id).eq("company_id", currentCompanyId);
     if (error) setMessage(errorText(error)); else setRows(prev => prev.filter(item => item.id !== row.id));
@@ -506,7 +505,30 @@ export default function SalesWorkspace({ kind }) {
     </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
-      <div className="sw-table-scroll"><table className={kind === "quotations" ? "sw-quotation-table" : ""}><thead><tr>{config.columns.map(c => <th key={c}>{c}</th>)}<th>Actions</th></tr></thead><tbody>{filtered.map(row => {
+      {kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
+        const paymentStatus = String(row.payment_status || "").trim().toLowerCase();
+        const isPaid = paymentStatus ? ["paid", "fully paid", "settled", "complete", "completed"].includes(paymentStatus) : row.sale_type === "CASH";
+        return <article className="sw-register-transaction-card" key={row.id}>
+          <div className="sw-register-card-main">
+            <div className="sw-register-card-details">
+              <time dateTime={row.invoice_date || ""}>{dateText(row.invoice_date)}</time>
+              <strong>{row.customer_name || "—"}</strong>
+              <span className={"sw-payment-stamp " + (isPaid ? "is-paid" : "is-unpaid")} aria-label={isPaid ? "Paid" : "Unpaid"}>{isPaid ? "PAID" : "UNPAID"}</span>
+            </div>
+            <div className="sw-register-card-right">
+              <strong className="sw-register-card-amount">{currency(row.total_amount)}</strong>
+              <button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>
+            </div>
+          </div>
+          {menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-register-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>
+            <button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); registerAction(row, "Preview"); }}>Preview</button>
+            <button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); registerAction(row, "Edit"); }}>Edit</button>
+            <button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); registerAction(row, "Download"); }}>Download</button>
+            <button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); registerAction(row, "Share"); }}>Share</button>
+            <button type="button" className="sw-register-delete-action" onClick={() => { setMenuId(null); setMenuPosition(null); registerAction(row, "Delete"); }}>Delete</button>
+          </div></>, document.body)}
+        </article>;
+      })}</div> : <div className="sw-table-scroll"><table className={kind === "quotations" ? "sw-quotation-table" : ""}><thead><tr>{config.columns.map(c => <th key={c}>{c}</th>)}<th>Actions</th></tr></thead><tbody>{filtered.map(row => {
         const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
         const balance = kind === "register" ? (row.sale_type === "CASH" ? 0 : num(row.total_amount)) : null;
         return <tr key={row.id} className={kind === "quotations" ? "sw-quotation-row" : ""}>
@@ -518,7 +540,7 @@ export default function SalesWorkspace({ kind }) {
           {kind === "credits" && <><td data-label="Original invoice">{row.original_invoice_no || "—"}</td><td data-label="Reason">{row.reason || "—"}</td><td data-label="Amount" className="sw-money">{currency(row.total_amount)}</td><td data-label="Status"><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           <td data-label="Actions">{kind === "quotations" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-quotation-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}><button type="button" onClick={() => openQuotationPreview(row)}>View PDF</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); editQuotation(row); }}>Edit</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); shareQuotation(row); }}>Share</button><button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); downloadQuotation(row); }}>Download</button></div></>, document.body)}</div> : kind === "register" ? <div className="sw-menu-wrap"><button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="sw-menu">{["View","Edit","Print","Download","Share","Cancel Invoice"].map(action => <button type="button" key={action} onClick={() => registerAction(row, action)}>{action}</button>)}</div>}</div> : <div className="sw-actions"><button onClick={() => view(row)}>View</button>{isNativeAndroid && kind === "orders" && <button onClick={() => navigate("/app/delivery-challans/new", { state: { salesOrderId: row.id } })}>Create Challan</button>}{isNativeAndroid && (kind === "orders" || (kind === "quotations" && String(row.status || "").toLowerCase() === "accepted")) && <button onClick={() => navigate("/app/sales", { state: { sourceType: kind, sourceId: row.id } })}>Convert to Invoice</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div>}</td>
         </tr>;
-      })}</tbody></table></div>}
+      })}</tbody></table></div>}}
     </section></>}
     {dialog && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setDialog(false); }}><section className="sw-modal" role="dialog" aria-modal="true" aria-labelledby="sw-modal-title"><header><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales</p><h2 id="sw-modal-title">{actionLabel}</h2></div><button className="sw-close" onClick={() => setDialog(false)} aria-label="Close">×</button></header><form onSubmit={e => { e.preventDefault(); }} noValidate>
       {isNativeAndroid && <nav className="sw-mobile-steps" aria-label="Document creation steps"><span className={formStep === 1 ? "active" : formStep > 1 ? "complete" : ""}>1. Details</span><span className={formStep === 2 ? "active" : formStep > 2 ? "complete" : ""}>2. Items</span><span className={formStep === 3 ? "active" : ""}>3. Review</span></nav>}
