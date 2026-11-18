@@ -584,6 +584,7 @@ function formatQuantity(value) {
 function InvoicePrint({ invoice, items = [], settings, company, customer, onClose }) {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState("");
   const [previewZoom, setPreviewZoom] = useState(1);
   const pinchStartRef = useRef(null);
   const paperStackRef = useRef(null);
@@ -644,24 +645,56 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
     return btoa(binary);
   };
 
+  const withTimeout = (promise, label, milliseconds = 15000) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(label + " timed out. Please try again.")), milliseconds))
+  ]);
+
   const handleDownloadPDF = async () => {
+    if (downloading) return;
     setDownloading(true);
+    setDownloadMessage("");
     try {
-      const { pdf, filename } = await buildInvoicePdf();
+      const { pdf, filename } = await withTimeout(buildInvoicePdf(), "PDF generation");
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
-        const saved = await Filesystem.writeFile({
-          path: "Sales Invoices/" + filename,
-          data: await blobToBase64(pdf.output("blob")),
-          directory: Directory.Documents,
-          recursive: true
+        const data = await blobToBase64(pdf.output("blob"));
+        let saved;
+        let savedLocation = "Documents/Sales Invoices";
+        try {
+          saved = await withTimeout(Filesystem.writeFile({
+            path: "Sales Invoices/" + filename,
+            data,
+            directory: Directory.Documents,
+            recursive: true
+          }), "Saving to Documents");
+        } catch (documentsError) {
+          console.warn("Could not save PDF to Documents; using app storage fallback:", documentsError);
+          savedLocation = "app storage";
+          saved = await withTimeout(Filesystem.writeFile({
+            path: "Sales Invoices/" + filename,
+            data,
+            directory: Directory.Cache,
+            recursive: true
+          }), "Saving PDF to app storage");
+        }
+        setDownloadMessage("PDF saved successfully. " + savedLocation + ".");
+        notifyPdfDownloaded({
+          fileUri: saved.uri,
+          fileName: filename,
+          documentLabel: "Sales invoice PDF"
+        }).then(shown => {
+          if (!shown) setDownloadMessage("PDF saved to " + savedLocation + ". Allow notifications to receive the PDF shortcut.");
+        }).catch(error => {
+          console.warn("PDF notification could not be displayed:", error);
+          setDownloadMessage("PDF saved to " + savedLocation + ". Notification could not be displayed.");
         });
-        await notifyPdfDownloaded({ fileUri: saved.uri, fileName: filename, documentLabel: "Sales invoice PDF" });
       } else {
         pdf.save(filename);
+        setDownloadMessage("PDF download started: " + filename);
       }
     } catch (error) {
-      console.error("Unable to generate invoice PDF:", error);
-      alert("Unable to generate the invoice PDF. " + (error?.message || ""));
+      console.error("Unable to download invoice PDF:", error);
+      setDownloadMessage("Download failed: " + (error?.message || "Please try again."));
     } finally {
       setDownloading(false);
     }
@@ -754,7 +787,8 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
           </button>
         </div>
 
-        <div id="invoice-content" className="invoice-paper-stack" ref={paperStackRef} onTouchStart={handlePreviewTouchStart} onTouchMove={handlePreviewTouchMove} onTouchEnd={handlePreviewTouchEnd} onTouchCancel={handlePreviewTouchEnd}>
+        {downloadMessage && <div className="invoice-download-message" role="status">{downloadMessage}</div>}
+        <div id="invoice-content" className="invoice-paper-stack" ref={paperStackRef} style={{ alignItems: previewZoom > 1 ? "flex-start" : "center" }} onTouchStart={handlePreviewTouchStart} onTouchMove={handlePreviewTouchMove} onTouchEnd={handlePreviewTouchEnd} onTouchCancel={handlePreviewTouchEnd}>
           {pages.map((pageItems, pageIndex) => {
             const first = pageIndex === 0;
             const last = pageIndex === pages.length - 1;
