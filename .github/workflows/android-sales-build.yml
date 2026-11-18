@@ -82,9 +82,6 @@ jobs:
             npx cap add android
           fi
 
-      - name: Add Android microphone permissions
-        run: python3 scripts/ensure-android-microphone-permissions.py
-
       - name: Generate SYD Android launcher icons
         run: npx @capacitor/assets generate --android
 
@@ -94,16 +91,20 @@ jobs:
       - name: Register native speech plugin after Capacitor sync
         run: python3 scripts/ensure-offline-speech-recognition.py
 
-      - name: Add Android 13+ notification permissions after Capacitor sync
-        run: python3 scripts/ensure-android-notification-permissions.py
+      - name: Add Android microphone and notification permissions after Capacitor sync
+        run: |
+          python3 scripts/ensure-android-microphone-permissions.py
+          python3 scripts/ensure-android-notification-permissions.py
 
-      - name: Verify notification and PDF native plugins
+      - name: Verify notification, microphone and PDF native plugins
         run: |
           python3 - <<'PY'
           from pathlib import Path
           manifest = Path('android/app/src/main/AndroidManifest.xml').read_text()
           gradle = Path('android/app/capacitor.build.gradle').read_text()
           assert 'android.permission.POST_NOTIFICATIONS' in manifest, 'POST_NOTIFICATIONS is missing from AndroidManifest.xml'
+          assert 'android.permission.RECORD_AUDIO' in manifest, 'RECORD_AUDIO is missing from AndroidManifest.xml'
+          assert 'android.permission.MODIFY_AUDIO_SETTINGS' in manifest, 'MODIFY_AUDIO_SETTINGS is missing from AndroidManifest.xml'
           assert 'android.permission.VIBRATE' in manifest, 'VIBRATE is missing from AndroidManifest.xml'
           assert 'capacitor-local-notifications' in gradle, 'Capacitor Local Notifications plugin is not registered.'
           assert 'capacitor-community-file-opener' in gradle, 'Capacitor File Opener plugin is not registered.'
@@ -116,8 +117,32 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Verify native speech bridge inside APK
-        run: python3 scripts/verify-android-speech-apk.py
+      - name: Verify native speech bridge and notification permissions inside APK
+        run: |
+          python3 scripts/verify-android-speech-apk.py
+          python3 - <<'PY'
+          import os
+          import shutil
+          import subprocess
+          from pathlib import Path
+          apk = Path('android/app/build/outputs/apk/debug/app-debug.apk')
+          aapt = shutil.which('aapt')
+          if not aapt:
+              sdk = Path(os.environ.get('ANDROID_HOME', '/opt/android-sdk'))
+              candidates = list((sdk / 'build-tools').glob('*/aapt'))
+              if candidates:
+                  aapt = str(sorted(candidates)[-1])
+          if not aapt:
+              raise SystemExit('ERROR: aapt not found; cannot inspect packaged APK permissions.')
+          result = subprocess.run([aapt, 'dump', 'permissions', str(apk)], capture_output=True, text=True)
+          if result.returncode:
+              raise SystemExit(result.stderr or 'ERROR: Unable to inspect APK permissions.')
+          required = ('android.permission.POST_NOTIFICATIONS', 'android.permission.RECORD_AUDIO', 'android.permission.MODIFY_AUDIO_SETTINGS')
+          missing = [permission for permission in required if permission not in result.stdout]
+          if missing:
+              raise SystemExit('ERROR: Permissions missing from final APK: ' + ', '.join(missing))
+          print('Final APK includes notification and microphone permissions.')
+          PY
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
