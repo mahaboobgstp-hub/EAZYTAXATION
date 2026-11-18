@@ -572,3 +572,41 @@
   background:rgba(12,21,39,.38);
   font:600 15px Arial,sans-serif;
 }
+
+
+/* Keep zoomed A4 pages anchored at the left edge so the scroll viewport
+   can reach the full page width instead of centering/cropping it. */
+.invoice-paper-stack{
+  min-width:0;
+  max-width:100%;
+  flex:1 1 auto;
+  overflow-x:auto!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x pan-y;
+}
+.invoice-pdf-page-shell{
+  flex:0 0 auto;
+  margin-left:0;
+  margin-right:0;
+  max-width:none!important;
+}
+.invoice-download-message{
+  flex:0 0 auto;
+  padding:8px 14px;
+  color:#17345d;
+  background:#edf4ff;
+  border-bottom:1px solid #cbdaf0;
+  font:600 12px/1.4 Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+@media(max-width:900px){
+  .invoice-paper-stack{
+    width:100%;
+    min-width:0;
+    align-items:center;
+    overflow-x:auto!important;
+    overflow-y:auto!important;
+  }
+}
