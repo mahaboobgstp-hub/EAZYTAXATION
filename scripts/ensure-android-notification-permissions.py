@@ -22,6 +22,7 @@ if root.tag != "manifest":
 required_permissions = (
     "android.permission.POST_NOTIFICATIONS",
     "android.permission.VIBRATE",
+    "android.permission.CAMERA",
 )
 existing = {
     node.get(f"{{{ANDROID_NS}}}name")
