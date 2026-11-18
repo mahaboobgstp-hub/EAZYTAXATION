@@ -62,6 +62,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(OfflineSpeechRecognitionPlugin.class);
+        registerPlugin(CameraPermissionPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
@@ -72,9 +73,62 @@ if "extends BridgeActivity" not in main_source:
     raise SystemExit("ERROR: Android launcher MainActivity does not extend Capacitor BridgeActivity.")
 if "registerPlugin(OfflineSpeechRecognitionPlugin.class);" not in main_source:
     raise SystemExit("ERROR: OfflineSpeechRecognitionPlugin registration missing from launcher MainActivity.")
+if "registerPlugin(CameraPermissionPlugin.class);" not in main_source:
+    raise SystemExit("ERROR: CameraPermissionPlugin registration missing from launcher MainActivity.")
 
 print(f"Verified Android launcher activity: {launcher_name}")
-print("Generated deterministic MainActivity with native speech plugin registration.")
+print("Generated deterministic MainActivity with native speech and camera permission plugin registration.")
+
+camera_plugin = main.parent / "CameraPermissionPlugin.java"
+camera_plugin.write_text(r'''package com.eazytaxation.mobile;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
+
+@CapacitorPlugin(name = "CameraPermission", permissions = {
+    @Permission(alias = "camera", strings = { Manifest.permission.CAMERA })
+})
+public class CameraPermissionPlugin extends Plugin {
+    @PluginMethod
+    public void checkPermission(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("granted", getContext().checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void requestPermission(PluginCall call) {
+        if (getContext().checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            JSObject result = new JSObject();
+            result.put("granted", true);
+            call.resolve(result);
+            return;
+        }
+        requestPermissionForAlias("camera", call, "cameraPermissionResult");
+    }
+
+    @PermissionCallback
+    private void cameraPermissionResult(PluginCall call) {
+        JSObject result = new JSObject();
+        boolean granted = getContext().checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        result.put("granted", granted);
+        if (granted) call.resolve(result);
+        else call.reject("Camera permission was denied. Allow camera access in Android settings to capture purchase invoices.");
+    }
+}
+
+''')
+camera_source = camera_plugin.read_text()
+if "requestPermissionForAlias(\"camera\"" not in camera_source or "Manifest.permission.CAMERA" not in camera_source:
+    raise SystemExit("ERROR: Camera runtime permission bridge was not generated.")
+print("Generated native CameraPermission plugin with on-demand runtime permission request.")
 
 plugin = main.parent / "OfflineSpeechRecognitionPlugin.java"
 plugin.write_text(r'''package com.eazytaxation.mobile;
