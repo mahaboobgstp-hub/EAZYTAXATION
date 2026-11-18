@@ -88,6 +88,17 @@ jobs:
       - name: Synchronize Capacitor
         run: npx cap sync android
 
+      - name: Verify Local Notifications native integration after Capacitor sync
+        run: |
+          npm ls @capacitor/local-notifications --depth=0
+          test -d node_modules/@capacitor/local-notifications/android
+          test -f android/capacitor.settings.gradle
+          test -f android/app/capacitor.build.gradle
+          grep -q "capacitor-local-notifications" android/capacitor.settings.gradle
+          grep -q "capacitor-local-notifications" android/app/capacitor.build.gradle
+          find node_modules/@capacitor/local-notifications/android -type f -name '*LocalNotificationsPlugin*' | grep -q .
+          echo "Local Notifications package, Android native source and Gradle project registration verified."
+
       - name: Register native speech plugin after Capacitor sync
         run: python3 scripts/ensure-offline-speech-recognition.py
 
@@ -110,14 +121,36 @@ jobs:
           assert 'CameraPermissionPlugin.class' in Path('android/app/src/main/java/com/eazytaxation/mobile/MainActivity.java').read_text(), 'Camera permission plugin is not registered in MainActivity.'
           assert 'capacitor-local-notifications' in gradle, 'Capacitor Local Notifications plugin is not registered.'
           assert 'capacitor-community-file-opener' in gradle, 'Capacitor File Opener plugin is not registered.'
-          print('Verified Android notification permission and both native PDF notification/opening plugins.')
+          assert Path('android/capacitor.settings.gradle').is_file(), 'Capacitor native plugin settings file is missing.'
+          settings = Path('android/capacitor.settings.gradle').read_text()
+          assert 'capacitor-local-notifications' in settings, 'Local Notifications Gradle project is not included.'
+          assert Path('node_modules/@capacitor/local-notifications/android').is_dir(), 'Local Notifications Android implementation is missing from node_modules.'
+          print('Verified notification permission, Local Notifications Android implementation, Gradle inclusion and PDF file opener.')
           PY
 
-      - name: Build debug APK
+      - name: Clean and build debug APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew --stop
+          ./gradlew clean assembleDebug
+
+      - name: Verify Local Notifications code is packaged inside the APK
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          APKANALYZER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name apkanalyzer | head -n 1)"
+          if [ -z "$APKANALYZER" ]; then
+            echo "ERROR: Android apkanalyzer was not found; cannot verify compiled plugin classes."
+            exit 1
+          fi
+          "$APKANALYZER" dex packages "$APK" > /tmp/syd-apk-dex-packages.txt
+          if ! grep -q "com.capacitorjs.plugins.localnotifications" /tmp/syd-apk-dex-packages.txt; then
+            echo "ERROR: Local Notifications native Java package is missing from the final APK."
+            cat /tmp/syd-apk-dex-packages.txt
+            exit 1
+          fi
+          echo "Verified com.capacitorjs.plugins.localnotifications is compiled into the final APK."
 
       - name: Verify native speech bridge and notification permissions inside APK
         run: |
