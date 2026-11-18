@@ -544,3 +544,31 @@
   .invoice-pdf-page-shell:last-child{break-after:auto;page-break-after:auto}
   .invoice-pdf-page{transform:none!important}
 }
+
+
+/* Preview interaction: preserve the fitted A4 layout while allowing pinch zoom. */
+.invoice-pdf-page-shell{
+  max-width:none!important;
+}
+.invoice-paper-stack{
+  overflow-x:auto;
+  overflow-y:auto;
+  touch-action:pan-x pan-y;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.invoice-actions button:nth-child(2){background:#263b61}
+.invoice-actions button:last-child{background:#1e5bdd}
+.invoice-actions button:disabled{opacity:.62;cursor:wait}
+.invoice-preview-loading{
+  position:fixed;
+  inset:0;
+  z-index:2100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  color:#18375e;
+  background:rgba(12,21,39,.38);
+  font:600 15px Arial,sans-serif;
+}
