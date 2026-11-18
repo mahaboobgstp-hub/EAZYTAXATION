@@ -228,3 +228,31 @@
  .sw-register-card-right{gap:4px}
  .sw-register-card-right .sw-kebab{width:33px;height:36px;min-width:33px}
 }
+
+
+/* Final Sales Register card proportions with shared transparent payment emblem assets */
+.sw-register-card-main{display:grid;grid-template-columns:minmax(0,1fr) auto auto 38px;align-items:center;column-gap:clamp(7px,2vw,14px);min-width:0}
+.sw-register-card-details{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.sw-register-card-details>strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.sw-register-payment-emblem{display:block;flex:none;object-fit:contain;height:21px;width:auto;max-width:none;transform:translateY(-3px);filter:drop-shadow(0 1px 1px rgba(20,35,45,.10))}
+.sw-register-payment-emblem.is-paid{width:64px}
+.sw-register-payment-emblem.is-unpaid{width:82px}
+.sw-register-card-amount{font-size:15px;font-weight:800;color:#173e70;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sw-register-card-menu-button{width:36px;height:38px;min-width:36px;border-radius:10px;font-size:23px}
+@media(max-width:640px){
+ .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto auto 34px;column-gap:7px}
+ .sw-register-card-details time{font-size:11px}
+ .sw-register-card-details>strong{font-size:12px;line-height:1.3}
+ .sw-register-payment-emblem{height:19px;transform:translateY(-3px)}
+ .sw-register-payment-emblem.is-paid{width:57px}
+ .sw-register-payment-emblem.is-unpaid{width:72px}
+ .sw-register-card-amount{font-size:13px}
+ .sw-register-card-menu-button{width:33px;height:36px;min-width:33px}
+}
+@media(max-width:360px){
+ .sw-register-card-main{grid-template-columns:minmax(0,1fr) auto auto 30px;column-gap:5px}
+ .sw-register-payment-emblem.is-paid{width:51px}
+ .sw-register-payment-emblem.is-unpaid{width:64px}
+ .sw-register-card-amount{font-size:12px}
+ .sw-register-card-menu-button{width:30px;height:34px;min-width:30px}
+}
