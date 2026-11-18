@@ -504,3 +504,43 @@
 .invoice-pdf-signature p { font-size: 6.8pt; }
 .invoice-pdf-signature strong { font-size: 7.2pt; }
 .invoice-pdf-footer { font-size: 6.8pt; }
+
+/* Mobile preview scales the visual A4 sheet to the available viewport width.
+   The underlying document remains true A4 for printing and PDF export. */
+.invoice-paper-stack{
+  box-sizing:border-box;
+  width:100%;
+  align-items:center;
+}
+.invoice-pdf-page-shell{
+  position:relative;
+  flex:0 0 auto;
+  max-width:100%;
+  overflow:visible;
+}
+.invoice-pdf-page{
+  transform-origin:top left;
+}
+@media(max-width:900px){
+  .invoice-overlay{padding:5px;box-sizing:border-box}
+  .invoice-print{width:100%;max-width:100%;max-height:98dvh}
+  .invoice-paper-stack{
+    width:100%;
+    align-items:center;
+    padding:12px 8px 18px;
+    overflow-x:hidden;
+    overflow-y:auto;
+  }
+}
+@media print{
+  .invoice-pdf-page-shell{
+    width:210mm!important;
+    height:297mm!important;
+    max-width:none!important;
+    overflow:visible!important;
+    break-after:page;
+    page-break-after:always;
+  }
+  .invoice-pdf-page-shell:last-child{break-after:auto;page-break-after:auto}
+  .invoice-pdf-page{transform:none!important}
+}
