@@ -84,6 +84,7 @@ import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
 import SalesRegister from "./pages/sales/SalesRegister";
 import SalesWorkspace from "./pages/sales/SalesWorkspace";
+import SalesReturns from "./pages/sales/SalesReturns";
 import GSTRates from "./pages/GSTRates";
 import GSTR1 from "./pages/gst/GSTR1";
 import GSTR3B from "./pages/gst/GSTR3B";
@@ -336,6 +337,7 @@ function App() {
             element={<SalesWorkspace kind="register" />}
           />
           <Route path="sales-orders" element={<SalesWorkspace kind="orders" />} />
+          <Route path="sales-returns" element={<SalesReturns />} />
           <Route path="credit-notes" element={<SalesWorkspace kind="credits" />}
           />
 
