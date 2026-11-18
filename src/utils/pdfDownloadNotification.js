@@ -2,16 +2,35 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { Capacitor } from "@capacitor/core";
 
 /**
- * Post a native Android notification for a PDF already saved on-device.
- * The notification carries the exact file URI so App.jsx can open it on tap.
+ * Project-wide native download notification service.
+ *
+ * Use this for every document saved by the Android app: sales invoices,
+ * purchase invoices, quotations, expenses, reports and future exports.
+ * The notification stores the file URI so the app can open the exact file
+ * when the user taps the notification.
  */
-export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "PDF" }) {
+export async function notifyDocumentDownloaded({
+  fileUri,
+  fileName,
+  documentLabel = "Document",
+  mimeType = "application/pdf",
+  channelId = "document-downloads"
+}) {
   if (!fileUri || !fileName) {
-    return { ok: false, reason: "missing-file", message: "The PDF file location is missing." };
+    return { ok: false, reason: "missing-file", message: "The downloaded file location is missing." };
   }
 
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
-    return { ok: false, reason: "not-android", message: "Native Android notifications are available only in the installed Android app." };
+    return { ok: false, reason: "not-android", message: "Native download notifications are available only in the installed Android app." };
+  }
+
+  // Detect a stale shell / missing native plugin before attempting a call.
+  if (!Capacitor.isPluginAvailable("LocalNotifications")) {
+    return {
+      ok: false,
+      reason: "native-plugin-missing",
+      message: 'The Android Local Notifications plugin is not installed in this APK. Please install the latest SYD Android shell.'
+    };
   }
 
   try {
@@ -25,14 +44,15 @@ export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "
         ok: false,
         reason: "permission-denied",
         permission: permission.display,
-        message: "Android notification permission is disabled. Enable notifications for SYD Billing & Accounting in Android Settings."
+        message: "Android notifications are disabled. Enable notifications for SYD Billing & Accounting in Android Settings."
       };
     }
 
+    // One shared channel for all downloadable documents across SYD.
     await LocalNotifications.createChannel({
-      id: "pdf-downloads",
-      name: "PDF downloads",
-      description: "Notifications when sales invoice PDFs are downloaded",
+      id: channelId,
+      name: "Document downloads",
+      description: "Notifications when SYD documents and reports are downloaded",
       importance: 5,
       visibility: 1,
       sound: "default",
@@ -40,24 +60,23 @@ export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "
     });
 
     const notificationId = Math.max(1, Date.now() % 2147483647);
-    const scheduled = await LocalNotifications.schedule({
+    const result = await LocalNotifications.schedule({
       notifications: [{
         id: notificationId,
         title: documentLabel + " downloaded",
         body: "Tap to open " + fileName,
         largeBody: fileName,
-        channelId: "pdf-downloads",
+        channelId,
         autoCancel: true,
         ongoing: false,
-        // The user downloads while SYD is open; present this in the foreground too.
         foreground: true,
-        // Avoid opening the separate Alarms & reminders settings screen.
         isExactNotification: false,
         extra: {
           fileUri,
           fileName,
-          mimeType: "application/pdf",
-          notificationType: "downloaded-pdf"
+          mimeType,
+          notificationType: "downloaded-document",
+          documentLabel
         },
         schedule: { at: new Date(Date.now() + 500) }
       }]
@@ -66,14 +85,26 @@ export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "
     return {
       ok: true,
       notificationId,
-      warning: scheduled?.warning?.message || null
+      warning: result?.warning?.message || null
     };
   } catch (error) {
-    console.error("Native PDF notification failed:", error);
+    console.error("Native document download notification failed:", error);
     return {
       ok: false,
       reason: "notification-error",
       message: error?.message || "Android could not post the download notification."
     };
   }
+}
+
+/**
+ * Backwards-compatible alias for existing sales invoice download callers.
+ * New modules should call notifyDocumentDownloaded directly.
+ */
+export function notifyPdfDownloaded(options) {
+  return notifyDocumentDownloaded({
+    ...options,
+    documentLabel: options?.documentLabel || "Sales invoice",
+    mimeType: options?.mimeType || "application/pdf"
+  });
 }
