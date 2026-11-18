@@ -97,7 +97,9 @@ jobs:
           grep -q "capacitor-local-notifications" android/capacitor.settings.gradle
           grep -q "capacitor-local-notifications" android/app/capacitor.build.gradle
           find node_modules/@capacitor/local-notifications/android -type f -name '*LocalNotificationsPlugin*' | grep -q .
-          echo "Local Notifications package, Android native source and Gradle project registration verified."
+          test -f android/app/src/main/assets/capacitor.plugins.json
+          grep -q "LocalNotificationsPlugin" android/app/src/main/assets/capacitor.plugins.json
+          echo "Local Notifications package, Android native source, Gradle project and Capacitor runtime plugin registry verified."
 
       - name: Register native speech plugin after Capacitor sync
         run: python3 scripts/ensure-offline-speech-recognition.py
@@ -125,7 +127,10 @@ jobs:
           settings = Path('android/capacitor.settings.gradle').read_text()
           assert 'capacitor-local-notifications' in settings, 'Local Notifications Gradle project is not included.'
           assert Path('node_modules/@capacitor/local-notifications/android').is_dir(), 'Local Notifications Android implementation is missing from node_modules.'
-          print('Verified notification permission, Local Notifications Android implementation, Gradle inclusion and PDF file opener.')
+          registry_path = Path('android/app/src/main/assets/capacitor.plugins.json')
+          assert registry_path.is_file(), 'Capacitor runtime plugin registry is missing.'
+          assert 'LocalNotificationsPlugin' in registry_path.read_text(), 'LocalNotificationsPlugin is missing from the Capacitor runtime plugin registry.'
+          print('Verified notification permission, native implementation, Gradle inclusion, Capacitor runtime registration and PDF file opener.')
           PY
 
       - name: Clean and build debug APK
