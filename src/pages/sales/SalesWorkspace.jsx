@@ -397,6 +397,14 @@ export default function SalesWorkspace({ kind }) {
     popup.document.close(); popup.focus(); popup.print();
   };
 
+  const writeSalesInvoicePdf = async (result, directory = Directory.Documents) => {
+    const bytes = new Uint8Array(await result.blob.arrayBuffer());
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    const saved = await Filesystem.writeFile({ path: "Sales Invoices/" + result.fileName, data: btoa(binary), directory, recursive: true });
+    return saved.uri;
+  };
+
   const registerAction = async (row, action) => {
     setMenuId(null);
     if (action === "View") return navigate("/app/sales", { state: { previewInvoiceId: row.id } });
@@ -407,16 +415,41 @@ export default function SalesWorkspace({ kind }) {
       const { data: items, error } = await supabase.from("sales_invoice_items").select("*").eq("invoice_id", row.id).order("line_no");
       if (error) throw error;
       const result = createSalesInvoicePdf({ document: row, items: items || [], company: currentCompany || {} });
+      if (!result?.blob || result.blob.size < 100) throw new Error("The sales invoice PDF could not be generated. Please try again.");
       if (action === "Download") {
-        const url = URL.createObjectURL(result.blob); const link = document.createElement("a");
-        link.href = url; link.download = result.fileName; link.click(); URL.revokeObjectURL(url); return;
+        if (isNativeAndroid) {
+          const uri = await writeSalesInvoicePdf(result, Directory.Documents);
+          setMessageType("success");
+          setMessage("Sales invoice PDF downloaded successfully.");
+          setDownloadNotice({ fileName: result.fileName, location: "Documents/Sales Invoices", uri });
+          return;
+        }
+        const url = URL.createObjectURL(result.blob);
+        const link = document.createElement("a");
+        link.href = url; link.download = result.fileName; document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        setMessageType("success");
+        setMessage("Sales invoice PDF download started: " + result.fileName);
+        setDownloadNotice({ fileName: result.fileName, location: "your browser's Downloads folder", uri: null });
+        return;
       }
       if (action === "Share") {
+        if (isNativeAndroid) {
+          const uri = await writeSalesInvoicePdf(result, Directory.Cache);
+          await Share.share({ title: result.fileName, text: "Sales invoice " + (row.invoice_no || ""), files: [uri], dialogTitle: "Share sales invoice PDF" });
+          return;
+        }
         const file = new File([result.blob], result.fileName, { type: "application/pdf" });
         if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
-        else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); URL.revokeObjectURL(url); setMessage("PDF downloaded. Attach it to WhatsApp or email to share."); }
+        else {
+          const url = URL.createObjectURL(result.blob);
+          const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          setMessageType("success");
+          setMessage("PDF downloaded. Attach it to WhatsApp or email to share.");
+        }
       }
-    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
+    } catch (error) { if (error.name !== "AbortError") { setMessageType("error"); setMessage(errorText(error)); } }
   };
 
   const deleteRow = async row => {
