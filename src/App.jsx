@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { FileOpener } from '@capacitor-community/file-opener';
 import { Capacitor } from '@capacitor/core';
 import Landing from "./pages/landing/Landing";
 import Features from "./pages/features/Features";
@@ -131,6 +134,35 @@ import HRBudgetApprovals
   from "./pages/hr/HRBudgetApprovals";
 
 const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
+function NativePdfNotificationHandler() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") return undefined;
+    let active = true;
+    let listener;
+    LocalNotifications.addListener("localNotificationActionPerformed", async action => {
+      const file = action?.notification?.extra;
+      if (!file?.fileUri) return;
+      try {
+        await FileOpener.open({
+          filePath: file.fileUri,
+          contentType: file.mimeType || "application/pdf",
+          openWithDefault: true
+        });
+      } catch (error) {
+        console.error("Unable to open downloaded PDF from notification:", error);
+      }
+    }).then(handle => {
+      if (active) listener = handle;
+      else handle.remove();
+    }).catch(error => console.error("PDF notification listener could not start:", error));
+    return () => {
+      active = false;
+      if (listener) listener.remove();
+    };
+  }, []);
+  return null;
+}
 
 function App() {
 
