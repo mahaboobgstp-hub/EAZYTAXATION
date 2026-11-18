@@ -135,9 +135,13 @@ import HRBudgetApprovals
 
 const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
-function NativePdfNotificationHandler() {
+function NativeDocumentNotificationHandler() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") return undefined;
+    if (!Capacitor.isPluginAvailable("LocalNotifications")) {
+      console.error("SYD native capability missing: LocalNotifications is not registered in this Android shell.");
+      return undefined;
+    }
     let active = true;
     let listener;
     LocalNotifications.addListener("localNotificationActionPerformed", async action => {
@@ -150,12 +154,12 @@ function NativePdfNotificationHandler() {
           openWithDefault: true
         });
       } catch (error) {
-        console.error("Unable to open downloaded PDF from notification:", error);
+        console.error("Unable to open downloaded SYD document from notification:", error);
       }
     }).then(handle => {
       if (active) listener = handle;
       else handle.remove();
-    }).catch(error => console.error("PDF notification listener could not start:", error));
+    }).catch(error => console.error("Native document notification listener could not start:", error));
     return () => {
       active = false;
       if (listener) listener.remove();
@@ -171,7 +175,7 @@ function App() {
     <BrowserRouter>
 
       <CompanyProvider>
-      <NativePdfNotificationHandler />
+      <NativeDocumentNotificationHandler />
       <Routes>
 
         {/* ===========================
