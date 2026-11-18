@@ -505,7 +505,7 @@ export default function SalesWorkspace({ kind }) {
     </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
-      {kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
+      kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
         const paymentStatus = String(row.payment_status || "").trim().toLowerCase();
         const isPaid = paymentStatus ? ["paid", "fully paid", "settled", "complete", "completed"].includes(paymentStatus) : row.sale_type === "CASH";
         return <article className="sw-register-transaction-card" key={row.id}>
