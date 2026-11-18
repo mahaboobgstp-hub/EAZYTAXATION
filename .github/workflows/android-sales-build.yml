@@ -106,6 +106,8 @@ jobs:
           assert 'android.permission.RECORD_AUDIO' in manifest, 'RECORD_AUDIO is missing from AndroidManifest.xml'
           assert 'android.permission.MODIFY_AUDIO_SETTINGS' in manifest, 'MODIFY_AUDIO_SETTINGS is missing from AndroidManifest.xml'
           assert 'android.permission.VIBRATE' in manifest, 'VIBRATE is missing from AndroidManifest.xml'
+          assert 'android.permission.CAMERA' in manifest, 'CAMERA is missing from AndroidManifest.xml'
+          assert 'CameraPermissionPlugin.class' in Path('android/app/src/main/java/com/eazytaxation/mobile/MainActivity.java').read_text(), 'Camera permission plugin is not registered in MainActivity.'
           assert 'capacitor-local-notifications' in gradle, 'Capacitor Local Notifications plugin is not registered.'
           assert 'capacitor-community-file-opener' in gradle, 'Capacitor File Opener plugin is not registered.'
           print('Verified Android notification permission and both native PDF notification/opening plugins.')
@@ -137,7 +139,7 @@ jobs:
           result = subprocess.run([aapt, 'dump', 'permissions', str(apk)], capture_output=True, text=True)
           if result.returncode:
               raise SystemExit(result.stderr or 'ERROR: Unable to inspect APK permissions.')
-          required = ('android.permission.POST_NOTIFICATIONS', 'android.permission.RECORD_AUDIO', 'android.permission.MODIFY_AUDIO_SETTINGS')
+          required = ('android.permission.POST_NOTIFICATIONS', 'android.permission.RECORD_AUDIO', 'android.permission.MODIFY_AUDIO_SETTINGS', 'android.permission.CAMERA')
           missing = [permission for permission in required if permission not in result.stdout]
           if missing:
               raise SystemExit('ERROR: Permissions missing from final APK: ' + ', '.join(missing))
