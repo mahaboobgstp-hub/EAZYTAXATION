@@ -40,7 +40,7 @@ export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "
     });
 
     const notificationId = Math.max(1, Date.now() % 2147483647);
-    await LocalNotifications.schedule({
+    const scheduled = await LocalNotifications.schedule({
       notifications: [{
         id: notificationId,
         title: documentLabel + " downloaded",
@@ -49,17 +49,25 @@ export async function notifyPdfDownloaded({ fileUri, fileName, documentLabel = "
         channelId: "pdf-downloads",
         autoCancel: true,
         ongoing: false,
+        // The user downloads while SYD is open; present this in the foreground too.
+        foreground: true,
+        // Avoid opening the separate Alarms & reminders settings screen.
+        isExactNotification: false,
         extra: {
           fileUri,
           fileName,
           mimeType: "application/pdf",
           notificationType: "downloaded-pdf"
         },
-        schedule: { at: new Date(Date.now() + 1000), allowWhileIdle: true }
+        schedule: { at: new Date(Date.now() + 500) }
       }]
     });
 
-    return { ok: true, notificationId };
+    return {
+      ok: true,
+      notificationId,
+      warning: scheduled?.warning?.message || null
+    };
   } catch (error) {
     console.error("Native PDF notification failed:", error);
     return {
