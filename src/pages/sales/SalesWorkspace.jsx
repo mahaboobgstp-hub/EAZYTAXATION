@@ -65,6 +65,7 @@ export default function SalesWorkspace({ kind }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showQuotationDatePopover, setShowQuotationDatePopover] = useState(false);
+  const [showRegisterFilters, setShowRegisterFilters] = useState(false);
   const [draftDateFrom, setDraftDateFrom] = useState("");
   const [draftDateTo, setDraftDateTo] = useState("");
   const [dialog, setDialog] = useState(false);
@@ -429,11 +430,13 @@ export default function SalesWorkspace({ kind }) {
   const actionLabel = kind === "register" ? "New Sales Invoice" : kind === "quotations" ? "New Quotation" : kind === "orders" ? "New Sales Order" : kind === "challans" ? "New Delivery Challan" : "Create Credit Note";
   const statuses = kind === "register" ? [] : kind === "quotations" ? ["Draft", "Sent", "Accepted", "Rejected", "Expired"] : kind === "orders" ? ["Open", "Confirmed", "Partially Fulfilled", "Fulfilled", "Cancelled"] : kind === "challans" ? ["Draft", "Ready to Dispatch", "In Transit", "Delivered", "Cancelled"] : ["Draft", "Issued", "Applied", "Void"];
 
-  return <main className="sales-workspace">
-    <header className="sw-heading"><div><p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p><h1>{config.title}</h1><p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p></div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
+  const activeRegisterFilterCount = [statusFilter !== "All statuses", Boolean(customerFilter), billingTypeFilter !== "All", Boolean(placeOfSupplyFilter), Boolean(dateFrom), Boolean(dateTo)].filter(Boolean).length;
+
+  return <main className={`sales-workspace ${kind === "register" ? "sw-register-workspace" : ""}`} >
+    <header className="sw-heading"><div>{kind !== "register" && <p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p>}<h1>{config.title}</h1>{kind !== "register" && <p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p>}</div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
     {message && <div className={`sw-alert ${messageType === "success" ? "sw-alert-success" : ""}`} role={messageType === "success" ? "status" : "alert"}>{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
-    {kind !== "quotations" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
+    {kind !== "quotations" && kind !== "register" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
     {kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
       <div className="sw-quotation-date-wrap">
         <button type="button" className="sw-quotation-date-trigger" onClick={() => { setDraftDateFrom(dateFrom); setDraftDateTo(dateTo); setShowQuotationDatePopover(value => !value); }}>
@@ -447,14 +450,26 @@ export default function SalesWorkspace({ kind }) {
         </div></>}
       </div>
       <label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search quotations" /></label>
+    </section> : kind === "register" ? <section className="sw-filters sw-register-filters">
+      <div className="sw-register-filter-toolbar">
+        <label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
+        <button type="button" className={showRegisterFilters ? "sw-register-filter-toggle active" : "sw-register-filter-toggle"} aria-expanded={showRegisterFilters} onClick={() => setShowRegisterFilters(value => !value)}>
+          <span>☷</span> Filters {activeRegisterFilterCount > 0 && <span className="sw-register-filter-count">{activeRegisterFilterCount}</span>} <span className="sw-register-filter-chevron">{showRegisterFilters ? "⌃" : "⌄"}</span>
+        </button>
+      </div>
+      {showRegisterFilters && <div className="sw-register-filter-panel">
+        <label className="sw-register-filter-field"><span>Status</span><select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option><option>Paid</option><option>Outstanding</option></select></label>
+        <label className="sw-register-filter-field"><span>Customer</span><select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}><option value="">All customers</option>{customers.map(customer => <option key={customer.id} value={customer.id}>{customer.customer_name}</option>)}</select></label>
+        <label className="sw-register-filter-field"><span>Billing type</span><select value={billingTypeFilter} onChange={e => setBillingTypeFilter(e.target.value)}><option value="All">All billing types</option><option value="Cash">Cash</option><option value="Credit">Credit</option></select></label>
+        <label className="sw-register-filter-field"><span>Place of supply</span><select value={placeOfSupplyFilter} onChange={e => setPlaceOfSupplyFilter(e.target.value)}><option value="">All states</option>{[...new Set(rows.map(row => row.place_of_supply).filter(Boolean))].sort().map(state => <option key={state} value={state}>{state}</option>)}</select></label>
+        <label className="sw-register-filter-field"><span>From date</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} /></label>
+        <label className="sw-register-filter-field"><span>To date</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} /></label>
+        <div className="sw-register-filter-actions"><button type="button" className="sw-reset" onClick={() => { setStatusFilter("All statuses"); setCustomerFilter(""); setBillingTypeFilter("All"); setPlaceOfSupplyFilter(""); setDateFrom(""); setDateTo(""); setSearch(""); }}>Clear filters</button></div>
+      </div>}
     </section> : <section className="sw-filters"><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by number or customer" /></label>
-      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}{kind === "register" && <><option>Paid</option><option>Outstanding</option></>}</select>{isNativeAndroid && kind === "register" && <>
-      <select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}><option value="">All customers</option>{customers.map(customer => <option key={customer.id} value={customer.id}>{customer.customer_name}</option>)}</select>
-      <select value={billingTypeFilter} onChange={e => setBillingTypeFilter(e.target.value)}><option value="All">All billing types</option><option value="Cash">Cash</option><option value="Credit">Credit</option></select>
-      <select value={placeOfSupplyFilter} onChange={e => setPlaceOfSupplyFilter(e.target.value)}><option value="">All states</option>{[...new Set(rows.map(row => row.place_of_supply).filter(Boolean))].sort().map(state => <option key={state} value={state}>{state}</option>)}</select>
-    </>}
+      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}</select>
       <label>From <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>To <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
-      <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setCustomerFilter(""); setBillingTypeFilter("All"); setPlaceOfSupplyFilter(""); setDateFrom(""); setDateTo(""); }}>Reset</button>
+      <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setDateFrom(""); setDateTo(""); }}>Reset</button>
     </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
