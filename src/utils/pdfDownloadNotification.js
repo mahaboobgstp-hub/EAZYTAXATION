@@ -69,7 +69,6 @@ export async function notifyDocumentDownloaded({
         channelId,
         autoCancel: true,
         ongoing: false,
-        foreground: true,
         isExactNotification: false,
         extra: {
           fileUri,
