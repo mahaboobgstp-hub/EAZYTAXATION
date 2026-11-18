@@ -363,10 +363,13 @@ export default function SalesWorkspace({ kind }) {
       const result = await makeQuotationPdf(row);
       if (isNativeAndroid) {
         const uri = await writeQuotationPdf(result, Directory.Documents);
-        await notifyPdfDownloaded({ fileUri: uri, fileName: result.fileName, documentLabel: "Quotation PDF" });
-        setMessageType("success");
-        setMessage("Quotation PDF downloaded successfully.");
-        setDownloadNotice({ fileName: result.fileName, location: "Documents/Quotations", uri });
+        const notification = await notifyPdfDownloaded({ fileUri: uri, fileName: result.fileName, documentLabel: "Quotation PDF" });
+        if (!notification?.ok) {
+          setMessageType("error");
+          setMessage("Quotation PDF was saved, but the Android system notification could not be posted. " + (notification?.message || ""));
+        } else {
+          setMessage("");
+        }
         setMenuId(null); setMenuPosition(null);
         return uri;
       }
@@ -448,10 +451,13 @@ export default function SalesWorkspace({ kind }) {
       if (action === "Download") {
         if (isNativeAndroid) {
           const uri = await writeSalesInvoicePdf(result, Directory.Documents);
-          await notifyPdfDownloaded({ fileUri: uri, fileName: result.fileName, documentLabel: "Sales invoice PDF" });
-          setMessageType("success");
-          setMessage("Sales invoice PDF downloaded successfully.");
-          setDownloadNotice({ fileName: result.fileName, location: "Documents/Sales Invoices", uri });
+          const notification = await notifyPdfDownloaded({ fileUri: uri, fileName: result.fileName, documentLabel: "Sales invoice PDF" });
+          if (!notification?.ok) {
+            setMessageType("error");
+            setMessage("Sales invoice PDF was saved, but the Android system notification could not be posted. " + (notification?.message || ""));
+          } else {
+            setMessage("");
+          }
           return;
         }
         const url = URL.createObjectURL(result.blob);
