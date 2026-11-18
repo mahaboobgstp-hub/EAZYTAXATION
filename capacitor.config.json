@@ -1,5 +1,12 @@
 {
   "appId": "com.eazytaxation.mobile",
   "appName": "SYD Billing & Accounting",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "url": "https://syd-android-development.vercel.app",
+    "cleartext": false,
+    "allowNavigation": [
+      "syd-android-development.vercel.app"
+    ]
+  }
 }
