@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { notifyPdfDownloaded } from "../utils/pdfDownloadNotification";
+import { saveDocumentToPublicStorage } from "../services/nativeDocumentStorage";
 import "../css/sales/InvoicePrint.css";
 import { numberToWords } from "../utils/numberToWords";
 import { formatAmount } from "../utils/amountFormatter";
@@ -665,26 +666,12 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
     try {
       const { pdf, filename } = await withTimeout(buildInvoicePdf(), "PDF generation");
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
-        const data = await blobToBase64(pdf.output("blob"));
-        let saved;
-        let savedLocation = "Documents/Sales Invoices";
-        try {
-          saved = await withTimeout(Filesystem.writeFile({
-            path: "Sales Invoices/" + filename,
-            data,
-            directory: Directory.Documents,
-            recursive: true
-          }), "Saving to Documents");
-        } catch (documentsError) {
-          console.warn("Could not save PDF to Documents; using app storage fallback:", documentsError);
-          savedLocation = "app storage";
-          saved = await withTimeout(Filesystem.writeFile({
-            path: "Sales Invoices/" + filename,
-            data,
-            directory: Directory.Cache,
-            recursive: true
-          }), "Saving PDF to app storage");
-        }
+        const saved = await withTimeout(saveDocumentToPublicStorage({
+          blob: pdf.output("blob"),
+          fileName: filename,
+          folder: "Sales Invoices",
+          mimeType: "application/pdf"
+        }), "Saving to Documents");
         // Successful Android downloads are announced by the native Android
         // notification shade, not by an in-app success banner.
         setDownloadMessage("");
@@ -695,7 +682,7 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
         });
         if (!notification?.ok) {
           setDownloadMessage(
-            "PDF saved to " + savedLocation + ", but the Android system notification could not be posted. " +
+            "PDF saved to Documents/Sales Invoices, but the Android system notification could not be posted. " +
             (notification?.message || "Please check Android notification settings.")
           );
         }
