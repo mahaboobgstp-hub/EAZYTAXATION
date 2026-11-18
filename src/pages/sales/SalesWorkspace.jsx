@@ -513,12 +513,10 @@ export default function SalesWorkspace({ kind }) {
             <div className="sw-register-card-details">
               <time dateTime={row.invoice_date || ""}>{dateText(row.invoice_date)}</time>
               <strong>{row.customer_name || "—"}</strong>
-              <span className={"sw-payment-stamp " + (isPaid ? "is-paid" : "is-unpaid")} aria-label={isPaid ? "Paid" : "Unpaid"}>{isPaid ? "PAID" : "UNPAID"}</span>
             </div>
-            <div className="sw-register-card-right">
-              <strong className="sw-register-card-amount">{currency(row.total_amount)}</strong>
-              <button type="button" className="sw-kebab" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>
-            </div>
+            <img className={"sw-register-payment-emblem " + (isPaid ? "is-paid" : "is-unpaid")} src={isPaid ? "/assets/payment-emblems/paid.svg" : "/assets/payment-emblems/unpaid.svg"} alt={isPaid ? "Paid" : "Unpaid"} />
+            <strong className="sw-register-card-amount">{currency(row.total_amount)}</strong>
+            <button type="button" className="sw-kebab sw-register-card-menu-button" aria-label={"Actions for " + row.invoice_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button>
           </div>
           {menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-register-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>
             <button type="button" onClick={() => { setMenuId(null); setMenuPosition(null); registerAction(row, "Preview"); }}>Preview</button>
