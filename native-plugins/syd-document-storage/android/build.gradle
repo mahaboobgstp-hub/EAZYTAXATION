@@ -1,0 +1,15 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.syd.documentstorage"
+    compileSdk project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 35
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+    }
+}
+
+dependencies {
+    implementation project(':capacitor-android')
+}
