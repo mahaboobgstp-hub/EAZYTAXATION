@@ -682,11 +682,15 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
           fileUri: saved.uri,
           fileName: filename,
           documentLabel: "Sales invoice PDF"
-        }).then(shown => {
-          if (!shown) setDownloadMessage("PDF saved to " + savedLocation + ". Allow notifications to receive the PDF shortcut.");
+        }).then(result => {
+          if (result?.ok) {
+            setDownloadMessage("PDF saved to " + savedLocation + ". Android notification sent — tap it to open the PDF.");
+          } else {
+            setDownloadMessage("PDF saved to " + savedLocation + ". " + (result?.message || "Android notification could not be displayed."));
+          }
         }).catch(error => {
-          console.warn("PDF notification could not be displayed:", error);
-          setDownloadMessage("PDF saved to " + savedLocation + ". Notification could not be displayed.");
+          console.error("PDF notification could not be displayed:", error);
+          setDownloadMessage("PDF saved to " + savedLocation + ". Notification error: " + (error?.message || "unknown error"));
         });
       } else {
         pdf.save(filename);
