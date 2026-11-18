@@ -636,7 +636,7 @@ function InvoicePrint({ invoice, items = [], settings, company, customer, onClos
         drawPdfPage(pdf, pageItems, pageIndex, pages.length, itemList, invoice, settings, company, customer, logo, signature, amountWords);
       });
 
-      const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^\\w.-]+/g, "_") + ".pdf";
+      const filename = (safeText(invoice.invoice_no) || "sales-invoice").replace(/[^a-zA-Z0-9._-]+/g, "_") + ".pdf";
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
         const blob = pdf.output("blob");
         const bytes = new Uint8Array(await blob.arrayBuffer());
