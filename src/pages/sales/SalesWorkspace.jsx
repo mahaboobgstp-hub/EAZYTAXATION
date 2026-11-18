@@ -108,7 +108,7 @@ export default function SalesWorkspace({ kind }) {
   }, [currentCompanyId, kind]);
 
   const filtered = useMemo(() => rows.filter(row => {
-    const text = [row[config.number], row.customer_name, row.reason, row.vehicle_no, row.status].join(" ").toLowerCase();
+    const text = [row[config.number], row.customer_name, row.company_name, row.reason, row.vehicle_no, row.status].join(" ").toLowerCase();
     const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
     return (!search || text.includes(search.toLowerCase())) &&
       (kind === "quotations" || statusFilter === "All statuses" || status.toLowerCase() === statusFilter.toLowerCase()) &&
@@ -127,11 +127,7 @@ export default function SalesWorkspace({ kind }) {
     }
     if (kind === "quotations") return [metricRows.length];
     if (kind === "orders") return [metricRows.filter(r => !["fulfilled", "cancelled"].includes((r.status || "draft").toLowerCase())).length, currency(metricRows.reduce((s, r) => s + num(r.total_amount), 0)), metricRows.filter(r => !["fulfilled", "cancelled"].includes((r.fulfillment_status || "pending").toLowerCase())).length];
-    if (kind === "challans") return [
-      metricRows.filter(r => (r.status || "").toLowerCase().includes("ready")).length,
-      metricRows.filter(r => (r.status || "").toLowerCase().includes("transit")).length,
-      metricRows.filter(r => (r.status || "").toLowerCase() === "delivered").length,
-    ];
+    if (kind === "challans") return [];
     return [currency(metricRows.filter(r => r.status !== "Void").reduce((s, r) => s + num(r.total_amount), 0)), currency(metricRows.filter(r => r.status === "Applied").reduce((s, r) => s + num(r.total_amount), 0)), currency(metricRows.filter(r => !["Applied", "Void"].includes(r.status)).reduce((s, r) => s + num(r.total_amount), 0))];
   }, [filtered, rows, kind]);
 
@@ -402,6 +398,93 @@ export default function SalesWorkspace({ kind }) {
           for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
           const saved = await Filesystem.writeFile({ path: "Sales Orders/" + result.fileName, data: btoa(binary), directory: Directory.Cache, recursive: true });
           await Share.share({ title: result.fileName, text: "Sales Order " + (row.order_no || ""), files: [saved.uri], dialogTitle: "Share sales order PDF" });
+        } else {
+          const file = new File([result.blob], result.fileName, { type: "application/pdf" });
+          if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
+          else { const url = URL.createObjectURL(result.blob); const link = document.createElement("a"); link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
+        }
+      }
+    } catch (error) { if (error.name !== "AbortError") setMessage(errorText(error)); }
+  };
+
+  const makeDeliveryChallanPdf = async row => {
+    const { data: items, error } = await supabase.from("delivery_challan_items").select("*").eq("challan_id", row.id).order("created_at");
+    if (error) throw error;
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const companyName = currentCompany?.company_name || row.company_name || "Company";
+    pdf.setTextColor(23, 57, 95); pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
+    pdf.text("DELIVERY CHALLAN", 14, 20);
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(10); pdf.text(companyName, 14, 28);
+    pdf.setDrawColor(215, 225, 237); pdf.line(14, 33, 196, 33); pdf.setTextColor(38, 59, 89);
+    pdf.text("Challan No: " + (row.challan_no || "—"), 14, 42);
+    pdf.text("Date: " + dateText(row.challan_date), 14, 49);
+    pdf.text("Customer: " + (row.customer_name || "—"), 14, 56);
+    pdf.text("Sales Order: " + (row.sales_order_no || "—"), 14, 63);
+    pdf.text("Place of Supply: " + (row.place_of_supply || "—"), 14, 70);
+    pdf.text("Vehicle No: " + (row.vehicle_no || "—"), 110, 42);
+    pdf.text("E-Way Bill No: " + (row.eway_bill_no || "—"), 110, 49);
+    let y = 82;
+    pdf.setFillColor(239, 244, 250); pdf.rect(14, y, 182, 9, "F");
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(9);
+    pdf.text("Item / Description", 17, y + 6); pdf.text("Qty", 125, y + 6); pdf.text("Rate", 148, y + 6); pdf.text("Amount", 193, y + 6, { align: "right" });
+    y += 15; pdf.setFont("helvetica", "normal");
+    (items || []).forEach(item => {
+      const itemLines = pdf.splitTextToSize(String(item.item_name || item.description || "—"), 100);
+      const rowHeight = Math.max(8, itemLines.length * 4.5);
+      if (y + rowHeight > 270) { pdf.addPage(); y = 20; }
+      pdf.text(itemLines, 17, y); pdf.text(String(num(item.qty)), 125, y); pdf.text(currency(item.rate), 148, y); pdf.text(currency(item.amount), 193, y, { align: "right" });
+      y += rowHeight + 3; pdf.setDrawColor(235, 239, 244); pdf.line(14, y - 1, 196, y - 1);
+    });
+    y += 7; if (y > 250) { pdf.addPage(); y = 22; }
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+    pdf.text("Taxable Value: " + currency(row.taxable_value), 14, y); y += 7;
+    pdf.text("CGST: " + currency(row.cgst), 14, y); y += 7;
+    pdf.text("SGST: " + currency(row.sgst), 14, y); y += 7;
+    pdf.text("IGST: " + currency(row.igst), 14, y); y += 9;
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(12); pdf.text("Total Amount: " + currency(row.total_amount), 14, y);
+    return { blob: pdf.output("blob"), fileName: (row.challan_no || "Delivery-Challan") + ".pdf" };
+  };
+
+  const deliveryChallanAction = async (row, action) => {
+    setMenuId(null); setMenuPosition(null);
+    if (action === "View") {
+      try {
+        const result = await makeDeliveryChallanPdf(row);
+        if (!result?.blob || result.blob.size < 100) throw new Error("The delivery challan PDF could not be generated.");
+        setQuotationPreview({ ...result, row, documentType: "delivery-challan" });
+      } catch (error) { setMessage(errorText(error)); }
+      return;
+    }
+    if (action === "Edit") {
+      navigate("/app/delivery-challans/new", { state: { editChallanId: row.id } });
+      return;
+    }
+    if (action === "Cancel") {
+      if (!window.confirm("Cancel delivery challan " + (row.challan_no || "") + "? It will be marked as Cancelled.")) return;
+      await updateStatus(row, "Cancelled");
+      return;
+    }
+    try {
+      const result = await makeDeliveryChallanPdf(row);
+      if (!result?.blob || result.blob.size < 100) throw new Error("The delivery challan PDF could not be generated.");
+      if (action === "Download") {
+        if (isNativeAndroid) {
+          const saved = await saveDocumentToPublicStorage({ blob: result.blob, fileName: result.fileName, folder: "Delivery Challans", mimeType: "application/pdf" });
+          const notification = await notifyPdfDownloaded({ fileUri: saved.uri, fileName: result.fileName, documentLabel: "Delivery challan PDF" });
+          if (!notification?.ok) setMessage("Delivery challan PDF saved, but its notification could not be posted. " + (notification?.message || ""));
+          else setMessage("");
+        } else {
+          const url = URL.createObjectURL(result.blob); const link = document.createElement("a");
+          link.href = url; link.download = result.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+        }
+        return;
+      }
+      if (action === "Share") {
+        if (isNativeAndroid) {
+          const bytes = new Uint8Array(await result.blob.arrayBuffer()); let binary = "";
+          for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+          const saved = await Filesystem.writeFile({ path: "Delivery Challans/" + result.fileName, data: btoa(binary), directory: Directory.Cache, recursive: true });
+          await Share.share({ title: result.fileName, text: "Delivery Challan " + (row.challan_no || ""), files: [saved.uri], dialogTitle: "Share delivery challan PDF" });
         } else {
           const file = new File([result.blob], result.fileName, { type: "application/pdf" });
           if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: result.fileName, files: [file] });
@@ -721,11 +804,11 @@ export default function SalesWorkspace({ kind }) {
   const activeRegisterFilterCount = [statusFilter !== "All statuses", Boolean(customerFilter), billingTypeFilter !== "All", Boolean(placeOfSupplyFilter), Boolean(dateFrom), Boolean(dateTo)].filter(Boolean).length;
 
   return <main className={`sales-workspace ${kind === "register" ? "sw-register-workspace" : ""}`} >
-    <header className="sw-heading"><div>{kind !== "register" && kind !== "orders" && <p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p>}<h1>{config.title}</h1>{kind !== "register" && kind !== "orders" && <p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p>}</div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
+    <header className="sw-heading"><div>{kind !== "register" && kind !== "orders" && kind !== "challans" && <p className="sw-breadcrumb">Billing &amp; Accounting / Sales / {config.title}</p>}<h1>{config.title}</h1>{kind !== "register" && kind !== "orders" && kind !== "challans" && <p className="sw-subtitle">Manage {config.title.toLowerCase()} for {currentCompany?.company_name || "your selected company"}.</p>}</div><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
     {message && <div className={`sw-alert ${messageType === "success" ? "sw-alert-success" : ""}`} role={messageType === "success" ? "status" : "alert"}>{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="sw-empty">Choose a current company from the sidebar to view its sales records.</div> : <>
-    {kind !== "quotations" && kind !== "register" && kind !== "orders" && kind !== "credits" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
-    {kind === "credits" ? <section className="sw-filters sw-credit-filters"><select aria-label="Universal credit note filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search credit notes" /></label></section> : kind === "orders" ? <section className="sw-filters sw-order-filters"><select aria-label="Universal sales order filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sales orders" /></label></section> : kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
+    {kind !== "quotations" && kind !== "register" && kind !== "orders" && kind !== "credits" && kind !== "challans" && <section className={`sw-metrics sw-metrics-${metrics.length}`}>{config.metrics.map((label, i) => <article className="sw-metric" key={label}><span>{label}</span><strong>{metrics[i]}</strong></article>)}</section>}
+    {kind === "challans" ? <section className="sw-filters sw-challan-filters"><select aria-label="Universal delivery challan filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search delivery challans" /></label></section> : kind === "credits" ? <section className="sw-filters sw-credit-filters"><select aria-label="Universal credit note filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search credit notes" /></label></section> : kind === "orders" ? <section className="sw-filters sw-order-filters"><select aria-label="Universal sales order filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{statuses.map(status => <option key={status}>{status}</option>)}</select><label className="sw-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sales orders" /></label></section> : kind === "quotations" ? <section className="sw-filters sw-quotation-filters">
       <div className="sw-quotation-date-wrap">
         <button type="button" className="sw-quotation-date-trigger" onClick={() => { setDraftDateFrom(dateFrom); setDraftDateTo(dateTo); setShowQuotationDatePopover(value => !value); }}>
           <span>▦</span><span>{dateFrom || dateTo ? "Custom period" : "All dates"}</span><span>⌄</span>
@@ -761,7 +844,7 @@ export default function SalesWorkspace({ kind }) {
     </section>}
     <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div>{kind !== "quotations" && <button className="sw-export" onClick={() => window.print()}>Print list</button>}</div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
-      kind === "credits" ? <div className="sw-credit-card-list">{filtered.map(row => <article className="sw-credit-transaction-card" key={row.id}><div className="sw-credit-card-top"><strong>{row.credit_note_no || "—"}</strong><time dateTime={row.credit_note_date || ""}>{dateText(row.credit_note_date)}</time></div><div className="sw-credit-card-bottom"><span>{row.customer_name || "—"}</span><div className="sw-credit-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.credit_note_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-credit-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => creditNoteAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "orders" ? <div className="sw-order-card-list">{filtered.map(row => <article className="sw-order-transaction-card" key={row.id}><div className="sw-order-card-top"><strong>{row.order_no || "—"}</strong><time dateTime={row.order_date || ""}>{dateText(row.order_date)}</time></div><div className="sw-order-card-bottom"><span>{row.customer_name || currentCompany?.company_name || "—"}</span><div className="sw-order-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.order_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-order-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => salesOrderAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
+      kind === "challans" ? <div className="sw-challan-card-list">{filtered.map(row => <article className="sw-challan-transaction-card" key={row.id}><div className="sw-challan-card-top"><strong>{row.challan_no || "—"}</strong><time dateTime={row.challan_date || ""}>{dateText(row.challan_date)}</time></div><div className="sw-challan-card-bottom"><span>{row.customer_name || row.company_name || currentCompany?.company_name || "—"}</span><div className="sw-challan-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.challan_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-challan-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => deliveryChallanAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "credits" ? <div className="sw-credit-card-list">{filtered.map(row => <article className="sw-credit-transaction-card" key={row.id}><div className="sw-credit-card-top"><strong>{row.credit_note_no || "—"}</strong><time dateTime={row.credit_note_date || ""}>{dateText(row.credit_note_date)}</time></div><div className="sw-credit-card-bottom"><span>{row.customer_name || "—"}</span><div className="sw-credit-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.credit_note_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-credit-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => creditNoteAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "orders" ? <div className="sw-order-card-list">{filtered.map(row => <article className="sw-order-transaction-card" key={row.id}><div className="sw-order-card-top"><strong>{row.order_no || "—"}</strong><time dateTime={row.order_date || ""}>{dateText(row.order_date)}</time></div><div className="sw-order-card-bottom"><span>{row.customer_name || currentCompany?.company_name || "—"}</span><div className="sw-order-card-actions"><strong>{currency(row.total_amount)}</strong><button type="button" className="sw-kebab" aria-label={"Actions for " + row.order_no} aria-expanded={menuId === row.id} onClick={event => toggleQuotationMenu(event, row.id)}>⋮</button></div></div>{menuId === row.id && menuPosition && createPortal(<><div className="sw-menu-dismiss" onClick={() => { setMenuId(null); setMenuPosition(null); }} /><div className="sw-menu sw-order-action-menu sw-quotation-menu-portal" style={{ position: "fixed", top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>{["View","Edit","Download","Share","Cancel"].map(action => <button type="button" key={action} className={action === "Cancel" ? "sw-register-delete-action" : ""} onClick={() => salesOrderAction(row, action)}>{action}</button>)}</div></>, document.body)}</article>)}</div> : kind === "register" ? <div className="sw-register-card-list">{filtered.map(row => {
         const paymentStatus = String(row.payment_status || "").trim().toLowerCase();
         const isPaid = paymentStatus ? ["paid", "fully paid", "settled", "complete", "completed"].includes(paymentStatus) : row.sale_type === "CASH";
         return <article className="sw-register-transaction-card" key={row.id}>
@@ -828,7 +911,7 @@ export default function SalesWorkspace({ kind }) {
       </footer>
     </form></section></div>}
     {downloadNotice && <div className="sw-download-confirmation-backdrop" role="presentation"><section className="sw-download-confirmation" role="dialog" aria-modal="true" aria-label="PDF download complete"><div className="sw-download-confirmation-icon">✓</div><h2>PDF downloaded</h2><p><strong>{downloadNotice.fileName}</strong></p><p>Saved in: <b>{downloadNotice.location}</b></p><button type="button" className="sw-primary" onClick={() => setDownloadNotice(null)}>Done</button></section></div>}
-    {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} documentTitle={quotationPreview.documentType === "credit-note" ? "Credit Note" : "Quotation"} onClose={() => setQuotationPreview(null)} onDownload={() => quotationPreview.documentType === "credit-note" ? creditNoteAction(quotationPreview.row, "Download") : downloadQuotation(quotationPreview.row)} onShare={() => quotationPreview.documentType === "credit-note" ? creditNoteAction(quotationPreview.row, "Share") : shareQuotation(quotationPreview.row)} />}
+    {quotationPreview && <QuotationPdfPreview blob={quotationPreview.blob} fileName={quotationPreview.fileName} documentTitle={quotationPreview.documentType === "credit-note" ? "Credit Note" : quotationPreview.documentType === "delivery-challan" ? "Delivery Challan" : "Quotation"} onClose={() => setQuotationPreview(null)} onDownload={() => quotationPreview.documentType === "credit-note" ? creditNoteAction(quotationPreview.row, "Download") : quotationPreview.documentType === "delivery-challan" ? deliveryChallanAction(quotationPreview.row, "Download") : downloadQuotation(quotationPreview.row)} onShare={() => quotationPreview.documentType === "credit-note" ? creditNoteAction(quotationPreview.row, "Share") : quotationPreview.documentType === "delivery-challan" ? deliveryChallanAction(quotationPreview.row, "Share") : shareQuotation(quotationPreview.row)} />}
     {invoicePreviewLoading && <div className="invoice-preview-loading" role="status">Preparing invoice preview…</div>}
     {invoicePreview && createPortal(<InvoicePrint invoice={invoicePreview.invoice} items={invoicePreview.items} settings={invoicePreview.settings} company={invoicePreview.company} customer={invoicePreview.customer} onClose={() => setInvoicePreview(null)} />, document.body)}
     {selected && <div className="sw-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null); }}><section className="sw-modal sw-view-modal" role="dialog" aria-modal="true"><header><div><p className="sw-breadcrumb">{config.title}</p><h2>{selected[config.number] || "Record details"}</h2></div><button className="sw-close" onClick={() => setSelected(null)} aria-label="Close">×</button></header><dl className="sw-detail-grid"><div><dt>Date</dt><dd>{dateText(selected[config.date])}</dd></div><div><dt>Customer</dt><dd>{selected.customer_name || "—"}</dd></div><div><dt>Status</dt><dd>{selected.status || (selected.sale_type === "CASH" ? "Paid" : "Outstanding")}</dd></div><div><dt>Total</dt><dd>{currency(selected.total_amount)}</dd></div>{selected.reason && <div><dt>Reason</dt><dd>{selected.reason}</dd></div>}</dl>{selected.items?.length > 0 && <div className="sw-table-scroll"><table><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{selected.items.map((i,n)=><tr key={i.id || n}><td>{i.item_name || i.particulars}</td><td>{num(i.qty)}</td><td>{currency(i.rate)}</td><td>{currency(i.amount)}</td></tr>)}</tbody></table></div>}<footer>{kind === "register" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { editInvoiceId: id } }); }}>Edit invoice</button>}{kind === "orders" && <><button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { salesOrderId: id } }); }}>Create Challan</button><button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/sales", { state: { sourceType: "orders", sourceId: id } }); }}>Convert to Invoice</button></>}{kind === "challans" && <button className="sw-primary" onClick={() => { const id = selected.id; setSelected(null); navigate("/app/delivery-challans/new", { state: { editChallanId: id } }); }}>Edit challan</button>}<button className="sw-secondary" onClick={() => setSelected(null)}>Close</button></footer></section></div>}
