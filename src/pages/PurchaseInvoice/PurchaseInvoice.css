@@ -71,3 +71,16 @@
   font-size: 14px;
   font-weight: 600;
 }
+
+
+/* Keep purchase-step navigation visible above the native Android bottom navigation. */
+.purchase-page.android-workflow {
+  padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.purchase-page.android-workflow .android-workflow-actions {
+  position: fixed !important;
+  z-index: 950 !important;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 0 !important;
+  right: 0 !important;
+}
