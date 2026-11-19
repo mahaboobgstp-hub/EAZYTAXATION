@@ -1185,16 +1185,15 @@ const viewChallan = async (challanId) => {
         <main className="delivery-challan-page">
 
             <div className="delivery-challan-page-heading"><h2>
-                {editingChallanId
-                    ? "Edit Delivery Challan"
-                    : "New Delivery Challan"}
-            </h2><a href="/app/delivery-challans">Back to Delivery Challans</a></div>
+                {editingChallanId ? "Edit Delivery Challan" : "New Delivery Challan"}
+            </h2>{!isNativeAndroid && <a href="/app/delivery-challans">Back to Delivery Challans</a>}</div>
 
 
             {/* ============================================
                 COMPANY
             ============================================ */}
 
+{!isNativeAndroid && (
             <div style={{
                 marginBottom: "20px",
                 fontWeight: "600"
@@ -1208,6 +1207,7 @@ const viewChallan = async (challanId) => {
                       "Select Company from Sidebar"}
 
             </div>
+            )}
 
 
             {!currentCompanyId ? (
@@ -1229,19 +1229,27 @@ const viewChallan = async (challanId) => {
 
                 isNativeAndroid ? (<form className="dc-mobile-wizard" onSubmit={handleSubmit}>
 {mobileStep === 1 && <section className="dc-mobile-panel">
-<header className="dc-panel-heading"><span>STEP 01 · DETAILS</span><h3>Delivery information</h3><p>Enter the challan and delivery details</p></header>
 <div className="dc-mobile-stepper"><b className="is-current">1 Details</b><b>2 Items</b><b>3 Review</b></div>
-<div className="dc-mobile-field"><label>Challan Number</label><input name="challan_no" value={formData.challan_no} onChange={handleChange} placeholder="DC00001" required /></div>
-<div className="dc-mobile-field"><label>Challan Date</label><input type="date" name="challan_date" value={formData.challan_date} onChange={handleChange} required /></div>
-<div className="dc-mobile-field"><label>Delivery Type</label><select value={deliveryType} onChange={e=>{const v=e.target.value;setDeliveryType(v);if(v==="WITHOUT_ORDER"){setFormData(p=>({...p,sales_order_id:"",sales_order_no:""}));const empty=[{item_id:"",item_name:"",hsn_sac:"",unit:"",gst_rate:18,qty:1,rate:0,amount:0}];setItems(empty);calculateTotals(empty);}}}><option value="WITHOUT_ORDER">Without Sales Order</option><option value="ORDER">Against Sales Order</option></select></div>
-{deliveryType==="ORDER" && <div className="dc-mobile-field"><label>Sales Order</label><select value={formData.sales_order_id} onChange={handleSalesOrderChange} required><option value="">Select Sales Order</option>{salesOrders.map(o=><option key={o.id} value={o.id}>{o.order_no} · {o.customer_name}</option>)}</select></div>}
-<div className="dc-mobile-field"><label>Customer</label><select value={formData.customer_id} onChange={handleCustomerChange} disabled={deliveryType==="ORDER"} required><option value="">Select Customer</option>{customers.map(c=><option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></div>
-<div className="dc-mobile-field"><label>Place of Supply</label><select name="place_of_supply" value={formData.place_of_supply} onChange={handleChange}><option value="">Select State</option>{states.map(s=><option key={s.id||s.state_name} value={s.state_name||s.name}>{s.state_name||s.name}</option>)}</select></div>
-<div className="dc-mobile-subpanel"><h4>Billing Address</h4><p>{formData.billing_address||"Select a customer to load billing address."}</p></div>
-<div className="dc-mobile-subpanel"><h4>Shipping & Transport</h4>
-{[["Shipping Name","shipping_name","text"],["Shipping GSTIN","shipping_gstin","text"],["Shipping State","shipping_state","text"],["Vehicle Number","vehicle_no","text"],["E-Way Bill Number","eway_bill_no","text"]].map(([label,name,type])=><div className="dc-mobile-field" key={name}><label>{label}</label><input type={type} name={name} value={formData[name]} onChange={handleChange} /></div>)}
-<div className="dc-mobile-field"><label>Shipping Address</label><textarea name="shipping_address" value={formData.shipping_address} onChange={handleChange} rows={3}/></div></div>
-<button type="button" className="dc-mobile-primary" onClick={()=>{if(!formData.challan_no||!formData.challan_date||!formData.customer_id){alert("Complete challan number, date and customer first.");return;}if(deliveryType==="ORDER"&&!formData.sales_order_id){alert("Select a sales order first.");return;}setMobileStep(2);window.scrollTo({top:0,behavior:"smooth"});}}>Continue to Items →</button>
+<div className="dc-mobile-design-card">
+<div className="dc-mobile-design-card-heading"><span className="dc-design-icon">▤</span><h3>Challan Details</h3></div>
+<div className="dc-mobile-two-column">
+<div className="dc-mobile-field"><label>Challan Number <em>*</em></label><input name="challan_no" value={formData.challan_no} onChange={handleChange} placeholder="DC00001" required /></div>
+<div className="dc-mobile-field"><label>Challan Date <em>*</em></label><input type="date" name="challan_date" value={formData.challan_date} onChange={handleChange} required /></div>
+</div></div>
+<div className="dc-mobile-design-card">
+<div className="dc-mobile-design-card-heading"><span className="dc-design-icon">♙</span><h3>Party & Delivery</h3></div>
+<div className="dc-mobile-two-column">
+<div className="dc-mobile-field"><label>Customer <em>*</em></label><select value={formData.customer_id} onChange={handleCustomerChange} disabled={deliveryType==="ORDER"} required><option value="">Select Customer</option>{customers.map(c=><option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></div>
+<div className="dc-mobile-field"><label>Delivery Type <em>*</em></label><select value={deliveryType} onChange={e=>{const v=e.target.value;setDeliveryType(v);if(v==="WITHOUT_ORDER"){setFormData(p=>({...p,sales_order_id:"",sales_order_no:""}));const empty=[{item_id:"",item_name:"",hsn_sac:"",unit:"",gst_rate:18,qty:1,rate:0,amount:0}];setItems(empty);calculateTotals(empty);}}}><option value="WITHOUT_ORDER">Without Sales Order</option><option value="ORDER">Against Sales Order</option></select></div>
+</div>
+{deliveryType==="ORDER" && <div className="dc-mobile-field"><label>Sales Order <em>*</em></label><select value={formData.sales_order_id} onChange={handleSalesOrderChange} required><option value="">Select Sales Order</option>{salesOrders.map(o=><option key={o.id} value={o.id}>{o.order_no} · {o.customer_name}</option>)}</select></div>}
+<div className="dc-mobile-field"><label>Place of Supply <em>*</em></label><select name="place_of_supply" value={formData.place_of_supply} onChange={handleChange} required><option value="">Select State</option>{states.map(st=><option key={st.id||st.state_name||st.name} value={st.state_name||st.name}>{st.state_name||st.name}</option>)}</select></div>
+</div>
+<div className="dc-mobile-design-card">
+<div className="dc-mobile-design-card-heading"><span className="dc-design-icon">⌖</span><h3>Additional Information</h3></div>
+<div className="dc-mobile-field"><label>Remarks (Optional)</label><textarea name="remarks" value={formData.remarks} onChange={handleChange} rows={3} placeholder="Enter delivery remarks"/></div>
+</div>
+<button type="button" className="dc-mobile-primary" onClick={()=>{if(!formData.challan_no||!formData.challan_date||!formData.customer_id||!formData.place_of_supply){alert("Complete the required challan details first.");return;}if(deliveryType==="ORDER"&&!formData.sales_order_id){alert("Select a sales order first.");return;}setMobileStep(2);window.scrollTo({top:0,behavior:"smooth"});}}>Continue to Items →</button>
 </section>}
 {mobileStep === 2 && <section className="dc-mobile-panel">
 <header className="dc-panel-heading"><span>STEP 02 · ITEMS</span><h3>Items to deliver</h3><p>Add each item as a separate card</p></header>
