@@ -159,17 +159,26 @@
 }
 .expense-page.android-workflow .ew-actions.android-workflow-actions {
   position: static !important;
-  z-index: auto !important;
   inset: auto !important;
+  z-index: auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: stretch !important;
+  align-items: stretch !important;
+  gap: 10px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   margin: 14px 0 0 !important;
-  padding: 0 0 10px !important;
+  padding: 0 0 12px !important;
   background: transparent !important;
-  border-top: 0 !important;
+  border: 0 !important;
   box-shadow: none !important;
 }
 .expense-page.android-workflow .ew-actions.android-workflow-actions button {
+  position: static !important;
+  display: block !important;
   flex: 1 1 0 !important;
+  width: auto !important;
   min-width: 0 !important;
+  margin: 0 !important;
 }
