@@ -78,6 +78,7 @@ export default function PurchaseInvoice() {
       try{
         const [header,items]=await Promise.all([getPurchaseInvoiceById(id,currentCompanyId),getPurchaseInvoiceItems(id,currentCompanyId)]);
         setEditingInvoiceId(id);
+        setApplyRoundOff(Math.abs(Number(header.round_off)||0)>0);
         setFormData({
           invoice_no:header.invoice_no||"",invoice_date:header.invoice_date||today(),
           supplier_invoice_no:header.supplier_invoice_no||"",supplier_invoice_date:header.supplier_invoice_date||"",
