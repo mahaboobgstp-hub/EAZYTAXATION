@@ -1182,9 +1182,7 @@ const viewChallan = async (challanId) => {
 
     return (
 
-        <div style={{
-            padding: "20px"
-        }}>
+        <main className="delivery-challan-page">
 
             <div className="delivery-challan-page-heading"><h2>
                 {editingChallanId
@@ -1899,7 +1897,7 @@ const viewChallan = async (challanId) => {
     />
 
 )}
-        </div>
+        </main>
 
     );
 }
