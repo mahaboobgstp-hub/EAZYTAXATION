@@ -28,7 +28,7 @@ export async function advanceExpenseSequence() {
   if (updateError) throw updateError;
 }
 
-export async function getExpenseMasters(companyId) {
+export async function getExpenseMasters(companyId, accountingEnabled = false) {
   const [vendors, categories] = await Promise.all([
     supabase.from("vendors").select("id,vendor_name,gstin,state,address,company_id")
       .eq("company_id", companyId).order("vendor_name"),
@@ -36,7 +36,43 @@ export async function getExpenseMasters(companyId) {
   ]);
   if (vendors.error) throw vendors.error;
   if (categories.error) throw categories.error;
-  return { vendors: vendors.data || [], categories: categories.data || [] };
+
+  let expenseLedgers = [];
+  let paymentLedgers = [];
+  let accountGroups = [];
+  if (accountingEnabled) {
+    const { data: groups, error: groupError } = await supabase.from("account_groups")
+      .select("id,group_name,account_nature")
+      .eq("company_id", companyId)
+      .eq("is_active", true);
+    if (groupError) throw groupError;
+    accountGroups = groups || [];
+    const expenseGroupIds = accountGroups.filter(group => group.account_nature === "Expense").map(group => group.id);
+    const assetGroupIds = accountGroups.filter(group => group.account_nature === "Asset").map(group => group.id);
+    const [expenseResult, paymentResult] = await Promise.all([
+      expenseGroupIds.length
+        ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id")
+            .eq("company_id", companyId).eq("is_active", true).in("group_id", expenseGroupIds).order("ledger_name")
+        : Promise.resolve({ data: [], error: null }),
+      assetGroupIds.length
+        ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id")
+            .eq("company_id", companyId).eq("is_active", true).in("group_id", assetGroupIds).order("ledger_name")
+        : Promise.resolve({ data: [], error: null })
+    ]);
+    if (expenseResult.error) throw expenseResult.error;
+    if (paymentResult.error) throw paymentResult.error;
+    expenseLedgers = expenseResult.data || [];
+    paymentLedgers = paymentResult.data || [];
+  }
+
+  return {
+    vendors: vendors.data || [],
+    categories: categories.data || [],
+    expenseLedgers,
+    paymentLedgers,
+    accountGroups,
+    hasChartOfAccounts: Boolean(accountingEnabled)
+  };
 }
 
 export async function getExpenses(companyId) {
