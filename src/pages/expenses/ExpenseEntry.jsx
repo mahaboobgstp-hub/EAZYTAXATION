@@ -185,7 +185,8 @@ export default function ExpenseEntry(){
     setIncludeGstInAmount={setIncludeGstInAmount} file={file} setFile={setFile}
     attachmentLink={attachmentLink} message={message} setMessage={setMessage}
     loading={loading} expenseId={expenseId} nextStep={nextStep} save={save}
-    navigate={navigate} />;
+    navigate={navigate} openAiPicker={openAiPicker} setOpenAiPicker={setOpenAiPicker}
+    aiProcessing={aiProcessing} handleAiDocument={handleAiDocument} location={location} />;
 
   return <main className={isAndroid?"expense-page android-workflow":"expense-page"}>
     <header className="ew-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} disabled={aiProcessing} onFileSelected={selectedFile=>{setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});handleAiDocument(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
@@ -220,7 +221,7 @@ export default function ExpenseEntry(){
   </main>;
 }
 
-function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors,categories,expenseLedgers,paymentLedgers,accountingEnabled,currentCompany,vendor,selectVendor,includeGstInAmount,setIncludeGstInAmount,file,setFile,attachmentLink,message,setMessage,loading,expenseId,nextStep,save,navigate}){
+function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors,categories,expenseLedgers,paymentLedgers,accountingEnabled,currentCompany,vendor,selectVendor,includeGstInAmount,setIncludeGstInAmount,file,setFile,attachmentLink,message,setMessage,loading,expenseId,nextStep,save,navigate,openAiPicker,setOpenAiPicker,aiProcessing,handleAiDocument,location}){
   const [customPayee,setCustomPayee]=useState(false);
   const moneyValue=value=>money(value);
   const expenseLedger=expenseLedgers.find(item=>item.id===form.expense_ledger_id);
@@ -242,7 +243,7 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
   const gstTotal=calc.cgst+calc.sgst+calc.igst;
   const row=(label,value)=><div className="aex-review-row"><span>{label}</span><b>{value||"—"}</b></div>;
   return <main className="expense-page android-workflow aex-page">
-    <header className="ew-heading aex-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div></header>
+    <header className="ew-heading aex-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} disabled={aiProcessing} onFileSelected={selectedFile=>{setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});handleAiDocument(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
     {message&&<div className="ew-alert">{message}<button type="button" onClick={()=>setMessage("")}>×</button></div>}
     <nav className="android-stepper aex-stepper" aria-label="Expense entry steps">{["Details","Bill & Payment","Tax & Other","Review"].map((label,index)=><button type="button" key={label} className={step===index+1?"active":step>index+1?"complete":""} onClick={()=>{if(index+1<step){setMessage("");setStep(index+1);}}}><b>{step>index+1?"✓":index+1}</b><span>{label}</span></button>)}</nav>
     <form className="aex-form" onSubmit={event=>event.preventDefault()}>
