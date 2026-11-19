@@ -28,7 +28,7 @@ export async function advanceExpenseSequence() {
   if (updateError) throw updateError;
 }
 
-export async function getExpenseMasters(companyId, accountingEnabled = false) {
+export async function getExpenseMasters(companyId, accountingEnabled = false, includePaymentLedgers = false) {
   const [vendors, categories] = await Promise.all([
     supabase.from("vendors").select("id,vendor_name,gstin,state,address,company_id")
       .eq("company_id", companyId).order("vendor_name"),
@@ -40,22 +40,26 @@ export async function getExpenseMasters(companyId, accountingEnabled = false) {
   let expenseLedgers = [];
   let paymentLedgers = [];
   let accountGroups = [];
-  if (accountingEnabled) {
+  if (accountingEnabled || includePaymentLedgers) {
     const { data: groups, error: groupError } = await supabase.from("account_groups")
       .select("id,group_name,account_nature")
       .eq("company_id", companyId)
       .eq("is_active", true);
     if (groupError) throw groupError;
     accountGroups = groups || [];
-    const expenseGroupIds = accountGroups.filter(group => group.account_nature === "Expense").map(group => group.id);
-    const assetGroupIds = accountGroups.filter(group => group.account_nature === "Asset").map(group => group.id);
+    const expenseGroupIds = accountingEnabled
+      ? accountGroups.filter(group => group.account_nature === "Expense").map(group => group.id)
+      : [];
+    const assetGroupIds = includePaymentLedgers
+      ? accountGroups.filter(group => group.account_nature === "Asset").map(group => group.id)
+      : [];
     const [expenseResult, paymentResult] = await Promise.all([
       expenseGroupIds.length
         ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id,party_type")
             .eq("company_id", companyId).eq("is_active", true).in("group_id", expenseGroupIds).order("ledger_name")
         : Promise.resolve({ data: [], error: null }),
       assetGroupIds.length
-        ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id")
+        ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id,party_type")
             .eq("company_id", companyId).eq("is_active", true).in("group_id", assetGroupIds).order("ledger_name")
         : Promise.resolve({ data: [], error: null })
     ]);
@@ -72,7 +76,7 @@ export async function getExpenseMasters(companyId, accountingEnabled = false) {
     expenseLedgers,
     paymentLedgers,
     accountGroups,
-    hasChartOfAccounts: Boolean(accountingEnabled)
+    hasChartOfAccounts: Boolean(accountingEnabled || includePaymentLedgers)
   };
 }
 
