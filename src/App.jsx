@@ -82,6 +82,7 @@ import CAAssignment from "./pages/settings/CAAssignment";
 import CAWorkspace from "./pages/settings/CAWorkspace";
 import PurchaseInvoice from "./pages/PurchaseInvoice/PurchaseInvoice";
 import PurchaseWorkspace from "./pages/purchases/PurchaseWorkspace";
+import GoodsReceipt from "./pages/purchases/GoodsReceipt";
 import SalesRegister from "./pages/sales/SalesRegister";
 import SalesWorkspace from "./pages/sales/SalesWorkspace";
 import SalesReturns from "./pages/sales/SalesReturns";
@@ -304,6 +305,7 @@ function App() {
             element={<PurchaseInvoice />}
           />
           <Route path="purchase-register" element={<PurchaseWorkspace kind="register" />} />
+          <Route path="goods-receipts" element={<GoodsReceipt />} />
           <Route path="purchase-orders" element={<PurchaseWorkspace kind="orders" />} />
           <Route path="purchase-returns" element={<PurchaseWorkspace kind="returns" />} />
           <Route path="debit-notes" element={<PurchaseWorkspace kind="debits" />} />
