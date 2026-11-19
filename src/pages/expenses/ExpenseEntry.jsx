@@ -100,7 +100,7 @@ export default function ExpenseEntry(){
       setExpenseId(id);
       let path=form.attachment_url||null;
       if(file){path=await uploadExpenseAttachment(currentCompanyId,number,file);const {error:attachError}=await supabase.from("expenses").update({attachment_url:path,updated_at:new Date().toISOString()}).eq("id",id).eq("company_id",currentCompanyId);if(attachError)throw attachError;header.attachment_url=path;}
-      const saved={...header,id,vendor_name:form.payee_name.trim()||vendor?.vendor_name||"",vendor_gstin:vendor?.gstin||"",category_name:categories.find(c=>c.id===form.category_id)?.category_name||""};
+      const saved={...header,id,vendor_name:form.payee_name.trim()||vendor?.vendor_name||"",vendor_gstin:vendor?.gstin||"",category_name:categories.find(c=>c.id===form.category_id)?.category_name||expenseLedgers.find(c=>c.id===form.expense_ledger_id)?.ledger_name||""};
       setMessage(expenseId?"Expense updated successfully.":"Expense saved successfully.");
       if(print){setPreview({kind:"expense",record:saved,items:calc.normalized,company:currentCompany,autoPrint:true});}
       else reset(false);
