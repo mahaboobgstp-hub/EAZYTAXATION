@@ -51,7 +51,7 @@ export async function getExpenseMasters(companyId, accountingEnabled = false) {
     const assetGroupIds = accountGroups.filter(group => group.account_nature === "Asset").map(group => group.id);
     const [expenseResult, paymentResult] = await Promise.all([
       expenseGroupIds.length
-        ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id")
+        ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id,party_type")
             .eq("company_id", companyId).eq("is_active", true).in("group_id", expenseGroupIds).order("ledger_name")
         : Promise.resolve({ data: [], error: null }),
       assetGroupIds.length
