@@ -67,6 +67,7 @@ const [printMode, setPrintMode] = useState(false);
 
     const [editingChallanId, setEditingChallanId] = useState(null);
     const [mobileStep, setMobileStep] = useState(1);
+    const [savingChallan, setSavingChallan] = useState(false);
 
     const [formData, setFormData] = useState({
         company_id: "",
@@ -734,10 +735,11 @@ const [printMode, setPrintMode] = useState(false);
     // SUBMIT
     // =====================================================
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, generateEwayBill = false) => {
 
         e.preventDefault();
-
+        if (savingChallan) return;
+        setSavingChallan(true);
 
         try {
 
@@ -797,6 +799,7 @@ const [printMode, setPrintMode] = useState(false);
             };
 
 
+            let savedChallanId = editingChallanId;
             if (editingChallanId) {
 
                 await updateDeliveryChallan(
@@ -816,7 +819,7 @@ const [printMode, setPrintMode] = useState(false);
 
             } else {
 
-                await saveDeliveryChallan(
+                savedChallanId = await saveDeliveryChallan(
                     challanHeader,
                     items,
                     currentCompanyId
@@ -830,16 +833,20 @@ const [printMode, setPrintMode] = useState(false);
             }
 
 
-            resetForm();
+            if (generateEwayBill) {
+                alert("Delivery Challan saved successfully. Automatic E-Way Bill issuance is not connected yet. Please open the E-Way Bill portal from E-Way Bill Management, generate the bill using this Delivery Challan, then record the issued E-Way Bill number.");
+                navigate("/app/eway-bills", { state: { sourceType: "Delivery Challan", sourceId: savedChallanId, documentNo: formData.challan_no } });
+                return;
+            }
 
+            resetForm();
             loadChallans();
 
         } catch (error) {
-
             console.error(error);
-
             alert(error.message);
-
+        } finally {
+            setSavingChallan(false);
         }
 
     };
@@ -1860,9 +1867,13 @@ const viewChallan = async (challanId) => {
                                     if (mobileStep === 2 && !items.some(item => item.item_id && Number(item.qty) > 0)) { alert("Add at least one item with a valid delivery quantity."); return; }
                                     setMobileStep(step => step + 1);
                                 }}>Next: {mobileStep === 1 ? "Add Items" : "Review"} →</button>
-                                : <button type="submit" className="delivery-challan-primary-btn">{editingChallanId ? "Update Delivery Challan" : "Save Delivery Challan"}</button>}
+                                : <div className="dc-save-options">
+                                    <button type="submit" className="delivery-challan-primary-btn" disabled={savingChallan}>{savingChallan ? "Saving..." : editingChallanId ? "Update Challan" : "Save Challan"}</button>
+                                    <button type="button" className="dc-save-eway-btn" disabled={savingChallan} onClick={e => handleSubmit(e, true)}>{savingChallan ? "Saving..." : "Save & Generate E-Way Bill"}</button>
+                                </div>}
                         </> : <>
-                            <button type="submit" className="delivery-challan-primary-btn">{editingChallanId ? "Update Delivery Challan" : "Save Delivery Challan"}</button>
+                            <button type="submit" className="delivery-challan-primary-btn" disabled={savingChallan}>{savingChallan ? "Saving..." : editingChallanId ? "Update Delivery Challan" : "Save Delivery Challan"}</button>
+                            <button type="button" className="dc-save-eway-btn" disabled={savingChallan} onClick={e => handleSubmit(e, true)}>{savingChallan ? "Saving..." : "Save & Generate E-Way Bill"}</button>
                             {editingChallanId && <button type="button" className="delivery-challan-secondary-btn" onClick={resetForm}>Cancel Edit</button>}
                         </>}
                     </div>

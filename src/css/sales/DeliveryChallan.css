@@ -522,3 +522,18 @@
 .dc-mobile-steps span{padding:9px 4px;text-align:center;border-radius:8px}
 .dc-mobile-steps span.active{background:#e4edff;color:#155eef}
 .dc-mobile-steps span.complete{background:#e8f7ef;color:#177245}
+
+
+/* Save and E-Way Bill action pair */
+.dc-save-options{display:flex;gap:8px;flex:1;min-width:0}
+.dc-save-options>button{flex:1;min-width:0}
+.dc-save-eway-btn{padding:10px 14px;border:0;border-radius:7px;background:#155eef;color:#fff;font-size:14px;font-weight:700;cursor:pointer;white-space:normal}
+.dc-save-eway-btn:hover{background:#104dcc}
+.dc-save-eway-btn:disabled,.delivery-challan-primary-btn:disabled{opacity:.65;cursor:wait}
+@media(max-width:640px){
+  .delivery-challan-actions{align-items:stretch;gap:8px}
+  .delivery-challan-actions>.delivery-challan-secondary-btn{flex:0 0 22%;padding:10px 6px}
+  .dc-save-options{flex:1;display:grid;grid-template-columns:1fr 1.35fr;gap:7px}
+  .dc-save-options>button{font-size:12px;padding:10px 7px;line-height:1.25}
+  .delivery-challan-actions>.dc-save-eway-btn{flex:1;font-size:12px;padding:10px 8px}
+}
