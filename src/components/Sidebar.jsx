@@ -582,7 +582,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
         .map(group => ({
           ...group,
           links: group.title === "Sales"
-            ? group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
+            ? group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-returns", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
             : group.title === "Purchases"
               ? group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/purchase-returns", "/app/debit-notes"].includes(path))
               : group.links.filter(([, path]) => ["/app/expenses", "/app/expense-register", "/app/expense-categories", "/app/expense-reports"].includes(path))
