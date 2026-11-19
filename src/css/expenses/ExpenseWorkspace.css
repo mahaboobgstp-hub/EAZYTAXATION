@@ -320,3 +320,66 @@
   .expense-page.android-workflow.aex-page .aex-heading h1 { font-size:21px !important; }
   .expense-page.android-workflow.aex-page .aex-heading .ai-entry-header-actions { gap:5px !important; }
 }
+
+
+/* Linked bank account creation inside Android expense payment step */
+.expense-page.android-workflow.aex-page .aex-add-bank {
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  width:100% !important; min-height:46px !important; margin:-2px 0 14px !important;
+  padding:10px 14px !important; border:1px solid #b9d2f5 !important;
+  border-radius:10px !important; background:#eef5ff !important; color:#175cd3 !important;
+  font-family:inherit !important; font-size:14px !important; font-weight:750 !important;
+  box-shadow:none !important;
+}
+.expense-page.android-workflow.aex-page .aex-modal-backdrop {
+  position:fixed !important; z-index:1000 !important; inset:0 !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  padding:14px !important; background:rgba(16,24,40,.58) !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal {
+  display:block !important; box-sizing:border-box !important; width:min(100%,480px) !important;
+  max-height:calc(100dvh - 28px) !important; overflow-y:auto !important;
+  margin:0 !important; padding:20px !important; border:1px solid #e2e8f0 !important;
+  border-radius:16px !important; background:#fff !important;
+  box-shadow:0 20px 60px rgba(16,24,40,.25) !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-modal-heading {
+  display:flex !important; align-items:flex-start !important; justify-content:space-between !important;
+  gap:12px !important; margin-bottom:18px !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-modal-heading h3 {
+  margin:0 0 5px !important; color:#1b3558 !important; font-size:20px !important; font-weight:800 !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-modal-heading p {
+  margin:0 !important; color:#66758a !important; font-size:12px !important; line-height:1.4 !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-modal-heading button {
+  flex:0 0 34px !important; width:34px !important; height:34px !important; min-height:34px !important;
+  border:0 !important; border-radius:9px !important; background:#f1f4f8 !important;
+  color:#475467 !important; font-size:22px !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .ew-field {
+  display:flex !important; flex-direction:column !important; gap:6px !important;
+  margin:0 0 12px !important; color:#526985 !important; font-size:13px !important; font-weight:750 !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .ew-field input,
+.expense-page.android-workflow.aex-page .aex-bank-modal .ew-field select {
+  width:100% !important; min-height:45px !important; height:45px !important;
+  box-sizing:border-box !important; padding:0 12px !important;
+  border:1px solid #cfd9e6 !important; border-radius:9px !important;
+  background:#fff !important; color:#20334f !important; font:500 15px inherit !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-privacy {
+  margin:3px 0 14px !important; color:#66758a !important; font-size:11px !important; line-height:1.4 !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-error {
+  margin-bottom:12px !important; padding:10px 12px !important; border-radius:8px !important;
+  background:#fff1f0 !important; color:#b42318 !important; font-size:12px !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-actions {
+  display:flex !important; gap:9px !important; margin-top:14px !important;
+}
+.expense-page.android-workflow.aex-page .aex-bank-modal .aex-bank-actions button {
+  flex:1 1 50% !important; min-height:46px !important; border-radius:9px !important;
+  font-family:inherit !important; font-size:13px !important; font-weight:750 !important;
+}
