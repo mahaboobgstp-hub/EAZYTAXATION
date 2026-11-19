@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import {
-  generateExpenseNumber, getExpenseMasters, getExpenseById, saveExpense, updateExpense,
+  generateExpenseNumber, getExpenseMasters, getExpenseById, saveExpense, updateExpense, createExpenseBankAccount,
   uploadExpenseAttachment, getExpenseAttachmentUrl, createExpensePayment
 } from "../../services/expenseService";
 import ExpenseDocumentPreview from "./ExpenseDocumentPreview";
@@ -109,6 +109,17 @@ export default function ExpenseEntry(){
     finally{setLoading(false);}
   }
   function selectVendor(id){const v=vendors.find(x=>x.id===id);set("vendor_id",id);set("payee_name",v?.vendor_name||"");setSupplierState(v?.state||"");}
+
+  async function handleCreateBankAccount(values){
+    if(!currentCompanyId)throw new Error("Select a company first.");
+    const created=await createExpenseBankAccount(currentCompanyId,values);
+    const refreshed=await getExpenseMasters(currentCompanyId,accountingEnabled,true);
+    setPaymentLedgers(refreshed.paymentLedgers||[]);
+    set("payment_mode","Bank");
+    set("payment_ledger_id",created.id);
+    set("payment_account",created.ledger_name);
+    return created;
+  }
   async function handleAiDocument(selectedFile){
     setFile(selectedFile);
     setAiValidation(null);
@@ -186,7 +197,7 @@ export default function ExpenseEntry(){
     attachmentLink={attachmentLink} message={message} setMessage={setMessage}
     loading={loading} expenseId={expenseId} nextStep={nextStep} save={save}
     navigate={navigate} openAiPicker={openAiPicker} setOpenAiPicker={setOpenAiPicker}
-    aiProcessing={aiProcessing} handleAiDocument={handleAiDocument} location={location} />;
+    aiProcessing={aiProcessing} handleAiDocument={handleAiDocument} location={location} onCreateBankAccount={handleCreateBankAccount} />;
 
   return <main className={isAndroid?"expense-page android-workflow":"expense-page"}>
     <header className="ew-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} disabled={aiProcessing} onFileSelected={selectedFile=>{setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});handleAiDocument(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
