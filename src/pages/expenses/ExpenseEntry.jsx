@@ -230,8 +230,9 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
   const paymentModeOptions=[["Cash","▣"],["Bank","▤"],["UPI","UPI"],["Others","•••"]];
   const visiblePaymentLedgers=paymentLedgers.filter(item=>{
     const groupName=(item.group_name||"").toLowerCase();
-    if(form.payment_mode==="Cash")return groupName.includes("cash")||groupName.includes("cash in hand");
-    if(form.payment_mode==="Bank"||form.payment_mode==="UPI"||form.payment_mode==="Cheque")return groupName.includes("bank")||groupName.includes("cash")===false;
+    const ledgerName=(item.ledger_name||"").toLowerCase();
+    if(form.payment_mode==="Cash")return groupName.includes("cash")||ledgerName.includes("cash");
+    if(form.payment_mode==="Bank"||form.payment_mode==="UPI"||form.payment_mode==="Cheque")return groupName.includes("bank")||ledgerName.includes("bank");
     return true;
   });
   const paymentOptions=visiblePaymentLedgers.length?visiblePaymentLedgers:paymentLedgers;
