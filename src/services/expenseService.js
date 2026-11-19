@@ -53,7 +53,7 @@ export async function getExpenseMasters(companyId, accountingEnabled = false, in
     const assetGroupIds = includePaymentLedgers
       ? accountGroups.filter(group => group.account_nature === "Asset").map(group => group.id)
       : [];
-    const [expenseResult, paymentResult] = await Promise.all([
+    const [expenseResult, paymentResult, bankProfileResult] = await Promise.all([
       expenseGroupIds.length
         ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id,party_type")
             .eq("company_id", companyId).eq("is_active", true).in("group_id", expenseGroupIds).order("ledger_name")
@@ -61,13 +61,24 @@ export async function getExpenseMasters(companyId, accountingEnabled = false, in
       assetGroupIds.length
         ? supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id,party_type")
             .eq("company_id", companyId).eq("is_active", true).in("group_id", assetGroupIds).order("ledger_name")
+        : Promise.resolve({ data: [], error: null }),
+      includePaymentLedgers
+        ? supabase.from("bank_account_profiles")
+            .select("id,ledger_id,bank_name,account_holder_name,account_number_masked,ifsc,branch_name,account_type")
+            .eq("company_id", companyId).eq("is_active", true)
         : Promise.resolve({ data: [], error: null })
     ]);
     if (expenseResult.error) throw expenseResult.error;
     if (paymentResult.error) throw paymentResult.error;
+    if (bankProfileResult.error) throw bankProfileResult.error;
     const groupNameById = new Map(accountGroups.map(group => [group.id, group.group_name]));
+    const bankProfileByLedger = new Map((bankProfileResult.data || []).map(profile => [profile.ledger_id, profile]));
     expenseLedgers = (expenseResult.data || []).map(ledger => ({ ...ledger, group_name: groupNameById.get(ledger.group_id) || "" }));
-    paymentLedgers = (paymentResult.data || []).map(ledger => ({ ...ledger, group_name: groupNameById.get(ledger.group_id) || "" }));
+    paymentLedgers = (paymentResult.data || []).map(ledger => ({
+      ...ledger,
+      group_name: groupNameById.get(ledger.group_id) || "",
+      bank_profile: bankProfileByLedger.get(ledger.id) || null
+    }));
   }
 
   return {
@@ -78,6 +89,73 @@ export async function getExpenseMasters(companyId, accountingEnabled = false, in
     accountGroups,
     hasChartOfAccounts: Boolean(accountingEnabled || includePaymentLedgers)
   };
+}
+
+
+export async function createExpenseBankAccount(companyId, values) {
+  if (!companyId) throw new Error("Select a company before creating a bank account.");
+  const bankName = String(values.bank_name || "").trim();
+  const accountNumber = String(values.account_number || "").replace(/\s+/g, "");
+  const ifsc = String(values.ifsc || "").trim().toUpperCase();
+  if (!bankName) throw new Error("Enter the bank name.");
+  if (!/^\d{9,18}$/.test(accountNumber)) throw new Error("Enter a valid bank account number (9 to 18 digits).");
+  if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) throw new Error("Enter a valid 11-character IFSC code.");
+  const accountType = String(values.account_type || "Current");
+  const maskedNumber = "••••" + accountNumber.slice(-4);
+
+  const { data: duplicate, error: duplicateError } = await supabase.from("bank_account_profiles")
+    .select("id").eq("company_id", companyId).eq("bank_name", bankName)
+    .eq("account_number_masked", maskedNumber).eq("ifsc", ifsc).eq("is_active", true).limit(1);
+  if (duplicateError) throw duplicateError;
+  if (duplicate?.length) throw new Error("This bank account is already added to this company.");
+
+  const { data: groups, error: groupsError } = await supabase.from("account_groups")
+    .select("id,group_name,group_code,parent_group_id,account_nature")
+    .eq("company_id", companyId).eq("is_active", true);
+  if (groupsError) throw groupsError;
+  const assetGroup = (groups || []).find(group => group.account_nature === "Asset" && !group.parent_group_id);
+  if (!assetGroup) throw new Error("The Assets account group is missing. Create or load the standard Chart of Accounts groups first.");
+
+  let bankGroup = (groups || []).find(group =>
+    group.account_nature === "Asset" && group.parent_group_id === assetGroup.id &&
+    group.group_name.trim().toLowerCase() === "bank accounts"
+  );
+  if (!bankGroup) {
+    const groupCode = "BANK" + Date.now().toString().slice(-6);
+    const { data, error } = await supabase.from("account_groups").insert([{
+      company_id: companyId, group_name: "Bank Accounts", group_code: groupCode,
+      parent_group_id: assetGroup.id, account_nature: "Asset", normal_balance: "Debit",
+      statement_classification: "Balance Sheet", description: "Company bank account ledgers",
+      is_system: false, is_active: true
+    }]).select().single();
+    if (error) throw error;
+    bankGroup = data;
+  }
+
+  const ledgerName = bankName + " - " + accountType + " - " + accountNumber.slice(-4);
+  const ledgerCode = "BNK" + Date.now().toString().slice(-8);
+  const { data: ledger, error: ledgerError } = await supabase.from("chart_of_accounts").insert([{
+    company_id: companyId, ledger_name: ledgerName, ledger_code: ledgerCode,
+    group_id: bankGroup.id, opening_balance: Number(values.opening_balance || 0),
+    opening_balance_type: values.opening_balance_type || "Debit",
+    opening_date: values.opening_date || currentDate(), party_type: "Bank",
+    description: "Bank account ledger created from Android Expense Entry",
+    is_system: false, is_active: true
+  }]).select().single();
+  if (ledgerError) throw ledgerError;
+
+  const { data: profile, error: profileError } = await supabase.from("bank_account_profiles").insert([{
+    company_id: companyId, ledger_id: ledger.id, bank_name: bankName,
+    account_holder_name: String(values.account_holder_name || "").trim() || null,
+    account_number_masked: maskedNumber, ifsc,
+    branch_name: String(values.branch_name || "").trim() || null,
+    account_type: accountType, is_active: true
+  }]).select().single();
+  if (profileError) {
+    await supabase.from("chart_of_accounts").delete().eq("id", ledger.id).eq("company_id", companyId);
+    throw profileError;
+  }
+  return { ...ledger, bank_profile: profile };
 }
 
 export async function getExpenses(companyId) {
