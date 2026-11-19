@@ -232,7 +232,7 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
     const groupName=(item.group_name||"").toLowerCase();
     const ledgerName=(item.ledger_name||"").toLowerCase();
     if(form.payment_mode==="Cash")return groupName.includes("cash")||ledgerName.includes("cash");
-    if(form.payment_mode==="Bank"||form.payment_mode==="UPI"||form.payment_mode==="Cheque")return groupName.includes("bank")||ledgerName.includes("bank");
+    if(form.payment_mode==="Bank"||form.payment_mode==="UPI"||form.payment_mode==="Cheque")return item.party_type==="Bank"||groupName.includes("bank")||ledgerName.includes("bank");
     return true;
   });
   const paymentOptions=visiblePaymentLedgers.length?visiblePaymentLedgers:paymentLedgers;
