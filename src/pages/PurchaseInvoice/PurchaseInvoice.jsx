@@ -246,9 +246,6 @@ export default function PurchaseInvoice() {
                 {itemsMaster.map(item=><option key={item.id} value={item.id}>{item.item_name}</option>)}
               </select>
             </label>
-            {!line.item_id&&<label className="pi-mobile-field">Or enter custom item
-              <input value={line.item_name} placeholder="Enter item description" onChange={e=>updateLine(index,"item_name",e.target.value)}/>
-            </label>}
             <div className="pi-mobile-item-grid">
               <label className="pi-mobile-field">Quantity
                 <input type="number" min="0" step="0.001" value={line.qty} onChange={e=>updateLine(index,"qty",e.target.value)}/>
