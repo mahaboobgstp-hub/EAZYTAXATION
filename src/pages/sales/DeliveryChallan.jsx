@@ -1227,7 +1227,53 @@ const viewChallan = async (challanId) => {
 
             ) : (
 
-                <form onSubmit={handleSubmit}>
+                {isNativeAndroid ? (<form className="dc-mobile-wizard" onSubmit={handleSubmit}>
+{mobileStep === 1 && <section className="dc-mobile-panel">
+<header className="dc-panel-heading"><span>STEP 01 · DETAILS</span><h3>Delivery information</h3><p>Enter the challan and delivery details</p></header>
+<div className="dc-mobile-stepper"><b className="is-current">1 Details</b><b>2 Items</b><b>3 Review</b></div>
+<div className="dc-mobile-field"><label>Challan Number</label><input name="challan_no" value={formData.challan_no} onChange={handleChange} placeholder="DC00001" required /></div>
+<div className="dc-mobile-field"><label>Challan Date</label><input type="date" name="challan_date" value={formData.challan_date} onChange={handleChange} required /></div>
+<div className="dc-mobile-field"><label>Delivery Type</label><select value={deliveryType} onChange={e=>{const v=e.target.value;setDeliveryType(v);if(v==="WITHOUT_ORDER"){setFormData(p=>({...p,sales_order_id:"",sales_order_no:""}));const empty=[{item_id:"",item_name:"",hsn_sac:"",unit:"",gst_rate:18,qty:1,rate:0,amount:0}];setItems(empty);calculateTotals(empty);}}}><option value="WITHOUT_ORDER">Without Sales Order</option><option value="ORDER">Against Sales Order</option></select></div>
+{deliveryType==="ORDER" && <div className="dc-mobile-field"><label>Sales Order</label><select value={formData.sales_order_id} onChange={handleSalesOrderChange} required><option value="">Select Sales Order</option>{salesOrders.map(o=><option key={o.id} value={o.id}>{o.order_no} · {o.customer_name}</option>)}</select></div>}
+<div className="dc-mobile-field"><label>Customer</label><select value={formData.customer_id} onChange={handleCustomerChange} disabled={deliveryType==="ORDER"} required><option value="">Select Customer</option>{customers.map(c=><option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></div>
+<div className="dc-mobile-field"><label>Place of Supply</label><select name="place_of_supply" value={formData.place_of_supply} onChange={handleChange}><option value="">Select State</option>{states.map(s=><option key={s.id||s.state_name} value={s.state_name||s.name}>{s.state_name||s.name}</option>)}</select></div>
+<div className="dc-mobile-subpanel"><h4>Billing Address</h4><p>{formData.billing_address||"Select a customer to load billing address."}</p></div>
+<div className="dc-mobile-subpanel"><h4>Shipping & Transport</h4>
+{[["Shipping Name","shipping_name","text"],["Shipping GSTIN","shipping_gstin","text"],["Shipping State","shipping_state","text"],["Vehicle Number","vehicle_no","text"],["E-Way Bill Number","eway_bill_no","text"]].map(([label,name,type])=><div className="dc-mobile-field" key={name}><label>{label}</label><input type={type} name={name} value={formData[name]} onChange={handleChange} /></div>)}
+<div className="dc-mobile-field"><label>Shipping Address</label><textarea name="shipping_address" value={formData.shipping_address} onChange={handleChange} rows={3}/></div></div>
+<button type="button" className="dc-mobile-primary" onClick={()=>{if(!formData.challan_no||!formData.challan_date||!formData.customer_id){alert("Complete challan number, date and customer first.");return;}if(deliveryType==="ORDER"&&!formData.sales_order_id){alert("Select a sales order first.");return;}setMobileStep(2);window.scrollTo({top:0,behavior:"smooth"});}}>Continue to Items →</button>
+</section>}
+{mobileStep === 2 && <section className="dc-mobile-panel">
+<header className="dc-panel-heading"><span>STEP 02 · ITEMS</span><h3>Items to deliver</h3><p>Add each item as a separate card</p></header>
+<div className="dc-mobile-stepper"><b className="is-complete">1 Details</b><b className="is-current">2 Items</b><b>3 Review</b></div>
+{deliveryType==="ORDER"&&<div className="dc-order-note">Sales Order: <strong>{formData.sales_order_no}</strong><br/>Delivery quantities are restricted to pending quantities.</div>}
+<div className="dc-mobile-item-list">{items.map((item,i)=><article className="dc-mobile-item-card" key={i}>
+<div className="dc-item-card-top"><strong>Item {i+1}</strong>{items.length>1&&<button type="button" onClick={()=>removeItem(i)}>Remove</button>}</div>
+<div className="dc-mobile-field"><label>Item</label>{deliveryType==="ORDER"?<input value={item.item_name||""} readOnly/>:<select value={item.item_id} onChange={e=>handleItemChange(i,"item_id",e.target.value)}><option value="">Select Item</option>{itemsMaster.map(m=><option key={m.id} value={m.id}>{m.item_name}</option>)}</select>}</div>
+<div className="dc-item-meta-grid">
+<div className="dc-mobile-field"><label>HSN / SAC</label><input value={item.hsn_sac||""} readOnly/></div>
+<div className="dc-mobile-field"><label>Unit</label><UomDropdown value={item.unit} onChange={v=>handleItemChange(i,"unit",v)}/></div>
+<div className="dc-mobile-field"><label>GST Rate</label><GstRateDropdown value={item.gst_rate} onChange={v=>handleItemChange(i,"gst_rate",v)}/></div>
+<div className="dc-mobile-field"><label>Quantity</label><input type="number" min="0" step="0.001" value={item.qty} onChange={e=>handleItemChange(i,"qty",e.target.value)}/></div>
+<div className="dc-mobile-field"><label>Rate (₹)</label><input type="number" min="0" step="0.01" value={item.rate} onChange={e=>handleItemChange(i,"rate",e.target.value)}/></div></div>
+{deliveryType==="ORDER"&&<div className="dc-order-qty-summary"><span>Ordered <b>{Number(item.ordered_qty||0).toFixed(3)}</b></span><span>Delivered <b>{Number(item.delivered_qty||0).toFixed(3)}</b></span><span>Pending <b>{Number(item.pending_qty||0).toFixed(3)}</b></span></div>}
+<div className="dc-item-amount"><span>Item Amount</span><strong>₹{Number(item.amount||0).toFixed(2)}</strong></div></article>)}</div>
+{deliveryType!=="ORDER"&&<button type="button" className="dc-add-item" onClick={addItem}>＋ Add Another Item</button>}
+<div className="dc-mobile-action-row"><button type="button" className="dc-mobile-secondary" onClick={()=>{setMobileStep(1);window.scrollTo({top:0,behavior:"smooth"});}}>Back</button><button type="button" className="dc-mobile-primary" onClick={()=>{if(!items.some(i=>i.item_id&&Number(i.qty)>0)){alert("Add at least one item with a valid quantity.");return;}setMobileStep(3);window.scrollTo({top:0,behavior:"smooth"});}}>Review Challan →</button></div>
+</section>}
+{mobileStep === 3 && <section className="dc-mobile-panel">
+<header className="dc-panel-heading"><span>STEP 03 · REVIEW</span><h3>Review Delivery Challan</h3><p>Verify the information before saving</p></header>
+<div className="dc-mobile-stepper"><b className="is-complete">1 Details</b><b className="is-complete">2 Items</b><b className="is-current">3 Review</b></div>
+<div className="dc-review-card"><div className="dc-review-card-heading"><h4>Challan Details</h4><button type="button" onClick={()=>setMobileStep(1)}>Edit</button></div><dl>
+<div><dt>Challan Number</dt><dd>{formData.challan_no}</dd></div><div><dt>Date</dt><dd>{formData.challan_date}</dd></div><div><dt>Customer</dt><dd>{formData.customer_name||customers.find(c=>c.id===formData.customer_id)?.customer_name||"—"}</dd></div><div><dt>Place of Supply</dt><dd>{formData.place_of_supply||"—"}</dd></div>{formData.sales_order_no&&<div><dt>Sales Order</dt><dd>{formData.sales_order_no}</dd></div>}</dl></div>
+<div className="dc-review-card"><div className="dc-review-card-heading"><h4>Items Summary</h4><button type="button" onClick={()=>setMobileStep(2)}>Edit</button></div>{items.filter(i=>i.item_id).map((i,n)=><div className="dc-review-item" key={n}><div><strong>{i.item_name||itemsMaster.find(m=>m.id===i.item_id)?.item_name||"Item"}</strong><small>{i.qty} {i.unit} × ₹{Number(i.rate||0).toFixed(2)} · GST {i.gst_rate}%</small></div><b>₹{Number(i.amount||0).toFixed(2)}</b></div>)}</div>
+<div className="dc-review-card"><h4>Shipping & Transport</h4><dl><div><dt>Shipping Name</dt><dd>{formData.shipping_name||"—"}</dd></div><div><dt>GSTIN</dt><dd>{formData.shipping_gstin||"—"}</dd></div><div><dt>Shipping State</dt><dd>{formData.shipping_state||"—"}</dd></div><div><dt>Vehicle Number</dt><dd>{formData.vehicle_no||"—"}</dd></div><div><dt>E-Way Bill Number</dt><dd>{formData.eway_bill_no||"—"}</dd></div><div><dt>Address</dt><dd>{formData.shipping_address||"—"}</dd></div></dl></div>
+<div className="dc-mobile-field"><label>Remarks</label><textarea name="remarks" value={formData.remarks} onChange={handleChange} rows={3} placeholder="Add delivery remarks"/></div>
+<div className="dc-tax-summary"><div><span>Taxable Value</span><strong>₹{Number(formData.taxable_value||0).toFixed(2)}</strong></div>{Number(formData.cgst)>0&&<div><span>CGST</span><strong>₹{Number(formData.cgst).toFixed(2)}</strong></div>}{Number(formData.sgst)>0&&<div><span>SGST</span><strong>₹{Number(formData.sgst).toFixed(2)}</strong></div>}{Number(formData.igst)>0&&<div><span>IGST</span><strong>₹{Number(formData.igst).toFixed(2)}</strong></div>}<div className="dc-tax-grand-total"><span>Total Amount</span><strong>₹{Number(formData.total_amount||0).toFixed(2)}</strong></div></div>
+<div className="dc-mobile-action-row"><button type="button" className="dc-mobile-secondary" onClick={()=>{setMobileStep(2);window.scrollTo({top:0,behavior:"smooth"});}}>Back</button><button type="submit" className="dc-mobile-primary" disabled={savingChallan}>{savingChallan?"Saving...":editingChallanId?"Update Challan":"Save Challan"}</button></div>
+<button type="button" className="dc-mobile-eway" disabled={savingChallan} onClick={e=>handleSubmit(e,true)}>{savingChallan?"Saving...":"Save & Generate E-Way Bill"}</button>
+</section>}
+</form>) : (<form onSubmit={handleSubmit}>
                     {isNativeAndroid && <nav className="dc-mobile-steps" aria-label="Delivery challan steps"><span className={mobileStep === 1 ? "active" : mobileStep > 1 ? "complete" : ""}>1. Details</span><span className={mobileStep === 2 ? "active" : mobileStep > 2 ? "complete" : ""}>2. Items</span><span className={mobileStep === 3 ? "active" : ""}>3. Review</span></nav>}
 
 
@@ -1876,10 +1922,7 @@ const viewChallan = async (challanId) => {
                         </>}
                     </div>
 
-                </form>
-
-            )}
-
+                </form>)}
 
 {printMode && selectedChallan && (
 
