@@ -238,7 +238,7 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
   const gstTotal=calc.cgst+calc.sgst+calc.igst;
   const row=(label,value)=><div className="aex-review-row"><span>{label}</span><b>{value||"—"}</b></div>;
   return <main className="expense-page android-workflow aex-page">
-    <header className="ew-heading aex-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture disabled={false} onFileSelected={selectedFile=>{setFile(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
+    <header className="ew-heading aex-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div></header>
     {message&&<div className="ew-alert">{message}<button type="button" onClick={()=>setMessage("")}>×</button></div>}
     <nav className="android-stepper aex-stepper" aria-label="Expense entry steps">{["Details","Bill & Payment","Tax & Other","Review"].map((label,index)=><button type="button" key={label} className={step===index+1?"active":step>index+1?"complete":""} onClick={()=>{if(index+1<step){setMessage("");setStep(index+1);}}}><b>{step>index+1?"✓":index+1}</b><span>{label}</span></button>)}</nav>
     <form className="aex-form" onSubmit={event=>event.preventDefault()}>
