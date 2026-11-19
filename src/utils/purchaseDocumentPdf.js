@@ -75,6 +75,11 @@ export function downloadPurchasePdf({ kind, document, items = [], company = {}, 
   rightY = paragraph(`GSTIN: ${document.gstin || "—"}`, margin + colW + 10, rightY, colW, 9);
   rightY = paragraph(`State: ${document.vendor_state || "—"}`, margin + colW + 10, rightY, colW, 9);
   y = Math.max(leftY, rightY) + 6;
+  if (kind === "register") {
+    y = paragraph(`Vehicle No.: ${document.vehicle_no || "—"}     E-Way Bill No.: ${document.eway_bill_no || "—"}`, margin, y, usable, 8);
+    y = paragraph(`Transporter: ${document.transporter_name || "—"}     Transporter ID: ${document.transporter_id || "—"}`, margin, y, usable, 8);
+    y = paragraph(`Transport Document: ${document.transport_doc_no || "—"}     Date: ${document.transport_doc_date || "—"}`, margin, y, usable, 8);
+  }
   if (document.reason) y = paragraph(`Reason: ${document.reason}`, margin, y, usable, 9) + 2;
   addTableHeader();
 
@@ -102,7 +107,7 @@ export function downloadPurchasePdf({ kind, document, items = [], company = {}, 
   const total = document.grand_total ?? document.total_amount ?? document.total_credit ?? 0;
   const summary = [
     ["Taxable Value", taxable], ["CGST", document.cgst], ["SGST", document.sgst],
-    ["IGST", document.igst], ["Round Off", document.round_off],
+    ["IGST", document.igst], ["Total GST", n(document.cgst) + n(document.sgst) + n(document.igst)], ["Round Off", document.round_off],
   ];
   const summaryHeight = summary.length * 6 + 12;
   if (y + summaryHeight > height - 18) addPage();
