@@ -148,3 +148,28 @@
   .ew-preview-toolbar { flex-wrap: wrap; }
   .ew-preview-toolbar button { min-height: 42px; }
 }
+
+
+/* Android expense workflow: keep step actions above the app's fixed bottom navigation. */
+.expense-page.android-workflow {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.expense-page.android-workflow .android-stepper {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+.expense-page.android-workflow .ew-actions.android-workflow-actions {
+  position: static !important;
+  z-index: auto !important;
+  inset: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 14px 0 0 !important;
+  padding: 0 0 10px !important;
+  background: transparent !important;
+  border-top: 0 !important;
+  box-shadow: none !important;
+}
+.expense-page.android-workflow .ew-actions.android-workflow-actions button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
