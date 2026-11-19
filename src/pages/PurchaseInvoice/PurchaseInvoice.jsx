@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
+import { getStates } from "../../services/stateService";
 import { supabase } from "../../supabase/supabaseClient";
 import { getVendorsForDropdown, getItemsForDropdown, generatePurchaseInvoiceNumber, savePurchaseInvoice, updatePurchaseInvoice, getPurchaseInvoiceById, getPurchaseInvoiceItems } from "../../services/purchaseInvoiceService";
 import PurchaseDocumentPreview from "../purchases/PurchaseDocumentPreview";
@@ -23,6 +24,7 @@ export default function PurchaseInvoice() {
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
   const [step,setStep] = useState(1);
   const [vendors,setVendors] = useState([]);
+  const [states,setStates] = useState([]);
   const [itemsMaster,setItemsMaster] = useState([]);
   const [editingInvoiceId,setEditingInvoiceId] = useState(null);
   const [preview,setPreview] = useState(null);
@@ -36,13 +38,14 @@ export default function PurchaseInvoice() {
     invoice_no:"", invoice_date:today(), supplier_invoice_no:"", supplier_invoice_date:today(),
     vendor_id:"", vendor_name:"", vendor_state:"", billing_address:"", shipping_address:"",
     gstin:"", place_of_supply:"", vehicle_no:"", eway_bill_no:"", remarks:"",
-    gst_treatment:"Regular Supplier (Registered)"
+    gst_treatment:"Regular Supplier (Registered)", purchase_type:"Goods"
   });
   const [lines,setLines] = useState([emptyLine()]);
 
   useEffect(()=>{
     if(!currentCompanyId)return;
     getVendorsForDropdown(currentCompanyId).then(data=>setVendors(data||[])).catch(e=>setMessage(e.message));
+    getStates().then(data=>setStates(data||[])).catch(e=>setMessage(e.message));
     getItemsForDropdown(currentCompanyId).then(data=>setItemsMaster(data||[])).catch(e=>setMessage(e.message));
   },[currentCompanyId]);
 
@@ -80,7 +83,7 @@ export default function PurchaseInvoice() {
           billing_address:header.billing_address||"",shipping_address:header.shipping_address||"",
           gstin:header.gstin||"",place_of_supply:header.place_of_supply||"",vehicle_no:header.vehicle_no||"",
           eway_bill_no:header.eway_bill_no||"",remarks:header.remarks||"",
-          gst_treatment:header.gst_treatment||"Regular Supplier (Registered)"
+          gst_treatment:header.gst_treatment||"Regular Supplier (Registered)", purchase_type:header.purchase_type||"Goods"
         });
         setLines(items.map(i=>({item_id:i.item_id||"",item_name:i.item_name||"",hsn_sac:i.hsn_sac||"",uom:i.uom||"",qty:String(i.qty??1),rate:String(i.rate??0),discount_percent:String(i.discount_percent??0),gst_rate:String(i.gst_rate??0)})));
         navigate("/app/purchases",{replace:true,state:null});
@@ -113,7 +116,7 @@ export default function PurchaseInvoice() {
   };
   const reset=async()=>{
     setEditingInvoiceId(null);setLines([emptyLine()]);setMessage("");
-    setFormData({invoice_no:"",invoice_date:today(),supplier_invoice_no:"",supplier_invoice_date:today(),vendor_id:"",vendor_name:"",vendor_state:"",billing_address:"",shipping_address:"",gstin:"",place_of_supply:"",vehicle_no:"",eway_bill_no:"",remarks:"",gst_treatment:"Regular Supplier (Registered)"});
+    setFormData({invoice_no:"",invoice_date:today(),supplier_invoice_no:"",supplier_invoice_date:today(),vendor_id:"",vendor_name:"",vendor_state:"",billing_address:"",shipping_address:"",gstin:"",place_of_supply:"",vehicle_no:"",eway_bill_no:"",remarks:"",gst_treatment:"Regular Supplier (Registered)",purchase_type:"Goods"});
   };
   const save=async(printAfterSave=false)=>{
     if(!currentCompanyId){setMessage("Select a current company before creating a purchase invoice.");return;}
@@ -198,7 +201,7 @@ export default function PurchaseInvoice() {
       setAiProcessing(false);
     }
   };
-  const companyName=currentCompany?.company_name||"";
+  
 
   const goNext = () => { if (step === 1 && !formData.supplier_invoice_no.trim()) { setMessage("Enter the supplier invoice number to continue."); return; } if (step === 1 && !formData.vendor_id) { setMessage("Select a supplier to continue."); return; } if (step === 2 && !normalized.length) { setMessage("Add at least one invoice item to continue."); return; } setMessage(""); setStep(s=>Math.min(4,s+1)); };
 
@@ -208,22 +211,24 @@ export default function PurchaseInvoice() {
     {message&&<div className="pi-error">{message}</div>}
     {isAndroid && <nav className="android-stepper">{["Details","Items","Charges & Tax","Review"].map((label,i)=><button type="button" key={label} className={step===i+1?"active":step>i+1?"complete":""} onClick={()=>{if(i+1<step)setStep(i+1);}}><b>{i+1}</b><span>{label}</span></button>)}</nav>}
     {!currentCompanyId?<div className="pi-card">Choose a current company from the sidebar to create a purchase invoice.</div>:<>
-      <section className="pi-card" style={isAndroid&&step!==1?{display:"none"}:{}}><h2>Purchase Invoice Details</h2><div className="pi-grid">
-        <Field label="Company" value={companyName} readOnly/>
-        <Field label="Purchase Invoice No." value={formData.invoice_no} readOnly/>
-        <Field label="Purchase Date" type="date" value={formData.invoice_date} onChange={v=>setField("invoice_date",v)}/>
-        <Field label="Supplier Invoice No." required value={formData.supplier_invoice_no} onChange={v=>setField("supplier_invoice_no",v)} placeholder="Enter supplier invoice number"/>
-        <Field label="Supplier Invoice Date" type="date" value={formData.supplier_invoice_date} onChange={v=>setField("supplier_invoice_date",v)}/>
-        <label className="pi-field">GST Treatment<select value={formData.gst_treatment} onChange={e=>setField("gst_treatment",e.target.value)}>{["Regular Supplier (Registered)","Composition Supplier","Unregistered Supplier","SEZ / Import"].map(x=><option key={x}>{x}</option>)}</select></label>
-      </div></section>
-      <section className="pi-card" style={isAndroid&&step!==1?{display:"none"}:{}}><h2>Supplier Details</h2><div className="pi-grid">
-        <label className="pi-field">Vendor (Supplier) *<select required value={formData.vendor_id} onChange={e=>chooseVendor(e.target.value)}><option value="">Select supplier from Vendor Master</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.vendor_name}{v.gstin?" · "+v.gstin:""}</option>)}</select></label>
-        <Field label="GSTIN" value={formData.gstin} onChange={v=>setField("gstin",v)}/>
-        <Field label="Supplier State" value={formData.vendor_state} onChange={v=>setField("vendor_state",v)}/>
-        <Field label="Place of Supply" value={formData.place_of_supply} onChange={v=>setField("place_of_supply",v)}/>
-        <label className="pi-field pi-wide">Billing Address<textarea rows="2" value={formData.billing_address} onChange={e=>setField("billing_address",e.target.value)}/></label>
-        <label className="pi-field pi-wide">Shipping Address<textarea rows="2" value={formData.shipping_address} onChange={e=>setField("shipping_address",e.target.value)}/></label>
-      </div><p className="pi-tax-note">{selectedVendor?.state||formData.place_of_supply||"Supplier state"} · {sameState?"Intra-State (CGST + SGST)":"Inter-State (IGST)"}</p></section>
+      <section className="pi-card pi-details-card" style={isAndroid&&step!==1?{display:"none"}:{}}>
+        <h2>Invoice &amp; Supplier Details</h2>
+        <div className="pi-grid">
+          <Field label="Purchase Invoice No." value={formData.invoice_no} readOnly/>
+          <Field label="Purchase Date" type="date" required value={formData.invoice_date} onChange={v=>setField("invoice_date",v)}/>
+          <Field label="Supplier Invoice No." required value={formData.supplier_invoice_no} onChange={v=>setField("supplier_invoice_no",v)} placeholder="Enter supplier invoice number"/>
+          <Field label="Supplier Invoice Date" type="date" required value={formData.supplier_invoice_date} onChange={v=>setField("supplier_invoice_date",v)}/>
+          <label className="pi-field pi-wide">Supplier (Vendor Master) *<select required value={formData.vendor_id} onChange={e=>chooseVendor(e.target.value)}><option value="">Select supplier</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.vendor_name}</option>)}</select></label>
+          <div className="pi-auto-details pi-wide">
+            <div><b>GSTIN</b><span>{formData.gstin||"Auto-filled from Vendor Master"}</span></div>
+            <div><b>Supplier State</b><span>{formData.vendor_state||"Auto-filled from Vendor Master"}</span></div>
+          </div>
+          <label className="pi-field pi-wide">Supplier Type *<select value={formData.gst_treatment} onChange={e=>setField("gst_treatment",e.target.value)}>{["Regular Supplier (Registered)","Composition Supplier","Unregistered Supplier","SEZ / Import"].map(x=><option key={x}>{x}</option>)}</select></label>
+          <label className="pi-field pi-wide">Purchase Type *<select value={formData.purchase_type} onChange={e=>setField("purchase_type",e.target.value)}><option value="Goods">Goods</option><option value="Services">Services</option></select></label>
+          <label className="pi-field pi-wide">Place of Supply *<select required value={formData.place_of_supply} onChange={e=>setField("place_of_supply",e.target.value)}><option value="">Select place of supply</option>{states.map(state=><option key={state.id} value={state.state_name}>{state.state_name}</option>)}</select></label>
+        </div>
+        <p className="pi-tax-note">{formData.place_of_supply||"Place of Supply"} · {sameState?"Intra-State (CGST + SGST)":"Inter-State (IGST)"}</p>
+      </section>
       <section className="pi-items-summary" style={isAndroid&&step!==2?{display:"none"}:{}}><div className="pi-card"><h2>Invoice Items</h2><div className="pi-items-scroll"><table className="pi-items-table"><thead><tr><th>#</th><th>Item / Product</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>Disc %</th><th>GST %</th><th>Taxable</th><th>Total</th><th></th></tr></thead><tbody>{lines.map((line,index)=>{
         const c=normalized[index]||{taxable_value:0,line_total:0};
         return <tr key={index}><td>{index+1}</td><td><select value={line.item_id} onChange={e=>chooseItem(index,e.target.value)}><option value="">Select item</option>{itemsMaster.map(item=><option key={item.id} value={item.id}>{item.item_name}</option>)}</select>{!line.item_id&&<input className="pi-custom-item" value={line.item_name} placeholder="Or type a custom item" onChange={e=>updateLine(index,"item_name",e.target.value)}/>}</td><td><input value={line.hsn_sac} onChange={e=>updateLine(index,"hsn_sac",e.target.value)} placeholder="HSN"/></td><td><input type="number" min="0" step="0.001" value={line.qty} onChange={e=>updateLine(index,"qty",e.target.value)}/></td><td><input value={line.uom} onChange={e=>updateLine(index,"uom",e.target.value)} placeholder="Unit"/></td><td><input type="number" min="0" step="0.01" value={line.rate} onChange={e=>updateLine(index,"rate",e.target.value)}/></td><td><input type="number" min="0" max="100" step="0.01" value={line.discount_percent} onChange={e=>updateLine(index,"discount_percent",e.target.value)}/></td><td><select value={line.gst_rate} onChange={e=>updateLine(index,"gst_rate",e.target.value)}>{["0","5","12","18","28"].map(x=><option key={x} value={x}>{x}%</option>)}</select></td><td>{money(c.taxable_value)}</td><td><strong>{money(c.line_total)}</strong></td><td><button className="pi-delete" type="button" onClick={()=>setLines(p=>p.length>1?p.filter((_,i)=>i!==index):p)} aria-label="Remove item">×</button></td></tr>;
