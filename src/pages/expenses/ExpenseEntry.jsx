@@ -260,17 +260,17 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
         <Field label="Bill / Invoice No." value={form.supplier_invoice_no} onChange={value=>set("supplier_invoice_no",value)} placeholder="Enter bill number"/>
         <Field label="Bill Date" type="date" value={form.supplier_invoice_date} onChange={value=>set("supplier_invoice_date",value)}/>
         <div className="aex-section-label">Payment Method *</div>
-        <div className="aex-payment-methods">{paymentModeOptions.map(([name,icon])=><button type="button" key={name} className={form.payment_mode===name?"selected":""} onClick={()=>set("payment_mode",name)}><b>{icon}</b><span>{name}</span></button>)}</div>
+        <div className="aex-payment-methods">{paymentModeOptions.map(([name,icon])=><button type="button" key={name} className={form.payment_mode===name?"selected":""} onClick={()=>{set("payment_mode",name);set("payment_ledger_id","");set("payment_account","");}}><b>{icon}</b><span>{name}</span></button>)}</div>
         {accountingEnabled?<label className="ew-field">Payment Account *<select value={form.payment_ledger_id||""} onChange={event=>{const id=event.target.value;set("payment_ledger_id",id);set("payment_account",paymentLedgers.find(item=>item.id===id)?.ledger_name||"");}}><option value="">Select payment account</option>{paymentOptions.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!paymentLedgers.length&&<small className="aex-hint">No active Asset ledgers are available. Create a bank or cash ledger in the Chart of Accounts.</small>}</label>:<Field label="Payment Account" value={form.payment_account} onChange={value=>set("payment_account",value)} placeholder="e.g. HDFC Current Account"/>}
       </section>}
       {step===3&&<section className="ew-card aex-card">
         <h2>▱ &nbsp;Amount & Tax</h2>
-        <Field label="Amount (Taxable) *" value={lines[0]?.rate||"0"} onChange={setAmount} placeholder="Enter amount"/>
+        <Field label="Amount (Taxable) *" type="number" value={lines[0]?.rate||"0"} onChange={setAmount} placeholder="Enter amount"/>
         <div className="aex-two-fields"><label className="ew-field">GST Rate<select value={lines[0]?.gst_percent||"0"} onChange={event=>setGst(event.target.value)}>{["0","5","12","18","28"].map(rate=><option key={rate} value={rate}>{rate}%</option>)}</select></label><label className="ew-field">GST Amount<input value={moneyValue(gstTotal)} readOnly/></label></div>
         <label className="aex-toggle"><span><b>Include GST in Amount</b><small>Switch on when the entered amount already includes GST</small></span><input type="checkbox" checked={includeGstInAmount} onChange={event=>setIncludeGstInAmount(event.target.checked)}/></label>
-        <Field label="Other Charges" value={form.other_charges} onChange={value=>set("other_charges",value)}/>
-        <Field label="Discount" value={form.discount_amount} onChange={value=>set("discount_amount",value)}/>
-        <Field label="Round Off" value={form.round_off} onChange={value=>set("round_off",value)}/>
+        <Field label="Other Charges" type="number" value={form.other_charges} onChange={value=>set("other_charges",value)}/>
+        <Field label="Discount" type="number" value={form.discount_amount} onChange={value=>set("discount_amount",value)}/>
+        <Field label="Round Off" type="number" value={form.round_off} onChange={value=>set("round_off",value)}/>
         <div className="aex-total"><span>Total Expense</span><b>{moneyValue(calc.total)}</b></div>
       </section>}
       {step===4&&<>
