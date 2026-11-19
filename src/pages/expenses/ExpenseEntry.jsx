@@ -17,23 +17,25 @@ const today = () => { const d = new Date(); return new Date(d.getTime()-d.getTim
 const n = value => Number(value) || 0;
 const money = value => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(n(value));
 const blankLine = () => ({description:"",hsn_sac:"",qty:"1",uom:"",rate:"0",gst_percent:"18",discount_percent:"0"});
-const initialForm = () => ({expense_no:"",expense_date:today(),category_id:"",vendor_id:"",payee_name:"",supplier_invoice_no:"",supplier_invoice_date:"",payment_mode:"Bank",payment_account:"",paid_by:"",due_date:"",reference_no:"",gst_treatment:"Registered (Regular)",discount_amount:"0",other_charges:"0",round_off:"0",remarks:"",payment_status:"Unpaid",status:"Posted",attachment_url:""});
+const initialForm = () => ({expense_no:"",expense_date:today(),category_id:"",expense_ledger_id:"",payment_ledger_id:"",vendor_id:"",payee_name:"",supplier_invoice_no:"",supplier_invoice_date:"",payment_mode:"Bank",payment_account:"",paid_by:"",due_date:"",reference_no:"",gst_treatment:"Registered (Regular)",is_gst_inclusive:false,discount_amount:"0",other_charges:"0",round_off:"0",remarks:"",payment_status:"Unpaid",status:"Posted",attachment_url:""});
 
 export default function ExpenseEntry(){
   const {currentCompany,currentCompanyId}=useCompany();
   const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==="android";
   const [step,setStep]=useState(1);
   const location=useLocation(),navigate=useNavigate();
-  const [vendors,setVendors]=useState([]),[categories,setCategories]=useState([]);
+  const [vendors,setVendors]=useState([]),[categories,setCategories]=useState([]),[expenseLedgers,setExpenseLedgers]=useState([]),[paymentLedgers,setPaymentLedgers]=useState([]);
   const [form,setForm]=useState(initialForm),[lines,setLines]=useState([blankLine()]);
   const [expenseId,setExpenseId]=useState(null),[file,setFile]=useState(null),[attachmentLink,setAttachmentLink]=useState("");
   const [loading,setLoading]=useState(false),[message,setMessage]=useState(""),[preview,setPreview]=useState(null);
   const [supplierState,setSupplierState]=useState("");
+  const [includeGstInAmount,setIncludeGstInAmount]=useState(false);
+  const accountingEnabled=Boolean(currentCompany?.accounting_enabled);
   const [openAiPicker,setOpenAiPicker]=useState(Boolean(location.state?.openAiDocumentPicker));
   const [aiProcessing,setAiProcessing]=useState(false),[aiValidation,setAiValidation]=useState(null);
   const companyName=currentCompany?.company_name||"";
 
-  useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);return;}getExpenseMasters(currentCompanyId).then(({vendors,categories})=>{setVendors(vendors);setCategories(categories);}).catch(e=>setMessage(e.message));},[currentCompanyId]);
+  useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);setExpenseLedgers([]);setPaymentLedgers([]);return;}getExpenseMasters(currentCompanyId,accountingEnabled).then(({vendors,categories,expenseLedgers,paymentLedgers})=>{setVendors(vendors);setCategories(categories);setExpenseLedgers(expenseLedgers||[]);setPaymentLedgers(paymentLedgers||[]);}).catch(e=>setMessage(e.message));},[currentCompanyId,accountingEnabled]);
   useEffect(()=>{
     if(!currentCompanyId)return;
     const editId=location.state?.editExpenseId;
@@ -42,6 +44,7 @@ export default function ExpenseEntry(){
     getExpenseById(editId,currentCompanyId).then(data=>{if(!active)return;
       setExpenseId(data.id);setSupplierState(data.vendor_state||"");
       setForm({...initialForm(),...data,payee_name:data.payee_name||data.vendor_name||"",discount_amount:String(data.discount_amount||0),other_charges:String(data.other_charges||0),round_off:String(data.round_off||0)});
+      setIncludeGstInAmount(Boolean(data.is_gst_inclusive));
       setLines(data.items?.length?data.items.map(x=>({description:x.description,hsn_sac:x.hsn_sac||"",qty:String(x.qty),uom:x.uom||"",rate:String(x.rate),gst_percent:String(x.gst_percent),discount_percent:String(x.discount_percent||0)})):[blankLine()]);
       if(data.attachment_url)getExpenseAttachmentUrl(data.attachment_url).then(url=>active&&setAttachmentLink(url)).catch(()=>{});
     }).catch(e=>setMessage(e.message));
@@ -59,9 +62,10 @@ export default function ExpenseEntry(){
       const lineDiscount=lineGross*n(l.discount_percent)/100;
       const share= gross?headerDiscount*((lineGross-lineDiscount)/Math.max(1,gross-lines.reduce((s,x)=>s+Math.max(0,n(x.qty))*Math.max(0,n(x.rate))*n(x.discount_percent)/100,0))):0;
       const discount=lineDiscount+share;
-      const base=Math.max(0,lineGross-discount);
+      const enteredBase=Math.max(0,lineGross-discount);
       const taxRate=form.gst_treatment==="No GST"?0:n(l.gst_percent);
-      const tax=Math.round(base*taxRate)/100;
+      const base=includeGstInAmount&&taxRate>0?enteredBase/(1+taxRate/100):enteredBase;
+      const tax=includeGstInAmount&&taxRate>0?enteredBase-base:Math.round(base*taxRate)/100;
       const c=isSameState?Math.round(tax/2*100)/100:0,s=isSameState?Math.round((tax-c)*100)/100:0,ig=isSameState?0:tax;
       taxable+=base;cgst+=c;sgst+=s;igst+=ig;
       return {...l,qty:n(l.qty),rate:n(l.rate),gst_percent:taxRate,discount_percent:n(l.discount_percent),discount_amount:discount,taxable_amount:base,cgst_amount:c,sgst_amount:s,igst_amount:ig,total_amount:base+c+s+ig};
@@ -69,25 +73,26 @@ export default function ExpenseEntry(){
     const raw=taxable+cgst+sgst+igst+n(form.other_charges);
     const roundOff=n(form.round_off);
     return {normalized,gross,discount:headerDiscount+normalized.reduce((s,l)=>s+l.discount_amount,0)-headerDiscount,taxable,cgst,sgst,igst,other:n(form.other_charges),roundOff,total:Math.max(0,raw+roundOff)};
-  },[lines,form.discount_amount,form.other_charges,form.round_off,isSameState]);
+  },[lines,form.discount_amount,form.other_charges,form.round_off,isSameState,includeGstInAmount]);
   const updateLine=(index,key,value)=>setLines(p=>p.map((l,i)=>i===index?{...l,[key]:value}:l));
 
   function reset(clearMessage=true){
-    setExpenseId(null);setFile(null);setAttachmentLink("");setSupplierState("");setForm(initialForm());setLines([blankLine()]);
+    setExpenseId(null);setFile(null);setAttachmentLink("");setSupplierState("");setIncludeGstInAmount(false);setForm(initialForm());setLines([blankLine()]);
     if(clearMessage)setMessage("");
     if(location.state?.editExpenseId)navigate("/app/expenses",{replace:true,state:null});
   }
   async function save(event,print=false){
     event?.preventDefault();setMessage("");
     if(!currentCompanyId){setMessage("Choose a company first.");return;}
-    if(!form.category_id){setMessage("Choose an expense category.");return;}
+    if(isAndroid&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger from your Chart of Accounts.");return;}
+    if((!isAndroid||!accountingEnabled)&&!form.category_id){setMessage("Choose an expense category.");return;}
     if(!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter the supplier or payee.");return;}
     if(!calc.normalized.length){setMessage("Add at least one expense line.");return;}
     setLoading(true);
     try{
       const number=form.expense_no||await generateExpenseNumber(currentCompanyId);
       const gst=n(calc.cgst+calc.sgst+calc.igst);
-      const header={expense_no:number,expense_date:form.expense_date,company_id:currentCompanyId,category_id:form.category_id||null,vendor_id:form.vendor_id||null,payee_name:form.payee_name.trim(),supplier_invoice_no:form.supplier_invoice_no.trim(),supplier_invoice_date:form.supplier_invoice_date||null,payment_mode:form.payment_mode,payment_account:form.payment_account.trim(),paid_by:form.paid_by.trim(),due_date:form.due_date||null,reference_no:form.reference_no.trim(),gst_treatment:form.gst_treatment,is_gst_applicable:form.gst_treatment!=="No GST",taxable_amount:calc.taxable,gst_percent:calc.taxable?gst/calc.taxable*100:0,cgst:calc.cgst,sgst:calc.sgst,igst:calc.igst,discount_amount:calc.discount,other_charges:calc.other,round_off:calc.roundOff,total_amount:calc.total,paid_amount:expenseId?n(form.paid_amount):0,payment_status:expenseId?(n(form.paid_amount)>=calc.total&&calc.total>0?"Paid":n(form.paid_amount)>0?"Partially Paid":"Unpaid"):"Unpaid",status:form.status,remarks:form.remarks.trim(),attachment_url:form.attachment_url||null};
+      const header={expense_no:number,expense_date:form.expense_date,company_id:currentCompanyId,category_id:form.category_id||null,expense_ledger_id:isAndroid&&accountingEnabled?form.expense_ledger_id||null:null,payment_ledger_id:isAndroid&&accountingEnabled?form.payment_ledger_id||null:null,is_gst_inclusive:isAndroid?includeGstInAmount:false,vendor_id:form.vendor_id||null,payee_name:form.payee_name.trim(),supplier_invoice_no:form.supplier_invoice_no.trim(),supplier_invoice_date:form.supplier_invoice_date||null,payment_mode:form.payment_mode,payment_account:form.payment_account.trim(),paid_by:form.paid_by.trim(),due_date:form.due_date||null,reference_no:form.reference_no.trim(),gst_treatment:form.gst_treatment,is_gst_applicable:form.gst_treatment!=="No GST",taxable_amount:calc.taxable,gst_percent:calc.taxable?gst/calc.taxable*100:0,cgst:calc.cgst,sgst:calc.sgst,igst:calc.igst,discount_amount:calc.discount,other_charges:calc.other,round_off:calc.roundOff,total_amount:calc.total,paid_amount:expenseId?n(form.paid_amount):0,payment_status:expenseId?(n(form.paid_amount)>=calc.total&&calc.total>0?"Paid":n(form.paid_amount)>0?"Partially Paid":"Unpaid"):"Unpaid",status:form.status,remarks:form.remarks.trim(),attachment_url:form.attachment_url||null};
       let id=expenseId;
       if(id) await updateExpense(id,header,calc.normalized,currentCompanyId);
       else id=await saveExpense(header,calc.normalized,currentCompanyId);
@@ -168,7 +173,17 @@ export default function ExpenseEntry(){
     }
   }
 
-  const nextStep=()=>{if(step===1&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===1&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===3&&!calc.normalized.length){setMessage("Add at least one expense item to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
+  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&accountingEnabled&&!form.payment_ledger_id){setMessage("Choose the payment account.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
+
+  if(isAndroid) return <AndroidExpenseFlow
+    step={step} setStep={setStep} form={form} set={set} lines={lines} updateLine={updateLine}
+    calc={calc} vendors={vendors} categories={categories} expenseLedgers={expenseLedgers}
+    paymentLedgers={paymentLedgers} accountingEnabled={accountingEnabled} currentCompany={currentCompany}
+    vendor={vendor} selectVendor={selectVendor} includeGstInAmount={includeGstInAmount}
+    setIncludeGstInAmount={setIncludeGstInAmount} file={file} setFile={setFile}
+    attachmentLink={attachmentLink} message={message} setMessage={setMessage}
+    loading={loading} expenseId={expenseId} nextStep={nextStep} save={save}
+    navigate={navigate} />;
 
   return <main className={isAndroid?"expense-page android-workflow":"expense-page"}>
     <header className="ew-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture autoOpen={openAiPicker} disabled={aiProcessing} onFileSelected={selectedFile=>{setOpenAiPicker(false);navigate(location.pathname,{replace:true,state:null});handleAiDocument(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
@@ -202,5 +217,78 @@ export default function ExpenseEntry(){
     {preview&&<ExpenseDocumentPreview {...preview} onClose={()=>{setPreview(null);reset(false);}}/>}
   </main>;
 }
+
+function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors,categories,expenseLedgers,paymentLedgers,accountingEnabled,currentCompany,vendor,selectVendor,includeGstInAmount,setIncludeGstInAmount,file,setFile,attachmentLink,message,setMessage,loading,expenseId,nextStep,save,navigate}){
+  const [customPayee,setCustomPayee]=useState(false);
+  const moneyValue=value=>money(value);
+  const expenseLedger=expenseLedgers.find(item=>item.id===form.expense_ledger_id);
+  const category=categories.find(item=>item.id===form.category_id);
+  const selectedExpenseName=expenseLedger?.ledger_name||category?.category_name||"";
+  const setAmount=value=>updateLine(0,"rate",value);
+  const setGst=value=>updateLine(0,"gst_percent",value);
+  const paymentModeOptions=[["Cash","▣"],["Bank","▤"],["UPI","UPI"],["Others","•••"]];
+  const visiblePaymentLedgers=paymentLedgers.filter(item=>{
+    const groupName=(item.group_name||"").toLowerCase();
+    if(form.payment_mode==="Cash")return groupName.includes("cash")||groupName.includes("cash in hand");
+    if(form.payment_mode==="Bank"||form.payment_mode==="UPI"||form.payment_mode==="Cheque")return groupName.includes("bank")||groupName.includes("cash")===false;
+    return true;
+  });
+  const paymentOptions=visiblePaymentLedgers.length?visiblePaymentLedgers:paymentLedgers;
+  const paymentName=paymentLedgers.find(item=>item.id===form.payment_ledger_id)?.ledger_name||form.payment_account;
+  const gstTotal=calc.cgst+calc.sgst+calc.igst;
+  const row=(label,value)=><div className="aex-review-row"><span>{label}</span><b>{value||"—"}</b></div>;
+  return <main className="expense-page android-workflow aex-page">
+    <header className="ew-heading aex-heading"><div><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><div className="ai-entry-header-actions"><AiDocumentCapture disabled={false} onFileSelected={selectedFile=>{setFile(selectedFile);}}/><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></div></header>
+    {message&&<div className="ew-alert">{message}<button type="button" onClick={()=>setMessage("")}>×</button></div>}
+    <nav className="android-stepper aex-stepper" aria-label="Expense entry steps">{["Details","Bill & Payment","Tax & Other","Review"].map((label,index)=><button type="button" key={label} className={step===index+1?"active":step>index+1?"complete":""} onClick={()=>{if(index+1<step){setMessage("");setStep(index+1);}}}><b>{step>index+1?"✓":index+1}</b><span>{label}</span></button>)}</nav>
+    <form className="aex-form" onSubmit={event=>event.preventDefault()}>
+      {step===1&&<section className="ew-card aex-card">
+        <h2>▤ &nbsp;Expense Details</h2>
+        <Field label="Expense Voucher No." value={form.expense_no} readOnly/>
+        <Field label="Expense Date *" type="date" value={form.expense_date} onChange={value=>set("expense_date",value)} required/>
+        {accountingEnabled?<label className="ew-field">Expense Ledger *<select value={form.expense_ledger_id||""} onChange={event=>{const id=event.target.value;set("expense_ledger_id",id);const selected=expenseLedgers.find(item=>item.id===id);updateLine(0,"description",selected?.ledger_name||"");}}><option value="">Select expense ledger</option>{expenseLedgers.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!expenseLedgers.length&&<small className="aex-hint">No active Expense ledgers were found in this company's Chart of Accounts. Add an Expense ledger before recording this entry.</small>}</label>:<label className="ew-field">Expense Category *<select value={form.category_id||""} onChange={event=>{const id=event.target.value;set("category_id",id);const selected=categories.find(item=>item.id===id);updateLine(0,"description",selected?.category_name||"");}}><option value="">Select expense category</option>{categories.map(item=><option key={item.id} value={item.id}>{item.category_name}</option>)}</select></label>}
+        <p className="aex-info">ⓘ {accountingEnabled?"Showing active Expense ledgers from your Chart of Accounts.":"Choose from the general expense categories."}</p>
+        <label className="ew-field">Narration / Remarks<textarea rows="3" value={form.remarks} onChange={event=>set("remarks",event.target.value)} placeholder="Enter note (optional)"/></label>
+      </section>}
+      {step===2&&<section className="ew-card aex-card">
+        <h2>♙ &nbsp;Bill & Supplier Details</h2>
+        <label className="ew-field">Supplier / Payee<select value={customPayee?"":form.vendor_id||""} onChange={event=>{setCustomPayee(false);selectVendor(event.target.value);}}><option value="">Select supplier / payee</option>{vendors.map(item=><option key={item.id} value={item.id}>{item.vendor_name}</option>)}</select></label>
+        <button className="aex-add-supplier" type="button" onClick={()=>{setCustomPayee(true);set("vendor_id","");set("payee_name","");}}>＋ Add New Supplier / Other Payee</button>
+        {(customPayee||(!form.vendor_id&&form.payee_name))&&<Field label="Supplier / Payee Name *" value={form.payee_name} onChange={value=>set("payee_name",value)} placeholder="Enter supplier or payee name" required/>}
+        <Field label="Bill / Invoice No." value={form.supplier_invoice_no} onChange={value=>set("supplier_invoice_no",value)} placeholder="Enter bill number"/>
+        <Field label="Bill Date" type="date" value={form.supplier_invoice_date} onChange={value=>set("supplier_invoice_date",value)}/>
+        <div className="aex-section-label">Payment Method *</div>
+        <div className="aex-payment-methods">{paymentModeOptions.map(([name,icon])=><button type="button" key={name} className={form.payment_mode===name?"selected":""} onClick={()=>set("payment_mode",name)}><b>{icon}</b><span>{name}</span></button>)}</div>
+        {accountingEnabled?<label className="ew-field">Payment Account *<select value={form.payment_ledger_id||""} onChange={event=>{const id=event.target.value;set("payment_ledger_id",id);set("payment_account",paymentLedgers.find(item=>item.id===id)?.ledger_name||"");}}><option value="">Select payment account</option>{paymentOptions.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!paymentLedgers.length&&<small className="aex-hint">No active Asset ledgers are available. Create a bank or cash ledger in the Chart of Accounts.</small>}</label>:<Field label="Payment Account" value={form.payment_account} onChange={value=>set("payment_account",value)} placeholder="e.g. HDFC Current Account"/>}
+      </section>}
+      {step===3&&<section className="ew-card aex-card">
+        <h2>▱ &nbsp;Amount & Tax</h2>
+        <Field label="Amount (Taxable) *" value={lines[0]?.rate||"0"} onChange={setAmount} placeholder="Enter amount"/>
+        <div className="aex-two-fields"><label className="ew-field">GST Rate<select value={lines[0]?.gst_percent||"0"} onChange={event=>setGst(event.target.value)}>{["0","5","12","18","28"].map(rate=><option key={rate} value={rate}>{rate}%</option>)}</select></label><label className="ew-field">GST Amount<input value={moneyValue(gstTotal)} readOnly/></label></div>
+        <label className="aex-toggle"><span><b>Include GST in Amount</b><small>Switch on when the entered amount already includes GST</small></span><input type="checkbox" checked={includeGstInAmount} onChange={event=>setIncludeGstInAmount(event.target.checked)}/></label>
+        <Field label="Other Charges" value={form.other_charges} onChange={value=>set("other_charges",value)}/>
+        <Field label="Discount" value={form.discount_amount} onChange={value=>set("discount_amount",value)}/>
+        <Field label="Round Off" value={form.round_off} onChange={value=>set("round_off",value)}/>
+        <div className="aex-total"><span>Total Expense</span><b>{moneyValue(calc.total)}</b></div>
+      </section>}
+      {step===4&&<>
+        <section className="ew-card aex-card"><h2>▤ &nbsp;Review & Confirm</h2>
+          {row("Voucher No.",form.expense_no)}{row("Expense Date",form.expense_date)}{row(accountingEnabled?"Expense Ledger":"Expense Category",selectedExpenseName)}
+          {row("Supplier / Payee",form.payee_name||vendor?.vendor_name)}{row("Bill No.",form.supplier_invoice_no)}{row("Bill Date",form.supplier_invoice_date)}
+          {row("Payment Method",form.payment_mode)}{row("Payment Account",paymentName)}
+          {row("Taxable Amount",moneyValue(calc.taxable))}{row("GST ("+(lines[0]?.gst_percent||0)+"%)",moneyValue(gstTotal))}
+          {row("Other Charges",moneyValue(calc.other))}{row("Discount",moneyValue(calc.discount))}
+          <div className="aex-review-total"><span>Total Expense</span><b>{moneyValue(calc.total)}</b></div>
+        </section>
+        <section className="ew-card aex-card aex-attachments"><h2>♧ &nbsp;Attachments</h2><p>Upload supplier bill or supporting documents</p><label className="ew-upload">＋ Choose PDF, JPG or PNG<input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={event=>setFile(event.target.files?.[0]||null)}/></label>{file&&<div className="ew-file">{file.name}<button type="button" onClick={()=>setFile(null)}>Remove</button></div>}{!file&&attachmentLink&&<a href={attachmentLink} target="_blank" rel="noreferrer">View current attachment</a>}</section>
+      </>}
+      <div className="ew-actions android-workflow-actions aex-actions">
+        <button className="ew-soft" type="button" onClick={()=>step===1?navigate("/app/expense-register"):setStep(current=>current-1)}>{step===1?"Cancel":"← Back"}</button>
+        {step<4?<button className="ew-primary" type="button" onClick={nextStep}>Next →</button>:<><button className="ew-secondary" type="button" disabled={loading} onClick={()=>save(null,true)}>{loading?"Saving…":"Save & Print"}</button><button className="ew-primary" type="button" disabled={loading} onClick={()=>save(null,false)}>{loading?"Saving…":expenseId?"Update Expense":"Save Expense"}</button></>}
+      </div>
+    </form>
+  </main>;
+}
+
 function Field({label,value,onChange,type="text",readOnly=false,placeholder="",required=false}){return <label className="ew-field">{label}<input type={type} value={value??""} onChange={e=>onChange?.(e.target.value)} readOnly={readOnly} placeholder={placeholder} required={required}/></label>}
 function Summary({label,value}){return <div className="ew-summary-row"><span>{label}</span><b>{value}</b></div>}
