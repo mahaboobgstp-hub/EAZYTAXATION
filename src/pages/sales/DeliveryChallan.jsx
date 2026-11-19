@@ -1227,7 +1227,7 @@ const viewChallan = async (challanId) => {
 
             ) : (
 
-                {isNativeAndroid ? (<form className="dc-mobile-wizard" onSubmit={handleSubmit}>
+                isNativeAndroid ? (<form className="dc-mobile-wizard" onSubmit={handleSubmit}>
 {mobileStep === 1 && <section className="dc-mobile-panel">
 <header className="dc-panel-heading"><span>STEP 01 · DETAILS</span><h3>Delivery information</h3><p>Enter the challan and delivery details</p></header>
 <div className="dc-mobile-stepper"><b className="is-current">1 Details</b><b>2 Items</b><b>3 Review</b></div>
