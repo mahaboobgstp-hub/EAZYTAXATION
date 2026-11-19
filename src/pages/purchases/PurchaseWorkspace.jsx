@@ -312,7 +312,7 @@ export default function PurchaseWorkspace({ kind }) {
     </section>}
     <section className="pw-table-card"><div className="pw-table-heading"><h2>{config.title}</h2><span>{filtered.length} records</span></div>
       {loading ? <div className="pw-empty">Loading records…</div> : !filtered.length ? <div className="pw-empty"><strong>No records yet</strong><span>Create a purchase document to see it here.</span><button className="pw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
-      <div className="pw-mobile-cards">{filtered.slice((page-1)*8,page*8).map(row => {
+      <><div className="pw-mobile-cards">{filtered.slice((page-1)*8,page*8).map(row => {
         const cardStatus = kind === "register" ? invoiceStatus(row) : row.status || "Draft";
         const cardNumber = row[config.number] || "—";
         const cardDate = row[config.date];
@@ -342,7 +342,7 @@ export default function PurchaseWorkspace({ kind }) {
           {kind === "debits" && <><td className="pw-docno">{row.debit_note_no}</td><td>{dateText(row.debit_note_date)}</td><td>{vendorName(row)}</td><td>{row.original_purchase_invoice_no || "—"}</td><td>{row.reason || "—"}</td><td className="pw-money">{money(row.taxable_value)}</td><td className="pw-money">{money(gstTotal(row))}</td><td className="pw-money"><strong>{money(row.total_amount)}</strong></td><td><span className={`pw-status ${(row.status||"Draft").toLowerCase().replaceAll(" ","-")}`}>{row.status || "Draft"}</span></td></>}
           <td><div className="pw-menu-wrap"><button className="pw-kebab" aria-label={`Actions for ${row[config.number]}`} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="pw-menu">{["View","Edit","Print","Download","Share"].map(action => <button key={action} onClick={() => onAction(row, action)}>{action}</button>)}</div>}</div></td>
         </tr>;
-      })}</tbody></table></div>}
+      })}</tbody></table></div></>}
       {!!filtered.length && <footer className="pw-table-footer"><span>Showing {Math.min(filtered.length,(page-1)*8+1)}–{Math.min(page*8,filtered.length)} of {filtered.length} records</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button><span>{page}</span><button disabled={page*8>=filtered.length} onClick={()=>setPage(p=>p+1)}>›</button></div></footer>}
     </section></>}
     {dialog && <div className="pw-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setDialog(false);}}><section className="pw-modal" role="dialog" aria-modal="true"><header><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases</p><h2>{editing ? `Edit ${config.title.slice(0,-1)}` : actionLabel}</h2></div><button className="pw-close" onClick={()=>setDialog(false)}>×</button></header><form noValidate={isAndroid} onSubmit={save}>
