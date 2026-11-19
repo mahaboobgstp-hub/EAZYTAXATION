@@ -312,6 +312,19 @@ export default function PurchaseWorkspace({ kind }) {
     </section>}
     <section className="pw-table-card"><div className="pw-table-heading"><h2>{config.title}</h2><span>{filtered.length} records</span></div>
       {loading ? <div className="pw-empty">Loading records…</div> : !filtered.length ? <div className="pw-empty"><strong>No records yet</strong><span>Create a purchase document to see it here.</span><button className="pw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
+      <div className="pw-mobile-cards">{filtered.slice((page-1)*8,page*8).map(row => {
+        const cardStatus = kind === "register" ? invoiceStatus(row) : row.status || "Draft";
+        const cardNumber = row[config.number] || "—";
+        const cardDate = row[config.date];
+        const cardAmount = kind === "register" ? row.grand_total : kind === "returns" ? row.total_credit : row.total_amount;
+        const originalNumber = row.supplier_invoice_no || row.original_purchase_invoice_no || "";
+        return <article className="pw-mobile-card" key={row.id}>
+          <div className="pw-mobile-card-top"><strong>{cardNumber}</strong><time>{dateText(cardDate)}</time></div>
+          <div className="pw-mobile-card-supplier">{vendorName(row)}</div>
+          {originalNumber && <div className="pw-mobile-card-reference">Supplier Invoice: <strong>{originalNumber}</strong></div>}
+          <div className="pw-mobile-card-bottom"><span className={`pw-status ${cardStatus.toLowerCase().replaceAll(" ","-")}`}>{cardStatus}</span><strong>{money(cardAmount)}</strong><div className="pw-menu-wrap"><button className="pw-kebab" aria-label={`Actions for ${cardNumber}`} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>⋮</button>{menuId === row.id && <div className="pw-menu">{["View","Edit","Print","Download","Share"].map(action => <button key={action} onClick={() => onAction(row, action)}>{action}</button>)}</div>}</div></div>
+        </article>;
+      })}</div>
       <div className="pw-table-scroll"><table><thead><tr>
         {kind === "register" && ["Purchase No.", "Supplier Invoice No.", "Date", "Supplier", "GSTIN", "Taxable Value", "GST", "Total Amount", "Status", "Actions"].map(x => <th key={x}>{x}</th>)}
         {kind === "orders" && ["PO No.", "Order Date", "Supplier", "Expected Delivery", "Items", "Order Total", "Received", "Status", "Actions"].map(x => <th key={x}>{x}</th>)}
