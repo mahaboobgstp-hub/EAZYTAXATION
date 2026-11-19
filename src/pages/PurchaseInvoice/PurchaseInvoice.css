@@ -73,16 +73,54 @@
 }
 
 
-/* Keep purchase-step navigation visible above the native Android bottom navigation. */
+/* Purchase step actions remain in normal document flow, after the active form step. */
 .purchase-page.android-workflow {
-  padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
 }
 .purchase-page.android-workflow .android-workflow-actions {
-  position: fixed !important;
-  z-index: 950 !important;
-  bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
-  left: 0 !important;
-  right: 0 !important;
+  position: static !important;
+  z-index: auto !important;
+  inset: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 14px 0 0 !important;
+  padding: 0 0 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.purchase-page.android-workflow .pi-items-screen-summary {
+  display: none !important;
+}
+.purchase-page.android-workflow .pi-items-table .pi-item-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 34px !important;
+  background-color: #fff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234b5f79' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 15px 15px !important;
+}
+.purchase-page.android-workflow .pi-invoice-number {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 5px;
+  padding: 6px 10px;
+  border: 1px solid #dce6f1;
+  border-radius: 8px;
+  background: #f2f6fc;
+  font-size: 12px;
+}
+.purchase-page.android-workflow .pi-invoice-number span {
+  color: #66758a;
+  font-weight: 600;
+}
+.purchase-page.android-workflow .pi-invoice-number strong {
+  color: #155eef;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Android purchase invoice tax summary and transporter accordion. */
