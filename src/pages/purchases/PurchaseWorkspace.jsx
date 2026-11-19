@@ -42,6 +42,7 @@ export default function PurchaseWorkspace({ kind }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [menuId, setMenuId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dialog, setDialog] = useState(false);
@@ -294,17 +295,21 @@ export default function PurchaseWorkspace({ kind }) {
   };
 
   return <main className="purchase-workspace">
-    <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / {config.title}</p><h1>{config.title}</h1>{kind === "orders" && <p className="pw-subtitle">Create, track and manage purchase orders with suppliers.</p>}</div><button className="pw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
+    <header className="pw-heading"><div><h1>{config.title}</h1>{kind === "orders" && <p className="pw-subtitle">Create, track and manage purchase orders with suppliers.</p>}</div><button className="pw-primary" onClick={createAction}>＋ {actionLabel}</button></header>
     {message && <div className="pw-alert" role="alert">{message}<button onClick={() => setMessage("")}>×</button></div>}
     {!currentCompanyId ? <div className="pw-empty">Choose a current company from the sidebar to view purchase records.</div> : <>
-    <section className={`pw-metrics pw-metrics-${metrics.length}`}>{config.metrics.map((title, i) => <article className={`pw-metric pw-tone-${i}`} key={title}><span>{title}</span><strong>{metrics[i]}</strong></article>)}</section>
-    <section className="pw-filters">
-      <label className="pw-search"><span>⌕</span><input placeholder={kind === "register" ? "Search by Purchase No. / Supplier Inv. No." : `Search by ${config.title.toLowerCase()} or supplier...`} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></label>
-      <label>Supplier<select value={vendorFilter} onChange={e => setVendorFilter(e.target.value)}><option>All Suppliers</option>{vendors.map(v => <option key={v.id} value={v.id}>{v.vendor_name}</option>)}</select></label>
-      <label>Status<select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All Statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}</select></label>
-      <label>Date from<input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>Date to<input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
-      <button className="pw-apply" onClick={() => setPage(1)}>Apply</button><button className="pw-reset" onClick={() => { setSearch(""); setVendorFilter("All Suppliers"); setStatusFilter("All Statuses"); setDateFrom(""); setDateTo(""); setPage(1); }}>Reset</button>
+
+    <section className="pw-toolbar">
+      <button type="button" className="pw-universal-filter" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(v => !v)}>☷ Filter <span>⌄</span></button>
+      <label className="pw-search"><span>⌕</span><input placeholder="Search document number, supplier or reference" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></label>
     </section>
+    {filtersOpen && <section className="pw-filter-panel">
+      <label>Supplier<select value={vendorFilter} onChange={e => {setVendorFilter(e.target.value);setPage(1);}}><option>All Suppliers</option>{vendors.map(v => <option key={v.id} value={v.id}>{v.vendor_name}</option>)}</select></label>
+      <label>Status<select value={statusFilter} onChange={e => {setStatusFilter(e.target.value);setPage(1);}}><option>All Statuses</option>{statuses.map(s => <option key={s}>{s}</option>)}</select></label>
+      <label>From<input type="date" value={dateFrom} onChange={e => {setDateFrom(e.target.value);setPage(1);}} /></label>
+      <label>To<input type="date" value={dateTo} onChange={e => {setDateTo(e.target.value);setPage(1);}} /></label>
+      <button type="button" className="pw-reset" onClick={() => {setVendorFilter("All Suppliers");setStatusFilter("All Statuses");setDateFrom("");setDateTo("");setPage(1);}}>Clear filters</button>
+    </section>}
     <section className="pw-table-card"><div className="pw-table-heading"><h2>{config.title}</h2><span>{filtered.length} records</span></div>
       {loading ? <div className="pw-empty">Loading records…</div> : !filtered.length ? <div className="pw-empty"><strong>No records yet</strong><span>Create a purchase document to see it here.</span><button className="pw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
       <div className="pw-table-scroll"><table><thead><tr>
