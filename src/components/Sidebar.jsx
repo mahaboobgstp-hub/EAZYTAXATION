@@ -62,6 +62,7 @@ const MODULES = {
           ["Add Purchase Invoice", "/app/purchases"],
           ["Purchase Register", "/app/purchase-register"],
           ["Purchase Orders", "/app/purchase-orders"],
+          ["Goods Receipt (GRN)", "/app/goods-receipts"],
           ["Purchase Returns", "/app/purchase-returns"],
           ["Debit Notes", "/app/debit-notes"],
         ],
@@ -435,6 +436,7 @@ const AVAILABLE_ROUTES = new Set([
   "/app/purchases",
   "/app/purchase-register",
   "/app/purchase-orders",
+  "/app/goods-receipts",
   "/app/purchase-returns",
   "/app/debit-notes",
   "/app/expenses",
@@ -584,7 +586,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
           links: group.title === "Sales"
             ? group.links.filter(([, path]) => ["/app/sales", "/app/sales-register", "/app/quotation", "/app/sales-returns", "/app/sales-orders", "/app/delivery-challans", "/app/credit-notes"].includes(path))
             : group.title === "Purchases"
-              ? group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/purchase-returns", "/app/debit-notes"].includes(path))
+              ? group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/goods-receipts", "/app/purchase-returns", "/app/debit-notes"].includes(path))
               : group.links.filter(([, path]) => ["/app/expenses", "/app/expense-register", "/app/expense-categories", "/app/expense-reports"].includes(path))
         }))
     : currentModule.groups;
