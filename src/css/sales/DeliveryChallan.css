@@ -773,3 +773,86 @@
   .dc-mobile-action-row { grid-template-columns: .72fr 1.28fr; }
 }
 
+
+
+/* Approved Screen 1 — challan details design */
+.dc-mobile-design-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dfe5ef;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(22, 40, 70, .035);
+}
+.dc-mobile-design-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 2px;
+}
+.dc-mobile-design-card-heading h3 {
+  margin: 0;
+  color: #17243a;
+  font-size: 17px;
+  font-weight: 750;
+}
+.dc-design-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: #1554d1;
+  background: #edf3ff;
+  font-size: 21px;
+  font-weight: 700;
+}
+.dc-mobile-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  min-width: 0;
+}
+.dc-mobile-design-card .dc-mobile-field {
+  gap: 7px;
+}
+.dc-mobile-design-card .dc-mobile-field label {
+  color: #1f2c40;
+  font-size: 13px;
+  font-weight: 650;
+}
+.dc-mobile-design-card .dc-mobile-field label em {
+  color: #dc4545;
+  font-style: normal;
+}
+.dc-mobile-design-card .dc-mobile-field input,
+.dc-mobile-design-card .dc-mobile-field select,
+.dc-mobile-design-card .dc-mobile-field textarea {
+  min-height: 48px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #1e293b;
+  font-size: 14px;
+}
+.dc-mobile-design-card .dc-mobile-field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.dc-mobile-wizard > .dc-mobile-panel > .dc-mobile-primary {
+  min-height: 56px;
+  margin-top: 1px;
+  border-radius: 12px;
+  background: #1554d1;
+  box-shadow: 0 3px 8px rgba(21, 84, 209, .14);
+}
+@media (max-width: 520px) {
+  .dc-mobile-design-card { padding: 15px; gap: 13px; }
+  .dc-mobile-two-column { grid-template-columns: minmax(0, 1fr); gap: 13px; }
+  .dc-mobile-design-card-heading h3 { font-size: 16px; }
+}
