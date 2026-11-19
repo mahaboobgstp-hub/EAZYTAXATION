@@ -35,7 +35,7 @@ export default function ExpenseEntry(){
   const [aiProcessing,setAiProcessing]=useState(false),[aiValidation,setAiValidation]=useState(null);
   const companyName=currentCompany?.company_name||"";
 
-  useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);setExpenseLedgers([]);setPaymentLedgers([]);return;}getExpenseMasters(currentCompanyId,accountingEnabled).then(({vendors,categories,expenseLedgers,paymentLedgers})=>{setVendors(vendors);setCategories(categories);setExpenseLedgers(expenseLedgers||[]);setPaymentLedgers(paymentLedgers||[]);}).catch(e=>setMessage(e.message));},[currentCompanyId,accountingEnabled]);
+  useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);setExpenseLedgers([]);setPaymentLedgers([]);return;}getExpenseMasters(currentCompanyId,accountingEnabled,isAndroid).then(({vendors,categories,expenseLedgers,paymentLedgers})=>{setVendors(vendors);setCategories(categories);setExpenseLedgers(expenseLedgers||[]);setPaymentLedgers(paymentLedgers||[]);}).catch(e=>setMessage(e.message));},[currentCompanyId,accountingEnabled,isAndroid]);
   useEffect(()=>{
     if(!currentCompanyId)return;
     const editId=location.state?.editExpenseId;
@@ -88,6 +88,7 @@ export default function ExpenseEntry(){
     if(isAndroid&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger from your Chart of Accounts.");return;}
     if((!isAndroid||!accountingEnabled)&&!form.category_id){setMessage("Choose an expense category.");return;}
     if(!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter the supplier or payee.");return;}
+    if(isAndroid&&!form.payment_ledger_id){setMessage("Select the Cash or Bank ledger from which this expense is paid.");return;}
     if(!calc.normalized.length){setMessage("Add at least one expense line.");return;}
     setLoading(true);
     try{
@@ -174,7 +175,7 @@ export default function ExpenseEntry(){
     }
   }
 
-  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&accountingEnabled&&!form.payment_ledger_id){setMessage("Choose the payment account.");return;}if(step===3&&n(lines[0]?.rate)<=0){setMessage("Enter a taxable amount greater than zero.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
+  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&!form.payment_ledger_id){setMessage("Select the Cash or Bank ledger from which this expense is paid.");return;}if(step===3&&n(lines[0]?.rate)<=0){setMessage("Enter a taxable amount greater than zero.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
 
   if(isAndroid) return <AndroidExpenseFlow
     step={step} setStep={setStep} form={form} set={set} lines={lines} updateLine={updateLine}
@@ -227,15 +228,16 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
   const selectedExpenseName=expenseLedger?.ledger_name||category?.category_name||"";
   const setAmount=value=>updateLine(0,"rate",value);
   const setGst=value=>updateLine(0,"gst_percent",value);
-  const paymentModeOptions=[["Cash","▣"],["Bank","▤"],["UPI","UPI"],["Others","•••"]];
   const visiblePaymentLedgers=paymentLedgers.filter(item=>{
     const groupName=(item.group_name||"").toLowerCase();
     const ledgerName=(item.ledger_name||"").toLowerCase();
-    if(form.payment_mode==="Cash")return groupName.includes("cash")||ledgerName.includes("cash");
-    if(form.payment_mode==="Bank"||form.payment_mode==="UPI"||form.payment_mode==="Cheque")return item.party_type==="Bank"||groupName.includes("bank")||ledgerName.includes("bank");
-    return true;
+    const isCash=groupName.includes("cash")||ledgerName.includes("cash");
+    const isBank=item.party_type==="Bank"||groupName.includes("bank")||ledgerName.includes("bank");
+    if(form.payment_mode==="Cash")return isCash;
+    if(["Bank","UPI","Cheque","Card"].includes(form.payment_mode))return isBank;
+    return isCash||isBank;
   });
-  const paymentOptions=visiblePaymentLedgers.length?visiblePaymentLedgers:paymentLedgers;
+  const paymentOptions=visiblePaymentLedgers;
   const paymentName=paymentLedgers.find(item=>item.id===form.payment_ledger_id)?.ledger_name||form.payment_account;
   const gstTotal=calc.cgst+calc.sgst+calc.igst;
   const row=(label,value)=><div className="aex-review-row"><span>{label}</span><b>{value||"—"}</b></div>;
@@ -259,9 +261,8 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
         {(customPayee||(!form.vendor_id&&form.payee_name))&&<Field label="Supplier / Payee Name *" value={form.payee_name} onChange={value=>set("payee_name",value)} placeholder="Enter supplier or payee name" required/>}
         <Field label="Bill / Invoice No." value={form.supplier_invoice_no} onChange={value=>set("supplier_invoice_no",value)} placeholder="Enter bill number"/>
         <Field label="Bill Date" type="date" value={form.supplier_invoice_date} onChange={value=>set("supplier_invoice_date",value)}/>
-        <div className="aex-section-label">Payment Method *</div>
-        <div className="aex-payment-methods">{paymentModeOptions.map(([name,icon])=><button type="button" key={name} className={form.payment_mode===name?"selected":""} onClick={()=>{set("payment_mode",name);set("payment_ledger_id","");set("payment_account","");}}><b>{icon}</b><span>{name}</span></button>)}</div>
-        {accountingEnabled?<label className="ew-field">Payment Account *<select value={form.payment_ledger_id||""} onChange={event=>{const id=event.target.value;set("payment_ledger_id",id);set("payment_account",paymentLedgers.find(item=>item.id===id)?.ledger_name||"");}}><option value="">Select payment account</option>{paymentOptions.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!paymentLedgers.length&&<small className="aex-hint">No active Asset ledgers are available. Create a bank or cash ledger in the Chart of Accounts.</small>}</label>:<Field label="Payment Account" value={form.payment_account} onChange={value=>set("payment_account",value)} placeholder="e.g. HDFC Current Account"/>}
+        <label className="ew-field">Payment Method *<select value={form.payment_mode} onChange={event=>{set("payment_mode",event.target.value);set("payment_ledger_id","");set("payment_account","");}}><option value="Bank">Bank</option><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Cheque">Cheque</option><option value="Card">Card</option><option value="Others">Others</option></select></label>
+        <label className="ew-field">Paid Through Ledger *<select value={form.payment_ledger_id||""} onChange={event=>{const id=event.target.value;set("payment_ledger_id",id);set("payment_account",paymentOptions.find(item=>item.id===id)?.ledger_name||"");}}><option value="">Select {form.payment_mode==="Cash"?"Cash ledger":["Bank","UPI","Cheque","Card"].includes(form.payment_mode)?"Bank ledger":"Cash / Bank ledger"}</option>{paymentOptions.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!paymentOptions.length&&<small className="aex-hint">No matching active {form.payment_mode==="Cash"?"Cash":"Bank"} ledger was found in this company's Chart of Accounts. Create the ledger there, then return here to select it.</small>}</label>
       </section>}
       {step===3&&<section className="ew-card aex-card">
         <h2>▱ &nbsp;Amount & Tax</h2>
