@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getStates }
 from '../../services/stateService';
+import { useCompany } from '../../context/CompanyContext';
 
 import '../../css/masters/Vendors.css';
 
@@ -13,6 +14,7 @@ import {
 
 function Vendors() {
 
+  const { currentCompanyId } = useCompany();
   const [vendors, setVendors] = useState([]);
   const [states, setStates] = useState([]);
   const [editingId, setEditingId] = useState(null);
