@@ -1922,7 +1922,7 @@ const viewChallan = async (challanId) => {
                         </>}
                     </div>
 
-                </form>)}
+                </form>))}
 
 {printMode && selectedChallan && (
 
