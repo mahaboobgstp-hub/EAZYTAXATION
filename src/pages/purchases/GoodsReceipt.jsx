@@ -24,6 +24,8 @@ export default function GoodsReceipt() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [typeFilter, setTypeFilter] = useState("all");
   const [form, setForm] = useState({ receipt_no: "", receipt_date: today(), receipt_type: "purchase_order", vendor_id: "", purchase_order_id: "", supplier_challan_no: "", received_by: "", remarks: "" });
   const [lines, setLines] = useState([blankLine()]);
 
@@ -61,7 +63,7 @@ export default function GoodsReceipt() {
     accepted: sum.accepted + num(line.accepted_qty),
     damaged: sum.damaged + num(line.damaged_qty)
   }), { received: 0, accepted: 0, damaged: 0 }), [lines]);
-  const visibleRows = rows.filter(row => [row.receipt_no, row.vendor_name, row.purchase_order_no, row.supplier_challan_no].join(" ").toLowerCase().includes(search.toLowerCase()));
+  const visibleRows = rows.filter(row => [row.receipt_no, row.vendor_name, row.purchase_order_no, row.supplier_challan_no].join(" ").toLowerCase().includes(search.toLowerCase()) && (typeFilter === "all" || row.receipt_type === typeFilter));
 
   const updateForm = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
   const updateLine = (index, key, value) => setLines(prev => prev.map((line, i) => i === index ? { ...line, [key]: value } : line));
@@ -133,22 +135,20 @@ export default function GoodsReceipt() {
 
   return <main className={`grn-page ${isAndroid ? "grn-android" : ""}`}>
     <header className="grn-heading">
-      <div><span className="grn-eyebrow">PURCHASES</span><h1>Goods Receipt Notes</h1><p>Record and verify goods physically received from suppliers</p></div>
+      <div><h1>Goods Receipt Notes</h1></div>
       {!creating && <button className="grn-primary" onClick={openCreate}>＋ New Goods Receipt</button>}
     </header>
     {!currentCompanyId && <div className="grn-alert">Select a company to view Goods Receipt Notes.</div>}
     {error && <div className="grn-alert">{error}<button onClick={() => setError("")}>×</button></div>}
     {!creating ? <>
-      <div className="grn-toolbar"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search GRN, supplier or challan number"/><button onClick={load}>Refresh</button></div>
+      <div className="grn-toolbar"><button type="button" className="grn-filter-trigger" onClick={() => setShowFilters(v => !v)}>☷ Filter</button><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search GRN, supplier or challan number"/></div>{showFilters && <div className="grn-filter-panel"><label>Receipt Type<select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}><option value="all">All receipts</option><option value="purchase_order">Against Purchase Order</option><option value="direct">Direct Receipt</option></select></label><button type="button" onClick={()=>setTypeFilter("all")}>Clear</button></div>}
       <section className="grn-table-card">
-        {loading ? <div className="grn-empty">Loading Goods Receipt Notes…</div> : visibleRows.length ? <div className="grn-table-scroll"><table><thead><tr><th>GRN Number</th><th>Date</th><th>Supplier</th><th>Purchase Order</th><th>Received</th><th>Accepted</th><th>Damaged</th><th>Status</th></tr></thead><tbody>
-          {visibleRows.map(row => <tr key={row.id}><td><strong>{row.receipt_no}</strong></td><td>{row.receipt_date}</td><td>{row.vendor_name}</td><td>{row.purchase_order_no || "Direct Receipt"}</td><td>{num(row.total_received_qty)}</td><td>{num(row.accepted_qty)}</td><td>{num(row.damaged_qty)}</td><td><span className="grn-status">{row.status}</span></td></tr>)}
-        </tbody></table></div> : <div className="grn-empty"><strong>No Goods Receipt Notes yet</strong><span>Create a GRN when goods arrive from a supplier.</span></div>}
+        {loading ? <div className="grn-empty">Loading Goods Receipt Notes…</div> : visibleRows.length ? <div className="grn-transaction-list">{visibleRows.map(row => <article className="grn-transaction-card" key={row.id}><div className="grn-card-top"><strong>{row.receipt_no}</strong><time>{row.receipt_date}</time></div><div className="grn-card-supplier">{row.vendor_name || "—"}</div><div className="grn-card-meta"><span>{row.purchase_order_no || "Direct Receipt"}</span><span className="grn-status">{row.status}</span></div><div className="grn-card-quantities"><span>Received <b>{num(row.total_received_qty)}</b></span><span>Accepted <b>{num(row.accepted_qty)}</b></span><span>Damaged <b>{num(row.damaged_qty)}</b></span></div></article>)}</div></div> : <div className="grn-empty"><strong>No Goods Receipt Notes yet</strong><span>Create a GRN when goods arrive from a supplier.</span></div>}
       </section>
     </> : <>
       <div className="grn-form-top"><button className="grn-back-link" onClick={() => setCreating(false)}>← Back to Goods Receipt Notes</button><div className="grn-stepper">{["Details","Items","Review"].map((label,i)=><button key={label} className={step===i+1?"active":step>i+1?"done":""} onClick={() => { if(i+1<step) setStep(i+1); }}><b>{step>i+1?"✓":i+1}</b>{label}</button>)}</div></div>
       {step===1 && <section className="grn-panel">
-        <div className="grn-panel-title"><span>▤</span><div><h2>GRN Details</h2><p>Enter the receipt and supplier information</p></div></div>
+        <div className="grn-panel-title"><h2>GRN Details</h2></div>
         <div className="grn-grid">
           <label>GRN Number <em>*</em><input value={form.receipt_no} onChange={e=>updateForm("receipt_no",e.target.value)} placeholder="GRN00001"/></label>
           <label>Receipt Date <em>*</em><input type="date" value={form.receipt_date} onChange={e=>updateForm("receipt_date",e.target.value)}/></label>
@@ -161,7 +161,7 @@ export default function GoodsReceipt() {
         <button className="grn-primary grn-full" onClick={()=>{if(validateStep())setStep(2);}}>Continue to Items →</button>
       </section>}
       {step===2 && <section className="grn-panel">
-        <div className="grn-panel-title"><span>⬡</span><div><h2>Items Received</h2><p>Record actual quantities received and accepted</p></div></div>
+        <div className="grn-panel-title"><h2>Items Received</h2></div>
         <div className="grn-item-list">{lines.map((line,index)=><article className="grn-item-card" key={index}>
           <header><strong>Item {index+1}</strong>{lines.length>1&&<button className="grn-remove" onClick={()=>setLines(prev=>prev.filter((_,i)=>i!==index))}>×</button>}</header>
           <label>Item <em>*</em>{form.receipt_type==="purchase_order"&&orderItems.length>0?<input value={line.item_name} readOnly/>:<select value={line.item_id} onChange={e=>chooseItem(index,e.target.value)}><option value="">Select Item</option>{items.map(item=><option key={item.id} value={item.id}>{item.item_name}</option>)}</select>}</label>
@@ -177,7 +177,7 @@ export default function GoodsReceipt() {
         <div className="grn-actions"><button className="grn-secondary" onClick={()=>setStep(1)}>Back</button><button className="grn-primary" onClick={()=>{if(validateStep())setStep(3);}}>Review GRN →</button></div>
       </section>}
       {step===3 && <section className="grn-panel">
-        <div className="grn-panel-title"><span>▣</span><div><h2>Review Goods Receipt</h2><p>Verify the received quantities before saving</p></div></div>
+        <div className="grn-panel-title"><h2>Review Goods Receipt</h2></div>
         <article className="grn-review-card"><header><h3>GRN Details</h3><button onClick={()=>setStep(1)}>Edit</button></header>
           {[["GRN Number",form.receipt_no],["Receipt Date",form.receipt_date],["Supplier",selectedVendor?.vendor_name],["Receipt Type",form.receipt_type==="purchase_order"?"Against Purchase Order":"Direct Receipt"],["Purchase Order",orders.find(o=>o.id===form.purchase_order_id)?.order_no||"—"],["Supplier Challan No.",form.supplier_challan_no||"—"]].map(([label,value])=><div className="grn-review-row" key={label}><span>{label}</span><strong>{value||"—"}</strong></div>)}
         </article>
