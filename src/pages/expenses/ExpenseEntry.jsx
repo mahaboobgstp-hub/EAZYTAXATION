@@ -232,8 +232,12 @@ export default function ExpenseEntry(){
   </main>;
 }
 
-function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors,categories,expenseLedgers,paymentLedgers,accountingEnabled,currentCompany,vendor,selectVendor,includeGstInAmount,setIncludeGstInAmount,file,setFile,attachmentLink,message,setMessage,loading,expenseId,nextStep,save,navigate,openAiPicker,setOpenAiPicker,aiProcessing,handleAiDocument,location}){
+function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors,categories,expenseLedgers,paymentLedgers,accountingEnabled,currentCompany,vendor,selectVendor,includeGstInAmount,setIncludeGstInAmount,file,setFile,attachmentLink,message,setMessage,loading,expenseId,nextStep,save,navigate,openAiPicker,setOpenAiPicker,aiProcessing,handleAiDocument,location,onCreateBankAccount}){
   const [customPayee,setCustomPayee]=useState(false);
+  const [showBankModal,setShowBankModal]=useState(false);
+  const [savingBank,setSavingBank]=useState(false);
+  const [bankError,setBankError]=useState("");
+  const [bankForm,setBankForm]=useState({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current",opening_balance:"0",opening_balance_type:"Debit"});
   const moneyValue=value=>money(value);
   const expenseLedger=expenseLedgers.find(item=>item.id===form.expense_ledger_id);
   const category=categories.find(item=>item.id===form.category_id);
@@ -244,13 +248,24 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
     const groupName=(item.group_name||"").toLowerCase();
     const ledgerName=(item.ledger_name||"").toLowerCase();
     const isCash=groupName.includes("cash")||ledgerName.includes("cash");
-    const isBank=item.party_type==="Bank"||groupName.includes("bank")||ledgerName.includes("bank");
+    const isBank=item.party_type==="Bank"||groupName.includes("bank")||ledgerName.includes("bank")||Boolean(item.bank_profile);
     if(form.payment_mode==="Cash")return isCash;
     if(["Bank","UPI","Cheque","Card"].includes(form.payment_mode))return isBank;
     return isCash||isBank;
   });
   const paymentOptions=visiblePaymentLedgers;
-  const paymentName=paymentLedgers.find(item=>item.id===form.payment_ledger_id)?.ledger_name||form.payment_account;
+  const isBankPayment=["Bank","UPI","Cheque","Card","Others"].includes(form.payment_mode);
+  const paymentName=paymentLedgers.find(item=>item.id===form.payment_ledger_id)?.ledger_name||"";
+  const saveBankAccount=async event=>{
+    event.preventDefault();setBankError("");setSavingBank(true);
+    try{
+      const created=await onCreateBankAccount(bankForm);
+      setShowBankModal(false);
+      setBankForm({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current",opening_balance:"0",opening_balance_type:"Debit"});
+      setMessage("Bank account created and linked to its Chart of Accounts ledger.");
+    }catch(error){setBankError(error.message||"Unable to create bank account.");}
+    finally{setSavingBank(false);}
+  };
   const gstTotal=calc.cgst+calc.sgst+calc.igst;
   const row=(label,value)=><div className="aex-review-row"><span>{label}</span><b>{value||"—"}</b></div>;
   return <main className="expense-page android-workflow aex-page">
@@ -274,7 +289,22 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
         <Field label="Bill / Invoice No." value={form.supplier_invoice_no} onChange={value=>set("supplier_invoice_no",value)} placeholder="Enter bill number"/>
         <Field label="Bill Date" type="date" value={form.supplier_invoice_date} onChange={value=>set("supplier_invoice_date",value)}/>
         <label className="ew-field">Payment Method *<select value={form.payment_mode} onChange={event=>{set("payment_mode",event.target.value);set("payment_ledger_id","");set("payment_account","");}}><option value="Bank">Bank</option><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Cheque">Cheque</option><option value="Card">Card</option><option value="Others">Others</option></select></label>
-        <label className="ew-field">Paid Through Ledger *<select value={form.payment_ledger_id||""} onChange={event=>{const id=event.target.value;set("payment_ledger_id",id);set("payment_account",paymentOptions.find(item=>item.id===id)?.ledger_name||"");}}><option value="">Select {form.payment_mode==="Cash"?"Cash ledger":["Bank","UPI","Cheque","Card"].includes(form.payment_mode)?"Bank ledger":"Cash / Bank ledger"}</option>{paymentOptions.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!paymentOptions.length&&<small className="aex-hint">No matching active {form.payment_mode==="Cash"?"Cash":"Bank"} ledger was found in this company's Chart of Accounts. Create the ledger there, then return here to select it.</small>}</label>
+        <label className="ew-field">{form.payment_mode==="Cash"?"Cash Ledger *":"Bank Account / Ledger *"}<select value={form.payment_ledger_id||""} onChange={event=>{const id=event.target.value;set("payment_ledger_id",id);set("payment_account",paymentOptions.find(item=>item.id===id)?.ledger_name||"");}}><option value="">{form.payment_mode==="Cash"?"Select Cash ledger":"Select Bank account"}</option>{paymentOptions.map(item=><option key={item.id} value={item.id}>{item.ledger_name}{item.bank_profile?.account_number_masked?" · "+item.bank_profile.account_number_masked:""}</option>)}</select>{!paymentOptions.length&&<small className="aex-hint">No matching {form.payment_mode==="Cash"?"Cash ledger":"bank account"} is available for this company.</small>}</label>
+        {isBankPayment&&<button className="aex-add-bank" type="button" onClick={()=>{setBankError("");setShowBankModal(true);}}>＋ Add Bank Account</button>}
+        {showBankModal&&<div className="aex-modal-backdrop"><form className="aex-bank-modal" onSubmit={saveBankAccount}>
+          <div className="aex-bank-modal-heading"><div><h3>Add Bank Account</h3><p>This will create a linked Bank ledger in the Chart of Accounts.</p></div><button type="button" onClick={()=>setShowBankModal(false)}>×</button></div>
+          {bankError&&<div className="aex-bank-error">{bankError}</div>}
+          <label className="ew-field">Bank Name *<input required value={bankForm.bank_name} onChange={event=>setBankForm(p=>({...p,bank_name:event.target.value}))} placeholder="e.g. HDFC Bank"/></label>
+          <label className="ew-field">Account Holder Name<input value={bankForm.account_holder_name} onChange={event=>setBankForm(p=>({...p,account_holder_name:event.target.value}))} placeholder="Name as per bank records"/></label>
+          <label className="ew-field">Account Number *<input required inputMode="numeric" maxLength={18} value={bankForm.account_number} onChange={event=>setBankForm(p=>({...p,account_number:event.target.value.replace(/\\D/g,"").slice(0,18)}))} placeholder="Enter 9–18 digit account number"/></label>
+          <label className="ew-field">IFSC Code *<input required maxLength={11} value={bankForm.ifsc} onChange={event=>setBankForm(p=>({...p,ifsc:event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,11)}))} placeholder="e.g. HDFC0001234"/></label>
+          <label className="ew-field">Branch Name<input value={bankForm.branch_name} onChange={event=>setBankForm(p=>({...p,branch_name:event.target.value}))} placeholder="Branch name"/></label>
+          <label className="ew-field">Account Type<select value={bankForm.account_type} onChange={event=>setBankForm(p=>({...p,account_type:event.target.value}))}><option>Current</option><option>Savings</option><option>Cash Credit</option><option>Overdraft</option></select></label>
+          <label className="ew-field">Opening Balance (₹)<input type="number" min="0" step="0.01" value={bankForm.opening_balance} onChange={event=>setBankForm(p=>({...p,opening_balance:event.target.value}))}/></label>
+          <label className="ew-field">Opening Balance Type<select value={bankForm.opening_balance_type} onChange={event=>setBankForm(p=>({...p,opening_balance_type:event.target.value}))}><option>Debit</option><option>Credit</option></select></label>
+          <p className="aex-bank-privacy">Only the last four digits of the account number are stored in the bank account profile.</p>
+          <div className="aex-bank-actions"><button type="button" className="ew-soft" onClick={()=>setShowBankModal(false)}>Cancel</button><button type="submit" className="ew-primary" disabled={savingBank}>{savingBank?"Creating…":"Create Bank Account"}</button></div>
+        </form></div>}
       </section>}
       {step===3&&<section className="ew-card aex-card">
         <h2>▱ &nbsp;Amount & Tax</h2>
