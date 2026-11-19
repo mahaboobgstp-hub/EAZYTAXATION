@@ -82,20 +82,23 @@ export async function getExpenses(companyId) {
     .eq("company_id", companyId).order("expense_date", { ascending: false });
   if (error) throw error;
   const rows = data || [];
-  const ids = [...new Set(rows.flatMap(row => [row.vendor_id, row.category_id]).filter(Boolean))];
-  const [vendors, categories] = await Promise.all([
+  const ids = [...new Set(rows.flatMap(row => [row.vendor_id, row.category_id, row.expense_ledger_id]).filter(Boolean))];
+  const [vendors, categories, ledgers] = await Promise.all([
     ids.length ? supabase.from("vendors").select("id,vendor_name,gstin,state").in("id", rows.map(x => x.vendor_id).filter(Boolean)) : Promise.resolve({ data: [] }),
-    ids.length ? supabase.from("expense_categories").select("id,category_name").in("id", rows.map(x => x.category_id).filter(Boolean)) : Promise.resolve({ data: [] })
+    ids.length ? supabase.from("expense_categories").select("id,category_name").in("id", rows.map(x => x.category_id).filter(Boolean)) : Promise.resolve({ data: [] }),
+    rows.some(x => x.expense_ledger_id) ? supabase.from("chart_of_accounts").select("id,ledger_name").eq("company_id", companyId).in("id", rows.map(x => x.expense_ledger_id).filter(Boolean)) : Promise.resolve({ data: [] })
   ]);
   if (vendors.error) throw vendors.error;
   if (categories.error) throw categories.error;
+  if (ledgers.error) throw ledgers.error;
   const vendorMap = new Map((vendors.data || []).map(item => [item.id, item]));
   const categoryMap = new Map((categories.data || []).map(item => [item.id, item]));
+  const ledgerMap = new Map((ledgers.data || []).map(item => [item.id, item]));
   return rows.map(row => ({
     ...row,
     vendor_name: vendorMap.get(row.vendor_id)?.vendor_name || row.payee_name || "",
     vendor_gstin: vendorMap.get(row.vendor_id)?.gstin || "",
-    category_name: categoryMap.get(row.category_id)?.category_name || "Uncategorized",
+    category_name: categoryMap.get(row.category_id)?.category_name || ledgerMap.get(row.expense_ledger_id)?.ledger_name || "Uncategorized",
     vendor_state: vendorMap.get(row.vendor_id)?.state || ""
   }));
 }
