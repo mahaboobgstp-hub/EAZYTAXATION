@@ -119,7 +119,8 @@ const handleEdit = (vendor) => {
 
 } else {
 
-    await createVendor(formData);
+    if (!currentCompanyId) throw new Error('Select a company before adding a supplier.');
+    await createVendor({ ...formData, company_id: currentCompanyId });
 
     alert("Vendor Saved Successfully");
 
