@@ -174,7 +174,7 @@ export default function ExpenseEntry(){
     }
   }
 
-  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&accountingEnabled&&!form.payment_ledger_id){setMessage("Choose the payment account.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
+  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&accountingEnabled&&!form.payment_ledger_id){setMessage("Choose the payment account.");return;}if(step===3&&n(lines[0]?.rate)<=0){setMessage("Enter a taxable amount greater than zero.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
 
   if(isAndroid) return <AndroidExpenseFlow
     step={step} setStep={setStep} form={form} set={set} lines={lines} updateLine={updateLine}
@@ -265,7 +265,7 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
       </section>}
       {step===3&&<section className="ew-card aex-card">
         <h2>▱ &nbsp;Amount & Tax</h2>
-        <Field label="Amount (Taxable) *" type="number" value={lines[0]?.rate||"0"} onChange={setAmount} placeholder="Enter amount"/>
+        <Field label="Amount (Taxable) *" type="number" value={lines[0]?.rate||"0"} onChange={setAmount} placeholder="Enter amount" required/>
         <div className="aex-two-fields"><label className="ew-field">GST Rate<select value={lines[0]?.gst_percent||"0"} onChange={event=>setGst(event.target.value)}>{["0","5","12","18","28"].map(rate=><option key={rate} value={rate}>{rate}%</option>)}</select></label><label className="ew-field">GST Amount<input value={moneyValue(gstTotal)} readOnly/></label></div>
         <label className="aex-toggle"><span><b>Include GST in Amount</b><small>Switch on when the entered amount already includes GST</small></span><input type="checkbox" checked={includeGstInAmount} onChange={event=>setIncludeGstInAmount(event.target.checked)}/></label>
         <Field label="Other Charges" type="number" value={form.other_charges} onChange={value=>set("other_charges",value)}/>
