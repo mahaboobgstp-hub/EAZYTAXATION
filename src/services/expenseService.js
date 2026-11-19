@@ -61,8 +61,9 @@ export async function getExpenseMasters(companyId, accountingEnabled = false) {
     ]);
     if (expenseResult.error) throw expenseResult.error;
     if (paymentResult.error) throw paymentResult.error;
-    expenseLedgers = expenseResult.data || [];
-    paymentLedgers = paymentResult.data || [];
+    const groupNameById = new Map(accountGroups.map(group => [group.id, group.group_name]));
+    expenseLedgers = (expenseResult.data || []).map(ledger => ({ ...ledger, group_name: groupNameById.get(ledger.group_id) || "" }));
+    paymentLedgers = (paymentResult.data || []).map(ledger => ({ ...ledger, group_name: groupNameById.get(ledger.group_id) || "" }));
   }
 
   return {
