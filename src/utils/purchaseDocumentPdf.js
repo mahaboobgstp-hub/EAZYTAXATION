@@ -77,8 +77,7 @@ export function downloadPurchasePdf({ kind, document, items = [], company = {}, 
   y = Math.max(leftY, rightY) + 6;
   if (kind === "register") {
     y = paragraph(`Vehicle No.: ${document.vehicle_no || "—"}     E-Way Bill No.: ${document.eway_bill_no || "—"}`, margin, y, usable, 8);
-    y = paragraph(`Transporter: ${document.transporter_name || "—"}     Transporter ID: ${document.transporter_id || "—"}`, margin, y, usable, 8);
-    y = paragraph(`Transport Document: ${document.transport_doc_no || "—"}     Date: ${document.transport_doc_date || "—"}`, margin, y, usable, 8);
+    y = paragraph(`Transporter: ${document.transporter_name || "—"}     Transport Document / LR No.: ${document.transport_doc_no || "—"}`, margin, y, usable, 8);
   }
   if (document.reason) y = paragraph(`Reason: ${document.reason}`, margin, y, usable, 9) + 2;
   addTableHeader();
