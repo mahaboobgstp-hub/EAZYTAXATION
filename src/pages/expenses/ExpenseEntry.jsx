@@ -64,8 +64,9 @@ export default function ExpenseEntry(){
       const discount=lineDiscount+share;
       const enteredBase=Math.max(0,lineGross-discount);
       const taxRate=form.gst_treatment==="No GST"?0:n(l.gst_percent);
-      const base=includeGstInAmount&&taxRate>0?enteredBase/(1+taxRate/100):enteredBase;
-      const tax=includeGstInAmount&&taxRate>0?enteredBase-base:Math.round(base*taxRate)/100;
+      const inclusive=isAndroid&&includeGstInAmount&&taxRate>0;
+      const base=inclusive?enteredBase/(1+taxRate/100):enteredBase;
+      const tax=inclusive?enteredBase-base:Math.round(base*taxRate)/100;
       const c=isSameState?Math.round(tax/2*100)/100:0,s=isSameState?Math.round((tax-c)*100)/100:0,ig=isSameState?0:tax;
       taxable+=base;cgst+=c;sgst+=s;igst+=ig;
       return {...l,qty:n(l.qty),rate:n(l.rate),gst_percent:taxRate,discount_percent:n(l.discount_percent),discount_amount:discount,taxable_amount:base,cgst_amount:c,sgst_amount:s,igst_amount:ig,total_amount:base+c+s+ig};
@@ -92,7 +93,7 @@ export default function ExpenseEntry(){
     try{
       const number=form.expense_no||await generateExpenseNumber(currentCompanyId);
       const gst=n(calc.cgst+calc.sgst+calc.igst);
-      const header={expense_no:number,expense_date:form.expense_date,company_id:currentCompanyId,category_id:form.category_id||null,expense_ledger_id:isAndroid&&accountingEnabled?form.expense_ledger_id||null:null,payment_ledger_id:isAndroid&&accountingEnabled?form.payment_ledger_id||null:null,is_gst_inclusive:isAndroid?includeGstInAmount:false,vendor_id:form.vendor_id||null,payee_name:form.payee_name.trim(),supplier_invoice_no:form.supplier_invoice_no.trim(),supplier_invoice_date:form.supplier_invoice_date||null,payment_mode:form.payment_mode,payment_account:form.payment_account.trim(),paid_by:form.paid_by.trim(),due_date:form.due_date||null,reference_no:form.reference_no.trim(),gst_treatment:form.gst_treatment,is_gst_applicable:form.gst_treatment!=="No GST",taxable_amount:calc.taxable,gst_percent:calc.taxable?gst/calc.taxable*100:0,cgst:calc.cgst,sgst:calc.sgst,igst:calc.igst,discount_amount:calc.discount,other_charges:calc.other,round_off:calc.roundOff,total_amount:calc.total,paid_amount:expenseId?n(form.paid_amount):0,payment_status:expenseId?(n(form.paid_amount)>=calc.total&&calc.total>0?"Paid":n(form.paid_amount)>0?"Partially Paid":"Unpaid"):"Unpaid",status:form.status,remarks:form.remarks.trim(),attachment_url:form.attachment_url||null};
+      const header={expense_no:number,expense_date:form.expense_date,company_id:currentCompanyId,category_id:form.category_id||null,expense_ledger_id:form.expense_ledger_id||null,payment_ledger_id:form.payment_ledger_id||null,is_gst_inclusive:isAndroid?includeGstInAmount:Boolean(form.is_gst_inclusive),vendor_id:form.vendor_id||null,payee_name:form.payee_name.trim(),supplier_invoice_no:form.supplier_invoice_no.trim(),supplier_invoice_date:form.supplier_invoice_date||null,payment_mode:form.payment_mode,payment_account:form.payment_account.trim(),paid_by:form.paid_by.trim(),due_date:form.due_date||null,reference_no:form.reference_no.trim(),gst_treatment:form.gst_treatment,is_gst_applicable:form.gst_treatment!=="No GST",taxable_amount:calc.taxable,gst_percent:calc.taxable?gst/calc.taxable*100:0,cgst:calc.cgst,sgst:calc.sgst,igst:calc.igst,discount_amount:calc.discount,other_charges:calc.other,round_off:calc.roundOff,total_amount:calc.total,paid_amount:expenseId?n(form.paid_amount):0,payment_status:expenseId?(n(form.paid_amount)>=calc.total&&calc.total>0?"Paid":n(form.paid_amount)>0?"Partially Paid":"Unpaid"):"Unpaid",status:form.status,remarks:form.remarks.trim(),attachment_url:form.attachment_url||null};
       let id=expenseId;
       if(id) await updateExpense(id,header,calc.normalized,currentCompanyId);
       else id=await saveExpense(header,calc.normalized,currentCompanyId);
