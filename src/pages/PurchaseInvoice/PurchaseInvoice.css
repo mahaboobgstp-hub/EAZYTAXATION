@@ -125,3 +125,70 @@
 
 /* Android purchase invoice tax summary and transporter accordion. */
 .purchase-page.android-workflow .pi-charges-card h2{margin:0 0 14px;color:#17365d;font-size:19px}.purchase-page.android-workflow .pi-tax-breakdown{padding:12px;border:1px solid #e1e8f0;border-radius:12px;background:#f8faff}.purchase-page.android-workflow .pi-gst-total,.purchase-page.android-workflow .pi-charges-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0;color:#17365d;font-weight:800;border-top:1px solid #dce5ef}.purchase-page.android-workflow .pi-gst-total strong{color:#155eef}.purchase-page.android-workflow .pi-roundoff-toggle{display:flex;align-items:center;gap:10px;margin:14px 0;padding:13px;border:1px solid #dce5ef;border-radius:11px;background:#fff;color:#344054;font-weight:700}.purchase-page.android-workflow .pi-roundoff-toggle input{width:20px;min-height:20px;accent-color:#155eef}.purchase-page.android-workflow .pi-roundoff-toggle strong{margin-left:auto;color:#17365d}.purchase-page.android-workflow .pi-charges-total{padding:14px;border-radius:11px;background:#eef4ff;border:0;font-size:15px}.purchase-page.android-workflow .pi-charges-total strong{font-size:19px;color:#155eef}.purchase-page.android-workflow .pi-transport-details{margin-top:14px;border:1px solid #dce5ef;border-radius:12px;background:#fff;overflow:hidden}.purchase-page.android-workflow .pi-transport-details>summary{display:flex;flex-direction:column;gap:4px;padding:14px;cursor:pointer;color:#17365d;font-weight:800;list-style:none}.purchase-page.android-workflow .pi-transport-details>summary::-webkit-details-marker{display:none}.purchase-page.android-workflow .pi-transport-details>summary small{color:#718198;font-size:11px;font-weight:500}.purchase-page.android-workflow .pi-transport-details>.pi-grid{padding:0 13px 13px;display:grid;grid-template-columns:minmax(0,1fr);gap:11px}@media(max-width:360px){.purchase-page.android-workflow .pi-mobile-item-card .pi-mobile-item-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Approved Android Items screen: compact item cards, no horizontal scrolling or extra columns. */
+.purchase-page.android-workflow .pi-mobile-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.purchase-page.android-workflow .pi-mobile-item-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #dce5ef;
+  border-radius: 14px;
+  background: #fff;
+}
+.purchase-page.android-workflow .pi-mobile-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: #17365d;
+  font-size: 16px;
+  font-weight: 800;
+}
+.purchase-page.android-workflow .pi-mobile-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  color: #526176;
+  font-size: 13px;
+  font-weight: 700;
+}
+.purchase-page.android-workflow .pi-mobile-field input,
+.purchase-page.android-workflow .pi-mobile-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #1d2939;
+  font-size: 15px;
+}
+.purchase-page.android-workflow .pi-mobile-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234b5f79' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 15px 15px;
+}
+.purchase-page.android-workflow .pi-mobile-item-picker {
+  margin-bottom: 11px;
+}
+.purchase-page.android-workflow .pi-mobile-item-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+}
+.purchase-page.android-workflow .pi-mobile-item-grid .pi-mobile-field:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.purchase-page.android-workflow .pi-items-scroll {
+  display: none !important;
+}
