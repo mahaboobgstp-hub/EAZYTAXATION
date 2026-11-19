@@ -182,3 +182,50 @@
   min-width: 0 !important;
   margin: 0 !important;
 }
+
+
+/* Approved native Android Expense Entry flow */
+.aex-page { padding: 18px 14px calc(104px + env(safe-area-inset-bottom, 0px)) !important; background: #f4f7fc; }
+.aex-heading { margin: 0 0 12px !important; }
+.aex-heading h1 { font-size: 25px !important; }
+.aex-stepper { display: grid !important; grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: 4px !important; margin: 12px 0 16px !important; padding: 9px 5px !important; background: #f5f7fb !important; border-radius: 14px !important; }
+.aex-stepper button { min-width: 0 !important; min-height: 62px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 5px !important; padding: 5px 1px !important; color: #66758a !important; font-size: 10px !important; white-space: normal !important; }
+.aex-stepper button b { width: 29px !important; height: 29px !important; display: grid !important; place-items: center !important; border-radius: 50% !important; background: #e3e8ef !important; color: #475467 !important; font-size: 13px !important; }
+.aex-stepper button.active,.aex-stepper button.complete { color: #155eef !important; }
+.aex-stepper button.active b,.aex-stepper button.complete b { background: #155eef !important; color: #fff !important; }
+.aex-card { padding: 18px !important; border-radius: 15px !important; margin-bottom: 13px !important; }
+.aex-card h2 { margin: 0 0 16px !important; color: #1d3b66 !important; font-size: 18px !important; }
+.aex-card > .ew-field { margin: 0 0 14px; font-size: 13px; }
+.aex-card .ew-field input,.aex-card .ew-field select,.aex-card .ew-field textarea { min-height: 46px; height: 46px; font-size: 16px; border-radius: 9px; }
+.aex-card .ew-field textarea { height: auto; min-height: 86px; padding: 11px; }
+.aex-info { margin: -2px 0 16px; padding: 10px 11px; border-radius: 9px; background: #eef5ff; color: #36577e; font-size: 12px; line-height: 1.45; }
+.aex-hint { display: block; margin-top: 7px; color: #9a5b12; line-height: 1.4; }
+.aex-add-supplier { margin: -2px 0 14px; border: 0; background: #eaf2ff; color: #175cd3; border-radius: 8px; padding: 10px 12px; font-size: 13px; font-weight: 750; }
+.aex-section-label { margin: 5px 0 9px; color: #526985; font-size: 13px; font-weight: 750; }
+.aex-payment-methods { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-bottom: 16px; }
+.aex-payment-methods button { min-width: 0; min-height: 70px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; border: 1px solid #d4deeb; border-radius: 10px; background: #fff; color: #425773; font-size: 11px; font-weight: 700; }
+.aex-payment-methods button b { font-size: 17px; }
+.aex-payment-methods button.selected { border-color: #155eef; background: #f1f6ff; color: #155eef; box-shadow: inset 0 0 0 1px #155eef; }
+.aex-two-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.aex-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 0 15px; padding: 13px 12px; border: 1px solid #dce5f1; border-radius: 10px; background: #f9fbfe; color: #344761; }
+.aex-toggle span { display: grid; gap: 4px; }
+.aex-toggle b { font-size: 13px; }
+.aex-toggle small { color: #71819a; font-size: 11px; line-height: 1.35; }
+.aex-toggle input { width: 22px; height: 22px; accent-color: #155eef; flex: 0 0 auto; }
+.aex-total,.aex-review-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; padding: 15px; border-radius: 10px; background: #eaf2ff; color: #173d6d; font-size: 15px; font-weight: 800; }
+.aex-total b,.aex-review-total b { color: #155eef; font-size: 19px; }
+.aex-review-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #edf1f6; color: #5c6f88; font-size: 13px; }
+.aex-review-row b { color: #263a56; text-align: right; max-width: 58%; overflow-wrap: anywhere; }
+.aex-attachments { display: block !important; min-height: 0 !important; }
+.aex-attachments p { margin: -5px 0 10px; font-size: 13px; color: #71819a; }
+.aex-attachments .ew-upload { width: 100%; min-height: 48px; box-sizing: border-box; font-size: 14px; }
+.aex-form .aex-actions { position: static !important; inset: auto !important; z-index: auto !important; display: flex !important; flex-direction: row !important; justify-content: stretch !important; gap: 9px !important; width: 100% !important; margin: 14px 0 8px !important; padding: 0 0 10px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.aex-form .aex-actions button { position: static !important; display: block !important; flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; min-height: 47px !important; padding: 0 7px !important; margin: 0 !important; font-size: 13px !important; white-space: normal !important; }
+@media(max-width:380px) {
+  .aex-page { padding-left: 10px !important; padding-right: 10px !important; }
+  .aex-card { padding: 14px !important; }
+  .aex-heading h1 { font-size: 22px !important; }
+  .aex-payment-methods { gap: 5px; }
+  .aex-form .aex-actions { gap: 6px !important; }
+  .aex-form .aex-actions button { font-size: 11px !important; }
+}
