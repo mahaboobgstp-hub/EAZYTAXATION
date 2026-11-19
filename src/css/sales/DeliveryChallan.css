@@ -537,3 +537,79 @@
   .dc-save-options>button{font-size:12px;padding:10px 7px;line-height:1.25}
   .delivery-challan-actions>.dc-save-eway-btn{flex:1;font-size:12px;padding:10px 8px}
 }
+
+/* Native Android form layout: constrain the legacy inline desktop grids and controls. */
+.delivery-challan-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 16px;
+  overflow-x: hidden;
+}
+.delivery-challan-page form {
+  width: 100%;
+  min-width: 0;
+}
+.delivery-challan-page form label {
+  display: block;
+  margin: 0 0 6px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+.delivery-challan-page form input,
+.delivery-challan-page form select,
+.delivery-challan-page form textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  font: inherit;
+}
+@media (max-width: 640px) {
+  .delivery-challan-page {
+    padding: 12px !important;
+  }
+  .delivery-challan-page form > div[style*="display: grid"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    width: 100%;
+    min-width: 0;
+  }
+  .delivery-challan-page form > div[style*="display: grid"] > div {
+    min-width: 0;
+    width: 100%;
+  }
+  .delivery-challan-page form input,
+  .delivery-challan-page form select,
+  .delivery-challan-page form textarea {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 10px 12px;
+    background: #fff;
+    color: #1e293b;
+    font-size: 14px;
+  }
+  .delivery-challan-page form textarea {
+    min-height: 88px;
+  }
+  .delivery-challan-page form h3 {
+    margin: 18px 0 10px;
+    color: #1e293b;
+    font-size: 17px;
+  }
+  .delivery-challan-page .dc-mobile-steps {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .delivery-challan-page .delivery-challan-actions {
+    position: sticky;
+    bottom: 72px;
+    z-index: 5;
+    padding: 10px 0;
+    background: #f5f7fb;
+  }
+}
+
