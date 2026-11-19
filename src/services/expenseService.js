@@ -108,13 +108,14 @@ export async function getExpenseById(id, companyId) {
   if (companyId) query = query.eq("company_id", companyId);
   const { data, error } = await query.single();
   if (error) throw error;
-  const [linesFromItems, vendors, categories] = await Promise.all([
+  const [linesFromItems, vendors, categories, expenseLedger] = await Promise.all([
     getExpenseItems(id),
     data.vendor_id ? supabase.from("vendors").select("id,vendor_name,gstin,state,address").eq("id", data.vendor_id).maybeSingle() : Promise.resolve({ data: null }),
-    data.category_id ? supabase.from("expense_categories").select("id,category_name").eq("id", data.category_id).maybeSingle() : Promise.resolve({ data: null })
+    data.category_id ? supabase.from("expense_categories").select("id,category_name").eq("id", data.category_id).maybeSingle() : Promise.resolve({ data: null }),
+    data.expense_ledger_id ? supabase.from("chart_of_accounts").select("id,ledger_name").eq("id", data.expense_ledger_id).eq("company_id", companyId).maybeSingle() : Promise.resolve({ data: null })
   ]);
   const lines = linesFromItems.length ? linesFromItems : (moneyNumber(data.taxable_amount) > 0 ? [{ description: data.remarks || "Expense", hsn_sac: "", qty: 1, uom: "", rate: moneyNumber(data.taxable_amount), taxable_amount: moneyNumber(data.taxable_amount), gst_percent: moneyNumber(data.gst_percent), cgst_amount: moneyNumber(data.cgst), sgst_amount: moneyNumber(data.sgst), igst_amount: moneyNumber(data.igst), total_amount: moneyNumber(data.total_amount) }] : []);
-  return { ...data, items: lines, vendor_name: vendors.data?.vendor_name || data.payee_name || "", vendor_gstin: vendors.data?.gstin || "", vendor_state: vendors.data?.state || "", vendor_address: vendors.data?.address || "", category_name: categories.data?.category_name || "" };
+  return { ...data, items: lines, vendor_name: vendors.data?.vendor_name || data.payee_name || "", vendor_gstin: vendors.data?.gstin || "", vendor_state: vendors.data?.state || "", vendor_address: vendors.data?.address || "", category_name: categories.data?.category_name || expenseLedger.data?.ledger_name || "", expense_ledger_name: expenseLedger.data?.ledger_name || "" };
 }
 
 export async function getExpenseItems(expenseId) {
