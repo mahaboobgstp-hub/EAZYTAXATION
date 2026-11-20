@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiFileText, FiShoppingCart, FiClipboard, FiUsers, FiPackage, FiX, FiArrowRight,
   FiCreditCard, FiUser, FiBriefcase, FiCalendar, FiTrendingUp, FiDollarSign,
-  FiBookOpen, FiClock, FiGrid, FiCpu, FiMoreVertical,
+  FiBookOpen, FiClock, FiGrid, FiMoreVertical,
   FiEye, FiEdit2, FiShare2, FiPrinter, FiDownload
 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
@@ -13,6 +13,7 @@ import { downloadPurchasePdf } from "../utils/purchaseDocumentPdf";
 import { downloadExpensePdf } from "../utils/expenseDocumentPdf";
 import { getExpenseById } from "../services/expenseService";
 import "../css/AndroidHome.css";
+import SYD_MASCOT from "../assets/sydMascot";
 
 const money = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
 const dateText = value => value ? new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "—";
@@ -172,7 +173,7 @@ export default function AndroidHome() {
       <section className="android-home-grid" aria-label="Quick actions">
         {shortcuts.map(({ title, path, panel: panelName, icon: Icon, tone }) => (
           <button key={title} type="button" className={`android-home-tile ${tone}`} onClick={() => openShortcut({ path, panel: panelName })} aria-label={title}>
-            <span className="android-home-tile-icon"><Icon /></span><span className="android-home-tile-title">{title}</span>
+            <span className="android-home-tile-icon">{tone === "assistant" ? <img src={SYD_MASCOT} alt="" aria-hidden="true" draggable="false" /> : <Icon />}</span><span className="android-home-tile-title">{title}</span>
           </button>
         ))}
       </section>
