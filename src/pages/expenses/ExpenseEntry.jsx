@@ -51,6 +51,7 @@ export default function ExpenseEntry(){
     return()=>{active=false;};
   },[currentCompanyId,location.state]);
   const set=(key,value)=>setForm(p=>({...p,[key]:value}));
+  useEffect(()=>{if(!accountingEnabled||!form.expense_ledger_id||form.category_id)return;const mapped=categories.find(item=>item.company_id===currentCompanyId&&item.ledger_id===form.expense_ledger_id&&item.is_active!==false);if(mapped)set("category_id",mapped.id);},[accountingEnabled,categories,form.expense_ledger_id,form.category_id,currentCompanyId]);
   const vendor=vendors.find(v=>v.id===form.vendor_id);
   const isSameState=Boolean(currentCompany?.state&&(supplierState||vendor?.state)&&currentCompany.state.trim().toLowerCase()===(supplierState||vendor?.state).trim().toLowerCase());
   const calc=useMemo(()=>{
@@ -247,7 +248,9 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
   const moneyValue=value=>money(value);
   const expenseLedger=expenseLedgers.find(item=>item.id===form.expense_ledger_id);
   const category=categories.find(item=>item.id===form.category_id);
-  const selectedExpenseName=expenseLedger?.ledger_name||category?.category_name||"";
+  const mappedCategories=categories.filter(item=>item.company_id===currentCompany?.id&&item.ledger_id&&item.is_active!==false);
+  const legacyLedgerEdit=Boolean(expenseId&&!form.category_id&&form.expense_ledger_id);
+  const selectedExpenseName=category?.category_name||expenseLedger?.ledger_name||"";
   const setAmount=value=>updateLine(0,"rate",value);
   const setGst=value=>updateLine(0,"gst_percent",value);
   const visiblePaymentLedgers=paymentLedgers.filter(item=>{
@@ -283,8 +286,8 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
         <h2>▤ &nbsp;Expense Details</h2>
         <Field label="Expense Voucher No." value={form.expense_no} readOnly/>
         <Field label="Expense Date *" type="date" value={form.expense_date} onChange={value=>set("expense_date",value)} required/>
-        {accountingEnabled?<label className="ew-field">Expense Ledger *<select value={form.expense_ledger_id||""} onChange={event=>{const id=event.target.value;set("expense_ledger_id",id);const selected=expenseLedgers.find(item=>item.id===id);updateLine(0,"description",selected?.ledger_name||"");}}><option value="">Select expense ledger</option>{expenseLedgers.map(item=><option key={item.id} value={item.id}>{item.ledger_name}</option>)}</select>{!expenseLedgers.length&&<small className="aex-hint">No active Expense ledgers were found in this company's Chart of Accounts. Add an Expense ledger before recording this entry.</small>}</label>:<label className="ew-field">Expense Category *<select value={form.category_id||""} onChange={event=>{const id=event.target.value;set("category_id",id);const selected=categories.find(item=>item.id===id);updateLine(0,"description",selected?.category_name||"");}}><option value="">Select expense category</option>{categories.map(item=><option key={item.id} value={item.id}>{item.category_name}</option>)}</select></label>}
-        <p className="aex-info">ⓘ {accountingEnabled?"Showing active Expense ledgers from your Chart of Accounts.":"Choose from the general expense categories."}</p>
+        {accountingEnabled?<><label className="ew-field">Expense Category *<select value={form.category_id||""} onChange={event=>{const id=event.target.value;const selected=mappedCategories.find(item=>item.id===id);set("category_id",id);set("expense_ledger_id",selected?.ledger_id||"");updateLine(0,"description",selected?.category_name||"");}}><option value="">Select configured expense category</option>{mappedCategories.map(item=><option key={item.id} value={item.id}>{item.category_name} · {expenseLedgers.find(ledger=>ledger.id===item.ledger_id)?.ledger_name||"Linked ledger"}</option>)}</select></label>{legacyLedgerEdit&&<small className="aex-hint">This older expense uses a direct ledger selection. Choose a configured category when one is available.</small>}{!mappedCategories.length&&<div className="aex-hint">No company expense categories have been linked to Chart of Accounts ledgers yet. Create or configure a category first.</div>}<button className="aex-add-bank" type="button" onClick={()=>navigate("/app/expense-categories")}>＋ Configure Expense Categories</button></>:<label className="ew-field">Expense Category *<select value={form.category_id||""} onChange={event=>{const id=event.target.value;set("category_id",id);const selected=categories.find(item=>item.id===id);updateLine(0,"description",selected?.category_name||"");}}><option value="">Select expense category</option>{categories.map(item=><option key={item.id} value={item.id}>{item.category_name}</option>)}</select></label>}
+        <p className="aex-info">ⓘ {accountingEnabled?"Choose a company category mapped to its Chart of Accounts ledger.":"Choose from the general expense categories."}</p>
         <label className="ew-field">Narration / Remarks<textarea rows="3" value={form.remarks} onChange={event=>set("remarks",event.target.value)} placeholder="Enter note (optional)"/></label>
       </section>}
       {step===2&&<section className="ew-card aex-card">
@@ -324,7 +327,7 @@ function AndroidExpenseFlow({step,setStep,form,set,lines,updateLine,calc,vendors
       </section>}
       {step===4&&<>
         <section className="ew-card aex-card"><h2>▤ &nbsp;Review & Confirm</h2>
-          {row("Voucher No.",form.expense_no)}{row("Expense Date",form.expense_date)}{row(accountingEnabled?"Expense Ledger":"Expense Category",selectedExpenseName)}
+          {row("Voucher No.",form.expense_no)}{row("Expense Date",form.expense_date)}{row("Expense Category",selectedExpenseName)}
           {row("Supplier / Payee",form.payee_name||vendor?.vendor_name)}{row("Bill No.",form.supplier_invoice_no)}{row("Bill Date",form.supplier_invoice_date)}
           {row("Payment Method",form.payment_mode)}{row("Payment Account",paymentName)}
           {row("Taxable Amount",moneyValue(calc.taxable))}{row("GST ("+(lines[0]?.gst_percent||0)+"%)",moneyValue(gstTotal))}
