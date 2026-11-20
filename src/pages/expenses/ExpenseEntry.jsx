@@ -35,7 +35,7 @@ export default function ExpenseEntry(){
   const [aiProcessing,setAiProcessing]=useState(false),[aiValidation,setAiValidation]=useState(null);
   const companyName=currentCompany?.company_name||"";
 
-  useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);setExpenseLedgers([]);setPaymentLedgers([]);return;}getExpenseMasters(currentCompanyId,accountingEnabled,isAndroid).then(({vendors,categories,expenseLedgers,paymentLedgers})=>{setVendors(vendors);setCategories(categories);setExpenseLedgers(expenseLedgers||[]);setPaymentLedgers(paymentLedgers||[]);}).catch(e=>setMessage(e.message));},[currentCompanyId,accountingEnabled,isAndroid]);
+  useEffect(()=>{if(!currentCompanyId){setVendors([]);setCategories([]);setExpenseLedgers([]);setPaymentLedgers([]);return;}getExpenseMasters(currentCompanyId,accountingEnabled,accountingEnabled&&isAndroid).then(({vendors,categories,expenseLedgers,paymentLedgers})=>{setVendors(vendors);setCategories(categories);setExpenseLedgers(expenseLedgers||[]);setPaymentLedgers(paymentLedgers||[]);}).catch(e=>setMessage(e.message));},[currentCompanyId,accountingEnabled,isAndroid]);
   useEffect(()=>{
     if(!currentCompanyId)return;
     const editId=location.state?.editExpenseId;
@@ -88,7 +88,7 @@ export default function ExpenseEntry(){
     if(isAndroid&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger from your Chart of Accounts.");return;}
     if((!isAndroid||!accountingEnabled)&&!form.category_id){setMessage("Choose an expense category.");return;}
     if(!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter the supplier or payee.");return;}
-    if(isAndroid&&!form.payment_ledger_id){setMessage("Select the Cash or Bank ledger from which this expense is paid.");return;}
+    if(isAndroid&&accountingEnabled&&!form.payment_ledger_id){setMessage("Select the Cash or Bank ledger from which this expense is paid.");return;}if(isAndroid&&!accountingEnabled&&!form.payment_account.trim()){setMessage("Enter the Cash or Bank account name used for this payment.");return;}
     if(!calc.normalized.length){setMessage("Add at least one expense line.");return;}
     setLoading(true);
     try{
@@ -113,7 +113,7 @@ export default function ExpenseEntry(){
   async function handleCreateBankAccount(values){
     if(!currentCompanyId)throw new Error("Select a company first.");
     const created=await createExpenseBankAccount(currentCompanyId,values);
-    const refreshed=await getExpenseMasters(currentCompanyId,accountingEnabled,true);
+    const refreshed=await getExpenseMasters(currentCompanyId,accountingEnabled,accountingEnabled);
     setPaymentLedgers(refreshed.paymentLedgers||[]);
     set("payment_mode","Bank");
     set("payment_ledger_id",created.id);
@@ -186,7 +186,7 @@ export default function ExpenseEntry(){
     }
   }
 
-  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&!form.payment_ledger_id){setMessage("Select the Cash or Bank ledger from which this expense is paid.");return;}if(step===3&&n(lines[0]?.rate)<=0){setMessage("Enter a taxable amount greater than zero.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
+  const nextStep=()=>{if(step===1&&accountingEnabled&&!form.expense_ledger_id){setMessage("Choose an expense ledger to continue.");return;}if(step===1&&!accountingEnabled&&!form.category_id){setMessage("Choose an expense category to continue.");return;}if(step===2&&!form.payee_name.trim()&&!form.vendor_id){setMessage("Enter or select the supplier/payee.");return;}if(step===2&&accountingEnabled&&!form.payment_ledger_id){setMessage("Select the Cash or Bank ledger from which this expense is paid.");return;}if(step===2&&!accountingEnabled&&!form.payment_account.trim()){setMessage("Enter the Cash or Bank account name used for this payment.");return;}if(step===3&&n(lines[0]?.rate)<=0){setMessage("Enter a taxable amount greater than zero.");return;}if(step===3&&!calc.normalized.length){setMessage("Enter the taxable amount to continue.");return;}setMessage("");setStep(s=>Math.min(4,s+1));};
 
   if(isAndroid) return <AndroidExpenseFlow
     step={step} setStep={setStep} form={form} set={set} lines={lines} updateLine={updateLine}
