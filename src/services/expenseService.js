@@ -167,7 +167,7 @@ export async function getExpenses(companyId) {
   const ids = [...new Set(rows.flatMap(row => [row.vendor_id, row.category_id, row.expense_ledger_id]).filter(Boolean))];
   const [vendors, categories, ledgers] = await Promise.all([
     ids.length ? supabase.from("vendors").select("id,vendor_name,gstin,state").in("id", rows.map(x => x.vendor_id).filter(Boolean)) : Promise.resolve({ data: [] }),
-    ids.length ? supabase.from("expense_categories").select("id,category_name").in("id", rows.map(x => x.category_id).filter(Boolean)) : Promise.resolve({ data: [] }),
+    ids.length ? supabase.from("expense_categories").select("id,category_name,company_id,ledger_id,expenditure_type").in("id", rows.map(x => x.category_id).filter(Boolean)).or(`company_id.eq.${companyId},company_id.is.null`) : Promise.resolve({ data: [] }),
     rows.some(x => x.expense_ledger_id) ? supabase.from("chart_of_accounts").select("id,ledger_name").eq("company_id", companyId).in("id", rows.map(x => x.expense_ledger_id).filter(Boolean)) : Promise.resolve({ data: [] })
   ]);
   if (vendors.error) throw vendors.error;
@@ -193,7 +193,7 @@ export async function getExpenseById(id, companyId) {
   const [linesFromItems, vendors, categories, expenseLedger] = await Promise.all([
     getExpenseItems(id),
     data.vendor_id ? supabase.from("vendors").select("id,vendor_name,gstin,state,address").eq("id", data.vendor_id).maybeSingle() : Promise.resolve({ data: null }),
-    data.category_id ? supabase.from("expense_categories").select("id,category_name").eq("id", data.category_id).maybeSingle() : Promise.resolve({ data: null }),
+    data.category_id ? supabase.from("expense_categories").select("id,category_name,company_id,ledger_id,expenditure_type").eq("id", data.category_id).or(`company_id.eq.${companyId},company_id.is.null`).maybeSingle() : Promise.resolve({ data: null }),
     data.expense_ledger_id ? supabase.from("chart_of_accounts").select("id,ledger_name").eq("id", data.expense_ledger_id).eq("company_id", companyId).maybeSingle() : Promise.resolve({ data: null })
   ]);
   const lines = linesFromItems.length ? linesFromItems : (moneyNumber(data.taxable_amount) > 0 ? [{ description: data.remarks || "Expense", hsn_sac: "", qty: 1, uom: "", rate: moneyNumber(data.taxable_amount), taxable_amount: moneyNumber(data.taxable_amount), gst_percent: moneyNumber(data.gst_percent), cgst_amount: moneyNumber(data.cgst), sgst_amount: moneyNumber(data.sgst), igst_amount: moneyNumber(data.igst), total_amount: moneyNumber(data.total_amount) }] : []);
