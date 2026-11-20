@@ -4,7 +4,7 @@ import {
   FiFileText, FiShoppingCart, FiClipboard, FiUsers, FiPackage, FiX, FiArrowRight,
   FiCreditCard, FiUser, FiBriefcase, FiCalendar, FiTrendingUp, FiDollarSign,
   FiBookOpen, FiClock, FiGrid, FiMoreVertical,
-  FiEye, FiEdit2, FiShare2, FiPrinter, FiDownload
+  FiEye, FiEdit2, FiShare2, FiPrinter, FiDownload, FiCpu
 } from "react-icons/fi";
 import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
