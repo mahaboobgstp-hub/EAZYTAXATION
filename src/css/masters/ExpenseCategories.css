@@ -1,33 +1,213 @@
 .expense-categories-page {
-  padding: 20px;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 24px;
+  color: #1e293b;
+  box-sizing: border-box;
 }
-
-.expense-category-form {
+.ec-page-heading {
   display: flex;
-  gap: 15px;
-  margin-bottom: 30px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
 }
-
-.expense-category-form input {
-  padding: 10px;
-  width: 400px;
+.ec-eyebrow {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 7px;
 }
-
-.expense-category-form button {
-  padding: 10px 20px;
+.ec-page-heading h1 {
+  margin: 0;
+  color: #172b4d;
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 800;
 }
-
-.expense-category-grid {
+.ec-page-heading p {
+  margin: 7px 0 0;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 680px;
+}
+.ec-primary, .ec-secondary, .ec-outline-small {
+  min-height: 44px;
+  border-radius: 11px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ec-primary {
+  color: #fff;
+  background: #1764e8;
+  border: 1px solid #1764e8;
+  box-shadow: 0 5px 12px rgba(23,100,232,.15);
+}
+.ec-primary:disabled { opacity: .65; cursor: wait; }
+.ec-secondary {
+  color: #334155;
+  background: #eef3f9;
+  border: 1px solid #dce5ef;
+}
+.ec-mode-card, .ec-form-card, .ec-list-card {
+  background: #fff;
+  border: 1px solid #dce5ef;
+  border-radius: 18px;
+  box-shadow: 0 5px 20px rgba(30,64,110,.045);
+}
+.ec-mode-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  background: #f5f8ff;
+}
+.ec-mode-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  height: 42px;
+  border-radius: 13px;
+  color: #1764e8;
+  background: #e5efff;
+  font-size: 23px;
+  font-weight: 800;
+}
+.ec-mode-card b { color: #1e3a63; }
+.ec-mode-card p { margin: 4px 0 0; color: #64748b; line-height: 1.45; font-size: 14px; }
+.ec-notice, .ec-error, .ec-warning, .ec-field-note {
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ec-notice { color: #166534; background: #ecfdf3; border: 1px solid #bbf7d0; }
+.ec-error, .ec-warning { color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; }
+.ec-field-note { color: #365b88; background: #eff6ff; margin: -2px 0 4px; }
+.ec-form-card { padding: 22px; margin-bottom: 20px; }
+.ec-form-heading, .ec-list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+.ec-form-heading { margin-bottom: 18px; }
+.ec-form-heading h2, .ec-list-heading h2 {
+  margin: 0;
+  color: #1e3a63;
+  font-size: 20px;
+}
+.ec-form-heading p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+.ec-close {
+  width: 38px; height: 38px; border: 0; border-radius: 10px;
+  color: #475569; background: #f1f5f9; font-size: 25px; cursor: pointer;
+}
+.ec-form-card form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ec-form-card form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #52657c;
+  font-size: 14px;
+  font-weight: 700;
+}
+.ec-form-card label span { color: #dc2626; }
+.ec-form-card label small { font-size: 12px; font-weight: 500; color: #94a3b8; }
+.ec-form-card input, .ec-form-card select, .ec-form-card textarea {
   width: 100%;
-  border-collapse: collapse;
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 11px 13px;
+  color: #1e293b;
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
 }
-
-.expense-category-grid th,
-.expense-category-grid td {
-  border: 1px solid #ddd;
-  padding: 10px;
+.ec-form-card textarea { resize: vertical; }
+.ec-form-card input:focus, .ec-form-card select:focus, .ec-form-card textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.13);
 }
-
-.expense-category-grid th {
-  background: #f5f5f5;
+.ec-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 5px;
+}
+.ec-list-card { padding: 20px; }
+.ec-list-heading { margin-bottom: 16px; }
+.ec-list-heading span { display: block; margin-top: 4px; color: #94a3b8; font-size: 13px; }
+.ec-search {
+  width: min(100%, 300px);
+  min-height: 42px;
+  border: 1px solid #d5deea;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font: inherit;
+  box-sizing: border-box;
+}
+.ec-category-list { display: grid; gap: 9px; }
+.ec-category-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  background: #fff;
+}
+.ec-category-row.is-inactive { opacity: .58; }
+.ec-category-symbol {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #1764e8;
+  background: #edf4ff;
+  font-size: 21px;
+  font-weight: 800;
+}
+.ec-category-main { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.ec-category-main b { color: #263b57; font-size: 15px; }
+.ec-category-main small { color: #718096; font-size: 12px; line-height: 1.35; }
+.ec-category-main .ec-ledger-name { color: #2563a6; }
+.ec-outline-small {
+  min-height: 36px;
+  padding: 0 12px;
+  color: #1d5dbb;
+  background: #f5f8ff;
+  border: 1px solid #cfe0fb;
+  white-space: nowrap;
+}
+.ec-row-actions { display: flex; align-items: center; gap: 8px; }
+.ec-text-action { border: 0; background: transparent; color: #64748b; font-size: 12px; font-weight: 700; cursor: pointer; }
+.ec-empty { padding: 30px 14px; color: #64748b; text-align: center; }
+@media (max-width: 640px) {
+  .expense-categories-page { padding: 18px 14px 28px; }
+  .ec-page-heading { align-items: stretch; flex-direction: column; gap: 13px; }
+  .ec-page-heading .ec-primary { width: 100%; }
+  .ec-mode-card { align-items: flex-start; padding: 14px; }
+  .ec-form-card, .ec-list-card { padding: 16px; border-radius: 15px; }
+  .ec-form-card form { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .ec-form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .ec-list-heading { align-items: stretch; flex-direction: column; }
+  .ec-search { width: 100%; }
+  .ec-category-row { padding: 11px 10px; gap: 9px; }
+  .ec-category-symbol { flex-basis: 34px; height: 34px; }
+  .ec-row-actions { flex-direction: column; align-items: flex-end; gap: 3px; }
+  .ec-outline-small { min-height: 33px; padding: 0 9px; font-size: 12px; }
 }
