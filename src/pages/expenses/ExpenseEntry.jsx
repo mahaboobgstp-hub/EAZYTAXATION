@@ -104,7 +104,13 @@ export default function ExpenseEntry(){
       const saved={...header,id,vendor_name:form.payee_name.trim()||vendor?.vendor_name||"",vendor_gstin:vendor?.gstin||"",category_name:categories.find(c=>c.id===form.category_id)?.category_name||expenseLedgers.find(c=>c.id===form.expense_ledger_id)?.ledger_name||""};
       setMessage(expenseId?"Expense updated successfully.":"Expense saved successfully.");
       if(print){setPreview({kind:"expense",record:saved,items:calc.normalized,company:currentCompany,autoPrint:true});}
-      else reset(false);
+      else {
+        reset(false);
+        setStep(1);
+        generateExpenseNumber(currentCompanyId)
+          .then(nextNumber=>setForm(previous=>({...previous,expense_no:nextNumber})))
+          .catch(numberError=>setMessage(numberError.message||"Expense saved, but a new voucher number could not be generated."));
+      }
     }catch(error){setMessage(error.message||"Unable to save expense.");}
     finally{setLoading(false);}
   }
