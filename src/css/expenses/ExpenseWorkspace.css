@@ -578,3 +578,19 @@
   .expense-pdf-zoom button { width:29px !important; height:29px !important; min-height:29px !important; }
   .expense-pdf-zoom span { min-width:31px !important; font-size:10px !important; }
 }
+
+
+.expense-pdf-scroll {
+  flex:1 1 auto !important; min-height:0 !important; width:100% !important;
+  overflow:auto !important; overscroll-behavior:contain !important;
+  background:#e9eef5 !important; padding:10px 6px !important; box-sizing:border-box !important;
+}
+.expense-pdf-page {
+  display:block !important; max-width:none !important; height:auto !important;
+  margin:0 auto 12px !important; background:#fff !important;
+  box-shadow:0 2px 9px rgba(20,43,75,.15) !important;
+}
+@media(max-width:720px) {
+  .expense-pdf-scroll { padding:8px 4px !important; }
+  .expense-pdf-page { margin-bottom:9px !important; }
+}
