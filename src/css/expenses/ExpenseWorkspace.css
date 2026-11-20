@@ -453,3 +453,128 @@
   .expense-page.android-workflow.aex-page .aex-heading-actions-row .ai-entry-header-actions { gap:6px !important; }
   .expense-page.android-workflow.aex-page .aex-expense-register { padding:0 8px !important; font-size:12px !important; }
 }
+
+
+/* Compact Expense Register layout */
+.expense-register-page .expense-register-heading {
+  display:flex !important; flex-direction:row !important; align-items:center !important;
+  justify-content:space-between !important; gap:12px !important; margin:0 0 16px !important;
+}
+.expense-register-page .expense-register-heading h1 {
+  margin:0 !important; font-size:26px !important; line-height:1.2 !important;
+}
+.expense-register-page .expense-register-heading .ew-primary { min-height:44px !important; }
+.expense-register-filters {
+  display:grid !important; grid-template-columns:minmax(0,1fr) minmax(155px,.55fr) !important;
+  align-items:center !important; gap:10px !important; padding:12px !important; margin-bottom:14px !important;
+}
+.expense-register-filters .ew-search {
+  min-width:0 !important; margin:0 !important; height:44px !important; box-sizing:border-box !important;
+}
+.expense-register-filters .ew-search input { min-width:0 !important; height:42px !important; font-size:14px !important; }
+.expense-register-filters .expense-universal-filter { display:block !important; min-width:0 !important; }
+.expense-register-filters .expense-universal-filter select {
+  width:100% !important; height:44px !important; min-height:44px !important;
+  box-sizing:border-box !important; border:1px solid #cfdaea !important; border-radius:8px !important;
+  padding:0 10px !important; background:#fff !important; color:#20334f !important;
+  font:600 13px Inter,system-ui,sans-serif !important;
+}
+.expense-register-transactions { padding:15px !important; }
+.expense-register-transactions .ew-table-scroll { width:100% !important; overflow:visible !important; }
+.expense-register-transactions .ew-register-table {
+  width:100% !important; min-width:0 !important; table-layout:fixed !important;
+}
+.expense-register-transactions .ew-register-table th,
+.expense-register-transactions .ew-register-table td {
+  white-space:normal !important; overflow-wrap:anywhere !important; padding:11px 9px !important;
+}
+.expense-register-transactions .ew-register-table th:nth-child(1) { width:22%; }
+.expense-register-transactions .ew-register-table th:nth-child(2) { width:15%; }
+.expense-register-transactions .ew-register-table th:nth-child(3) { width:30%; }
+.expense-register-transactions .ew-register-table th:nth-child(4) { width:23%; }
+.expense-register-transactions .ew-register-table th:nth-child(5) { width:10%; }
+.expense-register-transactions .ew-register-table td:nth-child(4) { text-align:right !important; }
+.expense-register-transactions .expense-register-actions { text-align:center !important; overflow:visible !important; }
+.expense-register-transactions .ew-menu-wrap { position:relative !important; }
+.expense-register-transactions .ew-menu { min-width:150px !important; }
+.expense-register-transactions .ew-menu button:disabled { opacity:.4 !important; }
+.expense-cancelled-row td:first-child:after {
+  content:"CANCELLED"; display:block; margin-top:3px; color:#b42318; font-size:9px; font-weight:850; letter-spacing:.35px;
+}
+.expense-pdf-overlay { padding:10px !important; }
+.expense-pdf-preview {
+  display:flex !important; flex-direction:column !important; width:min(100%,980px) !important;
+  height:calc(100dvh - 20px) !important; max-height:calc(100dvh - 20px) !important;
+  overflow:hidden !important; padding:10px !important; border-radius:12px !important;
+}
+.expense-pdf-toolbar {
+  flex:0 0 auto !important; display:flex !important; align-items:center !important;
+  justify-content:space-between !important; flex-wrap:nowrap !important; gap:7px !important;
+  padding:0 0 9px !important;
+}
+.expense-pdf-toolbar button { min-height:40px !important; padding:0 10px !important; font-size:12px !important; }
+.expense-pdf-zoom { display:flex !important; align-items:center !important; gap:5px !important; }
+.expense-pdf-zoom button {
+  width:34px !important; height:34px !important; min-height:34px !important; padding:0 !important;
+  border:1px solid #d6e0ed !important; border-radius:8px !important; background:#f3f7fc !important;
+  color:#1d3b66 !important; font-size:20px !important; font-weight:800 !important;
+}
+.expense-pdf-zoom button:disabled { opacity:.35 !important; }
+.expense-pdf-zoom span { min-width:38px !important; text-align:center !important; color:#405671 !important; font-size:11px !important; font-weight:750 !important; }
+.expense-pdf-frame { display:block !important; flex:1 1 auto !important; width:100% !important; min-height:0 !important; border:0 !important; background:#eef2f7 !important; }
+@media(max-width:720px) {
+  .expense-register-page { padding:14px 10px calc(94px + env(safe-area-inset-bottom,0px)) !important; }
+  .expense-register-page .expense-register-heading {
+    flex-direction:row !important; align-items:center !important; gap:8px !important; margin-bottom:13px !important;
+  }
+  .expense-register-page .expense-register-heading h1 { font-size:22px !important; white-space:nowrap !important; }
+  .expense-register-page .expense-register-heading .ew-primary {
+    width:auto !important; min-height:42px !important; padding:0 11px !important; font-size:12px !important;
+  }
+  .expense-register-filters { grid-template-columns:minmax(0,1fr) minmax(112px,.8fr) !important; gap:7px !important; padding:10px !important; }
+  .expense-register-filters .ew-search { height:42px !important; padding:0 8px !important; gap:6px !important; font-size:17px !important; }
+  .expense-register-filters .ew-search input { height:40px !important; font-size:12px !important; }
+  .expense-register-filters .expense-universal-filter select { height:42px !important; min-height:42px !important; padding:0 6px !important; font-size:11px !important; }
+  .expense-register-transactions { padding:13px 11px !important; }
+  .expense-register-transactions .ew-table-heading { padding:0 2px 10px !important; }
+  .expense-register-transactions .ew-table-heading h2 { font-size:17px !important; }
+  .expense-register-transactions .ew-register-table { display:block !important; width:100% !important; min-width:0 !important; }
+  .expense-register-transactions .ew-register-table thead { display:none !important; }
+  .expense-register-transactions .ew-register-table tbody { display:grid !important; gap:9px !important; width:100% !important; }
+  .expense-register-transactions .ew-register-table tr {
+    display:grid !important; grid-template-columns:minmax(0,1fr) auto !important;
+    grid-template-areas:"number date" "payee payee" "amount actions" !important;
+    align-items:center !important; gap:7px 10px !important; width:100% !important;
+    box-sizing:border-box !important; padding:11px 9px !important;
+    border:1px solid #e1e8f2 !important; border-radius:10px !important; background:#fff !important;
+  }
+  .expense-register-transactions .ew-register-table td {
+    display:block !important; min-width:0 !important; height:auto !important;
+    padding:0 !important; border:0 !important; font-size:12px !important;
+    line-height:1.35 !important; white-space:normal !important;
+  }
+  .expense-register-transactions .ew-register-table td:before {
+    display:block !important; margin-bottom:3px !important; color:#7b8ba1 !important;
+    font-size:9px !important; font-weight:750 !important; text-align:left !important;
+  }
+  .expense-register-transactions .ew-register-table td:nth-child(1) { grid-area:number !important; font-size:13px !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(1):before { content:"Expense No." !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(2) { grid-area:date !important; text-align:right !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(2):before { content:"Date" !important; text-align:right !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(3) { grid-area:payee !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(3):before { content:"Supplier / Payee" !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(4) { grid-area:amount !important; text-align:left !important; font-size:14px !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(4):before { content:"Amount" !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(5) { grid-area:actions !important; text-align:right !important; }
+  .expense-register-transactions .ew-register-table td:nth-child(5):before { content:"" !important; }
+  .expense-register-transactions .ew-kebab { width:36px !important; height:36px !important; font-size:25px !important; }
+  .expense-register-transactions .ew-menu { top:auto !important; bottom:36px !important; right:0 !important; }
+  .expense-register-transactions .ew-pagination { gap:8px !important; font-size:11px !important; }
+  .expense-pdf-overlay { padding:0 !important; align-items:stretch !important; }
+  .expense-pdf-preview { width:100% !important; height:100dvh !important; max-height:100dvh !important; border-radius:0 !important; padding:8px !important; }
+  .expense-pdf-toolbar { gap:4px !important; }
+  .expense-pdf-toolbar button { min-height:38px !important; padding:0 7px !important; font-size:10px !important; }
+  .expense-pdf-zoom { gap:3px !important; }
+  .expense-pdf-zoom button { width:29px !important; height:29px !important; min-height:29px !important; }
+  .expense-pdf-zoom span { min-width:31px !important; font-size:10px !important; }
+}
