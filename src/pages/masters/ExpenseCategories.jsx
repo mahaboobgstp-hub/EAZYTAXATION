@@ -195,7 +195,7 @@ export default function ExpenseCategories() {
                 {accountingEnabled ? <small>{classification}</small> : <small>{category.description || (isShared ? "Default category" : "Company category")}</small>}
                 {accountingEnabled && !isShared && <small className="ec-ledger-name">Ledger: {ledger?.ledger_name || "Not mapped"}</small>}
               </div>
-              {isShared ? <button type="button" className="ec-outline-small" onClick={() => startCreate(category)}>{accountingEnabled ? "Configure" : "Use"}</button> :
+              {isShared ? (accountingEnabled ? <button type="button" className="ec-outline-small" onClick={() => startCreate(category)}>Configure</button> : <span className="ec-default-tag">Default</span>) :
                 <div className="ec-row-actions"><button type="button" className="ec-outline-small" onClick={() => startEdit(category)}>Edit</button><button type="button" className="ec-text-action" onClick={() => toggleActive(category)}>{category.is_active === false ? "Activate" : "Deactivate"}</button></div>}
             </article>;
           })}</div>}
