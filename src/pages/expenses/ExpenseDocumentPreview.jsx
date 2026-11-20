@@ -1,9 +1,10 @@
 import React,{useEffect,useRef,useState} from "react";
 import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import {downloadExpensePdf} from "../../utils/expenseDocumentPdf";
 import "../../css/expenses/ExpenseWorkspace.css";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/build/pdf.worker.min.mjs",import.meta.url).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc=pdfWorker;
 
 export default function ExpenseDocumentPreview({kind="expense",record,items=[],company,onClose}){
  const containerRef=useRef(null);
