@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useModule } from "../context/ModuleContext";
+import { useCompany } from "../context/CompanyContext";
 import { supabase } from "../supabase/supabaseClient";
 import { Capacitor } from "@capacitor/core";
 
@@ -520,6 +521,7 @@ const isGroupLocked = (moduleId, group) =>
 
 function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose }) {
   const { activeModule } = useModule();
+  const { currentCompany } = useCompany();
   const location = useLocation();
   const navigate = useNavigate();
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
@@ -578,8 +580,28 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
 
   const currentModule = MODULES[effectiveModuleId] || MODULES.billing;
   const currentModuleLocked = LOCKED_MODULES.has(effectiveModuleId);
+  const companyModules = {
+    sales: true, purchases: true, expenses: true, banking: true,
+    gst_tax: false, accounting: false, inventory: false, hr: false,
+    payroll: false, manufacturing: false, multi_location: false,
+    ...(currentCompany?.module_settings || {})
+  };
+  const groupModuleKey = {
+    Sales: "sales", Purchases: "purchases", Expenses: "expenses",
+    Banking: "banking", Accounting: "accounting", "GST & Tax": "gst_tax"
+  };
+  const configuredGroups = currentModule.groups.filter(group => {
+    const key = groupModuleKey[group.title];
+    if (key) return companyModules[key] !== false;
+    if (effectiveModuleId === "hr") return companyModules.hr !== false;
+    if (effectiveModuleId === "payroll") return companyModules.payroll !== false;
+    if (effectiveModuleId === "inventory") return companyModules.inventory !== false;
+    if (effectiveModuleId === "supply-chain") return companyModules.purchases !== false;
+    if (effectiveModuleId === "gst-tax") return companyModules.gst_tax !== false;
+    return true;
+  });
   const visibleModuleGroups = isNativeAndroid
-    ? currentModule.groups
+    ? configuredGroups
         .filter(group => ["Sales", "Purchases", "Expenses"].includes(group.title))
         .map(group => ({
           ...group,
@@ -589,7 +611,7 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose })
               ? group.links.filter(([, path]) => ["/app/purchases", "/app/purchase-register", "/app/purchase-orders", "/app/goods-receipts", "/app/purchase-returns", "/app/debit-notes"].includes(path))
               : group.links.filter(([, path]) => ["/app/expenses", "/app/expense-register", "/app/expense-categories", "/app/expense-reports"].includes(path))
         }))
-    : currentModule.groups;
+    : configuredGroups;
   const visibleCommonGroups = isNativeAndroid ? ANDROID_COMMON_GROUPS : COMMON_GROUPS;
 
   const toggleMenu = (menuName) => {
