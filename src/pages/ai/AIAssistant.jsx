@@ -1,4 +1,5 @@
 import React from "react";
+import SYD_MASCOT from "../../assets/sydMascot";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCpu, FiMic, FiFileText, FiChevronRight, FiCheckCircle } from "react-icons/fi";
 import "../../css/AIWorkflows.css";
@@ -8,7 +9,7 @@ export default function AIAssistant(){
   return <main className="ai-screen">
     <header className="ai-screen-header"><button type="button" onClick={()=>navigate("/app")} aria-label="Back"><FiArrowLeft/></button><h1>AI Assistant</h1></header>
     <section className="ai-hero">
-      <div className="ai-robot"><FiCpu/></div>
+      <div className="ai-robot ai-robot-mascot"><img src={SYD_MASCOT} alt="SYD AI assistant mascot" /></div>
       <h2>Your Accounting AI Assistant</h2>
       <p>Create invoices, record expenses, create masters or add from invoice documents.</p>
     </section>
