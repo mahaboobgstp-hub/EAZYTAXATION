@@ -383,3 +383,73 @@
   flex:1 1 50% !important; min-height:46px !important; border-radius:9px !important;
   font-family:inherit !important; font-size:13px !important; font-weight:750 !important;
 }
+
+
+/* Expense header: title row followed by document actions and register */
+.expense-page.android-workflow.aex-page .aex-heading {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  justify-content:flex-start !important;
+  gap:12px !important;
+  margin:0 0 16px !important;
+  width:100% !important;
+}
+.expense-page.android-workflow.aex-page .aex-heading .aex-heading-title {
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+.expense-page.android-workflow.aex-page .aex-heading .aex-heading-title h1 {
+  display:block !important;
+  width:100% !important;
+  margin:0 !important;
+  font-size:25px !important;
+  line-height:1.2 !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+}
+.expense-page.android-workflow.aex-page .aex-heading-actions-row {
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:9px !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+.expense-page.android-workflow.aex-page .aex-heading-actions-row .ai-entry-header-actions {
+  display:flex !important;
+  flex:0 0 auto !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-width:0 !important;
+}
+.expense-page.android-workflow.aex-page .aex-heading-actions-row .ai-entry-header-actions button {
+  min-height:44px !important;
+  border-radius:10px !important;
+}
+.expense-page.android-workflow.aex-page .aex-expense-register {
+  display:flex !important;
+  flex:1 1 auto !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:0 !important;
+  min-height:46px !important;
+  padding:0 12px !important;
+  border:1px solid #155eef !important;
+  border-radius:10px !important;
+  background:#155eef !important;
+  color:#fff !important;
+  font-family:inherit !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  white-space:nowrap !important;
+  box-shadow:0 3px 8px rgba(21,94,239,.16) !important;
+}
+@media(max-width:380px) {
+  .expense-page.android-workflow.aex-page .aex-heading .aex-heading-title h1 { font-size:23px !important; }
+  .expense-page.android-workflow.aex-page .aex-heading-actions-row { gap:7px !important; }
+  .expense-page.android-workflow.aex-page .aex-heading-actions-row .ai-entry-header-actions { gap:6px !important; }
+  .expense-page.android-workflow.aex-page .aex-expense-register { padding:0 8px !important; font-size:12px !important; }
+}
