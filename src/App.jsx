@@ -585,7 +585,7 @@ function App() {
           {/* Fixed Assets accounting module */}
           <Route path="asset-dashboard" element={<FixedAssetsWorkspace />} />
           <Route path="fixed-assets" element={<FixedAssetsWorkspace />} />
-          <Route path="asset-register" element={<FixedAssetsWorkspace />} />
+          <Route path="fixed-assets-register" element={<FixedAssetsWorkspace />} />
           <Route path="asset-categories-accounting" element={<FixedAssetsWorkspace />} />
           <Route path="asset-acquisition" element={<FixedAssetsWorkspace />} />
           <Route path="asset-depreciation" element={<FixedAssetsWorkspace />} />
