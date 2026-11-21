@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../css/FixedAssetsWorkspace.css";
-const NAV=[["Asset Dashboard","asset-dashboard","▦"],["Asset Master (Register)","fixed-assets-register","▤"],["Asset Categories","asset-categories-accounting","▥"],["Acquire Asset","asset-acquisition","＋"],["Depreciation","asset-depreciation","%"],["Asset Transfer","asset-transfer","⇄"],["Asset Disposal / Sale","asset-disposal","⌁"],["Asset Reports","asset-reports","▧"]];
+const NAV=[["Asset Dashboard","asset-dashboard","▦"],["Asset Master (Register)","fixed-assets-register","▤"],["Asset Categories","asset-categories-accounting","▥"],["Acquire Asset","asset-acquisition","＋"],["Depreciation","asset-depreciation","%"],["Asset Transfer","asset-transfer-accounting","⇄"],["Asset Disposal / Sale","asset-disposal","⌁"],["Asset Reports","asset-reports","▧"]];
 const titles=Object.fromEntries(NAV.map(([l,s])=>[s,l]));
 const demo=[{code:"FA-0001",name:"CNC Machine",category:"Machinery",location:"Factory",cost:"₹5,00,000",book:"₹4,20,000"},{code:"FA-0002",name:"Company Vehicle",category:"Vehicles",location:"Head Office",cost:"₹18,00,000",book:"₹12,60,000"},{code:"FA-0003",name:"Office Laptops",category:"Computers",location:"Office",cost:"₹4,00,000",book:"₹2,40,000"}];
 function Field({label,type="text",placeholder="",options}){return <label className="fa-field"><span>{label}</span>{options?<select defaultValue=""><option value="" disabled>Select {label}</option>{options.map(o=><option key={o}>{o}</option>)}</select>:<input type={type} placeholder={placeholder}/>}</label>}
