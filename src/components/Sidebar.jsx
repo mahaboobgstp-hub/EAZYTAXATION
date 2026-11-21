@@ -477,7 +477,15 @@ const AVAILABLE_ROUTES = new Set([
   "/app/trial-balance",
   "/app/profit-loss",
   "/app/balance-sheet",
-]);
+  "/app/asset-dashboard",
+  "/app/fixed-assets-register",
+  "/app/asset-categories-accounting",
+  "/app/asset-acquisition",
+  "/app/asset-depreciation",
+  "/app/asset-transfer-accounting",
+  "/app/asset-disposal",
+  "/app/asset-reports",
+ ]);
 
 /*
  * These HR groups remain locked until a later release.
