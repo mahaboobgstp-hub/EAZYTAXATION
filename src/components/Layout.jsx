@@ -18,7 +18,8 @@ function Layout() {
   const [screenRefreshKey, setScreenRefreshKey] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const desktopOnlyPath = /^\/app\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|ca-workspace|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
+  const isFixedAssetsAccountingPath = /^\/app\/(asset-dashboard|fixed-assets-register|asset-categories-accounting|asset-acquisition|asset-depreciation|asset-transfer-accounting|asset-disposal|asset-reports)$/.test(location.pathname);
+  const desktopOnlyPath = !isFixedAssetsAccountingPath && /^\/app\/(employees|employee-|attendance|payroll|salary|final-settlement|leave-|holiday-|departments|designations|locations|shifts|recruitment-|job-|candidate-|interview-|offer-|training-|performance-|asset-|vehicle-|hr-|ca-workspace|stock-|physical-stock|stock-transfer|asset-categories)/i.test(location.pathname);
 
   const toggleSidebar = () => {
     if (window.innerWidth <= 768) setMobileSidebarOpen(open => !open);
