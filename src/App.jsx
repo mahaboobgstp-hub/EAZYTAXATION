@@ -94,6 +94,7 @@ import EwayBills from "./pages/gst/EwayBills";
 import EInvoiceWorkspace from "./pages/gst/EInvoiceWorkspace";
 import ReportsWorkspace from "./pages/reports.jsx";
 import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
+import FixedAssetsWorkspace from "./pages/FixedAssetsWorkspace";
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -580,6 +581,17 @@ function App() {
   path="hr-budget-approvals"
   element={<HRBudgetApprovals />}
 />
+
+          {/* Fixed Assets accounting module */}
+          <Route path="asset-dashboard" element={<FixedAssetsWorkspace />} />
+          <Route path="fixed-assets" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-register" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-categories-accounting" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-acquisition" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-depreciation" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-transfer-accounting" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-disposal" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-reports" element={<FixedAssetsWorkspace />} />
 
           {/* ACCOUNTING WORKSPACE */}
           <Route path="accounting" element={<AccountingWorkspace />} />
