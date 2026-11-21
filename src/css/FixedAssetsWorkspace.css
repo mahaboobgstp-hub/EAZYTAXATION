@@ -18,18 +18,25 @@
  .fa-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .fa-module-card{padding:11px 9px;gap:7px}
 }
-\n/* Mobile fixed-asset register cards: avoid sideways scrolling on Android. */\n.fa-mobile-asset-list{display:none}\n.fa-mobile-asset-card{border:1px solid #dce5f2;border-radius:12px;background:#fff;padding:13px;margin-bottom:10px}\n.fa-mobile-asset-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}\n.fa-mobile-asset-card header>div{display:flex;flex-direction:column;gap:4px;min-width:0}\n.fa-mobile-asset-card header strong{font-size:14px;color:#1d3558}\n.fa-mobile-asset-card header small{font-size:11px;color:#718096}\n.fa-mobile-asset-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}\n.fa-mobile-asset-grid>div{display:flex;flex-direction:column;gap:4px;min-width:0}\n.fa-mobile-asset-grid small{font-size:11px;color:#718096}\n.fa-mobile-asset-grid strong{font-size:13px;color:#243b60;overflow-wrap:anywhere}\n@media(max-width:650px){.fa-table-wrap{display:none}.fa-mobile-asset-list{display:block}}\n
-/* Correct responsive asset register presentation for compact Android webviews */
-@media screen and (max-width: 900px) {
-  .fixed-assets-page .fa-table-wrap { display: none !important; }
-  .fixed-assets-page .fa-mobile-asset-list { display: block !important; width: 100%; }
-  .fixed-assets-page .fa-mobile-asset-card { display: block !important; box-sizing: border-box; width: 100%; border: 1px solid #dce5f2; border-radius: 12px; background: #fff; padding: 13px; margin: 0 0 10px; }
-  .fixed-assets-page .fa-mobile-asset-card header { display: flex !important; flex-direction: row !important; justify-content: space-between !important; align-items: flex-start !important; gap: 10px !important; margin: 0 0 12px !important; }
-  .fixed-assets-page .fa-mobile-asset-card header > div { display: flex !important; flex-direction: column !important; gap: 4px !important; min-width: 0 !important; }
-  .fixed-assets-page .fa-mobile-asset-card header strong { display: block !important; font-size: 14px !important; line-height: 1.3 !important; }
-  .fixed-assets-page .fa-mobile-asset-card header small { display: block !important; font-size: 11px !important; line-height: 1.3 !important; }
-  .fixed-assets-page .fa-mobile-asset-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
-  .fixed-assets-page .fa-mobile-asset-grid > div { display: flex !important; flex-direction: column !important; gap: 4px !important; min-width: 0 !important; }
-  .fixed-assets-page .fa-mobile-asset-grid small { display: block !important; font-size: 11px !important; line-height: 1.3 !important; }
-  .fixed-assets-page .fa-mobile-asset-grid strong { display: block !important; font-size: 13px !important; line-height: 1.35 !important; overflow-wrap: anywhere !important; }
+\n/* Fixed asset register responsive layout */
+.fa-mobile-asset-list{display:none}
+.fa-mobile-asset-card{box-sizing:border-box;width:100%;border:1px solid #dce5f2;border-radius:12px;background:#fff;padding:13px;margin:0 0 10px}
+.fa-mobile-asset-card header{display:flex;flex-direction:row;justify-content:space-between;align-items:flex-start;gap:10px;margin:0 0 12px}
+.fa-mobile-asset-card header>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fa-mobile-asset-card header strong{display:block;font-size:14px;line-height:1.3;color:#1d3558}
+.fa-mobile-asset-card header small{display:block;font-size:11px;line-height:1.3;color:#718096}
+.fa-mobile-asset-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fa-mobile-asset-grid>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fa-mobile-asset-grid small{display:block;font-size:11px;line-height:1.3;color:#718096}
+.fa-mobile-asset-grid strong{display:block;font-size:13px;line-height:1.35;color:#243b60;overflow-wrap:anywhere}
+@media screen and (max-width:900px){
+  .fixed-assets-page .fa-table-wrap{display:none!important}
+  .fixed-assets-page .fa-mobile-asset-list{display:block!important;width:100%}
+  .fixed-assets-page .fa-mobile-asset-card{display:block!important}
+  .fixed-assets-page .fa-mobile-asset-card header{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:flex-start!important}
+  .fixed-assets-page .fa-mobile-asset-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media screen and (min-width:901px){
+  .fixed-assets-page .fa-table-wrap{display:block}
+  .fixed-assets-page .fa-mobile-asset-list{display:none!important}
 }
