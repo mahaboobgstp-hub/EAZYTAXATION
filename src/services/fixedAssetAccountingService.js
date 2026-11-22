@@ -1,5 +1,18 @@
 import { createVoucher, postVoucher } from "./accountingService";
 
+/** Prevent accidental duplicate fixed-asset vouchers from repeated UI submissions. */
+async function assertNoFixedAssetVoucher(companyId, sourceRecordId) {
+  if (!sourceRecordId) throw new Error("A source record ID is required before posting a fixed-asset voucher.");
+  const { data, error } = await supabase.from("accounting_vouchers")
+    .select("id,status,voucher_number")
+    .eq("company_id", companyId)
+    .eq("source_module", "fixed_assets")
+    .eq("source_record_id", sourceRecordId)
+    .limit(1);
+  if (error) throw error;
+  if (data?.length) throw new Error("A fixed-asset voucher already exists for this source record. Review the existing voucher before retrying.");
+}
+
 /**
  * Build balanced acquisition lines from explicit ledger mapping.
  * GST eligibility is supplied by the user/accountant; this helper does not infer it.
@@ -49,6 +62,7 @@ export function buildAssetAcquisitionVoucherLines({
 }
 
 export async function createAndPostAssetAcquisitionVoucher(companyId, header, ledgerMapping, totals) {
+  await assertNoFixedAssetVoucher(companyId, header.source_record_id);
   const lines = buildAssetAcquisitionVoucherLines({ ...ledgerMapping, ...totals });
   const voucher = await createVoucher(companyId, {
     voucher_type: header.voucher_type || "Journal",
@@ -76,6 +90,7 @@ export function buildAssetSupplierPaymentLines({ supplierLedgerId, paymentLedger
 
 /** Create and post the voucher for a supplier payment linked to an asset acquisition. */
 export async function createAndPostAssetSupplierPaymentVoucher(companyId, header, mapping, amount) {
+  await assertNoFixedAssetVoucher(companyId, header.source_record_id);
   const lines = buildAssetSupplierPaymentLines({
     supplierLedgerId: mapping.supplierLedgerId,
     paymentLedgerId: mapping.paymentLedgerId,
@@ -107,6 +122,7 @@ export function buildDepreciationVoucherLines({ depreciationExpenseLedgerId, acc
 }
 
 export async function createAndPostDepreciationVoucher(companyId, header, mapping, amount) {
+  await assertNoFixedAssetVoucher(companyId, header.source_record_id);
   const lines = buildDepreciationVoucherLines({ ...mapping, amount, narration: header.narration });
   const voucher = await createVoucher(companyId, {
     voucher_type: header.voucher_type || "Journal", voucher_date: header.voucher_date,
@@ -145,6 +161,7 @@ export function buildAssetDisposalVoucherLines({ assetLedgerId, accumulatedDepre
 }
 
 export async function createAndPostAssetDisposalVoucher(companyId, header, mapping, amounts) {
+  await assertNoFixedAssetVoucher(companyId, header.source_record_id);
   const lines = buildAssetDisposalVoucherLines({ ...mapping, ...amounts, narration: header.narration });
   const voucher = await createVoucher(companyId, {
     voucher_type: header.voucher_type || "Journal", voucher_date: header.voucher_date,
