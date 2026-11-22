@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS fixed_asset_acquisition_lines_acquisition_id_idx ON public.fixed_asset_acquisition_lines(acquisition_id);
+CREATE INDEX IF NOT EXISTS fixed_asset_acquisition_payments_acquisition_id_idx ON public.fixed_asset_acquisition_payments(acquisition_id);
