@@ -587,6 +587,8 @@ function App() {
           <Route path="fixed-assets" element={<FixedAssetsWorkspace />} />
           <Route path="fixed-assets-register" element={<FixedAssetsWorkspace />} />
           <Route path="asset-categories-accounting" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-assignment" element={<FixedAssetsWorkspace />} />
+          <Route path="asset-maintenance" element={<FixedAssetsWorkspace />} />
           <Route path="asset-acquisition" element={<FixedAssetsWorkspace />} />
           <Route path="asset-depreciation" element={<FixedAssetsWorkspace />} />
           <Route path="asset-transfer-accounting" element={<FixedAssetsWorkspace />} />
