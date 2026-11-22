@@ -69,3 +69,22 @@ export function buildAssetSupplierPaymentLines({ supplierLedgerId, paymentLedger
     { ledger_id: payment, debit: 0, credit: value, line_narration: narration },
   ];
 }
+
+/** Create and post the voucher for a supplier payment linked to an asset acquisition. */
+export async function createAndPostAssetSupplierPaymentVoucher(companyId, header, mapping, amount) {
+  const lines = buildAssetSupplierPaymentLines({
+    supplierLedgerId: mapping.supplierLedgerId,
+    paymentLedgerId: mapping.paymentLedgerId,
+    amount,
+    narration: header.narration || "Payment for fixed asset acquisition",
+  });
+  const voucher = await createVoucher(companyId, {
+    voucher_type: header.voucher_type || "Payment",
+    voucher_date: header.voucher_date,
+    reference_number: header.reference_number || null,
+    narration: header.narration || "Payment for fixed asset acquisition",
+    source_module: "fixed_assets",
+    source_record_id: header.source_record_id || null,
+  }, lines);
+  return await postVoucher(companyId, voucher.id);
+}
