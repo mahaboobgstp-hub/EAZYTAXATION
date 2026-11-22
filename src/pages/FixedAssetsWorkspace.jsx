@@ -18,7 +18,7 @@ export default function FixedAssetsWorkspace(){
  const chooseAssetMethod=async method=>{const {error:e}=await supabase.from("companies").update({asset_accounting_method:method}).eq("id",currentCompanyId);if(e){setError(e.message);return;}setAssetMethod(method);setMethodPrompt(false);};
  const loadAssetCategories=async()=>{if(!currentCompanyId)return;try{setAssetCategories(await loadCategories(currentCompanyId));}catch(e){setError(e.message);}};
  const loadAssets=async()=>{if(!currentCompanyId){setAssets([]);return;}setLoading(true);const {data,error}=await supabase.from("fixed_assets").select("*").eq("company_id",currentCompanyId).order("created_at",{ascending:false});if(error){setError(error.message);setAssets([]);}else{setError("");setAssets(data||[]);}setLoading(false);};
- useEffect(()=>{loadAssets();loadAssetCategories();},[currentCompanyId]);
+ useEffect(()=>{setAssetMethod(currentCompany?.asset_accounting_method||null);setMethodPrompt(!currentCompany?.asset_accounting_method);loadAssets();loadAssetCategories();},[currentCompanyId]);
  const filtered=useMemo(()=>assets.filter(a=>([a.asset_code,a.asset_name,a.category].filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase()))&&(status==="all"||a.status===status)),[assets,search,status]);
  const openQuick=()=>{setMode("quick");setName("");setSelected(null);setError("");setModal(true);};
  const openAcquire=()=>{setMode("acquire");setForm({...blank});setSelected(null);setError("");setModal(true);};
