@@ -32,7 +32,11 @@ export function buildAssetAcquisitionVoucherLines({
     lines.push({ ledger_id: asset, debit: value, credit: 0, line_narration: "Fixed asset acquisition" });
     if (gst > 0) lines.push({ ledger_id: gstLedgerId, debit: gst, credit: 0, line_narration: "Recoverable input GST" });
   } else {
-    lines.push({ ledger_id: asset, debit: capCost, credit: 0, line_narration: "Fixed asset acquisition (GST capitalized)" });
+    // Non-recoverable GST is capitalized: asset debit must equal gross supplier invoice.
+    if (Math.abs(capCost - (value + gst)) > 0.02) {
+      throw new Error("When GST is not recoverable, capitalized cost must equal purchase value plus GST.");
+    }
+    lines.push({ ledger_id: asset, debit: value + gst, credit: 0, line_narration: "Fixed asset acquisition (GST capitalized)" });
   }
   lines.push({ ledger_id: supplier, debit: 0, credit: value + gst, line_narration: "Supplier payable" });
 
