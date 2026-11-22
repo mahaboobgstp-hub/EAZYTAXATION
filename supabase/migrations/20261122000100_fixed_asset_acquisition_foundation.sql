@@ -44,20 +44,24 @@ ALTER TABLE public.fixed_asset_acquisitions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fixed_asset_acquisition_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fixed_asset_acquisition_payments ENABLE ROW LEVEL SECURITY;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.fixed_asset_acquisitions TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.fixed_asset_acquisition_lines TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.fixed_asset_acquisition_payments TO authenticated;
+
 DO $$ BEGIN
- CREATE POLICY fixed_asset_acquisitions_company_access ON public.fixed_asset_acquisitions FOR ALL
+ CREATE POLICY fixed_asset_acquisitions_company_access ON public.fixed_asset_acquisitions FOR ALL TO authenticated
  USING (private.is_company_owner(company_id) OR private.has_company_user_permission(company_id,'accounting',false) OR private.has_ca_company_access(company_id,false))
  WITH CHECK (private.is_company_owner(company_id) OR private.has_company_user_permission(company_id,'accounting',true) OR private.has_ca_company_access(company_id,true));
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
- CREATE POLICY fixed_asset_acquisition_lines_company_access ON public.fixed_asset_acquisition_lines FOR ALL
+ CREATE POLICY fixed_asset_acquisition_lines_company_access ON public.fixed_asset_acquisition_lines FOR ALL TO authenticated
  USING (private.is_company_owner(company_id) OR private.has_company_user_permission(company_id,'accounting',false) OR private.has_ca_company_access(company_id,false))
  WITH CHECK (private.is_company_owner(company_id) OR private.has_company_user_permission(company_id,'accounting',true) OR private.has_ca_company_access(company_id,true));
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
- CREATE POLICY fixed_asset_acquisition_payments_company_access ON public.fixed_asset_acquisition_payments FOR ALL
+ CREATE POLICY fixed_asset_acquisition_payments_company_access ON public.fixed_asset_acquisition_payments FOR ALL TO authenticated
  USING (private.is_company_owner(company_id) OR private.has_company_user_permission(company_id,'accounting',false) OR private.has_ca_company_access(company_id,false))
  WITH CHECK (private.is_company_owner(company_id) OR private.has_company_user_permission(company_id,'accounting',true) OR private.has_ca_company_access(company_id,true));
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
