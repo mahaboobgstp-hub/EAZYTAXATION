@@ -49,3 +49,6 @@
 .fa-card-menu button:active{background:#f2f6fb}
 .fa-card-menu .fa-delete-action{color:#c03434}
 .fa-view-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.fa-view-details>div{display:flex;flex-direction:column;gap:4px;border:1px solid #e5ebf4;border-radius:8px;padding:10px}.fa-view-details small{font-size:12px;color:#73839a}.fa-view-details strong{color:#243b60;overflow-wrap:anywhere}
+/* Keep the asset status and overflow menu on the same line */
+.fa-mobile-asset-card .fa-card-actions{flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:6px;}
+.fa-mobile-asset-card .fa-card-menu-trigger{flex:0 0 34px;}
