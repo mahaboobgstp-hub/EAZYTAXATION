@@ -154,3 +154,39 @@ export async function createAndPostAssetDisposalVoucher(companyId, header, mappi
   }, lines);
   return await postVoucher(companyId, voucher.id);
 }
+
+/**
+ * Multi-line asset invoice voucher builder. Each invoice item can map to its own asset ledger.
+ * Input GST is aggregated to the selected input-tax ledger only when the caller marks it recoverable.
+ */
+export function buildMultiLineAssetAcquisitionVoucherLines({ supplierLedgerId, items, gstLedgerId = null, gstRecoverable = false }) {
+  const supplier = String(supplierLedgerId || "").trim();
+  if (!supplier) throw new Error("Select a supplier ledger.");
+  if (!Array.isArray(items) || items.length === 0) throw new Error("Add at least one asset invoice line.");
+  let supplierCredit = 0, recoverableGst = 0;
+  const lines = [];
+  for (const [index, item] of items.entries()) {
+    const ledger = String(item.assetLedgerId || "").trim();
+    const base = Number(item.purchaseValue || 0), gst = Number(item.gstTotal || 0);
+    if (!ledger) throw new Error(`Select an asset ledger for invoice line ${index + 1}.`);
+    if (!Number.isFinite(base) || base <= 0 || !Number.isFinite(gst) || gst < 0) throw new Error(`Invalid value/GST on invoice line ${index + 1}.`);
+    const cap = Number(item.capitalizedCost ?? base + (gstRecoverable ? 0 : gst));
+    if (!Number.isFinite(cap) || cap <= 0) throw new Error(`Invalid capitalized cost on invoice line ${index + 1}.`);
+    if (gstRecoverable) {
+      if (gst > 0 && !String(gstLedgerId || "").trim()) throw new Error("Select an Input GST ledger for recoverable GST.");
+      if (Math.abs(cap - base) > 0.02) throw new Error(`Recoverable GST must not be included in capitalized cost on line ${index + 1}.`);
+      lines.push({ ledger_id: ledger, debit: base, credit: 0, line_narration: item.description || `Asset invoice line ${index + 1}` });
+      recoverableGst += gst;
+    } else {
+      if (Math.abs(cap - (base + gst)) > 0.02) throw new Error(`Non-recoverable GST must be capitalized on line ${index + 1}.`);
+      lines.push({ ledger_id: ledger, debit: base + gst, credit: 0, line_narration: item.description || `Asset invoice line ${index + 1}` });
+    }
+    supplierCredit += base + gst;
+  }
+  if (gstRecoverable && recoverableGst > 0) lines.push({ ledger_id: gstLedgerId, debit: recoverableGst, credit: 0, line_narration: "Recoverable Input GST on asset invoice" });
+  lines.push({ ledger_id: supplier, debit: 0, credit: supplierCredit, line_narration: "Supplier payable for asset invoice" });
+  const debitTotal = lines.reduce((sum, line) => sum + Number(line.debit || 0), 0);
+  const creditTotal = lines.reduce((sum, line) => sum + Number(line.credit || 0), 0);
+  if (Math.abs(debitTotal - creditTotal) > 0.02) throw new Error("Multi-line asset invoice voucher is not balanced.");
+  return lines;
+}
