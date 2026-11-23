@@ -37,12 +37,25 @@ export async function importSalesCsvRows(rows,companyId,company){
 }
 
 export async function importPurchaseCsvRows(rows,companyId,company){
- const [{data:vendors,error:vErr},{data:items,error:iErr},{data:existing,error:eErr}]=await Promise.all([
+ const [{data:vendors,error:vErr},{data:itemsData,error:iErr},{data:existing,error:eErr}]=await Promise.all([
  supabase.from("vendors").select("id,vendor_name,gstin,state,address").eq("company_id",companyId),
  supabase.from("items").select("id,item_name,hsn_sac,unit,gst_rate,purchase_rate").eq("company_id",companyId),
  supabase.from("purchase_invoices").select("supplier_invoice_no,vendor_id").eq("company_id",companyId).eq("is_deleted",false)
  ]);
  if(vErr)throw vErr;if(iErr)throw iErr;if(eErr)throw eErr;
+ let items=[...(itemsData||[])];
+ // Summary-based purchase imports are not itemized. Create a non-inventory Service
+ // master for this specific placeholder instead of forcing users to add it manually.
+ const summaryNames=new Set(rows.map(r=>String(r["Item Name"]||"").trim()).filter(Boolean));
+ let createdSummaryItem=false;
+ if(summaryNames.has("Purchase Summary")&&!items.some(x=>norm(x.item_name)==="purchase summary")){
+   const {data:created,error:createError}=await supabase.from("items").insert({
+     company_id:companyId,item_name:"Purchase Summary",item_type:"Service",hsn_sac:null,
+     unit:"Nos",uom:"Nos",gst_rate:18,sales_rate:0,purchase_rate:0
+   }).select("id,item_name,hsn_sac,unit,gst_rate,purchase_rate").single();
+   if(createError)throw createError;
+   items.push(created);createdSummaryItem=true;
+ }
  const groups=new Map(),issues=[];
  rows.forEach((r,idx)=>{const supplierNo=r["Supplier Invoice Number"]?.trim(),date=r["Supplier Invoice Date"]?.trim(),vendorName=r["Vendor Name"]?.trim(),itemName=r["Item Name"]?.trim();
  if(!supplierNo||!dateOk(date)||!vendorName||!itemName){issues.push("CSV row "+(idx+2)+": supplier invoice number, valid date, vendor and item are required.");return;}
@@ -66,7 +79,7 @@ export async function importPurchaseCsvRows(rows,companyId,company){
  const {error:le}=await supabase.from("purchase_invoice_items").insert(g.lines.map((l,i)=>({...l,invoice_id:h.id,line_no:i+1})));
  if(le){await supabase.from("purchase_invoices").delete().eq("id",h.id).eq("company_id",companyId);failed.push(g.supplierNo+": "+le.message);continue;}imported++;existing.push({supplier_invoice_no:g.supplierNo,vendor_id:vendor.id});
  }
- return {imported,skipped,failed};
+ return {imported,skipped,failed,createdSummaryItem};
 }
 
 export async function importExpenseCsvRows(rows,companyId,company){
