@@ -1,7 +1,8 @@
 import React, { useRef, useState } from "react";
 import "../css/BulkTransactionImport.css";
 import { useCompany } from "../context/CompanyContext";
-import { supabase } from "../supabase/supabaseClient";\nimport { importSalesCsvRows, importPurchaseCsvRows, importExpenseCsvRows } from "../services/bulkInvoiceImportService";
+import { supabase } from "../supabase/supabaseClient";
+import { importSalesCsvRows, importPurchaseCsvRows, importExpenseCsvRows } from "../services/bulkInvoiceImportService";
 
 
 const TEMPLATES = {
