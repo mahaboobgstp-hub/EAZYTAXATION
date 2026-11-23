@@ -125,7 +125,7 @@ function UsersAccess() {
               <label>Role *<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option>Accounts</option><option>Billing</option><option>Inventory</option><option>HR & Payroll</option><option>GST</option><option>Custom</option></select></label>
               <label>Status<select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}><option>Active</option><option>Inactive</option></select></label>
             </div>
-            <div className="ua-permission-heading"><div><h3><FiShield /> Permissions</h3><p>Set module-wise Read / Write access for this user.</p></div></div>
+            {!selectedId && <div className="ua-form-grid ua-password-fields"><label>Password *<input type="password" required minLength={8} autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Set initial password (8+ characters)" /></label><label>Confirm Password *<input type="password" required minLength={8} autoComplete="new-password" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} placeholder="Re-enter password" /></label></div>}\n            <div className="ua-permission-heading"><div><h3><FiShield /> Permissions</h3><p>Set module-wise Read / Write access for this user.</p></div></div>
             <div className="ua-permission-table">
               <div className="ua-permission-head"><span>Module</span><span>Read (View)</span><span>Write (Create / Edit / Delete)</span></div>
               {ACCESS_MODULES.map((module) => <div className="ua-permission-row" key={module.key}>
