@@ -57,7 +57,7 @@ function AccountingWorkspace() {
     normal_balance:"Debit", statement_classification:"Balance Sheet", description:""
   });
   const [ledgerForm, setLedgerForm] = useState({
-    ledger_name:"", ledger_code:"", group_id:"", opening_balance:"0",
+    ledger_name:"", ledger_code:"", group_id:"", ledger_level:"Main Ledger", parent_ledger_id:"", is_posting_enabled:true, opening_balance:"0",
     opening_balance_type:"Debit", opening_date:today(), party_type:"",
     gst_applicable:false, gstin:"", description:""
   });
@@ -156,10 +156,13 @@ function AccountingWorkspace() {
         ...ledgerForm,
         opening_balance: Number(ledgerForm.opening_balance || 0),
         group_id: ledgerForm.group_id,
+        parent_ledger_id: ledgerForm.parent_ledger_id || null,
+        ledger_level: ledgerForm.ledger_level,
+        is_posting_enabled: ledgerForm.is_posting_enabled,
         party_type: ledgerForm.party_type || null,
         gstin: ledgerForm.gstin || null
       });
-      setLedgerForm({ ledger_name:"", ledger_code:"", group_id:"", opening_balance:"0", opening_balance_type:"Debit", opening_date:today(), party_type:"", gst_applicable:false, gstin:"", description:"" });
+      setLedgerForm({ ledger_name:"", ledger_code:"", group_id:"", ledger_level:"Main Ledger", parent_ledger_id:"", is_posting_enabled:true, opening_balance:"0", opening_balance_type:"Debit", opening_date:today(), party_type:"", gst_applicable:false, gstin:"", description:"" });
       setShowLedgerForm(false);
       setNotice("General ledger created successfully.");
       await load();
@@ -370,7 +373,10 @@ function AccountingWorkspace() {
         <div className="accounting-form-grid">
           <label>Ledger Name *<input required value={ledgerForm.ledger_name} onChange={(e)=>setLedgerForm({...ledgerForm,ledger_name:e.target.value})} placeholder="e.g. HDFC Bank A/c"/></label>
           <label>Ledger Code *<input required value={ledgerForm.ledger_code} onChange={(e)=>setLedgerForm({...ledgerForm,ledger_code:e.target.value.toUpperCase()})} placeholder="e.g. BANK001"/></label>
-          <label className="full-field">Parent Group / Subgroup *<select required value={ledgerForm.group_id} onChange={(e)=>setLedgerForm({...ledgerForm,group_id:e.target.value})}><option value="">Select account group</option>{data.groups.map((g)=><option key={g.id} value={g.id}>{getGroupPath(g.id)}</option>)}</select></label>
+          <label>Ledger Level *<select required value={ledgerForm.ledger_level} onChange={(e)=>{const level=e.target.value;setLedgerForm({...ledgerForm,ledger_level:level,parent_ledger_id:"",group_id:level==="Main Ledger"?"":ledgerForm.group_id,is_posting_enabled:level==="Subledger"?true:ledgerForm.is_posting_enabled});}}><option>Main Ledger</option><option>Intermediate Ledger</option><option>Subledger</option></select></label>
+          {ledgerForm.ledger_level!=="Main Ledger" && <label>Parent Ledger *<select required value={ledgerForm.parent_ledger_id} onChange={(e)=>{const parent=data.ledgers.find(l=>l.id===e.target.value);setLedgerForm({...ledgerForm,parent_ledger_id:e.target.value,group_id:parent?.group_id||ledgerForm.group_id});}}><option value="">Select parent ledger</option>{data.ledgers.filter(l=>l.is_active!==false && (ledgerForm.ledger_level==="Intermediate Ledger"?l.ledger_level==="Main Ledger":l.ledger_level==="Intermediate Ledger")).map(l=><option key={l.id} value={l.id}>{l.ledger_name} · {getGroupPath(l.group_id)}</option>)}</select></label>}
+          {ledgerForm.ledger_level==="Main Ledger" && <label className="full-field">Account Group *<select required value={ledgerForm.group_id} onChange={(e)=>setLedgerForm({...ledgerForm,group_id:e.target.value})}><option value="">Select account group</option>{data.groups.map((g)=><option key={g.id} value={g.id}>{getGroupPath(g.id)}</option>)}</select></label>}
+          <label className="full-field checkbox-field"><input type="checkbox" checked={ledgerForm.is_posting_enabled} disabled={ledgerForm.ledger_level==="Subledger"} onChange={(e)=>setLedgerForm({...ledgerForm,is_posting_enabled:e.target.checked})}/> Allow voucher posting to this ledger</label>
           <label>Opening Balance (₹)<input type="number" min="0" step="0.01" value={ledgerForm.opening_balance} onChange={(e)=>setLedgerForm({...ledgerForm,opening_balance:e.target.value})}/></label>
           <label>Balance Type<select value={ledgerForm.opening_balance_type} onChange={(e)=>setLedgerForm({...ledgerForm,opening_balance_type:e.target.value})}><option>Debit</option><option>Credit</option></select></label>
           <label>Opening Date<input type="date" value={ledgerForm.opening_date} onChange={(e)=>setLedgerForm({...ledgerForm,opening_date:e.target.value})}/></label>
