@@ -246,6 +246,23 @@ export default function BulkTransactionImport({ kind, onImported }) {
       } catch (error) { setNotice(`Import failed: ${error.message || "Unknown database error"}`); }
       return;
     }
+    if (["sales","purchases","expenses"].includes(kind)) {
+      if (!currentCompanyId) { setNotice("Select a company before importing."); return; }
+      const headers = rows[0].map(h => h.trim());
+      const records = rows.slice(1).filter(row => row.some(v => String(v || "").trim())).map(row => {
+        const obj = {}; headers.forEach((h, i) => { obj[h] = String(row[i] ?? "").trim(); }); return obj;
+      });
+      try {
+        const { data: company, error: companyError } = await supabase.from("companies").select("company_name,state").eq("id", currentCompanyId).single();
+        if (companyError) throw companyError;
+        const result = kind === "sales" ? await importSalesCsvRows(records, currentCompanyId, company) : kind === "purchases" ? await importPurchaseCsvRows(records, currentCompanyId, company) : await importExpenseCsvRows(records, currentCompanyId, company);
+        const failures = result.failed || [];
+        setNotice("Import completed: " + result.imported + " imported, " + result.skipped + " duplicates skipped, " + failures.length + " failed." + (failures.length ? " Details: " + failures.slice(0, 5).join(" | ") : ""));
+        if (result.imported) onImported?.();
+        if (!failures.length) { setRows([]); setFile(null); if (inputRef.current) inputRef.current.value = ""; }
+      } catch (error) { setNotice("Import failed: " + (error.message || "Database error")); }
+      return;
+    }
     if (kind !== "customers" && kind !== "vendors") {
       setNotice("Screen preview only: database validation and record creation are not yet connected for this import.");
       return;
