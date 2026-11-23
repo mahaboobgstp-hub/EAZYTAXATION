@@ -285,7 +285,7 @@ export default function BulkTransactionImport({ kind, onImported }) {
       try {
         const { data: existing, error: lookupError } = await supabase.from("expense_categories").select("category_name").eq("company_id", currentCompanyId);
         if (lookupError) throw lookupError;
-        const existingNames = new Set((existing || []).map(x => String(x.category_name || "").trim().toLowerCase());
+        const existingNames = new Set((existing || []).map(x => String(x.category_name || "").trim().toLowerCase()));
         const newNames = categoryNames.filter(name => !existingNames.has(name.toLowerCase()));
         const skipped = categoryNames.length - newNames.length;
         if (!newNames.length) { setNotice("All " + categoryNames.length + " expense categories already exist for this company; nothing imported."); return; }
