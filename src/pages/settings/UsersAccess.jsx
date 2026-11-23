@@ -8,7 +8,7 @@ import {
 import "../../css/settings/UsersAccess.css";
 
 const emptyForm = () => ({
-  fullName: "", email: "", role: "Accounts", status: "Active",
+  fullName: "", email: "", password: "", confirmPassword: "", role: "Accounts", status: "Active",
   permissions: JSON.parse(JSON.stringify(defaultPermissions)),
 });
 
