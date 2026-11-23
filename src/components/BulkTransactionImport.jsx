@@ -225,7 +225,7 @@ export default function BulkTransactionImport({ kind }) {
         }
         obj[key] = val;
       });
-      const name = obj[kind==="customers"?"customer_name":"vendor_name"];
+      const name = obj[kind==="customers"?"customer_name":"vendor_name"] || obj.customer_name || obj.vendor_name;
       if (!name) problems.push(`Row ${idx+2}: ${nameHeader} is required.`);
       if (obj.mobile && !/^\+?[0-9\s-]{7,15}$/.test(obj.mobile)) problems.push(`Row ${idx+2}: Mobile format looks invalid.`);
       if (obj.gstin && !/^[0-9A-Z]{15}$/i.test(obj.gstin)) problems.push(`Row ${idx+2}: GSTIN must be 15 characters.`);
