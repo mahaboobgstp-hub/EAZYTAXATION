@@ -26,7 +26,7 @@ const bankAccounts = [
   { name: "SBI Current Account", bank: "State Bank of India", number: "•••• 9012", balance: 1240560.75, date: "10 Jul 2026", color: "sbi" },
   { name: "ICICI Current Account", bank: "ICICI Bank", number: "•••• 4567", balance: 892130, date: "09 Jul 2026", color: "icici" }
 ];
-const categories = ["Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];
+const categories = ["Unclassified", "Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];
 
 export default function BankingWorkspace() {
   const { currentCompany } = useCompany();
