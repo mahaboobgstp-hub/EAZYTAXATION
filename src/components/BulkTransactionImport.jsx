@@ -122,7 +122,7 @@ function parseCsvPreview(text) {
   return rows;
 }
 
-export default function BulkTransactionImport({ kind }) {
+export default function BulkTransactionImport({ kind, onImported }) {
   const { currentCompanyId } = useCompany();
   const config = TEMPLATES[kind];
   const inputRef = useRef(null);
@@ -256,7 +256,7 @@ export default function BulkTransactionImport({ kind }) {
     try {
       const {error}=await supabase.from(table).insert(records);
       if(error) throw error;
-      setNotice(`Successfully imported ${records.length} ${kind} into the selected company.`);
+      setNotice(`Successfully imported ${records.length} ${kind} into the selected company.`);\n      onImported?.();
       setRows([]);
       setFile(null);
       if(inputRef.current) inputRef.current.value="";
