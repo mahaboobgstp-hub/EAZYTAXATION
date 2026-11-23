@@ -264,6 +264,39 @@ export default function BulkTransactionImport({ kind, onImported }) {
       } catch (error) { setNotice("Import failed: " + (error.message || "Database error")); }
       return;
     }
+    if (kind === "expense-categories") {
+      if (!currentCompanyId) { setNotice("Select a company before importing."); return; }
+      const headers = rows[0].map(h => h.trim());
+      if (!headers.includes("Category Name")) { setNotice("Missing required column: Category Name. Please download the Expense Categories template."); return; }
+      const categoryNames = [];
+      const seenInFile = new Set();
+      const issues = [];
+      rows.slice(1).forEach((row, idx) => {
+        if (!row.some(v => String(v || "").trim())) return;
+        const obj = {}; headers.forEach((h, i) => { obj[h] = String(row[i] ?? "").trim(); });
+        const name = obj["Category Name"];
+        if (!name) { issues.push("Row " + (idx + 2) + ": Category Name is required."); return; }
+        const key = name.toLowerCase();
+        if (seenInFile.has(key)) { issues.push("Row " + (idx + 2) + ": Duplicate category " + name + " within CSV."); return; }
+        seenInFile.add(key); categoryNames.push(name);
+      });
+      if (issues.length) { setNotice(issues.slice(0, 8).join(" | ") + (issues.length > 8 ? " (and " + (issues.length - 8) + " more)" : "")); return; }
+      if (!categoryNames.length) { setNotice("No usable category rows found."); return; }
+      try {
+        const { data: existing, error: lookupError } = await supabase.from("expense_categories").select("category_name").eq("company_id", currentCompanyId);
+        if (lookupError) throw lookupError;
+        const existingNames = new Set((existing || []).map(x => String(x.category_name || "").trim().toLowerCase());
+        const newNames = categoryNames.filter(name => !existingNames.has(name.toLowerCase()));
+        const skipped = categoryNames.length - newNames.length;
+        if (!newNames.length) { setNotice("All " + categoryNames.length + " expense categories already exist for this company; nothing imported."); return; }
+        const records = newNames.map(category_name => ({ category_name, company_id: currentCompanyId, is_active: true }));
+        const { error } = await supabase.from("expense_categories").insert(records);
+        if (error) throw error;
+        setNotice("Successfully imported " + newNames.length + " expense categories; skipped " + skipped + " existing duplicate(s).");
+        onImported?.(); setRows([]); setFile(null); if (inputRef.current) inputRef.current.value = "";
+      } catch (error) { setNotice("Import failed: " + (error.message || "Database error")); }
+      return;
+    }
     if (kind !== "customers" && kind !== "vendors") {
       setNotice("Screen preview only: database validation and record creation are not yet connected for this import.");
       return;
