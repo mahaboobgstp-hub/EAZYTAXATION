@@ -85,7 +85,7 @@ export async function importPurchaseCsvRows(rows,companyId,company){
 export async function importExpenseCsvRows(rows,companyId,company){
  const [{data:vendors,error:vErr},{data:initialCategories,error:cErr},{data:existing,error:eErr}]=await Promise.all([
  supabase.from("vendors").select("id,vendor_name,gstin,state").eq("company_id",companyId),
- supabase.from("expense_categories").select("id,category_name"),
+ supabase.from("expense_categories").select("id,category_name").eq("company_id",companyId),
  supabase.from("expenses").select("expense_no,supplier_invoice_no,vendor_id").eq("company_id",companyId)
  ]);
  if(vErr)throw vErr;if(cErr)throw cErr;if(eErr)throw eErr;
@@ -93,10 +93,10 @@ export async function importExpenseCsvRows(rows,companyId,company){
  const requestedNames=[...new Set(rows.map(r=>String(r["Expense Category"]||"").trim()).filter(Boolean))];
  const missingNames=requestedNames.filter(name=>!categoriesByKey.has(norm(name)));
  for(const categoryName of missingNames){
-   const {error:insertError}=await supabase.from("expense_categories").insert({category_name:categoryName});
+   const {error:insertError}=await supabase.from("expense_categories").insert({category_name:categoryName,company_id:companyId,is_active:true});
    if(insertError && !/duplicate|unique/i.test(insertError.message||"")) throw insertError;
  }
- const {data:categories,error:refreshError}=await supabase.from("expense_categories").select("id,category_name");
+ const {data:categories,error:refreshError}=await supabase.from("expense_categories").select("id,category_name").eq("company_id",companyId);
  if(refreshError)throw refreshError;
  const categoryMap=new Map((categories||[]).map(c=>[norm(c.category_name),c]));
  const issues=[];
