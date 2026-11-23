@@ -1,0 +1,11 @@
+-- Company-scoped reusable classification rules
+create table if not exists public.syd_transaction_rules (id uuid primary key default gen_random_uuid(), company_id uuid not null references public.companies(id) on delete cascade, rule_name text not null, match_type text not null check(match_type in ('exact_party','contains_narration','contains_description','exact_reference')), match_value text not null, transaction_direction text check(transaction_direction in ('debit','credit','any')), transaction_type text, ledger_id uuid not null, priority integer not null default 100, confirmed_by_user boolean not null default false, auto_apply boolean not null default false, is_active boolean not null default true, created_by uuid references auth.users(id), created_at timestamptz not null default now(), updated_at timestamptz not null default now(), constraint syd_transaction_rules_ledger_company_fk foreign key(company_id,ledger_id) references public.chart_of_accounts(company_id,id) on delete cascade);
+create index if not exists syd_transaction_rules_company_priority_idx on public.syd_transaction_rules(company_id,priority desc);
+alter table public.syd_transaction_rules enable row level security;
+drop policy if exists syd_transaction_rules_owner_all on public.syd_transaction_rules;
+create policy syd_transaction_rules_owner_all on public.syd_transaction_rules for all to authenticated using(private.is_company_owner(company_id)) with check(private.is_company_owner(company_id));
+drop policy if exists syd_transaction_rules_ca_access on public.syd_transaction_rules;
+create policy syd_transaction_rules_ca_access on public.syd_transaction_rules for all to authenticated using(private.has_ca_company_access(company_id,true)) with check(private.has_ca_company_access(company_id,true));
+drop policy if exists syd_transaction_rules_assigned_user on public.syd_transaction_rules;
+create policy syd_transaction_rules_assigned_user on public.syd_transaction_rules for all to authenticated using(private.has_company_user_permission(company_id,'accounting',true)) with check(private.has_company_user_permission(company_id,'accounting',true));
+grant select,insert,update,delete on public.syd_transaction_rules to authenticated;
