@@ -34,7 +34,7 @@ const TEMPLATES = {
     description: "Import complete customer master details across all form sections.",
     headers: ["Customer Name","Legal / Trade Name","Customer Code","Customer Type","Customer Group","Constitution","Active","GST Registration Type","GSTIN","PAN","GST Registered","Place of Supply","Composition Scheme","SEZ Customer","Export Customer","Deemed Export","TDS Applicable","E-Invoice Applicable","Opening Balance","Balance Type","Credit Limit","Credit Period (Days)","Payment Terms","Default Sales Ledger","Billing Address Line 1","Billing Address Line 2","Billing City","Billing State","Billing PIN Code","Billing Country","Shipping Same as Billing","Shipping Address Line 1","Shipping Address Line 2","Shipping City","Shipping State","Shipping PIN Code","Shipping Country","Contact Person","Designation","Mobile","Alternate Mobile","Email","Website","MSME / Udyam Number","Industry / Business","Sales Person","Customer Tags","Remarks"],
     sample: ["ABC Traders","ABC Traders Pvt Ltd","CUST-001","Business (B2B)","Sundry Debtors","Private Limited","Yes","Registered","37ABCDE1234F1Z5","ABCDE1234F","Yes","Andhra Pradesh","No","No","No","No","No","Yes","0","Debit","100000","30","Net 30","Sales","12 Market Road","","Vijayawada","Andhra Pradesh","520001","India","Yes","","","","","","","Ravi Kumar","Accounts Manager","9876543210","9876543211","accounts@abctraders.in","https://abctraders.in","","Trading","Sales Team","Regular","Demo customer"]
-  }
+  },
   vendors: {
     title: "Vendors",
     description: "Import complete vendor master details across all form sections.",
