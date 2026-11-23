@@ -20,7 +20,7 @@ export async function importSalesCsvRows(rows,companyId,company){
  if(g.date!==date||norm(g.customerName)!==norm(customerName)){issues.push("CSV row "+(idx+2)+": invoice "+no+" has inconsistent invoice header values.");return;}
  const item=items.find(x=>norm(x.item_name)===norm(itemName));const qty=n(r["Quantity"]),rate=n(r["Rate"]),discPct=n(r["Discount %"]),gstRate=n(r["GST Rate %"]),cessRate=n(r["Cess Rate %"]);
  if(qty<=0||rate<0||discPct<0||discPct>100||gstRate<0){issues.push("CSV row "+(idx+2)+": invalid quantity/rate/discount/GST.");return;}
- const gross=qty*rate,discount=gross*discPct/100,taxable=gross-discount,taxes=taxFor(taxable,gstRate,n(company?.state)===n(r["Place of Supply"])?true:n(company?.state)&&norm(company?.state)===norm(r["Place of Supply"]));
+ const gross=qty*rate,discount=gross*discPct/100,taxable=gross-discount,taxes=taxFor(taxable,gstRate,norm(company?.state)===norm(r["Place of Supply"]));
  const cess=taxable*cessRate/100;g.lines.push({item_id:item?.id||null,item_name:itemName,hsn_sac:r["HSN/SAC"]||item?.hsn_sac||"",unit:r["Unit"]||item?.unit||"",qty,rate,gst_rate:gstRate,amount:taxable+taxes.cgst+taxes.sgst+taxes.igst+cess,cess_rate:cessRate,cess_amount:cess,additional_cess_rate:0,additional_cess_amount:0,tax_inclusive:false});
  g.taxable=(g.taxable||0)+taxable;g.cgst=(g.cgst||0)+taxes.cgst;g.sgst=(g.sgst||0)+taxes.sgst;g.igst=(g.igst||0)+taxes.igst;g.cess=(g.cess||0)+cess;groups.set(key,g);
  });
