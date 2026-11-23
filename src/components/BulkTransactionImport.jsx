@@ -177,12 +177,77 @@ export default function BulkTransactionImport({ kind, onImported }) {
       setNotice("Select a CSV file with a header and at least one data row.");
       return;
     }
-    if (kind !== "customers" && kind !== "vendors") {
-      if (rows[0].length !== config.headers.length) {
-        setNotice("Please use the downloaded template.");
+    if (rows[0].length !== config.headers.length) {
+      setNotice("Please use the downloaded template.");
+      return;
+    }
+    if (kind === "items") {
+      if (!currentCompanyId) { setNotice("Select a company before importing."); return; }
+      const headers = rows[0].map(h => h.trim());
+      const requiredHeaders = ["Item Code", "Item Name", "Item Type", "HSN/SAC", "Unit", "GST Rate %", "Sales Rate", "Purchase Rate"];
+      if (!requiredHeaders.every(h => headers.includes(h))) {
+        setNotice("The Items CSV headers do not match the required template. Please download the latest Items template.");
         return;
       }
-      setNotice("Screen preview only: database validation and record creation will be connected after the UI is approved.");
+      const itemRecords = [];
+      const issues = [];
+      const codesSeen = new Set();
+      const namesSeen = new Set();
+      rows.slice(1).forEach((row, idx) => {
+        if (!row.some(v => String(v || "").trim())) return;
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = String(row[i] ?? "").trim(); });
+        const itemName = obj["Item Name"];
+        if (!itemName) { issues.push(`Row ${idx + 2}: Item Name is required.`); return; }
+        const type = obj["Item Type"] || "Goods";
+        if (!["Goods", "Service"].includes(type)) { issues.push(`Row ${idx + 2}: Item Type must be Goods or Service.`); return; }
+        const numeric = {};
+        for (const field of ["GST Rate %", "Sales Rate", "Purchase Rate"]) {
+          const raw = obj[field];
+          if (raw === "") { numeric[field] = null; continue; }
+          const value = Number(raw);
+          if (!Number.isFinite(value) || value < 0) { issues.push(`Row ${idx + 2}: ${field} must be a non-negative number.`); return; }
+          numeric[field] = value;
+        }
+        const code = obj["Item Code"];
+        if (code && codesSeen.has(code.toLowerCase())) { issues.push(`Row ${idx + 2}: Duplicate Item Code ${code} within CSV.`); return; }
+        if (namesSeen.has(itemName.toLowerCase())) { issues.push(`Row ${idx + 2}: Duplicate Item Name ${itemName} within CSV.`); return; }
+        if (code) codesSeen.add(code.toLowerCase());
+        namesSeen.add(itemName.toLowerCase());
+        itemRecords.push({
+          item_code: code || null,
+          item_name: itemName,
+          item_type: type,
+          hsn_sac: obj["HSN/SAC"] || null,
+          unit: obj["Unit"] || null,
+          gst_rate: numeric["GST Rate %"] ?? 0,
+          sales_rate: numeric["Sales Rate"],
+          purchase_rate: numeric["Purchase Rate"],
+          company_id: currentCompanyId
+        });
+      });
+      if (issues.length) { setNotice(issues.slice(0, 8).join(" | ") + (issues.length > 8 ? ` (and ${issues.length - 8} more)` : "")); return; }
+      if (!itemRecords.length) { setNotice("No usable item rows found."); return; }
+      try {
+        const { data: existing, error: lookupError } = await supabase.from("items").select("item_code,item_name").eq("company_id", currentCompanyId);
+        if (lookupError) throw lookupError;
+        const existingCodes = new Set((existing || []).map(x => String(x.item_code || "").trim().toLowerCase()).filter(Boolean));
+        const existingNames = new Set((existing || []).map(x => String(x.item_name || "").trim().toLowerCase()).filter(Boolean));
+        const newRecords = itemRecords.filter(x => (!x.item_code || !existingCodes.has(x.item_code.toLowerCase())) && !existingNames.has(x.item_name.toLowerCase()));
+        const skipped = itemRecords.length - newRecords.length;
+        if (!newRecords.length) { setNotice(`All ${itemRecords.length} items already exist in this company; nothing imported.`); return; }
+        const { error } = await supabase.from("items").insert(newRecords);
+        if (error) throw error;
+        setNotice(`Successfully imported ${newRecords.length} items${skipped ? `; skipped ${skipped} existing duplicate(s)` : ""} into the selected company.`);
+        onImported?.();
+        setRows([]);
+        setFile(null);
+        if (inputRef.current) inputRef.current.value = "";
+      } catch (error) { setNotice(`Import failed: ${error.message || "Unknown database error"}`); }
+      return;
+    }
+    if (kind !== "customers" && kind !== "vendors") {
+      setNotice("Screen preview only: database validation and record creation are not yet connected for this import.");
       return;
     }
     if (!currentCompanyId) { setNotice("Select a company before importing."); return; }
