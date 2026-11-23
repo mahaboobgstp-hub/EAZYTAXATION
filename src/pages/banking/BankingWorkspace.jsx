@@ -70,6 +70,20 @@ export default function BankingWorkspace() {
     const {error:pe}=await supabase.from("bank_account_profiles").insert({company_id:companyId,ledger_id:led.id,bank_name:accountForm.bank_name.trim(),account_holder_name:accountForm.account_holder_name||null,account_number_masked:accountForm.account_number?"****"+accountForm.account_number.slice(-4):null,ifsc:accountForm.ifsc.toUpperCase()||null,branch_name:accountForm.branch_name||null,account_type:accountForm.account_type,is_active:true});if(pe)throw pe;
     setNotice("Bank account saved successfully.");setAccountModal(false);setAccountForm({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});const {data:reload,error:re}=await supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true);if(re)throw re;setRealAccounts(reload||[]);
   }catch(err){setNotice("Could not save bank account: "+err.message);}finally{setAccountSaving(false);}};
+  const downloadBankStatementTemplate = () => {
+    const headers = ["Transaction Date (YYYY-MM-DD)", "Description / Narration", "Reference Number", "Debit", "Credit", "Amount"];
+    const csv = headers.join(",") + "\r\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "SYD_Bank_Statement_Import_Template.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const parseManualCsv = async (file) => {
     setManualError(""); setParsedLines([]); if (!file) return;
     try {
@@ -193,7 +207,7 @@ export default function BankingWorkspace() {
     {showImport && <div className="bank-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setShowImport(false);}}><section className="bank-import-modal" role="dialog" aria-modal="true" aria-labelledby="bank-import-title">
       <div className="bank-modal-heading"><div><div className="banking-eyebrow">BANKING</div><h2 id="bank-import-title">Manual CSV Statement Import</h2><p>Choose a saved bank account and upload a CSV statement.</p></div><button className="bank-icon-button" onClick={()=>setShowImport(false)}><FiX/></button></div>
       <label className="bank-recon-controls"><span>Bank Account</span><select value={manualAccountId} onChange={e=>setManualAccountId(e.target.value)}><option value="">Select account...</option>{realAccounts.map(a=><option key={a.id} value={a.id}>{a.bank_name} {a.account_number_masked||""}</option>)}</select></label>
-      <label className="bank-file-drop"><FiUploadCloud/><b>{manualFile?.name||"Choose CSV statement"}</b><small>CSV only · date, narration, debit/credit or amount columns</small><input type="file" accept=".csv,text/csv" onChange={async e=>{const file=e.target.files?.[0];setManualFile(file||null);await parseManualCsv(file);}}/></label>
+      <div className="bank-template-actions"><button type="button" className="bank-btn bank-btn-light" onClick={downloadBankStatementTemplate}><FiDownload/> Download Excel-compatible Template</button><small>Open in Excel, arrange/paste bank data into matching columns, save as CSV, then upload.</small></div><label className="bank-file-drop"><FiUploadCloud/><b>{manualFile?.name||"Choose CSV statement"}</b><small>CSV template · Date, Description, Reference, Debit, Credit, Amount</small><input type="file" accept=".csv,text/csv" onChange={async e=>{const file=e.target.files?.[0];setManualFile(file||null);await parseManualCsv(file);}}/></label>
       {manualError&&<p className="banking-footnote">{manualError}</p>}
       {parsedLines.length>0&&<div><strong>{parsedLines.length} rows parsed and ready</strong><div className="bank-table-wrap"><table className="bank-table"><thead><tr><th>Date</th><th>Description</th><th>Reference</th><th>Dr/Cr</th><th>Amount</th></tr></thead><tbody>{parsedLines.slice(0,10).map((r,i)=><tr key={i}><td>{r.statement_date}</td><td>{r.narration}</td><td>{r.reference_number||"-"}</td><td>{r.direction}</td><td>{money(r.amount)}</td></tr>)}</tbody></table></div>{parsedLines.length>10&&<small>Preview limited to first 10 rows.</small>}</div>}
       <div className="bank-modal-actions"><button className="bank-btn bank-btn-light" onClick={()=>setShowImport(false)}>Cancel</button><button className="bank-btn bank-btn-primary" disabled={!manualAccountId||!parsedLines.length||manualSaving} onClick={importManualCsv}>{manualSaving?"Importing...":"Import Transactions"} <FiArrowRight/></button></div>
