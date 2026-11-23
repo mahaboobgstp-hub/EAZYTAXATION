@@ -256,7 +256,8 @@ export default function BulkTransactionImport({ kind, onImported }) {
     try {
       const {error}=await supabase.from(table).insert(records);
       if(error) throw error;
-      setNotice(`Successfully imported ${records.length} ${kind} into the selected company.`);\n      onImported?.();
+      setNotice(`Successfully imported ${records.length} ${kind} into the selected company.`);
+      onImported?.();
       setRows([]);
       setFile(null);
       if(inputRef.current) inputRef.current.value="";
