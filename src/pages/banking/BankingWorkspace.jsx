@@ -37,11 +37,11 @@ export default function BankingWorkspace() {
       : "Overview"
   );
 
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [selected, setSelected] = useState([1, 3]);
+  const [transactions, setTransactions] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All Transactions");
-  const [account, setAccount] = useState("HDFC Current Account");
+  const [account, setAccount] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [importStep, setImportStep] = useState(1);
   const [importMethod, setImportMethod] = useState("aggregator");
@@ -51,7 +51,7 @@ export default function BankingWorkspace() {
   const [reconMatched, setReconMatched] = useState(false);
   const [period, setPeriod] = useState("Apr 2025");
   const [settingsTab, setSettingsTab] = useState("Account Aggregator");
-  const [realAccounts, setRealAccounts] = useState([]);
+  const [realAccounts, setRealAccounts] = useState([]);\n  const [accountLedgers, setAccountLedgers] = useState([]);
   const [accountModal, setAccountModal] = useState(false);
   const [accountForm, setAccountForm] = useState({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});
   const [accountSaving, setAccountSaving] = useState(false);
@@ -61,7 +61,18 @@ export default function BankingWorkspace() {
   const [manualError, setManualError] = useState("");
   const [manualSaving, setManualSaving] = useState(false);
   const companyId = currentCompany?.id || currentCompany?.company_id;
-  useEffect(() => { if(companyId) supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true).then(({data,error})=>{if(error)setNotice(error.message);else setRealAccounts(data||[]);}); }, [companyId]);
+  const loadBankingData = async () => {
+    if (!companyId) return;
+    const [{data: accounts, error: accountError}, {data: lines, error: linesError}] = await Promise.all([
+      supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true).order("created_at",{ascending:true}),
+      supabase.from("bank_statement_lines").select("*").eq("company_id",companyId).order("statement_date",{ascending:false})
+    ]);
+    if(accountError) setNotice("Bank accounts could not be loaded: "+accountError.message); else setRealAccounts(accounts||[]);
+    if(linesError) setNotice("Transactions could not be loaded: "+linesError.message);
+    else setTransactions((lines||[]).map(line=>({id:line.id,accountId:line.bank_account_id,date:line.statement_date,narration:line.narration||"",ref:line.reference_number||"",amount:(line.direction==="Debit"?-1:1)*Number(line.amount||0),type:line.category||"Unclassified",ledger:line.ledger_name||"",ledgerId:line.ledger_id||"",status:line.classification_status||"Unclassified",raw:line})));
+  };
+  useEffect(()=>{loadBankingData();},[companyId]);
+  useEffect(()=>{if(!companyId)return;supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code").eq("company_id",companyId).eq("is_active",true).order("ledger_name").then(({data,error})=>{if(error)setNotice(error.message);else setAccountLedgers(data||[]);});},[companyId]);
   const saveBankAccount = async (e) => { e.preventDefault(); if(!companyId || !accountForm.bank_name.trim()) return; setAccountSaving(true); try {
     const {data:gr,error:ge}=await supabase.from("account_groups").select("id").eq("company_id",companyId).eq("group_name","Bank Accounts").limit(1); if(ge)throw ge; let groupId=gr?.[0]?.id;
     if(!groupId){const {data:ng,error:ne}=await supabase.from("account_groups").insert({company_id:companyId,group_name:"Bank Accounts",group_code:"BANK_ACCOUNTS",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet"}).select("id").single();if(ne)throw ne;groupId=ng.id;}
@@ -134,7 +145,18 @@ export default function BankingWorkspace() {
     return matchesSearch && matchesFilter;
   }), [transactions, search, filter]);
 
-  const updateTransaction = (id, key, value) => setTransactions(rows => rows.map(row => row.id === id ? { ...row, [key]: value } : row));
+  const updateTransaction = async (id,key,value) => {
+    setTransactions(rows=>rows.map(row=>row.id===id?{...row,[key]:value}:row));
+    if(key==="type"){
+      const {error}=await supabase.from("bank_statement_lines").update({category:value,classification_status:value==="Unclassified"?"Unclassified":"To Post"}).eq("id",id).eq("company_id",companyId);
+      if(error)setNotice("Category save failed: "+error.message);
+    }
+    if(key==="ledgerId"){
+      const ledger=accountLedgers.find(x=>x.id===value);
+      const {error}=await supabase.from("bank_statement_lines").update({ledger_id:value||null,ledger_name:ledger?.ledger_name||null,classification_status:value?"To Post":"Unclassified"}).eq("id",id).eq("company_id",companyId);
+      if(error)setNotice("Ledger mapping save failed: "+error.message);
+    }
+  };
   const postSelected = () => {
     setTransactions(rows => rows.map(row => selected.includes(row.id) ? { ...row, status: "Posted" } : row));
     setSelected([]);
@@ -160,13 +182,13 @@ export default function BankingWorkspace() {
 
     {tab === "Overview" && <section className="banking-content">
       <div className="banking-metrics">
-        <Metric icon={<FiCreditCard/>} label="Connected Bank Accounts" value="3" hint="Active" tone="blue"/>
-        <Metric icon={<FiFileText/>} label="Unclassified Transactions" value={transactions.filter(x => x.status === "Unclassified").length + 40} hint="Needs Action" tone="orange"/>
-        <Metric icon={<FiClock/>} label="Pending Reconciliation" value="1" hint="Apr 2025" tone="pink"/>
-        <Metric icon={<FiCheckCircle/>} label="Last Import" value="11 Jul 2026" hint="Up to date" tone="green"/>
+        <Metric icon={<FiCreditCard/>} label="Connected Bank Accounts" value={realAccounts.length} hint="Saved" tone="blue"/>
+        <Metric icon={<FiFileText/>} label="Unclassified Transactions" value={transactions.filter(x => x.status === "Unclassified").length hint="Needs Action" tone="orange"/>
+        <Metric icon={<FiClock/>} label="Pending Reconciliation" value={transactions.filter(x=>x.status!=="Posted").length} hint="Imported" tone="pink"/>
+        <Metric icon={<FiCheckCircle/>} label="Last Import" value={transactions.length} hint="Loaded" tone="green"/>
       </div>
       <div className="banking-overview-grid">
-        <section className="bank-card bank-accounts-card"><div className="bank-card-heading"><div><h2>Bank Accounts (3)</h2><p>Your connected business accounts</p></div><button className="bank-text-button" onClick={() => setTab("Bank Accounts")}>View all <FiArrowRight/></button></div>
+        <section className="bank-card bank-accounts-card"><div className="bank-card-heading"><div><h2>Bank Accounts ({realAccounts.length})</h2><p>Your saved business accounts</p></div><button className="bank-text-button" onClick={() => setTab("Bank Accounts")}>View all <FiArrowRight/></button></div>
           <div className="bank-table-wrap"><table className="bank-table"><thead><tr><th>Bank Account</th><th>Account No.</th><th>Bank</th><th>Closing Balance</th><th>Last Statement</th><th></th></tr></thead><tbody>{bankAccounts.map(row => <tr key={row.name}><td><strong>{row.name}</strong></td><td>{row.number}</td><td>{row.bank}</td><td className="bank-amount">{money(row.balance)}</td><td>{row.date}</td><td><button className="bank-icon-button"><FiMoreVertical/></button></td></tr>)}</tbody></table></div>
         </section>
         <section className="bank-card bank-trend-card"><div className="bank-card-heading"><div><h2>Bank Balance Trend</h2><p>Consolidated closing balance</p></div><span className="bank-period">Apr – Jul</span></div><div className="bank-chart"><div className="bank-chart-y"><span>60L</span><span>45L</span><span>30L</span><span>15L</span><span>0</span></div><svg viewBox="0 0 420 190" role="img" aria-label="Bank balance trend chart"><defs><linearGradient id="bankFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#7550e8" stopOpacity=".22"/><stop offset="100%" stopColor="#7550e8" stopOpacity="0"/></linearGradient></defs><path d="M0 145 C45 138 55 112 92 119 S150 126 184 94 S245 111 280 70 S340 82 420 22 L420 180 L0 180Z" fill="url(#bankFill)"/><path d="M0 145 C45 138 55 112 92 119 S150 126 184 94 S245 111 280 70 S340 82 420 22" fill="none" stroke="#7047e8" strokeWidth="3" strokeLinecap="round"/><circle cx="420" cy="22" r="5" fill="#7047e8"/></svg></div><div className="bank-chart-x"><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div></section>
@@ -176,9 +198,9 @@ export default function BankingWorkspace() {
 
     {tab === "Transactions" && <section className="banking-content">
       <div className="banking-section-title"><div><h2>Bank Transactions – Classify & Post</h2><p>Review imported statement lines and map each transaction to the correct accounting entry.</p></div><div className="banking-heading-actions"><button className="bank-btn bank-btn-light" onClick={() => setNotice("Auto-classification preview completed. Review the suggested categories before posting.")}><FiZap/> Auto-Classify</button><button className="bank-btn bank-btn-primary" disabled={!selected.length} onClick={postSelected}><FiCheck/> Post Selected ({selected.length})</button></div></div>
-      <div className="bank-filter-bar"><select value={account} onChange={e => setAccount(e.target.value)}>{bankAccounts.map(x => <option key={x.name}>{x.name}</option>)}</select><label className="bank-date-filter"><FiCalendar/><span>01 Apr 2025 – 11 Jul 2026</span><FiChevronDown/></label><select value={filter} onChange={e => setFilter(e.target.value)}><option>All Transactions</option><option>Unclassified</option><option>To Post</option><option>Posted</option></select><label className="bank-search"><FiSearch/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search narration, amount..."/></label></div>
+      <div className="bank-filter-bar"><select value={account} onChange={e=>setAccount(e.target.value)}><option value="">All Bank Accounts</option>{realAccounts.map(a=><option key={a.id} value={a.id}>{a.bank_name} {a.account_number_masked||""}</option>)}</select><label className="bank-date-filter"><FiCalendar/><span>01 Apr 2025 – 11 Jul 2026</span><FiChevronDown/></label><select value={filter} onChange={e => setFilter(e.target.value)}><option>All Transactions</option><option>Unclassified</option><option>To Post</option><option>Posted</option></select><label className="bank-search"><FiSearch/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search narration, amount..."/></label></div>
       <div className="banking-status-tabs"><button className="active">All ({transactions.length})</button><button onClick={() => setFilter("Unclassified")}>Unclassified ({transactions.filter(x=>x.status==="Unclassified").length})</button><button onClick={() => setFilter("To Post")}>To Post ({transactions.filter(x=>x.status==="To Post").length})</button><button onClick={() => setFilter("Posted")}>Posted ({transactions.filter(x=>x.status==="Posted").length})</button></div>
-      <section className="bank-card"><TransactionTable rows={visibleTransactions} selected={selected} onToggle={toggleSelected} onChange={updateTransaction}/></section>
+      <section className="bank-card"><TransactionTable rows={visibleTransactions} selected={selected} onToggle={toggleSelected} onChange={updateTransaction} ledgers={accountLedgers}/></section>
       <p className="banking-footnote"><FiAlertCircle/> Posting is a preview action only. Actual journal, payment, receipt and purchase vouchers will be created after the accounting ledger integration is implemented.</p>
     </section>}
 
@@ -195,7 +217,7 @@ export default function BankingWorkspace() {
       <BulkTransactionImport kind="bank-accounts" />
       {accountModal && <div className="bank-modal-backdrop"><section className="bank-import-modal" role="dialog" aria-modal="true"><div className="bank-modal-heading"><div><h2>Add Bank Account</h2><p>Creates a bank ledger and stores account details.</p></div><button className="bank-icon-button" onClick={()=>setAccountModal(false)}><FiX/></button></div><form className="bank-account-form" onSubmit={saveBankAccount}><label>Bank Name<input required value={accountForm.bank_name} onChange={e=>setAccountForm({...accountForm,bank_name:e.target.value})}/></label><label>Account Holder<input value={accountForm.account_holder_name} onChange={e=>setAccountForm({...accountForm,account_holder_name:e.target.value})}/></label><label>Account Number<input value={accountForm.account_number} onChange={e=>setAccountForm({...accountForm,account_number:e.target.value})}/></label><label>IFSC<input value={accountForm.ifsc} onChange={e=>setAccountForm({...accountForm,ifsc:e.target.value})}/></label><label>Branch<input value={accountForm.branch_name} onChange={e=>setAccountForm({...accountForm,branch_name:e.target.value})}/></label><label>Account Type<select value={accountForm.account_type} onChange={e=>setAccountForm({...accountForm,account_type:e.target.value})}><option>Current</option><option>Savings</option><option>OD</option><option>CC</option></select></label><div className="bank-modal-actions"><button type="button" className="bank-btn bank-btn-light" onClick={()=>setAccountModal(false)}>Cancel</button><button className="bank-btn bank-btn-primary" disabled={accountSaving}>{accountSaving?"Saving...":"Save Account"}</button></div></form></section></div>}
       {realAccounts.length>0 && <div className="bank-card" style={{marginBottom:16,padding:12}}><strong>Saved bank accounts ({realAccounts.length})</strong><ul>{realAccounts.map(a=><li key={a.id}>{a.bank_name} — {a.account_number_masked||"No account number"} ({a.account_type})</li>)}</ul></div>}
-      <div className="bank-account-grid">{bankAccounts.map(row=><article className="bank-card bank-account-tile" key={row.name}><div className={"bank-logo "+row.color}>{row.bank.split(" ").map(x=>x[0]).join("").slice(0,3)}</div><div className="bank-account-status"><span className="bank-dot"/> Connected</div><h3>{row.name}</h3><p>{row.bank} · {row.number}</p><div className="bank-account-balance"><span>Available balance</span><strong>{money(row.balance)}</strong></div><div className="bank-account-actions"><button onClick={()=>{setAccount(row.name);setTab("Transactions")}}>View transactions</button><button aria-label="More options"><FiMoreVertical/></button></div></article>)}</div>
+      <div className="bank-account-grid">{realAccounts.map(row=><article className="bank-card bank-account-tile real-bank-account" key={row.id}><div className="bank-logo real-bank-logo">{(row.bank_name||"Bank").split(" ").map(x=>x[0]).join("").slice(0,3).toUpperCase()}</div><div className="bank-account-status"><span className="bank-dot"/> Saved</div><h3>{row.bank_name}</h3><p>{row.account_number_masked||"Account details hidden"} · {row.account_type||"Bank"}</p><div className="bank-account-balance"><span>Imported transactions</span><strong>{transactions.filter(t=>t.accountId===row.id).length}</strong></div><div className="bank-account-actions"><button onClick={()=>{setAccount(row.id);setTab("Transactions")}}>View transactions</button><button onClick={()=>{setManualAccountId(row.id);setShowImport(true);}}>Import statement</button></div></article>)}</div>
     </section>}
 
     {tab === "Settings" && <section className="banking-content">
@@ -215,7 +237,7 @@ export default function BankingWorkspace() {
 }
 
 function Metric({icon,label,value,hint,tone="blue"}) { return <article className="bank-metric"><div className={"bank-metric-icon "+tone}>{icon}</div><div className="bank-metric-copy"><span>{label}</span><strong>{value}</strong><small className={tone}>{hint}</small></div></article>; }
-function TransactionTable({rows,selected=[],onToggle,onChange,compact=false}) {
-  return <div className="bank-table-wrap"><table className="bank-table bank-transactions-table"><thead><tr>{!compact&&<th><input type="checkbox" aria-label="Select all"/></th>}<th>Date</th><th>Narration / Description</th><th>Bank Ref.</th><th>Amount (₹)</th><th>Type / Purpose</th><th>Accounting Mapping</th><th>Status</th></tr></thead><tbody>{rows.map(row=><tr key={row.id}>{!compact&&<td><input type="checkbox" checked={selected.includes(row.id)} onChange={()=>onToggle?.(row.id)} aria-label={"Select "+row.narration}/></td>}<td>{row.date}</td><td><strong>{row.narration}</strong></td><td>{row.ref}</td><td className={row.amount<0?"bank-negative":"bank-positive"}>{row.amount<0?"−":"+"}{money(row.amount)}</td><td>{compact?row.type:<select value={row.type} onChange={e=>onChange?.(row.id,"type",e.target.value)}>{categories.map(x=><option key={x}>{x}</option>)}</select>}</td><td>{compact?row.ledger:<input className="bank-ledger-input" value={row.ledger} onChange={e=>onChange?.(row.id,"ledger",e.target.value)}/>}</td><td><span className={"bank-status "+row.status.toLowerCase().replaceAll(" ","-")}>{row.status}</span></td></tr>)}</tbody></table>{!rows.length&&<div className="bank-empty">No transactions match your filters.</div>}</div>;
+function TransactionTable({rows,selected=[],onToggle,onChange,compact=false,ledgers=[]}) {
+  return <div className="bank-table-wrap"><table className="bank-table bank-transactions-table"><thead><tr>{!compact&&<th><input type="checkbox" aria-label="Select all"/></th>}<th>Date</th><th>Narration / Description</th><th>Bank Ref.</th><th>Amount (₹)</th><th>Type / Purpose</th><th>Accounting Mapping</th><th>Status</th></tr></thead><tbody>{rows.map(row=><tr key={row.id}>{!compact&&<td><input type="checkbox" checked={selected.includes(row.id)} onChange={()=>onToggle?.(row.id)} aria-label={"Select "+row.narration}/></td>}<td>{row.date}</td><td><strong>{row.narration}</strong></td><td>{row.ref}</td><td className={row.amount<0?"bank-negative":"bank-positive"}>{row.amount<0?"−":"+"}{money(row.amount)}</td><td>{compact?row.type:<select value={row.type} onChange={e=>onChange?.(row.id,"type",e.target.value)}>{categories.map(x=><option key={x}>{x}</option>)}</select>}</td><td>{compact?row.ledger:<select className="bank-ledger-input" value={row.ledgerId||""} onChange={e=>onChange?.(row.id,"ledgerId",e.target.value)}><option value="">Select ledger...</option>{ledgers.map(l=><option key={l.id} value={l.id}>{l.ledger_name}{l.ledger_code? " ("+l.ledger_code+")":""}</option>)}</select>}</td><td><span className={"bank-status "+row.status.toLowerCase().replaceAll(" ","-")}>{row.status}</span></td></tr>)}</tbody></table>{!rows.length&&<div className="bank-empty">No transactions match your filters.</div>}</div>;
 }
 function FiBookOpenIcon(){return <FiFileText/>;}
