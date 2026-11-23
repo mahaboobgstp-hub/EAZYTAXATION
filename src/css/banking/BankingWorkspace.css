@@ -19,3 +19,5 @@
 
 .bank-account-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:16px}.bank-account-form label{display:flex;flex-direction:column;gap:6px;color:#657086;font-size:11px;font-weight:700}.bank-account-form input,.bank-account-form select{height:38px;border:1px solid #dfe3ec;border-radius:7px;padding:0 10px;background:#fff;color:#334056;font-size:12px}.bank-account-form .bank-modal-actions{grid-column:1/-1}@media(max-width:600px){.bank-account-form{grid-template-columns:1fr}}
 .bank-template-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 14px}.bank-template-actions small{font-size:10px;color:#7e8799;line-height:1.5;max-width:500px}
+
+.real-bank-account{border-top:3px solid #7047e8;background:linear-gradient(180deg,#fbfaff 0,#fff 38%)}.real-bank-logo{background:#eee8ff;color:#6540d6;border:1px solid #ded2ff}.bank-account-tile.real-bank-account:hover{transform:translateY(-2px);box-shadow:0 8px 24px #1c294012}.bank-account-actions button+button{padding-left:10px}.banking-page .bank-transactions-table select.bank-ledger-input{min-width:190px}
