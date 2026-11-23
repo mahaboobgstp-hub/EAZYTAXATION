@@ -34,8 +34,23 @@ export async function createAccountGroup(companyId, values) {
 
 export async function createLedger(companyId, values) {
   const id = requireCompany(companyId);
-  const { data, error } = await supabase.from("chart_of_accounts")
-    .insert([{ ...values, company_id: id }]).select().single();
+  const level=values.ledger_level||"Main Ledger";
+  const parentId=values.parent_ledger_id||null;
+  if(!["Main Ledger","Intermediate Ledger","Subledger"].includes(level))throw new Error("Invalid ledger level.");
+  if(level==="Main Ledger"&&parentId)throw new Error("Main Ledgers cannot have a parent ledger.");
+  if(level!=="Main Ledger"&&!parentId)throw new Error("Select a parent ledger for this ledger level.");
+  if(level==="Main Ledger"&&!values.group_id)throw new Error("Select an account group.");
+  if(parentId){
+    const {data:parent,error:parentError}=await supabase.from("chart_of_accounts").select("id,company_id,group_id,ledger_level,is_active").eq("company_id",id).eq("id",parentId).maybeSingle();
+    if(parentError)throw parentError;
+    if(!parent||parent.is_active===false)throw new Error("Selected parent ledger is unavailable for this company.");
+    const expectedParentLevel=level==="Intermediate Ledger"?"Main Ledger":"Intermediate Ledger";
+    if(parent.ledger_level!==expectedParentLevel)throw new Error(level==="Intermediate Ledger"?"Intermediate Ledgers must be under a Main Ledger.":"Subledgers must be under an Intermediate Ledger.");
+    if(values.group_id&&values.group_id!==parent.group_id)throw new Error("Child ledger must belong to the same account group as its parent.");
+    values={...values,group_id:parent.group_id};
+  }
+  const payload={...values,company_id:id,ledger_level:level,parent_ledger_id:parentId,is_posting_enabled:level==="Subledger"?true:values.is_posting_enabled!==false};
+  const { data, error } = await supabase.from("chart_of_accounts").insert([payload]).select().single();
   if (error) throw error;
   return data;
 }
