@@ -46,7 +46,7 @@ function AccountingWorkspace() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [showGroupForm, setShowGroupForm] = useState(false);\n  const [groupCreationMode, setGroupCreationMode] = useState("main");
   const [showLedgerForm, setShowLedgerForm] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [selectedLedger, setSelectedLedger] = useState("");
@@ -319,7 +319,7 @@ function AccountingWorkspace() {
           <div className="panel-heading"><div><h3>Quick Actions</h3><p>Common accounting tasks</p></div></div>
           <div className="quick-actions">
             <button onClick={() => navigate("/app/journal-voucher")}>＋ <span><b>Journal Voucher</b><small>Create a manual entry</small></span></button>
-            <button onClick={() => { setShowGroupForm(true); navigate("/app/chart-of-accounts"); }}>▤ <span><b>Create Account Group</b><small>Build account hierarchy</small></span></button>
+            <button onClick={() => { setGroupCreationMode("main"); setGroupForm({group_name:"",group_code:"",parent_group_id:"",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet",description:""}); setShowGroupForm(true); navigate("/app/chart-of-accounts"); }}>▤ <span><b>Create Main Group</b><small>Start a new top-level group</small></span></button><button onClick={() => { setGroupCreationMode("subgroup"); setGroupForm({group_name:"",group_code:"",parent_group_id:"",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet",description:""}); setShowGroupForm(true); navigate("/app/chart-of-accounts"); }}>▤ <span><b>Create Subgroup</b><small>Add beneath an existing group</small></span></button>
             <button onClick={() => { setShowLedgerForm(true); navigate("/app/chart-of-accounts"); }}>▣ <span><b>Create Ledger</b><small>Add a general ledger</small></span></button>
             <button onClick={() => navigate("/app/trial-balance")}>▥ <span><b>Trial Balance</b><small>Review debit and credit totals</small></span></button>
           </div>
@@ -343,7 +343,7 @@ function AccountingWorkspace() {
 
   const renderChart = () => (
     <>
-      {renderHeader("Chart of Accounts", "Manage account groups, subgroups and general ledgers.", <><button className="btn-secondary" onClick={loadDefaultGroups} disabled={busy || data.groups.length > 0}>Load Standard Groups</button><button className="btn-secondary" onClick={() => setShowGroupForm(true)}>＋ New Group</button><button className="btn-primary" onClick={() => setShowLedgerForm(true)}>＋ New Ledger</button></>)}
+      {renderHeader("Chart of Accounts", "Manage account groups, subgroups and general ledgers.", <><button className="btn-secondary" onClick={loadDefaultGroups} disabled={busy || data.groups.length > 0}>Load Standard Groups</button><button className="btn-secondary" onClick={() => { setGroupCreationMode("main"); setGroupForm({group_name:"",group_code:"",parent_group_id:"",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet",description:""}); setShowGroupForm(true); }}>＋ Create Main Group</button><button className="btn-secondary" onClick={() => { setGroupCreationMode("subgroup"); setGroupForm({group_name:"",group_code:"",parent_group_id:"",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet",description:""}); setShowGroupForm(true); }}>＋ Create Subgroup</button><button className="btn-primary" onClick={() => setShowLedgerForm(true)}>＋ New Ledger</button></>)}
       <AccountImportWizard companyId={currentCompanyId} onComplete={load} />
       <section className="accounting-panel">
         <div className="coa-toolbar"><input placeholder="⌕  Search group or ledger..." onChange={(e) => { const value=e.target.value.toLowerCase(); setExpanded(Object.fromEntries(data.groups.map((g)=>[g.id, !value || g.group_name.toLowerCase().includes(value)]))); }} /><div className="view-toggle"><button className="selected">Tree View</button><button onClick={() => setExpanded(Object.fromEntries(data.groups.map((g)=>[g.id,true])))}>Expand All</button></div></div>
@@ -353,17 +353,17 @@ function AccountingWorkspace() {
         </tbody></table></div>
       </section>
       {showGroupForm && <div className="accounting-modal-backdrop"><form className="accounting-modal" onSubmit={handleCreateGroup}>
-        <div className="modal-heading"><div><h2>Create Account Group</h2><p>Create a main group or a subgroup under an existing group.</p></div><button type="button" onClick={() => setShowGroupForm(false)}>✕</button></div>
+        <div className="modal-heading"><div><h2>{groupCreationMode === "main" ? "Create Main Group" : "Create Subgroup"}</h2><p>{groupCreationMode === "main" ? "Create a top-level account group." : "Create a subgroup under an existing main group."}</p></div><button type="button" onClick={() => setShowGroupForm(false)}>✕</button></div>
         <div className="accounting-form-grid">
           <label>Group Name *<input required value={groupForm.group_name} onChange={(e)=>setGroupForm({...groupForm,group_name:e.target.value})} placeholder="e.g. Current Assets"/></label>
           <label>Group Code *<input required value={groupForm.group_code} onChange={(e)=>setGroupForm({...groupForm,group_code:e.target.value.toUpperCase()})} placeholder="e.g. CA"/></label>
-          <label>Parent Group<select value={groupForm.parent_group_id} onChange={(e)=>{const parent=data.groups.find((g)=>g.id===e.target.value);setGroupForm({...groupForm,parent_group_id:e.target.value,account_nature:parent?.account_nature||groupForm.account_nature,normal_balance:parent?.normal_balance||groupForm.normal_balance,statement_classification:parent?.statement_classification||groupForm.statement_classification});}}><option value="">None – Main Group</option>{data.groups.filter((g)=>!g.parent_group_id).map((g)=><option key={g.id} value={g.id}>{g.group_name}</option>)}</select></label>
+          {groupCreationMode === "main" ? <label>Parent Group<input value="None — Main Group" disabled /></label> : <label>Parent Group *<select required value={groupForm.parent_group_id} onChange={(e)=>{const parent=data.groups.find((g)=>g.id===e.target.value);setGroupForm({...groupForm,parent_group_id:e.target.value,account_nature:parent?.account_nature||groupForm.account_nature,normal_balance:parent?.normal_balance||groupForm.normal_balance,statement_classification:parent?.statement_classification||groupForm.statement_classification});}}><option value="">Select parent group</option>{data.groups.filter((g)=>!g.parent_group_id).map((g)=><option key={g.id} value={g.id}>{g.group_name}</option>)}</select></label>}
           <label>Account Nature *<select required value={groupForm.account_nature} onChange={(e)=>setGroupForm({...groupForm,account_nature:e.target.value,normal_balance:["Asset","Expense"].includes(e.target.value)?"Debit":"Credit",statement_classification:e.target.value==="Income"||e.target.value==="Expense"?"Profit & Loss":"Balance Sheet"})}>{["Asset","Liability","Equity","Income","Expense"].map((v)=><option key={v}>{v}</option>)}</select></label>
           <label>Normal Balance *<select value={groupForm.normal_balance} onChange={(e)=>setGroupForm({...groupForm,normal_balance:e.target.value})}><option>Debit</option><option>Credit</option></select></label>
           <label>Statement Classification *<select value={groupForm.statement_classification} onChange={(e)=>setGroupForm({...groupForm,statement_classification:e.target.value})}><option>Balance Sheet</option><option>Profit & Loss</option></select></label>
           <label className="full-field">Description<textarea rows="3" value={groupForm.description} onChange={(e)=>setGroupForm({...groupForm,description:e.target.value})} placeholder="Describe the purpose of this account group"/></label>
         </div>
-        <div className="modal-actions"><button type="button" className="btn-secondary" onClick={()=>setShowGroupForm(false)}>Cancel</button><button className="btn-primary" disabled={busy}>{busy?"Saving...":"Save Group"}</button></div>
+        <div className="modal-actions"><button type="button" className="btn-secondary" onClick={()=>setShowGroupForm(false)}>Cancel</button><button className="btn-primary" disabled={busy}>{busy?"Saving...":groupCreationMode === "main" ? "Save Main Group" : "Save Subgroup"}</button></div>
       </form></div>}
       {showLedgerForm && <div className="accounting-modal-backdrop"><form className="accounting-modal" onSubmit={handleCreateLedger}>
         <div className="modal-heading"><div><h2>Create General Ledger</h2><p>Every ledger must belong to an account group.</p></div><button type="button" onClick={()=>setShowLedgerForm(false)}>✕</button></div>
