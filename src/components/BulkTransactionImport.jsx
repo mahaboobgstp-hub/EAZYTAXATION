@@ -258,7 +258,7 @@ export default function BulkTransactionImport({ kind, onImported }) {
         if (companyError) throw companyError;
         const result = kind === "sales" ? await importSalesCsvRows(records, currentCompanyId, company) : kind === "purchases" ? await importPurchaseCsvRows(records, currentCompanyId, company) : await importExpenseCsvRows(records, currentCompanyId, company);
         const failures = result.failed || [];
-        setNotice("Import completed: " + result.imported + " imported, " + result.skipped + " duplicates skipped, " + failures.length + " failed." + (failures.length ? " Details: " + failures.slice(0, 5).join(" | ") : ""));
+        setNotice("Import completed: " + result.imported + " imported, " + result.skipped + " duplicates skipped, " + failures.length + " failed." + (result.createdSummaryItem ? " A non-inventory Service item named Purchase Summary was automatically created for summary-only invoice lines." : "") + (failures.length ? " Details: " + failures.slice(0, 5).join(" | ") : ""));
         if (result.imported) onImported?.();
         if (!failures.length) { setRows([]); setFile(null); if (inputRef.current) inputRef.current.value = ""; }
       } catch (error) { setNotice("Import failed: " + (error.message || "Database error")); }
