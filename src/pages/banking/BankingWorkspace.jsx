@@ -51,7 +51,8 @@ export default function BankingWorkspace() {
   const [reconMatched, setReconMatched] = useState(false);
   const [period, setPeriod] = useState("Apr 2025");
   const [settingsTab, setSettingsTab] = useState("Account Aggregator");
-  const [realAccounts, setRealAccounts] = useState([]);\n  const [accountLedgers, setAccountLedgers] = useState([]);
+  const [realAccounts, setRealAccounts] = useState([]);
+  const [accountLedgers, setAccountLedgers] = useState([]);
   const [accountModal, setAccountModal] = useState(false);
   const [accountForm, setAccountForm] = useState({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});
   const [accountSaving, setAccountSaving] = useState(false);
