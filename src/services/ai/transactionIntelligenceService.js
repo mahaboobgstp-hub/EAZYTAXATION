@@ -1,0 +1,27 @@
+import { supabase } from "../../supabase/supabaseClient";
+
+const norm = s => String(s ?? "").toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+const similarity = (a,b) => { const aa=new Set(norm(a).split(" ").filter(Boolean)); const bb=norm(b).split(" ").filter(Boolean); if(!aa.size||!bb.length)return 0; return bb.filter(t=>aa.has(t)).length/Math.max(aa.size,bb.length); };
+const keywordMap = [["electricity",["electricity","power bill","apspdcl","tsspdcl"]],["fuel",["diesel","petrol","fuel","hpcl","bpcl","ioc"]],["repairs",["repair","maintenance","servicing"]],["telephone",["mobile","telephone","internet","broadband","jio","airtel"]],["bank charges",["bank charge","service charge","commission"]],["rent",["rent","lease"]],["salary",["salary","payroll","wages"]],["travel",["travel","hotel","taxi","cab"]],["office expenses",["stationery","office supplies","paper"]],["purchase",["raw material","steel","iron","casting","goods purchase"]],["sales",["sales","sale proceeds","customer payment"]]];
+export async function loadTransactionIntelligence(companyId){
+ if(!companyId) throw new Error("Select a company first.");
+ const [l,c,v,r]=await Promise.all([supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code,group_id,party_type,linked_party_id,is_active").eq("company_id",companyId).eq("is_active",true),supabase.from("customers").select("id,customer_name,gstin,ledger_id").eq("company_id",companyId),supabase.from("vendors").select("id,vendor_name,gstin,ledger_id").eq("company_id",companyId),supabase.from("syd_transaction_rules").select("*").eq("company_id",companyId).eq("is_active",true).order("priority",{ascending:false})]);
+ for(const x of [l,c,v,r]) if(x.error) throw x.error;
+ return {ledgers:l.data||[],customers:c.data||[],vendors:v.data||[],rules:r.data||[]};
+}
+export function classifySYDTransaction(tx,ctx){
+ const narration=tx.narration||tx.description||tx.reference||"", party=tx.partyName||tx.vendorName||tx.customerName||"", direction=tx.direction||(Number(tx.amount)<0?"debit":Number(tx.amount)>0?"credit":"any");
+ for(const rule of ctx.rules||[]){ if(rule.transaction_direction&&rule.transaction_direction!=="any"&&rule.transaction_direction!==direction)continue; const value=norm(rule.match_value); const matched=rule.match_type==="exact_party"?norm(party)===value:rule.match_type==="contains_narration"?norm(narration).includes(value):rule.match_type==="contains_description"?norm(tx.description).includes(value):rule.match_type==="exact_reference"?norm(tx.reference)===value:false; if(matched){const ledger=ctx.ledgers.find(x=>x.id===rule.ledger_id);if(ledger)return {type:rule.transaction_type||"Classified",ledger,confidence:rule.confirmed_by_user?0.99:0.9,source:"Saved company rule",autoApply:!!rule.auto_apply&&!!rule.confirmed_by_user,explanation:"Matched saved company rule"};}}
+ const gstin=norm(tx.gstin||""); const customer=(gstin&&ctx.customers.find(x=>norm(x.gstin)===gstin))||ctx.customers.find(x=>similarity(x.customer_name,party)>=0.85); const vendor=(gstin&&ctx.vendors.find(x=>norm(x.gstin)===gstin))||ctx.vendors.find(x=>similarity(x.vendor_name,party)>=0.85);
+ if(customer?.ledger_id){const ledger=ctx.ledgers.find(x=>x.id===customer.ledger_id);if(ledger)return {type:"Customer",ledger,confidence:0.93,source:"Customer master",autoApply:false,explanation:"Party matched to customer master"};}
+ if(vendor?.ledger_id){const ledger=ctx.ledgers.find(x=>x.id===vendor.ledger_id);if(ledger)return {type:"Supplier",ledger,confidence:0.93,source:"Vendor master",autoApply:false,explanation:"Party matched to vendor master"};}
+ const text=norm([narration,tx.description,party].filter(Boolean).join(" ")); const hint=(keywordMap.find(([k,words])=>words.some(w=>text.includes(norm(w))))||[])[0];
+ if(hint){const candidates=ctx.ledgers.filter(x=>norm(x.ledger_name).includes(norm(hint)));const ledger=candidates.sort((a,b)=>a.ledger_name.length-b.ledger_name.length)[0];if(ledger)return {type:hint,ledger,confidence:0.58,source:"Narration keyword",autoApply:false,explanation:"Suggested by narration keyword; confirm before posting"};}
+ return {type:"Unclassified",ledger:null,confidence:0.15,source:"No match",autoApply:false,explanation:"No reliable mapping found"};
+}
+export const classifySYDBatch=(rows,ctx)=>rows.map(transaction=>({transaction,result:classifySYDTransaction(transaction,ctx)}));
+export async function saveSYDClassificationRule(companyId,rule,userId){
+ if(!companyId||!rule?.ledger_id||!rule?.match_value)throw new Error("Company, match pattern and ledger are required.");
+ const payload={company_id:companyId,rule_name:rule.rule_name||rule.match_value,match_type:rule.match_type||"contains_narration",match_value:String(rule.match_value).trim(),transaction_direction:rule.transaction_direction||"any",transaction_type:rule.transaction_type||null,ledger_id:rule.ledger_id,priority:Number(rule.priority||100),confirmed_by_user:true,auto_apply:!!rule.auto_apply,is_active:true,created_by:userId||null};
+ const {data,error}=await supabase.from("syd_transaction_rules").insert(payload).select().single();if(error)throw error;return data;
+}
