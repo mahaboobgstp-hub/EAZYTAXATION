@@ -1,5 +1,8 @@
 import React, { useRef, useState } from "react";
 import "../css/BulkTransactionImport.css";
+import { useCompany } from "../context/CompanyContext";
+import { supabase } from "../supabase/supabaseClient";
+
 
 const TEMPLATES = {
   sales: {
@@ -28,16 +31,16 @@ const TEMPLATES = {
   },
   customers: {
     title: "Customers",
-    description: "Import customer master records, contact details and GST registration information.",
-    headers: ["Customer Name","GSTIN","PAN","Mobile","Email","Address","State"],
-    sample: ["ABC Traders","37ABCDE1234F1Z5","ABCDE1234F","9876543210","accounts@abctraders.in","12 Market Road, Vijayawada","Andhra Pradesh"]
-  },
+    description: "Import complete customer master details across all form sections.",
+    headers: ["Customer Name","Legal / Trade Name","Customer Code","Customer Type","Customer Group","Constitution","Active","GST Registration Type","GSTIN","PAN","GST Registered","Place of Supply","Composition Scheme","SEZ Customer","Export Customer","Deemed Export","TDS Applicable","E-Invoice Applicable","Opening Balance","Balance Type","Credit Limit","Credit Period (Days)","Payment Terms","Default Sales Ledger","Billing Address Line 1","Billing Address Line 2","Billing City","Billing State","Billing PIN Code","Billing Country","Shipping Same as Billing","Shipping Address Line 1","Shipping Address Line 2","Shipping City","Shipping State","Shipping PIN Code","Shipping Country","Contact Person","Designation","Mobile","Alternate Mobile","Email","Website","MSME / Udyam Number","Industry / Business","Sales Person","Customer Tags","Remarks"],
+    sample: ["ABC Traders","ABC Traders Pvt Ltd","CUST-001","Business (B2B)","Sundry Debtors","Private Limited","Yes","Registered","37ABCDE1234F1Z5","ABCDE1234F","Yes","Andhra Pradesh","No","No","No","No","No","Yes","0","Debit","100000","30","Net 30","Sales","12 Market Road","","Vijayawada","Andhra Pradesh","520001","India","Yes","","","","","","","Ravi Kumar","Accounts Manager","9876543210","9876543211","accounts@abctraders.in","https://abctraders.in","","Trading","Sales Team","Regular","Demo customer"]
+  }
   vendors: {
     title: "Vendors",
-    description: "Import supplier master records and tax registration details.",
-    headers: ["Vendor Name","GSTIN","PAN","Mobile","Email","Address","State"],
-    sample: ["Sri Lakshmi Suppliers","37ABCDE1234F1Z5","ABCDE1234F","9876543211","billing@srilakshmi.in","45 Industrial Estate, Guntur","Andhra Pradesh"]
-  },
+    description: "Import complete vendor master details across all form sections.",
+    headers: ["Vendor Name","Legal / Trade Name","Vendor Code","Vendor Type","Vendor Group","Constitution","Active","GST Registration Type","GSTIN","PAN","GST Registered","Place of Supply","Composition Scheme","Reverse Charge Applicable","TDS Applicable","TCS Applicable","E-Invoice Applicable","Opening Balance","Balance Type","Credit Limit","Credit Period (Days)","Payment Terms","Default Purchase Ledger","Default Payment Mode","Billing Address Line 1","Billing Address Line 2","Billing City","Billing State","Billing PIN Code","Billing Country","Shipping Same as Billing","Shipping Address Line 1","Shipping Address Line 2","Shipping City","Shipping State","Shipping PIN Code","Shipping Country","Contact Person","Designation","Mobile","Alternate Mobile","Email","Website","Bank Account Holder","Bank Name","Bank Account Number","IFSC Code","Branch","Bank Account Type","MSME / Udyam Number","Vendor Category","Remarks"],
+    sample: ["Sri Lakshmi Suppliers","Sri Lakshmi Suppliers Pvt Ltd","VEND-001","Manufacturer","Sundry Creditors","Private Limited","Yes","Registered","37ABCDE1234F1Z5","ABCDE1234F","Yes","Andhra Pradesh","No","No","No","No","Yes","0","Credit","500000","45","Net 45","Purchases","Bank Transfer","45 Industrial Estate","","Guntur","Andhra Pradesh","522001","India","Yes","","","","","","","Lakshmi Devi","Sales Manager","9876543212","9876543213","billing@srilakshmi.in","https://srilakshmi.in","Sri Lakshmi Suppliers Pvt Ltd","HDFC Bank","50100123456789","HDFC0001234","Guntur Main","Current","","Raw Material Supplier","Demo supplier"]
+  }
   items: {
     title: "Items",
     description: "Import goods and services with HSN/SAC, units and default tax rates.",
@@ -120,6 +123,7 @@ function parseCsvPreview(text) {
 }
 
 export default function BulkTransactionImport({ kind }) {
+  const { currentCompanyId } = useCompany();
   const config = TEMPLATES[kind];
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -157,7 +161,7 @@ export default function BulkTransactionImport({ kind }) {
     const parsed = parseCsvPreview(content);
     setRows(parsed);
     if (parsed.length < 2) setNotice("The file should contain a header row and at least one data row.");
-    else if (parsed[0].length !== config.headers.length) setNotice(`Template has ${config.headers.length} columns. Your file has ${parsed[0].length} columns. Please use the downloaded template.`);
+    else if (kind !== "customers" && kind !== "vendors" && parsed[0].length !== config.headers.length) setNotice(`Template has ${config.headers.length} columns. Your file has ${parsed[0].length} columns. Please use the downloaded template.`);
   }
 
   function closeDialog() {
@@ -168,12 +172,95 @@ export default function BulkTransactionImport({ kind }) {
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  function handleSubmit() {
-    if (!file || rows.length < 2 || rows[0].length !== config.headers.length) {
-      setNotice("Select a CSV file that follows the downloaded template before continuing.");
+  async function handleSubmit() {
+    if (!file || rows.length < 2) {
+      setNotice("Select a CSV file with a header and at least one data row.");
       return;
     }
-    setNotice("Screen preview only: database validation and record creation will be connected after the UI is approved.");
+    if (kind !== "customers" && kind !== "vendors") {
+      if (rows[0].length !== config.headers.length) {
+        setNotice("Please use the downloaded template.");
+        return;
+      }
+      setNotice("Screen preview only: database validation and record creation will be connected after the UI is approved.");
+      return;
+    }
+    if (!currentCompanyId) { setNotice("Select a company before importing."); return; }
+    const headers = rows[0].map(h => h.trim());
+    const nameHeader = kind === "customers" ? "Customer Name" : "Vendor Name";
+    if (!headers.includes(nameHeader) && !headers.includes("Name")) { setNotice(`Missing required column: ${nameHeader}`); return; }
+    const boolFields = new Set(["Active","GST Registered","Composition Scheme","SEZ Customer","Export Customer","Deemed Export","TDS Applicable","TCS Applicable","Reverse Charge Applicable","E-Invoice Applicable","Shipping Same as Billing"]);
+    const numericFields = new Set(["Opening Balance","Credit Limit","Credit Period (Days)"]);
+    const colMap = {
+      "Customer Name":"customer_name","Vendor Name":"vendor_name","Name":"customer_name",
+      "Legal / Trade Name":"legal_name","Customer Code":"customer_code","Vendor Code":"vendor_code",
+      "Customer Type":"customer_type","Vendor Type":"vendor_type","Customer Group":"customer_group","Vendor Group":"vendor_group","Constitution":"constitution",
+      "Active":"is_active","GST Registration Type":"gst_registration_type","GSTIN":"gstin","PAN":"pan","GST Registered":"gst_registered","Place of Supply":"place_of_supply","Composition Scheme":"composition_scheme","SEZ Customer":"sez_customer","Export Customer":"export_customer","Deemed Export":"deemed_export","TDS Applicable":"tds_applicable","TCS Applicable":"tcs_applicable","Reverse Charge Applicable":"reverse_charge_applicable","E-Invoice Applicable":"e_invoice_applicable",
+      "Opening Balance":"opening_balance","Balance Type":"opening_balance_type","Credit Limit":"credit_limit","Credit Period (Days)":"credit_period_days","Payment Terms":"payment_terms","Default Sales Ledger":"default_sales_ledger","Default Purchase Ledger":"default_purchase_ledger","Default Payment Mode":"default_payment_mode",
+      "Billing Address Line 1":"billing_address_line1","Billing Address Line 2":"billing_address_line2","Billing City":"billing_city","Billing State":"billing_state","Billing PIN Code":"billing_pin","Billing Country":"billing_country","Shipping Same as Billing":"shipping_same_as_billing","Shipping Address Line 1":"shipping_address_line1","Shipping Address Line 2":"shipping_address_line2","Shipping City":"shipping_city","Shipping State":"shipping_state","Shipping PIN Code":"shipping_pin","Shipping Country":"shipping_country",
+      "Contact Person":"contact_person","Designation":"designation","Mobile":"mobile","Mobile Number":"mobile","Alternate Mobile":"alternate_mobile","Email":"email","Website":"website","Bank Account Holder":"bank_account_holder","Bank Name":"bank_name","Bank Account Number":"bank_account_number","IFSC Code":"bank_ifsc","Branch":"bank_branch","Bank Account Type":"bank_account_type","MSME / Udyam Number":"msme_udyam_number","Industry / Business":"industry_business","Sales Person":"sales_person","Customer Tags":"customer_tags","Vendor Category":"vendor_category","Remarks":"remarks","Address":"address","State":"state"
+    };
+    const legacyAllowed = ["Name","GSTIN","PAN","Mobile","Email","Address","State"];
+    if (headers.some(h => !colMap[h]) || (headers.length === 7 && legacyAllowed.every(h => headers.includes(h)))) {
+      if (!(headers.length === 7 && legacyAllowed.every(h => headers.includes(h)))) { setNotice("Your CSV contains unsupported column names. Download the new full-field template."); return; }
+    }
+    const records = [];
+    const problems = [];
+    rows.slice(1).forEach((row, idx) => {
+      if (!row.some(v => String(v||"").trim())) return;
+      const obj = {};
+      headers.forEach((header, i) => {
+        const key = colMap[header];
+        if (!key) return;
+        let val = String(row[i] ?? "").trim();
+        if (val === "") return;
+        if (boolFields.has(header)) {
+          if (/^(yes|true|1)$/i.test(val)) val = true;
+          else if (/^(no|false|0)$/i.test(val)) val = false;
+          else { problems.push(`Row ${idx+2}: ${header} must be Yes or No.`); return; }
+        } else if (numericFields.has(header)) {
+          const num = Number(val);
+          if (!Number.isFinite(num) || num < 0) { problems.push(`Row ${idx+2}: ${header} must be a non-negative number.`); return; }
+          val = num;
+        }
+        obj[key] = val;
+      });
+      const name = obj[kind==="customers"?"customer_name":"vendor_name"];
+      if (!name) problems.push(`Row ${idx+2}: ${nameHeader} is required.`);
+      if (obj.mobile && !/^\+?[0-9\s-]{7,15}$/.test(obj.mobile)) problems.push(`Row ${idx+2}: Mobile format looks invalid.`);
+      if (obj.gstin && !/^[0-9A-Z]{15}$/i.test(obj.gstin)) problems.push(`Row ${idx+2}: GSTIN must be 15 characters.`);
+      if (obj.pan && !/^[0-9A-Z]{10}$/i.test(obj.pan)) problems.push(`Row ${idx+2}: PAN must be 10 characters.`);
+      obj.is_active = obj.is_active ?? true;
+      obj.shipping_same_as_billing = obj.shipping_same_as_billing ?? true;
+      obj.gst_registered = obj.gst_registered ?? Boolean(obj.gstin);
+      obj.opening_balance = obj.opening_balance ?? 0;
+      obj.credit_limit = obj.credit_limit ?? 0;
+      obj.credit_period_days = obj.credit_period_days ?? 0;
+      obj.opening_balance_type = obj.opening_balance_type || (kind==="customers"?"Debit":"Credit");
+      if (kind==="customers") {
+        obj.customer_name=name;
+        if (!obj.customer_code) obj.customer_code=null;
+        obj.address=[obj.billing_address_line1,obj.billing_address_line2,obj.billing_city,obj.billing_state,obj.billing_pin,obj.billing_country].filter(Boolean).join(", ") || obj.address || "";
+        obj.state=obj.billing_state||obj.state||"";
+      } else {
+        obj.vendor_name=name;
+        obj.address=[obj.billing_address_line1,obj.billing_address_line2,obj.billing_city,obj.billing_state,obj.billing_pin,obj.billing_country].filter(Boolean).join(", ") || obj.address || "";
+        obj.state=obj.billing_state||obj.state||"";
+      }
+      obj.company_id=currentCompanyId;
+      records.push(obj);
+    });
+    if (problems.length) { setNotice(problems.slice(0,8).join(" | ")+(problems.length>8?` (and ${problems.length-8} more)`:"")); return; }
+    if (!records.length) { setNotice("No usable data rows found."); return; }
+    const table=kind==="customers"?"customers":"vendors";
+    try {
+      const {error}=await supabase.from(table).insert(records);
+      if(error) throw error;
+      setNotice(`Successfully imported ${records.length} ${kind} into the selected company.`);
+      setRows([]);
+      setFile(null);
+      if(inputRef.current) inputRef.current.value="";
+    } catch(error) { setNotice(`Import failed: ${error.message||"Unknown database error"}`); }
   }
 
   return (
