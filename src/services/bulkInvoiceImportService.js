@@ -1,7 +1,7 @@
 import { supabase } from "../supabase/supabaseClient";
 
 const n=v=>Number(v)||0;
-const norm=s=>String(s||"").trim().toLowerCase();
+const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const dateOk=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||""))&&Number.isFinite(Date.parse(s));
 const findParty=(list,gstin,name,field)=>list.find(x=>gstin&&norm(x.gstin)===norm(gstin))||list.find(x=>norm(x[field])===norm(name));
 const taxFor=(taxable,rate,same)=>{const tax=taxable*rate/100;return same?{cgst:tax/2,sgst:tax/2,igst:0}:{cgst:0,sgst:0,igst:tax};};
