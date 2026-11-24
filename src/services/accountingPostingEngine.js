@@ -86,13 +86,18 @@ export async function autoPostSalesInvoice(companyId,invoiceId){
   if(!capability.enabled)return await pending("sales_invoices",companyId,invoiceId,capability.reason,"Not Applicable");
   const {data:invoice,error}=await supabase.from("sales_invoices").select("*").eq("company_id",companyId).eq("id",invoiceId).single();if(error)throw error;
   const {data:items,error:itemError}=await supabase.from("sales_invoice_items").select("item_id,item_name,amount,qty").eq("invoice_id",invoiceId).order("line_no");if(itemError)throw itemError;
-  if(!invoice.customer_id)return await pending("sales_invoices",companyId,invoiceId,"Customer is not selected; invoice is not automatically posted.");
-  const {data:customer,error:customerError}=await supabase.from("customers").select("ledger_id").eq("company_id",companyId).eq("id",invoice.customer_id).single();if(customerError)throw customerError;
-  if(!customer.ledger_id)return await pending("sales_invoices",companyId,invoiceId,"Customer has no linked receivable ledger.");
+  const mappings=await getMappings(companyId);
+  let debitLedger=null;
+  if(invoice.sale_type==="CASH")debitLedger=mappings.cash_ledger;
+  else{
+   if(!invoice.customer_id)return await pending("sales_invoices",companyId,invoiceId,"Customer is not selected; invoice is not automatically posted.");
+   const {data:customer,error:customerError}=await supabase.from("customers").select("ledger_id").eq("company_id",companyId).eq("id",invoice.customer_id).single();if(customerError)throw customerError;
+   debitLedger=customer.ledger_id;if(!debitLedger)return await pending("sales_invoices",companyId,invoiceId,"Customer has no linked receivable ledger.");
+  }
+  if(invoice.sale_type==="CASH"&&!debitLedger)return await pending("sales_invoices",companyId,invoiceId,"Default cash ledger mapping is missing.");
   const ids=[...new Set((items||[]).map(i=>i.item_id).filter(Boolean))];
   let itemMap={};
   if(ids.length){const {data:masterItems,error:itemsError}=await supabase.from("items").select("id,item_type,accounting_item_type,sales_ledger_id").eq("company_id",companyId).in("id",ids);if(itemsError)throw itemsError;itemMap=Object.fromEntries((masterItems||[]).map(i=>[i.id,i]));}
-  const mappings=await getMappings(companyId);
   const incomeLedger=mappings.default_sales_ledger;
   const lines=[],revenueByLedger={};
   for(const line of items||[]){
@@ -104,10 +109,11 @@ export async function autoPostSalesInvoice(companyId,invoiceId){
   const taxable=money(invoice.taxable_value);if(Math.abs(sum(items||[],"amount")-taxable)>0.05)return await pending("sales_invoices",companyId,invoiceId,"Invoice line totals do not match the header taxable value.");
   Object.entries(revenueByLedger).forEach(([ledger,amount])=>addAmountLine(lines,ledger,amount,"credit","Sales Revenue"));
   const taxes={cgst:invoice.cgst,sgst:invoice.sgst,igst:invoice.igst,cess:invoice.cess_amount,additionalCess:invoice.additional_cess_amount};
+  for(const [tax,key] of Object.entries(taxMapping.sales)){if(money(taxes[tax])&&!mappings[key])return await pending("sales_invoices",companyId,invoiceId,"Missing "+tax.toUpperCase()+" output tax ledger mapping.");}
+  if(money(invoice.other_amount)&&!mappings.other_charges_ledger)return await pending("sales_invoices",companyId,invoiceId,"Other Charges ledger mapping is missing.");
+  const roundOff=money(invoice.round_off);if(roundOff&&!mappings.round_off_ledger)return await pending("sales_invoices",companyId,invoiceId,"Round-off ledger mapping is missing.");
   addTaxLines(lines,mappings,taxes,"credit","sales");
   addAmountLine(lines,mappings.other_charges_ledger,invoice.other_amount,"credit","Other Charges");
-  const baseCredit=sum(lines,"credit");
-  const roundOff=money(invoice.round_off);
   if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"credit":"debit","Sales Round-off");
   const invoiceTotal=money(invoice.total_amount);
   if(Math.abs(sum(lines,"credit")-sum(lines,"debit")-invoiceTotal)>0.05)return await pending("sales_invoices",companyId,invoiceId,"Mapped accounting lines do not equal the invoice total; review mappings and invoice adjustments.");
