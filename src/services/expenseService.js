@@ -1,4 +1,5 @@
-import { supabase } from "../supabase/supabaseClient";\nimport { autoPostExpense } from "./accountingPostingEngine";
+import { supabase } from "../supabase/supabaseClient";
+import { autoPostExpense } from "./accountingPostingEngine";
 
 const currentDate = () => new Date().toISOString().slice(0, 10);
 const moneyNumber = value => Number(value) || 0;
