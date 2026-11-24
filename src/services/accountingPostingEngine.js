@@ -191,6 +191,7 @@ export async function autoPostExpensePayment(companyId,paymentId){
   if(!capability.enabled)return await pending("expense_payments",companyId,paymentId,capability.reason,"Not Applicable");
   const {data:payment,error}=await supabase.from("expense_payments").select("*").eq("company_id",companyId).eq("id",paymentId).single();if(error)throw error;
   if(payment.status!=="Completed")return await pending("expense_payments",companyId,paymentId,"Payment is not completed; accounting posting was not created.","Not Applicable");
+  if(payment.expense_id){const {data:linkedExpense,error:expenseError}=await supabase.from("expenses").select("accounting_status").eq("company_id",companyId).eq("id",payment.expense_id).single();if(expenseError)throw expenseError;if(linkedExpense.accounting_status!=="Posted")return await pending("expense_payments",companyId,paymentId,"Linked expense is not posted to accounting yet; payment posting is held.");}
   const mappings=await getMappings(companyId);
   let payableLedger=mappings.default_expense_payable_ledger;
   if(payment.vendor_id){const {data:vendor,error:vendorError}=await supabase.from("vendors").select("ledger_id").eq("company_id",companyId).eq("id",payment.vendor_id).single();if(vendorError)throw vendorError;payableLedger=vendor.ledger_id||payableLedger;}
