@@ -50,7 +50,7 @@ language plpgsql security invoker set search_path=public
 as $$
 declare
   v_party_id uuid; v_ledger_id uuid; v_group_id uuid; v_parent_id uuid;
-  v_main_id uuid; v_intermediate_id uuid;
+  v_main_id uuid; v_intermediate_id uuid; v_parent_main_id uuid;
   v_group_name text; v_group_code text; v_parent_name text; v_parent_code text;
   v_ledger_name text; v_prefix text; v_party_code_prefix text; v_next integer;
   v_ledger_code text; v_party_code text; v_opening numeric(18,2);
@@ -110,7 +110,7 @@ begin
   select id,group_id into v_parent_id,v_group_id from public.chart_of_accounts
    where company_id=p_company_id and id=v_intermediate_id and ledger_level='Intermediate Ledger' and is_active=true;
   if v_parent_id is null then raise exception 'Selected intermediate ledger is not valid for this company.'; end if;
-  if v_main_id is null or not exists(select 1 from public.chart_of_accounts where company_id=p_company_id and id=v_main_id and ledger_level='Main Ledger' and is_active=true and group_id=v_group_id) then
+  if v_main_id is null or v_parent_main_id is distinct from v_main_id or not exists(select 1 from public.chart_of_accounts where company_id=p_company_id and id=v_main_id and ledger_level='Main Ledger' and is_active=true and group_id=v_group_id) then
     raise exception 'Select the valid main ledger above the intermediate ledger.';
   end if;
 
