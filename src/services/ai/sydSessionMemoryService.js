@@ -59,5 +59,5 @@ export function clearSYDSessionMemory(companyId) {
   try { sessionStorage.removeItem(storageKey(companyId)); } catch {}
 }
 export function buildSYDConversationContext(companyId, memory=readSYDSessionMemory(companyId)) {
-  return { memoryMode:"tab-session", companyId, recentTransactions:memory.entries.slice(-3), correctionNotes:memory.correctionNotes.slice(-4), instruction:"Use as continuity hints only. Never assume a prior transaction is the current one; confirm when context could be ambiguous. Do not reuse sensitive or financial values as defaults without explicit user confirmation." };
+  return { memoryMode:"tab-session", companyId, recentTransactions:memory.entries.slice(-2).map(entry=>({at:entry.at,command:entry.command.slice(0,180),screenId:entry.screenId,intent:entry.intent,response:entry.response.slice(0,180),headers:entry.headers,lines:entry.lines.slice(0,3),masters:entry.masters})), correctionNotes:memory.correctionNotes.slice(-3), instruction:"Use continuity hints only. Current command overrides past context. Confirm ambiguous transaction details; do not silently reuse financial values." };
 }
