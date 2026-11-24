@@ -188,3 +188,29 @@ The shared service accepts command text, company context, current screen ID, pla
 - Edge Function runtime and database RLS behavior for the new lookup client still require an authenticated test against a test company.
 - Draft PR #9 remains unmerged; no production merge/deployment was performed.
 - Android branch remains untouched.
+
+
+## Stage 6 — Validated Draft Preparation + Controlled Form Integration (2026-11-24)
+
+### Implemented
+- Added `src/services/ai/sydDraftPreparationService.js`, a strict allow-list draft normalizer for Sales Invoice, Purchase Invoice and Expense Entry.
+- Draft validator rejects unsupported screen targets, missing company context, unverified customer/supplier master selections for invoices, missing verified expense category, missing required line arrays, invalid dates, non-numeric header values, non-positive quantities and negative line rates.
+- Drafts include only allow-listed audited fields. Expense payment/posting status fields are explicitly removed from AI draft values.
+- SYD Intelligence UI now offers a validate-draft action and explicit Open Target Form handoff, using React Router state rather than database writes.
+- Sales Invoice consumes a company-matching validated draft after its company customer/item masters load; it maps only allow-listed header fields, selected customer details, audited item-line fields, and tax/discount/round-off state. It does not trigger save.
+- Purchase Invoice consumes a company-matching draft after vendor/item master loading; it maps only allow-listed fields and lines. It does not trigger save.
+- Expense Entry consumes a company-matching draft after vendors/categories load; category/vendor IDs must exist in loaded masters. It maps safe header fields and expense lines. It does not trigger save.
+- Added Stage 6 styling for validation and handoff controls.
+
+### Controlled integration boundaries
+- Draft handoff requires the selected company ID to match the company in the prepared draft.
+- Forms retain existing save buttons and workflows; SYD does not click or invoke save/post.
+- Existing invoice number generation and form defaults are retained; AI does not assign invoice numbers or posting/payment status.
+- Draft data is passed through in-memory route state and route state is cleared after consumption.
+- No master creation, transaction insert/update, posting, payment action, production record mutation, or Android change was performed.
+
+### Stage 6 limitations / validation status
+- The draft handoff is implemented for Sales Invoice, Purchase Invoice and Expense Entry.
+- Candidate item selection currently supports applying a selected item master to the first draft line; multi-item draft mapping needs additional line-level matching before it can be considered fully automated.
+- Purchase/expense line structures and React state are mapped from audited fields, but the latest frontend build and authenticated end-to-end test are still pending. Vercel build-rate-limit errors prevent a preview verification; no local checkout/runtime was available.
+- This stage is code-complete but not verified by a successful latest-commit CI build or live test. Production remains untouched and PR #9 remains draft/unmerged.
