@@ -85,7 +85,7 @@ export default function BankingWorkspace() {
   const saveBankAccount = async (e) => {
     e.preventDefault();
     if(!companyId||!accountForm.bank_name.trim())return;
-    if(accountingSetup.enabled&&bankIntermediateLedgers.length&&(!bankMainLedgerId||!bankIntermediateLedgerId)){setNotice("Select the main and intermediate ledger groups for this bank account.");return;}
+    if(accountingSetup.enabled&&accountingSetup.ledgers.some(l=>l.ledger_level==="Intermediate Ledger")&&(!bankMainLedgerId||!bankIntermediateLedgerId)){setNotice("Select the main and intermediate ledger groups for this bank account.");return;}
     setAccountSaving(true);
     try{
       const accountHashValue=await accountHash(accountForm.account_number);
