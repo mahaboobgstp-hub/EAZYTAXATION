@@ -31,7 +31,7 @@ export async function getCompanyUsers(companyId) {
 
 export async function inviteCompanyUser(payload) {
   const { data, error } = await supabase.functions.invoke("invite-company-user", {
-    body: { ...payload, kind: "user" },
+    body: { ...payload, kind: "user", password: payload.password },
   });
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
