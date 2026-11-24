@@ -1,6 +1,11 @@
 import { supabase } from "../../supabase/supabaseClient";
 
-const norm = s => String(s ?? "").toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+export const normalizeSYDKeyword = s => String(s ?? "").toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+const norm = normalizeSYDKeyword;
+export function findSavedSYDKeywordRule(text,rules=[],direction="any"){
+ const normalized=norm(text); if(!normalized)return null;
+ return (rules||[]).filter(rule=>rule.is_active!==false&&rule.match_type==="contains_narration"&&(!rule.transaction_direction||rule.transaction_direction==="any"||rule.transaction_direction===direction)&&norm(rule.match_value).length>=3&&normalized.includes(norm(rule.match_value))).sort((a,b)=>Number(b.priority||0)-Number(a.priority||0)||norm(b.match_value).length-norm(a.match_value).length)[0]||null;
+}
 const similarity = (a,b) => { const aa=new Set(norm(a).split(" ").filter(Boolean)); const bb=norm(b).split(" ").filter(Boolean); if(!aa.size||!bb.length)return 0; return bb.filter(t=>aa.has(t)).length/Math.max(aa.size,bb.length); };
 const keywordMap = [["electricity",["electricity","power bill","apspdcl","tsspdcl"]],["fuel",["diesel","petrol","fuel","hpcl","bpcl","ioc"]],["repairs",["repair","maintenance","servicing"]],["telephone",["mobile","telephone","internet","broadband","jio","airtel"]],["bank charges",["bank charge","service charge","commission"]],["rent",["rent","lease"]],["salary",["salary","payroll","wages"]],["travel",["travel","hotel","taxi","cab"]],["office expenses",["stationery","office supplies","paper"]],["purchase",["raw material","steel","iron","casting","goods purchase"]],["sales",["sales","sale proceeds","customer payment"]]];
 export async function loadTransactionIntelligence(companyId){
@@ -11,6 +16,8 @@ export async function loadTransactionIntelligence(companyId){
 }
 export function classifySYDTransaction(tx,ctx){
  const narration=tx.narration||tx.description||tx.reference||"", party=tx.partyName||tx.vendorName||tx.customerName||"", direction=tx.direction||(Number(tx.amount)<0?"debit":Number(tx.amount)>0?"credit":"any");
+ const keywordRule=findSavedSYDKeywordRule([narration,tx.description,party,tx.reference].filter(Boolean).join(" "),ctx.rules||[],direction);
+ if(keywordRule){const ledger=ctx.ledgers.find(x=>x.id===keywordRule.ledger_id);if(ledger)return {type:keywordRule.transaction_type||"Classified",ledger,confidence:keywordRule.confirmed_by_user?0.99:0.9,source:"Saved company keyword rule",autoApply:!!keywordRule.auto_apply&&!!keywordRule.confirmed_by_user,explanation:"Matched saved company keyword rule"};}
  for(const rule of ctx.rules||[]){ if(rule.transaction_direction&&rule.transaction_direction!=="any"&&rule.transaction_direction!==direction)continue; const value=norm(rule.match_value); const matched=rule.match_type==="exact_party"?norm(party)===value:rule.match_type==="contains_narration"?norm(narration).includes(value):rule.match_type==="contains_description"?norm(tx.description).includes(value):rule.match_type==="exact_reference"?norm(tx.reference)===value:false; if(matched){const ledger=ctx.ledgers.find(x=>x.id===rule.ledger_id);if(ledger)return {type:rule.transaction_type||"Classified",ledger,confidence:rule.confirmed_by_user?0.99:0.9,source:"Saved company rule",autoApply:!!rule.auto_apply&&!!rule.confirmed_by_user,explanation:"Matched saved company rule"};}}
  const gstin=norm(tx.gstin||""); const customer=(gstin&&ctx.customers.find(x=>norm(x.gstin)===gstin))||ctx.customers.find(x=>similarity(x.customer_name,party)>=0.85); const vendor=(gstin&&ctx.vendors.find(x=>norm(x.gstin)===gstin))||ctx.vendors.find(x=>similarity(x.vendor_name,party)>=0.85);
  if(customer?.ledger_id){const ledger=ctx.ledgers.find(x=>x.id===customer.ledger_id);if(ledger)return {type:"Customer",ledger,confidence:0.93,source:"Customer master",autoApply:false,explanation:"Party matched to customer master"};}
