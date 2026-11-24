@@ -351,3 +351,28 @@ The shared service accepts command text, company context, current screen ID, pla
 - Production merge/deployment: **not performed**
 - Android branch: **untouched**
 
+
+## Stage 12 — End-to-End Testing, Edge Cases & Release Readiness (2026-11-24)
+
+### Implemented
+- Added `src/services/ai/sydStage12QualityGateService.js`: a 15-point readiness checklist aggregator. Untested items default to `not_run`; readiness remains incomplete unless every checklist item is passed. This helper does not claim tests were performed.
+- Added Node built-in test coverage under `src/services/ai/__tests__/` for Stage 11 permission/safety/authorization/lifecycle helpers, Stage 7 draft validation, Stage 10 orchestration and the Stage 12 checklist aggregator.
+- Added the `npm run test:ai` script.
+- Updated `.github/workflows/web-build-validation.yml` to run the automated AI service tests before the Vite production build.
+- Added `docs/ai/STAGE_12_TESTING_RELEASE_READINESS.md` with a manual browser/runtime checklist covering transaction workflows, company isolation, authorization, session memory, resilience, mobile layout and regressions.
+
+### Test scope
+- Permission levels, unknown-action conservative fallback, safety requirements, company mismatch, authorization scope, fingerprint, expiry, grant reuse and lifecycle transitions.
+- Sales, Purchase and Expense draft validation for company/party/category/line requirements, dates, numeric values and discount boundaries.
+- Guided orchestration readiness and unsupported screens.
+- Quality gate summary counts and incomplete/failed/blocked/ready states.
+
+### Stage 12 verification status
+- Automated test files: **authored**
+- CI test command and workflow integration: **committed**
+- Automated test execution: **pending CI**
+- Production build: **pending CI**
+- Manual browser/runtime checklist: **created, not executed**
+- Company-isolation and security testing: **pending manual/runtime verification**
+- Production merge/deployment: **not performed**
+- Android branch: **untouched**
