@@ -80,6 +80,7 @@ import ReportsWorkspace from "./pages/reports.jsx";
 import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
 import AccountingMappings from "./pages/accounting/AccountingMappings";
 import CashAccounts from "./pages/accounting/CashAccounts";
+import SYDIntelligenceWorkspace from "./pages/ai/SYDIntelligenceWorkspace";
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -514,6 +515,7 @@ function App() {
 />
 
           {/* ACCOUNTING WORKSPACE */}
+          <Route path="syd-intelligence" element={<SYDIntelligenceWorkspace />} />
           <Route path="accounting" element={<AccountingWorkspace />} />
           <Route path="accounting-mappings" element={<AccountingMappings />} />\n          <Route path="cash-accounts" element={<CashAccounts />} />
           <Route path="chart-of-accounts" element={<AccountingWorkspace />} />
