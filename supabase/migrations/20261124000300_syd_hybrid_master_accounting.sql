@@ -10,6 +10,12 @@ alter table public.items
   add column if not exists cogs_ledger_id uuid,
   add column if not exists consumption_ledger_id;
 
+alter table public.items drop constraint if exists items_inventory_ledger_company_fk;
+alter table public.items drop constraint if exists items_purchase_ledger_company_fk;
+alter table public.items drop constraint if exists items_sales_ledger_company_fk;
+alter table public.items drop constraint if exists items_cogs_ledger_company_fk;
+alter table public.items drop constraint if exists items_consumption_ledger_company_fk;
+
 alter table public.items
   add constraint items_inventory_ledger_company_fk
   foreign key (company_id, inventory_ledger_id)
