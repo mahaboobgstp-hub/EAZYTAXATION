@@ -25,7 +25,7 @@ export async function postBusinessTransaction(companyId,transaction){
  if(!transaction?.source_module||!transaction?.source_record_id)throw new Error("Source module and source record ID are required for idempotent accounting posting.");
  const lines=(transaction.lines||[]).map(line=>({ledger_id:line.ledger_id,debit:money(line.debit),credit:money(line.credit),line_narration:line.line_narration||transaction.narration||null}));
  if(lines.length<2)throw new Error("Auto-posting requires at least two mapped accounting lines.");
- const debit=money(lines.reduce((sum,line)=>sum+line.debit,0),),credit=money(lines.reduce((sum,line)=>sum+line.credit,0);
+ const debit=money(lines.reduce((sum,line)=>sum+line.debit,0)),credit=money(lines.reduce((sum,line)=>sum+line.credit,0);
  if(debit<=0||Math.abs(debit-credit)>0.005)throw new Error("Automatic accounting lines must balance.");
  if(lines.some(line=>!line.ledger_id||line.debit<0||line.credit<0||(line.debit>0&&line.credit>0)||(line.debit===0&&line.credit===0)))throw new Error("Invalid accounting line. Each line must contain a ledger and one positive debit or credit.");
  const {data:ledgers,error:ledgerError}=await supabase.from("chart_of_accounts").select("id,is_active,is_posting_enabled").eq("company_id",companyId).in("id",lines.map(x=>x.ledger_id));
