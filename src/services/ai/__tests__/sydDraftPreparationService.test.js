@@ -21,7 +21,7 @@ test("purchase validator rejects nonpositive quantity and malformed date",()=>{
   assert.ok(result.errors.some(e=>e.includes("quantity")));
 });
 test("expense draft requires category, payee and lines",()=>{
-  const plan={screen_id:"expense_entry",fields:[{field_id:"expense_date",value:"2026-11-24"},{field_id:"lines",value:[{description:"Fuel",qty:1,rate:100}]}]};
+  const plan={screen_id:"expense_entry",fields:[{field_id:"expense_date",value:"2026-11-24"},{field_id:"payee_name",value:"Fuel Station"},{field_id:"lines",value:[{description:"Fuel",qty:1,rate:100}]}]};
   assert.equal(prepareSYDValidatedDraft({plan,companyId:"co"}).ok,false);
   const valid=prepareSYDValidatedDraft({plan,companyId:"co",selectedMasters:{expense_categories:{id:"cat1"}}});
   assert.equal(valid.ok,true);
