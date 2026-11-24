@@ -4,6 +4,7 @@
  * intentionally withheld until the screen's actual form controls are audited.
  */
 import { registerScreenDefinition, listScreenDefinitions } from "./screenRegistry";
+import { registerSYDWebFieldKnowledge } from "./webFieldKnowledge";
 
 const WEB_SCREENS = [
   { screenId:"dashboard", name:"Business Dashboard", module:"Dashboard", route:"/app/dashboard", description:"Business dashboard and company overview." },
@@ -41,6 +42,7 @@ export function registerSYDWebScreens() {
   for (const screen of WEB_SCREENS) {
     registerScreenDefinition({ ...screen, platformSupport:["web"], status:"active" }, { replace:true });
   }
+  registerSYDWebFieldKnowledge();
   return listScreenDefinitions().filter(screen => screen.platformSupport.includes("web"));
 }
 export function getSYDWebScreenByRoute(pathname) {
