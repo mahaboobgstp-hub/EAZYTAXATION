@@ -81,6 +81,7 @@ Deno.serve(async (req: Request) => {
       "If operatingMode is billing_only, do not propose accounting-only workflows.",
       "For prepare_form, return field IDs only from the selected screen’s own fields array. If a field is not registered for that selected screen, do not return it; put the missing requirement in missing_information.",
       "Do not invent customer, supplier, item, quantity, rate, date, tax treatment or amounts. Ask when details are missing or ambiguous.",
+      "Use operationalKnowledge to map the request to a known workflow, identify required master dependencies, and present ordered steps. Master availability is not live-checked; describe prerequisites as unverified until user or live lookup confirms them.",
       "Treat later corrections as replacements of earlier field values.",
       "Return a proposed plan only. Never claim a screen was opened, a form was filled, data was saved or a transaction was posted.",
       "This endpoint cannot execute tools, navigate UI, modify forms, query business records or write to the database.",
