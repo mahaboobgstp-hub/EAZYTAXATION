@@ -41,3 +41,18 @@
 .syd-ai-orchestration-track{height:6px;background:var(--input-bg,#e9edf2);border-radius:10px;overflow:hidden;margin:12px 0}.syd-ai-orchestration-track span{display:block;height:100%;background:#477eaa;border-radius:10px;transition:width .2s}
 .syd-ai-orchestration-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}.syd-ai-orchestration-step{display:flex;align-items:flex-start;gap:9px;padding:9px;border:1px solid var(--border-color,#e1e7ee);border-radius:9px}.syd-ai-orchestration-step.complete{border-color:#b9d8c3;background:#f1f8f3}.syd-ai-orchestration-step.active,.syd-ai-orchestration-step.attention,.syd-ai-orchestration-step.ready{border-color:#d9bd82;background:#fffaf0}.syd-ai-orchestration-number{width:22px;height:22px;flex:0 0 22px;display:grid;place-items:center;border-radius:50%;font-size:11px;font-weight:700;background:var(--input-bg,#e9edf2)}.syd-ai-orchestration-step.complete .syd-ai-orchestration-number{background:#d7eadc;color:#25643b}.syd-ai-orchestration-step>div{flex:1;min-width:0}.syd-ai-orchestration-step strong{display:block;font-size:12px}.syd-ai-orchestration-step small{display:block;margin-top:3px;line-height:1.4;color:var(--text-muted,#718096);font-size:11px}.syd-ai-orchestration-status{font-size:10px;text-transform:capitalize;color:var(--text-muted,#718096);white-space:nowrap}.syd-ai-orchestration-footer{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px}.syd-ai-orchestration-footer>span{font-size:11px;line-height:1.4;color:var(--text-muted,#718096);flex:1}.syd-ai-orchestration-footer button{border:0;border-radius:9px;padding:9px 12px;background:#243b53;color:#fff;font-size:12px;font-weight:600;cursor:pointer}.syd-ai-orchestration-footer button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:520px){.syd-ai-orchestration-footer{align-items:stretch;flex-direction:column}.syd-ai-orchestration-footer button{width:100%}.syd-ai-orchestration-status{font-size:9px}}
+
+/* Stage 11 — explicit action authorization preview and lifecycle */
+.syd-ai-authorization-panel{margin-top:12px;padding:12px;border:1px solid #d7b56f;border-radius:10px;background:var(--card-bg,#fff);display:grid;gap:8px}
+.syd-ai-authorization-panel>strong{font-size:13px;color:#8a5b12}
+.syd-ai-authorization-panel>div:not(.syd-ai-authorization-actions){display:flex;justify-content:space-between;gap:12px;font-size:12px}
+.syd-ai-authorization-panel>div span{color:var(--text-muted,#718096)}
+.syd-ai-authorization-panel>div b{text-align:right;text-transform:capitalize}
+.syd-ai-authorization-panel p{font-size:11px;line-height:1.5;margin:3px 0;color:var(--text-muted,#718096)}
+.syd-ai-authorization-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.syd-ai-authorization-actions button{border:1px solid var(--border-color,#dce3ea);border-radius:8px;padding:8px 11px;font-size:12px;font-weight:600;cursor:pointer}
+.syd-ai-authorization-actions button:last-child{background:#246b47;color:#fff;border-color:#246b47}
+.syd-ai-lifecycle-status{margin-top:8px;padding:9px;border-radius:8px;background:var(--input-bg,#f3f5f7);font-size:11px}
+.syd-ai-lifecycle-status strong{text-transform:capitalize}
+.syd-ai-lifecycle-status ul{margin:5px 0 0;padding-left:18px}
+@media(max-width:520px){.syd-ai-authorization-actions{flex-direction:column}.syd-ai-authorization-actions button{width:100%}}
