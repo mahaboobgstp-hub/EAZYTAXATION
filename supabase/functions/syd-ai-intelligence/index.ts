@@ -22,6 +22,12 @@ const planSchema = {
     missing_information: { type: "array", items: { type: "string" } },
     requires_confirmation: { type: "boolean" },
     response: { type: "string" },
+    workflow: { type: "object", additionalProperties: false, properties: {
+      workflow_id: { type: ["string","null"] },
+      steps: { type: "array", items: { type: "string" } },
+      master_dependencies: { type: "array", items: { type: "string" } },
+      confirmation_checkpoint: { type: "string" },
+    }, required: ["workflow_id","steps","master_dependencies","confirmation_checkpoint"] },
   },
   required: ["intent","screen_id","fields","missing_information","requires_confirmation","response"],
 };
@@ -64,6 +70,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Application metadata is too large. Please reduce the registered screen or field definitions." }, 413);
     }
     const conversationContext = safeObject(body?.conversationContext, 2000);
+    const operationalKnowledge = safeObject(body?.operationalKnowledge, 12000);
 
     const instructions = [
       "You are SYD Intelligence, the command-understanding layer for SYD Billing & Accounting.",
@@ -78,10 +85,10 @@ Deno.serve(async (req: Request) => {
       "Return a proposed plan only. Never claim a screen was opened, a form was filled, data was saved or a transaction was posted.",
       "This endpoint cannot execute tools, navigate UI, modify forms, query business records or write to the database.",
       "Use clarify when essential information is missing. Use unsupported when a requested capability is not represented by supplied definitions.",
-      "Set requires_confirmation to true for any prepare_form intent.",
+      "When the command maps to a listed operational workflow, include its workflow_id, ordered steps, master dependencies, and confirmation checkpoint. Use only workflow/master IDs from operationalKnowledge. If no workflow matches, workflow_id must be null and lists empty; still state a safe confirmation checkpoint. Never imply live master lookup has occurred.",
     ].join(" ");
 
-    const input = JSON.stringify({ command, platform, companyContext, registeredScreens, currentScreen, fields, conversationContext });
+    const input = JSON.stringify({ command, platform, companyContext, registeredScreens, currentScreen, fields, operationalKnowledge, conversationContext });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000);
     let providerResponse: Response;
@@ -139,6 +146,15 @@ Deno.serve(async (req: Request) => {
     const knownFieldIds = new Set(targetFieldDefinitions.map((field: any) => String(field?.fieldId || "")));
     plan.fields = Array.isArray(plan.fields) ? plan.fields.filter((field: any) => knownFieldIds.has(String(field?.field_id || ""))) : [];
     if (plan.intent === "prepare_form") plan.requires_confirmation = true;
+    const workflowCatalog = Array.isArray(operationalKnowledge?.workflows) ? operationalKnowledge.workflows : [];
+    const masterCatalog = Array.isArray(operationalKnowledge?.masterConcepts) ? operationalKnowledge.masterConcepts : [];
+    const allowedWorkflowIds = new Set(workflowCatalog.map((workflow: any) => String(workflow?.id || "")));
+    const allowedMasterIds = new Set(masterCatalog.map((master: any) => String(master?.id || "")));
+    if (!plan.workflow || typeof plan.workflow !== "object") plan.workflow = { workflow_id: null, steps: [], master_dependencies: [], confirmation_checkpoint: "Review the complete proposal and explicitly confirm before any action." };
+    if (!allowedWorkflowIds.has(String(plan.workflow.workflow_id || ""))) plan.workflow.workflow_id = null;
+    plan.workflow.steps = Array.isArray(plan.workflow.steps) ? plan.workflow.steps.slice(0, 12).map((step: any) => String(step).slice(0, 300)) : [];
+    plan.workflow.master_dependencies = Array.isArray(plan.workflow.master_dependencies) ? plan.workflow.master_dependencies.filter((id: any) => allowedMasterIds.has(String(id))).slice(0, 8) : [];
+    plan.workflow.confirmation_checkpoint = String(plan.workflow.confirmation_checkpoint || "Review the complete proposal and explicitly confirm before any action.").slice(0, 500);
 
     return json({
       plan, requestId, model,
