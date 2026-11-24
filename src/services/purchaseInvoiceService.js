@@ -1,4 +1,5 @@
-import { supabase } from "../supabase/supabaseClient";\nimport { autoPostPurchaseInvoice } from "./accountingPostingEngine";
+import { supabase } from "../supabase/supabaseClient";
+import { autoPostPurchaseInvoice } from "./accountingPostingEngine";
 
 const scoped = (query, companyId) => companyId ? query.eq("company_id", companyId) : query;
 
