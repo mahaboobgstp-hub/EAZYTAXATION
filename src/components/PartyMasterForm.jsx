@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const CUSTOMER_TABS = ["Basic Details", "GST & Tax", "Credit & Accounting", "Addresses", "Contacts", "Other Details"];
 const VENDOR_TABS = ["Basic Details", "GST & Tax", "Payment & Accounts", "Addresses", "Contacts", "Bank Details", "Other Details"];
@@ -20,9 +20,12 @@ const vendorFields = {
  "Other Details":[["msme_udyam_number","MSME / Udyam Number","text"],["vendor_category","Vendor Category","text"],["remarks","Remarks / Notes","textarea"]]
 };
 const blank = (isCustomer)=>({customer_name:"",vendor_name:"",legal_name:"",customer_code:"",vendor_code:"",ledger_code:"",customer_type:"Regular",vendor_type:"Regular",customer_group:"Sundry Debtors",vendor_group:"Sundry Creditors",constitution:"",gst_registration_type:"Unregistered",gstin:"",pan:"",gst_registered:false,place_of_supply:"",composition_scheme:false,sez_customer:false,export_customer:false,deemed_export:false,tds_applicable:false,tcs_applicable:false,reverse_charge_applicable:false,e_invoice_applicable:false,opening_balance:0,opening_balance_type:isCustomer?"Debit":"Credit",credit_limit:0,credit_period_days:0,payment_terms:"",default_sales_ledger:"Sales",default_purchase_ledger:"",default_payment_mode:"Bank Transfer",billing_address_line1:"",billing_address_line2:"",billing_city:"",billing_state:"",billing_pin:"",billing_country:"India",shipping_same_as_billing:true,shipping_address_line1:"",shipping_address_line2:"",shipping_city:"",shipping_state:"",shipping_pin:"",shipping_country:"India",contact_person:"",designation:"",mobile:"",alternate_mobile:"",email:"",website:"",bank_account_holder:"",bank_name:"",bank_account_number:"",bank_ifsc:"",bank_branch:"",bank_account_type:"Current",msme_udyam_number:"",industry_business:"",sales_person:"",customer_tags:"",vendor_category:"",remarks:"",address:"",state:"",phone:"",is_active:true});
-export default function PartyMasterForm({kind,initialData,onSave,onCancel}) {
+export default function PartyMasterForm({kind,initialData,onSave,onCancel,accountingSetup}) {
  const isCustomer=kind==="customer"; const [form,setForm]=useState({...blank(isCustomer),...(initialData||{})}); const tabs=isCustomer?CUSTOMER_TABS:VENDOR_TABS; const fields=isCustomer?customerFields:vendorFields; const [tab,setTab]=useState(tabs[0]);
  const change=(key,value)=>setForm(prev=>({...prev,[key]:value}));
+ const mainLedgers=(accountingSetup?.ledgers||[]).filter(x=>x.ledger_level==="Main Ledger"&&x.is_active!==false);
+ const intermediateLedgers=(accountingSetup?.ledgers||[]).filter(x=>x.ledger_level==="Intermediate Ledger"&&x.is_active!==false&&x.parent_ledger_id===form.main_ledger_id);
+ useEffect(()=>{if(initialData?.ledger_id&&accountingSetup?.ledgers?.length){const linked=accountingSetup.ledgers.find(x=>x.id===initialData.ledger_id);const parent=linked?accountingSetup.ledgers.find(x=>x.id===linked.parent_ledger_id):null;const main=parent?accountingSetup.ledgers.find(x=>x.id===parent.parent_ledger_id):null;if(parent&&main)setForm(prev=>({...prev,main_ledger_id:main.id,intermediate_ledger_id:parent.id}));}},[initialData?.ledger_id,accountingSetup?.ledgers]);
  const submit=(e)=>{e.preventDefault();onSave({...form,mobile:form.mobile||form.phone||"",address:[form.billing_address_line1,form.billing_address_line2,form.billing_city,form.billing_state,form.billing_pin,form.billing_country].filter(Boolean).join(", "),state:form.billing_state||form.state||""});};
  return <form className="party-master" onSubmit={submit}>
   <header className="party-master-head"><div><h2>{isCustomer?"Customer Master":"Vendor Master"}</h2><p>{isCustomer?"Create and manage customer accounts":"Create and manage vendor / supplier accounts"}</p></div><label className="party-active"><input type="checkbox" checked={!!form.is_active} onChange={e=>change("is_active",e.target.checked)}/> Active</label></header>
