@@ -177,3 +177,26 @@ export async function autoPostExpense(companyId,expenseId){
   await setSourceStatus("expenses",companyId,expenseId,"Posted","Automatically posted to accounting.",result.voucher_id);return result;
  }catch(error){const {data:existing}=await supabase.from("accounting_vouchers").select("id").eq("company_id",companyId).eq("source_module","expense").eq("source_record_id",expenseId).neq("status","Reversed").maybeSingle();await setSourceStatus("expenses",companyId,expenseId,"Failed",error.message,existing?.id||null);return {status:"Failed",reason:error.message};}
 }
+
+export async function autoPostExpensePayment(companyId,paymentId){
+ try{
+  const capability=await getCompanyAccountingCapability(companyId);
+  if(!capability.enabled)return await pending("expense_payments",companyId,paymentId,capability.reason,"Not Applicable");
+  const {data:payment,error}=await supabase.from("expense_payments").select("*").eq("company_id",companyId).eq("id",paymentId).single();if(error)throw error;
+  if(payment.status!=="Completed")return await pending("expense_payments",companyId,paymentId,"Payment is not completed; accounting posting was not created.","Not Applicable");
+  const mappings=await getMappings(companyId);
+  let payableLedger=mappings.default_expense_payable_ledger;
+  if(payment.vendor_id){const {data:vendor,error:vendorError}=await supabase.from("vendors").select("ledger_id").eq("company_id",companyId).eq("id",payment.vendor_id).single();if(vendorError)throw vendorError;payableLedger=vendor.ledger_id||payableLedger;}
+  if(!payableLedger)return await pending("expense_payments",companyId,paymentId,"Supplier payable or expense payable ledger mapping is missing.");
+  let paymentLedger=payment.payment_mode==="Cash"?mappings.cash_ledger:mappings.bank_ledger;
+  if(payment.payment_mode!=="Cash"&&payment.payment_account){
+   const {data:bank,error:bankError}=await supabase.from("bank_account_profiles").select("ledger_id,bank_name,account_number_masked").eq("company_id",companyId).eq("is_active",true).eq("bank_name",payment.payment_account).maybeSingle();
+   if(bankError)throw bankError;if(bank?.ledger_id)paymentLedger=bank.ledger_id;
+  }
+  if(!paymentLedger)return await pending("expense_payments",companyId,paymentId,"Cash or bank payment ledger mapping is missing.");
+  const amount=money(payment.amount);if(amount<=0)return await pending("expense_payments",companyId,paymentId,"Payment amount must be greater than zero.");
+  const lines=[{ledger_id:payableLedger,debit:amount,credit:0,line_narration:"Expense Payment / Payable Settlement"},{ledger_id:paymentLedger,debit:0,credit:amount,line_narration:"Cash / Bank Payment"}];
+  const result=await postBusinessTransaction(companyId,{source_module:"expense_payment",source_record_id:paymentId,voucher_type:"Payment",voucher_date:payment.payment_date,voucher_number:"AUTO-PAY-"+String(payment.payment_no||paymentId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:payment.reference_no,narration:"Auto-posted Expense Payment "+payment.payment_no,lines});
+  await setSourceStatus("expense_payments",companyId,paymentId,"Posted","Automatically posted to accounting.",result.voucher_id);return result;
+ }catch(error){const {data:existing}=await supabase.from("accounting_vouchers").select("id").eq("company_id",companyId).eq("source_module","expense_payment").eq("source_record_id",paymentId).neq("status","Reversed").maybeSingle();await setSourceStatus("expense_payments",companyId,paymentId,"Failed",error.message,existing?.id||null);return {status:"Failed",reason:error.message};}
+}
