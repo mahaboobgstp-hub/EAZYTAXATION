@@ -24,6 +24,8 @@ export default function SYDIntelligenceWorkspace() {
   const [result, setResult] = useState(null);
   const [masterResults, setMasterResults] = useState([]);
   const [selectedMasters, setSelectedMasters] = useState({});
+  const [selectedLineItems, setSelectedLineItems] = useState({});
+  const [draftCorrections, setDraftCorrections] = useState({ headers: {}, lines: {} });
   const [draftReviewOpen, setDraftReviewOpen] = useState(false);
   const [preparedDraft, setPreparedDraft] = useState(null);
   const [draftErrors, setDraftErrors] = useState([]);
@@ -34,7 +36,7 @@ export default function SYDIntelligenceWorkspace() {
   const submit = async (event) => {
     event?.preventDefault();
     if (!command.trim() || loading) return;
-    setLoading(true); setError(""); setResult(null); setMasterResults([]); setSelectedMasters({}); setDraftReviewOpen(false); setPreparedDraft(null); setDraftErrors([]);
+    setLoading(true); setError(""); setResult(null); setMasterResults([]); setSelectedMasters({}); setSelectedLineItems({}); setDraftCorrections({ headers: {}, lines: {} }); setDraftReviewOpen(false); setPreparedDraft(null); setDraftErrors([]);
     try {
       registerSYDWebScreens();
       const response = await interpretSYDCommand({ text: command, company: currentCompany, currentScreenId: currentScreen?.screenId || null, platform: "web" });
@@ -50,7 +52,7 @@ export default function SYDIntelligenceWorkspace() {
     try {
       const results = await searchSYDWorkflowMasters({ plan: result.plan, companyId: currentCompany.id });
       setMasterResults(results);
-      setSelectedMasters({});
+      setSelectedMasters({}); setSelectedLineItems({});
       if (!results.length) setLookupError("No identifiable master-name field was proposed. Add the name to your request and ask SYD again.");
     } catch (err) { setLookupError(err?.message || "Master lookup failed. Please try again."); }
     finally { setLookupLoading(false); }
@@ -61,9 +63,13 @@ export default function SYDIntelligenceWorkspace() {
   const masterById = new Map(operationalKnowledge.masterConcepts.map(master => [master.id, master]));
   const screens = ["Navigate to Sales Invoice", "Help me understand accounting for this company", "How do I record an expense?"];
   const toggleCandidate = (type, candidate) => setSelectedMasters(prev => ({ ...prev, [type]: candidate }));
-  const selectedCount = Object.keys(selectedMasters).length;
+  const selectedCount = Object.keys(selectedMasters).length + Object.keys(selectedLineItems).length;
+  const lineField = (plan?.fields || []).find(field => ["items","lines"].includes(field.field_id) && Array.isArray(field.value));
+  const proposedLines = lineField?.value || [];
+  const updateLineCorrection = (index, key, value) => setDraftCorrections(prev => ({ ...prev, lines: { ...prev.lines, [index]: { ...(prev.lines?.[index] || {}), [key]: value } } }));
+  const updateHeaderCorrection = (key, value) => setDraftCorrections(prev => ({ ...prev, headers: { ...prev.headers, [key]: value } }));
   const prepareDraft = () => {
-    const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters });
+    const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters, selectedLineItems, corrections: draftCorrections });
     setPreparedDraft(prepared); setDraftErrors(prepared.errors || []);
   };
   const openPreparedForm = () => {
@@ -105,11 +111,12 @@ export default function SYDIntelligenceWorkspace() {
         <div className="syd-ai-live-lookup"><button type="button" onClick={runMasterLookup} disabled={lookupLoading}><FiSearch/>{lookupLoading?"Checking company masters…":"Live-check identified master names"}</button><small>Read-only lookup, scoped to the selected company. Expense categories also include global categories.</small></div>
         {lookupError && <div className="syd-ai-error" role="alert">{lookupError}</div>}
         {masterResults.length>0&&<section className="syd-ai-master-results"><h3>Live master matches</h3><p className="syd-ai-muted">Choose a verified match for review. This selection is local to this proposal and does not change a form or record.</p>
-          {masterResults.map((resultItem,index)=><div className="syd-ai-master-result-group" key={resultItem.masterType+index}><div className="syd-ai-master-result-title">{masterLabel(resultItem.masterType)} · searched “{resultItem.query}”</div>
-            {resultItem.candidates.length===0?<div className="syd-ai-no-match">No matching records found.</div>:resultItem.candidates.map(candidate=><button type="button" className={"syd-ai-candidate"+(selectedMasters[resultItem.masterType]?.id===candidate.id?" selected":"")} key={candidate.id} onClick={()=>toggleCandidate(resultItem.masterType,candidate)}><span>{candidateName(resultItem.masterType,candidate)}</span><small>{candidate.gstin||candidate.item_code||candidate.state||"Verified record"}</small>{selectedMasters[resultItem.masterType]?.id===candidate.id&&<FiCheckCircle/>}</button>)}
+          {masterResults.map((resultItem,index)=><div className="syd-ai-master-result-group" key={resultItem.masterType+(resultItem.lineIndex===undefined?"header":resultItem.lineIndex)+index}><div className="syd-ai-master-result-title">{masterLabel(resultItem.masterType)}{resultItem.lineIndex!==undefined?" · Line "+(resultItem.lineIndex+1):""} · searched “{resultItem.query}”</div>
+            {resultItem.candidates.length===0?<div className="syd-ai-no-match">No matching records found.</div>:resultItem.candidates.map(candidate=><button type="button" className={"syd-ai-candidate"+((resultItem.lineIndex!==undefined?selectedLineItems[resultItem.lineIndex]?.id:selectedMasters[resultItem.masterType]?.id)===candidate.id?" selected":"")} key={candidate.id} onClick={()=>resultItem.lineIndex!==undefined?setSelectedLineItems(prev=>({...prev,[resultItem.lineIndex]:candidate})):toggleCandidate(resultItem.masterType,candidate)}><span>{candidateName(resultItem.masterType,candidate)}</span><small>{candidate.gstin||candidate.item_code||candidate.state||"Verified record"}</small>{((resultItem.lineIndex!==undefined?selectedLineItems[resultItem.lineIndex]?.id:selectedMasters[resultItem.masterType]?.id)===candidate.id)&&<FiCheckCircle/>}</button>)}
           </div>)}
           <button className="syd-ai-review-button" type="button" onClick={()=>setDraftReviewOpen(v=>!v)}>{draftReviewOpen?"Hide draft review":"Open draft review"} ({selectedCount} selected master{selectedCount===1?"":"s"})</button>
-          {draftReviewOpen&&<div className="syd-ai-draft-review"><h3>Draft review — not saved</h3><p>Company: <strong>{currentCompany?.company_name||"Not selected"}</strong></p><p>Intent: <strong>{plan?.intent||"—"}</strong></p><p>Screen: <strong>{plan?.screen_id||"—"}</strong></p><div className="syd-ai-draft-fields"><h4>Proposed values</h4>{(plan?.fields||[]).map((field,i)=><div key={field.field_id+i}><span>{field.field_id}</span><strong>{field.value??"—"}</strong></div>)}</div><h4>Confirmed master choices (review only)</h4>{Object.entries(selectedMasters).map(([type,record])=><div className="syd-ai-selected-master" key={type}><span>{masterLabel(type)}</span><strong>{candidateName(type,record)}</strong></div>)}<div className="syd-ai-review-warning">Draft preparation validates only audited fields. No saving or posting occurs. Form handoff is limited to supported audited screens.</div><button type="button" className="syd-ai-prepare-button" onClick={prepareDraft}>Validate draft for form handoff</button>{preparedDraft&&<div className="syd-ai-prepared-result"><strong>{preparedDraft.ok?"Draft validation passed":"Draft validation needs attention"}</strong>{draftErrors.length>0&&<ul>{draftErrors.map((e,i)=><li key={i}>{e}</li>)}</ul>}{preparedDraft.ok&&<button type="button" className="syd-ai-open-form" onClick={openPreparedForm}>Open target form with draft</button>}</div>}</div>}
+          {draftReviewOpen&&<div className="syd-ai-draft-review"><h3>Draft review — not saved</h3><p>Company: <strong>{currentCompany?.company_name||"Not selected"}</strong></p><p>Intent: <strong>{plan?.intent||"—"}</strong></p><p>Screen: <strong>{plan?.screen_id||"—"}</strong></p><div className="syd-ai-draft-fields"><h4>Header corrections (local draft only)</h4>{(plan?.fields||[]).filter(field=>!["items","lines"].includes(field.field_id)&&typeof field.value!=="object").map((field,i)=><label className="syd-ai-correction-row" key={field.field_id+i}><span>{field.field_id}</span><input value={draftCorrections.headers?.[field.field_id]??String(field.value??"")} onChange={e=>updateHeaderCorrection(field.field_id,e.target.value)} /></label>)}</div>
+          {proposedLines.length>0&&<div className="syd-ai-line-corrections"><h4>Line-by-line corrections</h4>{proposedLines.map((line,index)=><div className="syd-ai-line-correction-card" key={index}><strong>Line {index+1} · {line.item_name||line.description||line.item||"Transaction line"}</strong>{["item_name","description","qty","rate","gst_rate","gst_percent","discount_percent","hsn_sac","unit","uom"].filter(key=>line[key]!==undefined||["qty","rate","item_name","description"].includes(key)).map(key=><label key={key}><span>{key}</span><input value={draftCorrections.lines?.[index]?.[key]??String(line[key]??"")} onChange={e=>updateLineCorrection(index,key,e.target.value)} /></label>)}</div>)}</div>}<h4>Confirmed master choices (review only)</h4>{Object.entries(selectedMasters).map(([type,record])=><div className="syd-ai-selected-master" key={type}><span>{masterLabel(type)}</span><strong>{candidateName(type,record)}</strong></div>)}<div className="syd-ai-review-warning">Draft preparation validates only audited fields. No saving or posting occurs. Form handoff is limited to supported audited screens.</div><button type="button" className="syd-ai-prepare-button" onClick={prepareDraft}>Validate draft for form handoff</button>{preparedDraft&&<div className="syd-ai-prepared-result"><strong>{preparedDraft.ok?"Draft validation passed":"Draft validation needs attention"}</strong>{draftErrors.length>0&&<ul>{draftErrors.map((e,i)=><li key={i}>{e}</li>)}</ul>}{preparedDraft.ok&&<button type="button" className="syd-ai-open-form" onClick={openPreparedForm}>Open target form with draft</button>}</div>}</div>}
         </section>}
         <div className="syd-ai-safe-note"><FiShield/><span>Master search is read-only. Validated drafts can be handed to supported forms for your review. No transaction save or accounting posting is executed by SYD.</span></div>
         {result.requestId&&<small className="syd-ai-request-id">Request ID: {result.requestId}</small>}
