@@ -140,7 +140,7 @@ export async function autoPostPurchaseInvoice(companyId,invoiceId){
   const taxable=money(invoice.taxable);if(Math.abs(sum(items||[],"taxable_value")-taxable)>0.05)return await pending("purchase_invoices",companyId,invoiceId,"Invoice line totals do not match the header taxable value.");
   const lines=[];Object.entries(purchaseByLedger).forEach(([ledger,amount])=>addAmountLine(lines,ledger,amount,"debit","Purchase / Inventory"));
   const taxes={cgst:invoice.cgst,sgst:invoice.sgst,igst:invoice.igst,cess:0,additionalCess:0};addTaxLines(lines,mappings,taxes,"debit","purchase");
-  const roundOff=money(invoice.round_off);if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"credit":"debit","Purchase Round-off");
+  const roundOff=money(invoice.round_off);if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"debit":"credit","Purchase Round-off");
   const total=money(invoice.grand_total);addAmountLine(lines,vendor.ledger_id,total,"credit","Supplier Payable");
   if(Math.abs(sum(lines,"debit")-sum(lines,"credit"))>0.05)return await pending("purchase_invoices",companyId,invoiceId,"Mapped accounting lines do not equal the purchase invoice total; review mappings.");
   const result=await postBusinessTransaction(companyId,{source_module:"purchase_invoice",source_record_id:invoiceId,voucher_type:"Purchase",voucher_date:invoice.invoice_date,voucher_number:"AUTO-PI-"+String(invoice.invoice_no||invoiceId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:invoice.supplier_invoice_no||invoice.invoice_no,narration:"Auto-posted Purchase Invoice "+invoice.invoice_no,lines});
