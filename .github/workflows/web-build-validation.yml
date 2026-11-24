@@ -25,3 +25,5 @@ jobs:
 # Build-only workflow keeps preview validation independent of Vercel deployment quota.
 
 # CI checkpoint after master classification and automatic posting hooks.
+
+# Validate auto-posting hooks and account-group master mappings.
