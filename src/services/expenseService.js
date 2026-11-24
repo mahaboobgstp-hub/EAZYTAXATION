@@ -113,6 +113,7 @@ export async function saveExpense(header, items, companyId) {
     await supabase.from("expenses").delete().eq("id", expenseId).eq("company_id", companyId);
     throw itemError;
   }
+  if(companyId)await autoPostExpense(companyId,expenseId);
   await advanceExpenseSequence();
   return expenseId;
 }
