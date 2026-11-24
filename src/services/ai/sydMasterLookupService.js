@@ -38,7 +38,12 @@ export async function searchSYDWorkflowMasters({ plan, companyId }) {
   const searchTasks = [];
   for (const target of targets) {
     const field = fields.find(item => target.ids.includes(item.field_id) || target.textIds.includes(item.field_id));
-    const text = field?.value;
+    let text = field?.value;
+    if (target.masterType === "items" && (!text || typeof text !== "string")) {
+      const lineField = fields.find(item => ["items","lines"].includes(item.field_id) && Array.isArray(item.value));
+      const firstLine = lineField?.value?.[0];
+      text = firstLine?.item_name || firstLine?.description || firstLine?.item;
+    }
     if (text && typeof text === "string" && text.trim().length >= 2) {
       searchTasks.push(searchSYDMaster(target.masterType, text, companyId));
     }
