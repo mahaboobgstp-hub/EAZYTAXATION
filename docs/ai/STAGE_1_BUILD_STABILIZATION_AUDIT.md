@@ -376,3 +376,11 @@ The shared service accepts command text, company context, current screen ID, pla
 - Company-isolation and security testing: **pending manual/runtime verification**
 - Production merge/deployment: **not performed**
 - Android branch: **untouched**
+
+### Stage 12 CI verification update (2026-11-24)
+- Current branch head tested: `fd207302ed113aefb9fc80a8196ef3d0cbf261ce`
+- Automated AI service tests: **19 passed / 0 failed**
+- Production build: **passed**
+- The first test run exposed issues in test expectations/validation coverage. The date validation pattern was corrected and sales line discount validation was added to the allowed line fields; the expense test fixture was updated to include the required payee. The final Stage 12 CI run passed both test and build steps.
+- CI run: https://github.com/mahaboobgstp-hub/EAZYTAXATION/actions/runs/45417985346
+- Manual browser/runtime checklist, mobile viewport, and security/company-isolation verification remain **not executed**.
