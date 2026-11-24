@@ -29,7 +29,7 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
     if(field.value===undefined || field.value===null || field.value==="") continue;
     values[field.field_id]=field.value;
   }
-  Object.entries(corrections.headers||{}).forEach(([key,value])=>{if(ALLOWED[screenId].has(key) && !["items","lines","status","payment_status"].includes(key)) values[key]=value;});
+  Object.entries(corrections.headers||{}).forEach(([key,value])=>{if(ALLOWED[screenId].has(key) && !["items","lines","status","payment_status"].includes(key)) values[key]=key==="tax_inclusive"?(value==="true"||value===true):value;});
   const chosenMaster=selectedMasters[MASTER_TYPES[screenId]];
   const category=selectedMasters.expense_categories;
   if(chosenMaster?.id) values[MASTER_ID_FIELD[screenId]]=chosenMaster.id;
