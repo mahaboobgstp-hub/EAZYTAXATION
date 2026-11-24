@@ -29,7 +29,7 @@ const planSchema = {
       confirmation_checkpoint: { type: "string" },
     }, required: ["workflow_id","steps","master_dependencies","confirmation_checkpoint"] },
   },
-  required: ["intent","screen_id","fields","missing_information","requires_confirmation","response"],
+  required: ["intent","screen_id","fields","missing_information","requires_confirmation","response","workflow"],
 };
 function safeObject(value: unknown, maxLength = 8000) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
