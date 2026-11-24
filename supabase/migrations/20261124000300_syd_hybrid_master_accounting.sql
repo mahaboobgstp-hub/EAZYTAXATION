@@ -2,13 +2,12 @@
 -- Master creation only creates linked ledgers when accounting is enabled and an existing COA is present.
 -- Party ledger creation requires the user-selected hierarchy and is company-scoped.
 
-alter table public.items
-  add column if not exists accounting_item_type text,
-  add column if not exists inventory_ledger_id uuid,
-  add column if not exists purchase_ledger_id uuid,
-  add column if not exists sales_ledger_id uuid,
-  add column if not exists cogs_ledger_id uuid,
-  add column if not exists consumption_ledger_id;
+alter table public.items add column if not exists accounting_item_type text;
+alter table public.items add column if not exists inventory_ledger_id uuid;
+alter table public.items add column if not exists purchase_ledger_id uuid;
+alter table public.items add column if not exists sales_ledger_id uuid;
+alter table public.items add column if not exists cogs_ledger_id uuid;
+alter table public.items add column if not exists consumption_ledger_id uuid;
 
 alter table public.items drop constraint if exists items_inventory_ledger_company_fk;
 alter table public.items drop constraint if exists items_purchase_ledger_company_fk;
