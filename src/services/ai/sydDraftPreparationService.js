@@ -36,7 +36,7 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
   if (rawLines && !Array.isArray(rawLines)) errors.push("Line items must be an array to prepare safely.");
   const lineKey = screenId==="sales_invoice" ? "items" : "lines";
   if (Array.isArray(rawLines)) {
-    values[lineKey] = rawLines.filter(row=>row && typeof row==="object").map(row=>{
+    values[lineKey] = rawLines.filter(row=>row && typeof row==="object").map((row,index)=>{
       const line={};
       for(const key of (screenId==="sales_invoice"?["item_id","item_name","hsn_sac","qty","unit","rate","gst_rate","cess_rate"]:screenId==="purchase_invoice"?["item_id","item_name","hsn_sac","qty","uom","rate","discount_percent","gst_rate"]:["description","hsn_sac","qty","uom","rate","gst_percent","discount_percent"])) {
         if(row[key]!==undefined && row[key]!==null && row[key]!=="") line[key]=row[key];
