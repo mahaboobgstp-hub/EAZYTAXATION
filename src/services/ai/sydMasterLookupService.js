@@ -5,7 +5,7 @@ import { supabase } from "../../supabase/supabaseClient";
  * No master creation, transaction lookup, save, or posting.
  */
 const MASTER_CONFIG = {
-  customers: { table: "customers", nameColumn: "customer_name", select: "id,customer_name,gstin,phone,email,company_id", companyScoped: true },
+  customers: { table: "customers", nameColumn: "customer_name", select: "*", companyScoped: true },
   vendors: { table: "vendors", nameColumn: "vendor_name", select: "id,vendor_name,gstin,state,address,company_id", companyScoped: true },
   items: { table: "items", nameColumn: "item_name", select: "id,item_name,item_code,hsn_sac,unit,gst_rate,sales_rate,purchase_rate,company_id", companyScoped: true },
   expense_categories: { table: "expense_categories", nameColumn: "category_name", select: "id,category_name,company_id", companyScoped: false },
