@@ -123,3 +123,29 @@ The shared service accepts command text, company context, current screen ID, pla
 - These are source/static checks only. No full Vite build, CI run, or live Edge Function request was executed; runtime verification is still pending.
 
 - Follow-up source correction: normalized all field IDs to the registry-safe snake_case format (e.g., state keys `saleType`, `taxInclusive`, `discountType`, `discountValue`, `otherAmount`, and `roundOff` are represented by AI field IDs `sale_type`, `tax_inclusive`, `discount_type`, `discount_value`, `other_amount`, and `round_off`; their descriptions retain the source-state references). Fixed the field-catalogue clone syntax after source inspection.
+
+
+## Stage 4 — Operational Intelligence (2026-11-24)
+
+### Verified operational catalogue
+- Added `src/ai/registry/operationalKnowledge.js` describing dependencies for Customer Master, Supplier/Vendor Master, Items Master, Expense Category Master, Company Settings, Cash/Bank Accounts, and Chart of Accounts/Ledger Mapping.
+- Registered three reviewed workflow guides: Sales Invoice, Purchase Invoice and Expense Entry. Each has an ordered preparation sequence, master dependency IDs and explicit confirmation checkpoint.
+- All master lookup flags are set to false. The catalogue explicitly discloses that master availability is not live-checked and does not invent existing records.
+
+### AI request and response integration
+- The shared service includes operational knowledge in the request payload.
+- The Edge Function instructions require it to use the catalogue for workflow mapping, dependency explanation and ordered preparation steps.
+- Structured response schema now includes a workflow object with workflow ID, ordered steps, master dependencies and confirmation checkpoint.
+- Post-model validation deterministically resolves the workflow against the catalogue and the selected screen. The Edge Function derives steps and master dependencies from catalogue values (not model-generated values); unknown workflow IDs or screen mismatches are nulled. Master IDs are allowlisted.
+- Web Intelligence workspace now displays the workflow sequence, master prerequisites (explicitly labelled **not live-checked**) and confirmation checkpoint. It remains proposal-only.
+
+### Safety boundaries
+- No master database query, transaction query, auto-create master, navigation, form mutation, save, accounting post, or payment was implemented.
+- Confirmation is displayed as a checkpoint only; it does not trigger or authorize execution.
+- A future execution phase must add live company-scoped master lookup, deterministic validation, permission checks, a draft/review surface and server-side confirmation tokens before any write.
+
+### Stage 4 status
+- Operational dependency catalogue: implemented.
+- Workflow proposal schema and deterministic workflow/dependency derivation: implemented.
+- UI workflow/dependency/checkpoint panel: implemented.
+- Static source inspection: completed; runtime verification pending.
