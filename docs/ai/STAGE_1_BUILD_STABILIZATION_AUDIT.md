@@ -121,3 +121,5 @@ The shared service accepts command text, company context, current screen ID, pla
 - Confirmed the web service attaches per-screen field definitions and the Edge Function filters proposals against the selected screen's field IDs: **passed by source inspection**.
 - The Edge Function screen-metadata size guard was raised from 16 KB to 26 KB to accommodate the screen catalogue plus the newly attached audited fields while retaining a bounded payload.
 - These are source/static checks only. No full Vite build, CI run, or live Edge Function request was executed; runtime verification is still pending.
+
+- Follow-up source correction: normalized all field IDs to the registry-safe snake_case format (e.g., state keys `saleType`, `taxInclusive`, `discountType`, `discountValue`, `otherAmount`, and `roundOff` are represented by AI field IDs `sale_type`, `tax_inclusive`, `discount_type`, `discount_value`, `other_amount`, and `round_off`; their descriptions retain the source-state references). Fixed the field-catalogue clone syntax after source inspection.
