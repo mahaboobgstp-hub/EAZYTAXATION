@@ -7,6 +7,10 @@ import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupServi
 import { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
 import { analyzeSYDTransactionContext } from "../../services/ai/sydTransactionContextService";
 import { deriveSYDTransactionOrchestration } from "../../services/ai/sydTransactionOrchestrationService";
+import { classifySYDAction } from "../../services/ai/sydActionPermissionService";
+import { evaluateSYDActionSafety } from "../../services/ai/sydActionSafetyService";
+import { fingerprintSYDAction, createSYDActionAuthorization, verifySYDActionAuthorization } from "../../services/ai/sydActionAuthorizationService";
+import { createSYDActionLifecycle, transitionSYDActionLifecycle } from "../../services/ai/sydActionLifecycleService";
 import { readSYDSessionMemory, buildSYDConversationContext, recordSYDSessionTurn, recordSYDSessionCorrection, clearSYDSessionMemory } from "../../services/ai/sydSessionMemoryService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
 import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
@@ -34,6 +38,9 @@ export default function SYDIntelligenceWorkspace() {
   const [draftErrors, setDraftErrors] = useState([]);
   const [sessionMemory, setSessionMemory] = useState(() => readSYDSessionMemory(currentCompany?.id));
   const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
+  const [handoffAuthorization, setHandoffAuthorization] = useState(null);
+  const [handoffLifecycle, setHandoffLifecycle] = useState(null);
+  const [handoffGrant, setHandoffGrant] = useState(null);
 
   useEffect(() => { registerSYDWebScreens(); }, []);
   useEffect(() => { setSessionMemory(readSYDSessionMemory(currentCompany?.id)); }, [currentCompany?.id]);
@@ -83,11 +90,48 @@ export default function SYDIntelligenceWorkspace() {
     const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters, selectedLineItems, corrections: draftCorrections });
     setPreparedDraft(prepared); setDraftErrors(prepared.errors || []);
   };
-  const openPreparedForm = () => {
-    if (!preparedDraft?.ok) return;
+  const buildHandoffAction = () => {
+    if (!preparedDraft?.ok || !currentCompany?.id) return null;
+    const action = { actionType:"form_handoff", companyId:currentCompany.id, screenId:preparedDraft.screenId, draftSource:preparedDraft.source, preparedAt:preparedDraft.preparedAt, fieldCount:Object.keys(preparedDraft.values||{}).length };
+    action.fingerprint = fingerprintSYDAction(action);
+    action.permission = classifySYDAction("form_handoff");
+    return action;
+  };
+  const requestFormHandoff = () => {
+    const action = buildHandoffAction();
+    if (!action) return;
+    const safety = evaluateSYDActionSafety({ action, companyId:currentCompany?.id, currentCompanyId:currentCompany?.id, preparedDraft });
+    const lifecycle = createSYDActionLifecycle(action, safety);
+    setHandoffAuthorization({ action, safety });
+    setHandoffLifecycle(lifecycle);
+    setHandoffGrant(null);
+  };
+  const cancelHandoffAuthorization = () => {
+    if (handoffLifecycle) {
+      const transitioned = transitionSYDActionLifecycle(handoffLifecycle, "cancelled");
+      if (transitioned.ok) setHandoffLifecycle(transitioned.state);
+    }
+    setHandoffAuthorization(null);
+    setHandoffGrant(null);
+  };
+  const approveAndOpenForm = () => {
+    const action = buildHandoffAction();
+    if (!action || !handoffAuthorization?.safety?.safe) return;
+    const authorization = createSYDActionAuthorization({ action, safety:handoffAuthorization.safety, approved:true });
+    if (!authorization.ok) return;
+    const verification = verifySYDActionAuthorization({ grant:authorization.grant, action, companyId:currentCompany?.id, consume:true });
+    if (!verification.ok) return;
+    const authorizedState = transitionSYDActionLifecycle(handoffLifecycle, "authorized", { approvedAt:new Date().toISOString() });
+    if (!authorizedState.ok) return;
+    const executingState = transitionSYDActionLifecycle(authorizedState.state, "executing", { executionStartedAt:new Date().toISOString() });
+    if (!executingState.ok) return;
+    setHandoffGrant(verification.grant);
     const target = preparedDraft.screenId === "sales_invoice" ? "/app/sales" : preparedDraft.screenId === "purchase_invoice" ? "/app/purchases" : "/app/expenses";
+    // This action is a navigation handoff only. No record is saved or posted.
+    setHandoffLifecycle(transitionSYDActionLifecycle(executingState.state, "completed", { completedAt:new Date().toISOString(), result:"Form navigation authorized; no transaction write performed." }).state);
     navigate(target, { state: { sydDraft: preparedDraft } });
   };
+  const openPreparedForm = () => requestFormHandoff();
 
   return (
     <main className="syd-ai-workspace">
@@ -129,7 +173,7 @@ export default function SYDIntelligenceWorkspace() {
           </div>)}
           <button className="syd-ai-review-button" type="button" onClick={()=>setDraftReviewOpen(v=>!v)}>{draftReviewOpen?"Hide draft review":"Open draft review"} ({selectedCount} selected master{selectedCount===1?"":"s"})</button>
           {draftReviewOpen&&<div className="syd-ai-draft-review"><h3>Draft review — not saved</h3><p>Company: <strong>{currentCompany?.company_name||"Not selected"}</strong></p><p>Intent: <strong>{plan?.intent||"—"}</strong></p><p>Screen: <strong>{plan?.screen_id||"—"}</strong></p><div className="syd-ai-draft-fields"><h4>Header corrections (local draft only)</h4>{(plan?.fields||[]).filter(field=>!["items","lines"].includes(field.field_id)&&typeof field.value!=="object").map((field,i)=><label className="syd-ai-correction-row" key={field.field_id+i}><span>{field.field_id}</span><input value={draftCorrections.headers?.[field.field_id]??String(field.value??"")} onChange={e=>updateHeaderCorrection(field.field_id,e.target.value)} /></label>)}</div>
-          {proposedLines.length>0&&<div className="syd-ai-line-corrections"><h4>Line-by-line corrections</h4>{proposedLines.map((line,index)=><div className="syd-ai-line-correction-card" key={index}><strong>Line {index+1} · {line.item_name||line.description||line.item||"Transaction line"}</strong>{["item_name","description","qty","rate","gst_rate","gst_percent","discount_percent","hsn_sac","unit","uom"].filter(key=>line[key]!==undefined||["qty","rate","item_name","description"].includes(key)).map(key=><label key={key}><span>{key}</span><input value={draftCorrections.lines?.[index]?.[key]??String(line[key]??"")} onChange={e=>updateLineCorrection(index,key,e.target.value)} /></label>)}</div>)}</div>}<h4>Confirmed master choices (review only)</h4>{Object.entries(selectedMasters).map(([type,record])=><div className="syd-ai-selected-master" key={type}><span>{masterLabel(type)}</span><strong>{candidateName(type,record)}</strong></div>)}<div className="syd-ai-review-warning">Draft preparation validates only audited fields. No saving or posting occurs. Form handoff is limited to supported audited screens.</div><button type="button" className="syd-ai-prepare-button" onClick={prepareDraft}>Validate draft for form handoff</button>{preparedDraft&&<div className="syd-ai-prepared-result"><strong>{preparedDraft.ok?"Draft validation passed":"Draft validation needs attention"}</strong>{draftErrors.length>0&&<ul>{draftErrors.map((e,i)=><li key={i}>{e}</li>)}</ul>}{preparedDraft.ok&&<button type="button" className="syd-ai-open-form" onClick={openPreparedForm}>Open target form with draft</button>}</div>}</div>}
+          {proposedLines.length>0&&<div className="syd-ai-line-corrections"><h4>Line-by-line corrections</h4>{proposedLines.map((line,index)=><div className="syd-ai-line-correction-card" key={index}><strong>Line {index+1} · {line.item_name||line.description||line.item||"Transaction line"}</strong>{["item_name","description","qty","rate","gst_rate","gst_percent","discount_percent","hsn_sac","unit","uom"].filter(key=>line[key]!==undefined||["qty","rate","item_name","description"].includes(key)).map(key=><label key={key}><span>{key}</span><input value={draftCorrections.lines?.[index]?.[key]??String(line[key]??"")} onChange={e=>updateLineCorrection(index,key,e.target.value)} /></label>)}</div>)}</div>}<h4>Confirmed master choices (review only)</h4>{Object.entries(selectedMasters).map(([type,record])=><div className="syd-ai-selected-master" key={type}><span>{masterLabel(type)}</span><strong>{candidateName(type,record)}</strong></div>)}<div className="syd-ai-review-warning">Draft preparation validates only audited fields. No saving or posting occurs. Form handoff is limited to supported audited screens.</div><button type="button" className="syd-ai-prepare-button" onClick={prepareDraft}>Validate draft for form handoff</button>{preparedDraft&&<div className="syd-ai-prepared-result"><strong>{preparedDraft.ok?"Draft validation passed":"Draft validation needs attention"}</strong>{draftErrors.length>0&&<ul>{draftErrors.map((e,i)=><li key={i}>{e}</li>)}</ul>}{preparedDraft.ok&&<button type="button" className="syd-ai-open-form" onClick={requestFormHandoff}>Review authorization to open form</button>}{handoffAuthorization&&<div className="syd-ai-authorization-panel"><strong>Stage 11 · Action safety review</strong><div><span>Requested action</span><b>{handoffAuthorization.action.permission.label}</b></div><div><span>Company</span><b>{currentCompany?.company_name||"—"}</b></div><div><span>Destination</span><b>{preparedDraft.screenId.replaceAll("_"," ")}</b></div><div><span>Permission level</span><b>L{handoffAuthorization.action.permission.level} · Explicit confirmation</b></div><p>This approval is limited to opening this validated draft form. It does not authorize saving, posting, payment, or another action.</p><div className="syd-ai-authorization-actions"><button type="button" onClick={cancelHandoffAuthorization}>Cancel</button><button type="button" onClick={approveAndOpenForm} disabled={!handoffAuthorization.safety.safe}>Approve & Open Form</button></div></div>}{handoffLifecycle&&<div className="syd-ai-lifecycle-status"><strong>Action lifecycle: {handoffLifecycle.status.replaceAll("_"," ")}</strong>{handoffLifecycle.reasons?.length>0&&<ul>{handoffLifecycle.reasons.map((reason,i)=><li key={i}>{reason}</li>)}</ul>}</div>}</div>}</div>}
         </section>}
         <div className="syd-ai-safe-note"><FiShield/><span>Master search is read-only. Validated drafts can be handed to supported forms for your review. No transaction save or accounting posting is executed by SYD.</span></div>
         {result.requestId&&<small className="syd-ai-request-id">Request ID: {result.requestId}</small>}
