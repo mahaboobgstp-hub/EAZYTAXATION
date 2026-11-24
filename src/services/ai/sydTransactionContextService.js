@@ -43,7 +43,7 @@ export function analyzeSYDTransactionContext({plan,companyId,selectedMasters={},
   if(present(headers.gstin)&&present(headers.vendor_name)&&!selectedMasters.vendors?.id)questions.push("Supplier name and GSTIN are both present but no verified supplier master is selected. Confirm they belong together.");
   if(present(headers.tax_inclusive)&&!lines.some(line=>present(line.rate)))questions.push("Tax-inclusive pricing is indicated; confirm line rates before computing tax.");
   if(present(headers.discount_type)&&present(headers.discount_value)&&!numeric(headers.discount_value))questions.push("Invoice discount value is not numeric; correct it before draft validation.");
-else questions.push("What items or expense details should be entered?");
+if(!lines.length) questions.push("What items or expense details should be entered?");
   lines.forEach((line,i)=>{
     const label=`Line ${i+1}`;
     if(rule.lineMaster&&selectedLineItems[i]?.id){score+=3;reasons.push(`${label} item master matched`);}
