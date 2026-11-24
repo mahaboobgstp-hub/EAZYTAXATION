@@ -26,8 +26,8 @@ export function deriveSYDTransactionOrchestration({plan,companyId,masterResults=
   let actionId="interpret";
   if(plan&&supported&&!companyId){nextAction="Select a company";actionId="company";}
   else if(plan&&supported&&!lookupComplete){nextAction="Run read-only master lookup";actionId="masters";}
-  else if(plan&&supported&&!partyVerified){nextAction="Select the verified party master";actionId="masters";}
-  else if(plan&&supported&&lineMasterCoverage===false){nextAction="Select verified item matches";actionId="masters";}
+  else if(plan&&supported&&!partyVerified){nextAction="Select the verified party from the matches below";actionId="chooseParty";}
+  else if(plan&&supported&&lineMasterCoverage===false){nextAction="Select verified item matches below";actionId="chooseLineItem";}
   else if(plan&&supported&&!draftReviewOpen){nextAction="Open draft review";actionId="review";}
   else if(plan&&supported&&!validated){nextAction="Validate draft";actionId="validate";}
   else if(validated){nextAction="Open target form";actionId="handoff";}
