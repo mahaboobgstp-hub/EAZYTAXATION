@@ -46,7 +46,8 @@ function AccountingWorkspace() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [showGroupForm, setShowGroupForm] = useState(false);\n  const [groupCreationMode, setGroupCreationMode] = useState("main");
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [groupCreationMode, setGroupCreationMode] = useState("main");
   const [showLedgerForm, setShowLedgerForm] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [selectedLedger, setSelectedLedger] = useState("");
