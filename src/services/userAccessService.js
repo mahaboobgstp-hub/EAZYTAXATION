@@ -33,7 +33,22 @@ export async function inviteCompanyUser(payload) {
   const { data, error } = await supabase.functions.invoke("invite-company-user", {
     body: { ...payload, kind: "user", password: payload.password },
   });
-  if (error) throw error;
+  if (error) {
+    // Extract the Edge Function's actual response so users see the real failure,
+    // rather than Supabase's generic "non-2xx status code" message.
+    let detail = error.message || "Unable to create user.";
+    try {
+      const response = error.context;
+      if (response && typeof response.json === "function") {
+        const body = await response.json();
+        if (body?.error) detail = body.error;
+        else if (body?.message) detail = body.message;
+      }
+    } catch {
+      // Preserve the fallback message if the response body cannot be read.
+    }
+    throw new Error(detail);
+  }
   if (data?.error) throw new Error(data.error);
   return data;
 }
