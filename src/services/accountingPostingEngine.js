@@ -197,7 +197,7 @@ export async function autoPostExpensePayment(companyId,paymentId){
   if(payment.vendor_id){const {data:vendor,error:vendorError}=await supabase.from("vendors").select("ledger_id").eq("company_id",companyId).eq("id",payment.vendor_id).single();if(vendorError)throw vendorError;payableLedger=vendor.ledger_id||payableLedger;}
   if(!payableLedger)return await pending("expense_payments",companyId,paymentId,"Supplier payable or expense payable ledger mapping is missing.");
   let paymentLedger=payment.payment_method==="Cash"?mappings.cash_ledger:payment.payment_method==="Credit Card"?mappings.credit_card_ledger:mappings.bank_ledger;
-  if(payment.payment_method!=="Cash"&&payment.account_name){
+  if(payment.payment_method!=="Cash"&&payment.payment_method!=="Credit Card"&&payment.account_name){
    const {data:bank,error:bankError}=await supabase.from("bank_account_profiles").select("ledger_id,bank_name,account_number_masked").eq("company_id",companyId).eq("is_active",true).eq("bank_name",payment.account_name).maybeSingle();
    if(bankError)throw bankError;if(bank?.ledger_id)paymentLedger=bank.ledger_id;
   }
