@@ -6,3 +6,4 @@ export * from "./executionPolicy";
 export * from "./toolRegistry";
 
 export * from "./webScreenKnowledge";
+export * from "./operationalKnowledge";
