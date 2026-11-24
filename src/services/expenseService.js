@@ -210,7 +210,7 @@ export async function createExpensePayment(payment, companyId) {
     paid_to: payment.paid_to || expense?.payee_name || "Supplier"
   }]).select("id").single();
   if (error) throw error;
-  if (payment.status === "Completed" && payment.expense_id) await recalculateExpensePaid(payment.expense_id, companyId);
+  if (payment.status === "Completed") await autoPostExpensePayment(companyId,data.id);\n  if (payment.status === "Completed" && payment.expense_id) await recalculateExpensePaid(payment.expense_id, companyId);
   return data.id;
 }
 
