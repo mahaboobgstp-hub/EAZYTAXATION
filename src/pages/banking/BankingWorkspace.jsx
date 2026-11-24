@@ -11,6 +11,7 @@ import {
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import { loadTransactionIntelligence, classifySYDTransaction, saveSYDClassificationRule, normalizeSYDKeyword } from "../../services/ai/transactionIntelligenceService";
+import { getMasterAccountingSetup } from "../../services/masterAccountingService";
 import "../../css/banking/BankingWorkspace.css";
 
 const initialTransactions = [
@@ -27,7 +28,7 @@ const bankAccounts = [
   { name: "SBI Current Account", bank: "State Bank of India", number: "•••• 9012", balance: 1240560.75, date: "10 Jul 2026", color: "sbi" },
   { name: "ICICI Current Account", bank: "ICICI Bank", number: "•••• 4567", balance: 892130, date: "09 Jul 2026", color: "icici" }
 ];
-const categories = ["Unclassified", "Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];
+const categories = ["Unclassified", "Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];\nconst accountHash = async value => { const normalized=String(value||"").replace(/\\s+/g,"").toUpperCase(); if(!normalized)return null; if(!globalThis.crypto?.subtle)throw new Error("Secure duplicate checking is unavailable in this browser."); const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(normalized)); return Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join(""); };
 
 export default function BankingWorkspace() {
   const { currentCompany } = useCompany();
@@ -53,7 +54,7 @@ export default function BankingWorkspace() {
   const [period, setPeriod] = useState("Apr 2025");
   const [settingsTab, setSettingsTab] = useState("Account Aggregator");
   const [realAccounts, setRealAccounts] = useState([]);
-  const [accountLedgers, setAccountLedgers] = useState([]);
+  const [accountLedgers, setAccountLedgers] = useState([]);\n  const [accountingSetup,setAccountingSetup]=useState({enabled:false,ledgers:[],groups:[]});\n  const [bankMainLedgerId,setBankMainLedgerId]=useState("");\n  const [bankIntermediateLedgerId,setBankIntermediateLedgerId]=useState("");
   const [accountModal, setAccountModal] = useState(false);
   const [accountForm, setAccountForm] = useState({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});
   const [accountSaving, setAccountSaving] = useState(false);
@@ -73,16 +74,39 @@ export default function BankingWorkspace() {
     if(linesError) setNotice("Transactions could not be loaded: "+linesError.message);
     else { let intelligenceContext=null; try { intelligenceContext=await loadTransactionIntelligence(companyId); } catch(intelligenceError) { console.warn("SYD transaction intelligence unavailable:",intelligenceError.message); } setTransactions((lines||[]).map(line=>{ const tx={id:line.id,accountId:line.bank_account_id,date:line.statement_date,narration:line.narration||"",description:line.narration||"",reference:line.reference_number||"",ref:line.reference_number||"",amount:(line.direction==="Debit"?-1:1)*Number(line.amount||0),direction:line.direction==="Debit"?"debit":"credit",partyName:line.party_name||"",gstin:line.gstin||"",type:line.category||"Unclassified",ledger:line.ledger_name||"",ledgerId:line.ledger_id||"",status:line.classification_status||"Unclassified",raw:line}; const intelligence=intelligenceContext?classifySYDTransaction(tx,intelligenceContext):null; return {...tx,intelligence,...(intelligence?.autoApply&&intelligence.ledger?{ledgerId:intelligence.ledger.id,ledger:intelligence.ledger.ledger_name,type:intelligence.type,status:"To Post"}:{})}; })); }
   };
-  useEffect(()=>{loadBankingData();},[companyId]);
+  useEffect(()=>{loadBankingData();if(companyId)getMasterAccountingSetup(companyId).then(setAccountingSetup).catch(e=>console.warn("Bank accounting setup:",e.message));else setAccountingSetup({enabled:false,ledgers:[],groups:[]});},[companyId]);\n  const bankMainLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Main Ledger"&&l.is_active!==false);\n  const bankIntermediateLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Intermediate Ledger"&&l.is_active!==false&&l.parent_ledger_id===bankMainLedgerId);
   useEffect(()=>{if(!companyId)return;supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code").eq("company_id",companyId).eq("is_active",true).order("ledger_name").then(({data,error})=>{if(error)setNotice(error.message);else setAccountLedgers(data||[]);});},[companyId]);
-  const saveBankAccount = async (e) => { e.preventDefault(); if(!companyId || !accountForm.bank_name.trim()) return; setAccountSaving(true); try {
-    const {data:gr,error:ge}=await supabase.from("account_groups").select("id").eq("company_id",companyId).eq("group_name","Bank Accounts").limit(1); if(ge)throw ge; let groupId=gr?.[0]?.id;
-    if(!groupId){const {data:ng,error:ne}=await supabase.from("account_groups").insert({company_id:companyId,group_name:"Bank Accounts",group_code:"BANK_ACCOUNTS",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet"}).select("id").single();if(ne)throw ne;groupId=ng.id;}
-    const ledgerName=accountForm.bank_name.trim()+" - "+(accountForm.account_number.slice(-4)||"Account");
-    const {data:led,error:le}=await supabase.from("chart_of_accounts").insert({company_id:companyId,ledger_name:ledgerName,ledger_code:"BANK"+Date.now().toString().slice(-7),group_id:groupId,opening_balance:0,opening_balance_type:"Debit",gst_applicable:false,is_system:false,is_active:true}).select("id").single();if(le)throw le;
-    const {error:pe}=await supabase.from("bank_account_profiles").insert({company_id:companyId,ledger_id:led.id,bank_name:accountForm.bank_name.trim(),account_holder_name:accountForm.account_holder_name||null,account_number_masked:accountForm.account_number?"****"+accountForm.account_number.slice(-4):null,ifsc:accountForm.ifsc.toUpperCase()||null,branch_name:accountForm.branch_name||null,account_type:accountForm.account_type,is_active:true});if(pe)throw pe;
-    setNotice("Bank account saved successfully.");setAccountModal(false);setAccountForm({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});const {data:reload,error:re}=await supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true);if(re)throw re;setRealAccounts(reload||[]);
-  }catch(err){setNotice("Could not save bank account: "+err.message);}finally{setAccountSaving(false);}};
+  const saveBankAccount = async (e) => {
+    e.preventDefault();
+    if(!companyId||!accountForm.bank_name.trim())return;
+    if(accountingSetup.enabled&&bankMainLedgers.length&&(!bankMainLedgerId||!bankIntermediateLedgerId)){setNotice("Select the main and intermediate ledger groups for this bank account.");return;}
+    setAccountSaving(true);
+    try{
+      const accountHashValue=await accountHash(accountForm.account_number);
+      if(accountHashValue){
+        let duplicateQuery=supabase.from("bank_account_profiles").select("id,bank_name,account_number_masked,ifsc,ledger_id").eq("company_id",companyId).eq("account_number_hash",accountHashValue).eq("is_active",true);
+        if(accountForm.ifsc.trim())duplicateQuery=duplicateQuery.eq("ifsc",accountForm.ifsc.trim().toUpperCase());
+        const {data:duplicate,error:duplicateError}=await duplicateQuery.limit(1);
+        if(duplicateError)throw duplicateError;
+        if(duplicate?.length)throw new Error("This bank account already exists in SYD ("+duplicate[0].bank_name+" "+(duplicate[0].account_number_masked||"")+")");
+      }
+      let ledgerId=null;
+      if(accountingSetup.enabled&&bankMainLedgerId&&bankIntermediateLedgerId){
+        const parent=accountingSetup.ledgers.find(l=>l.id===bankIntermediateLedgerId);
+        if(!parent||parent.parent_ledger_id!==bankMainLedgerId||parent.ledger_level!=="Intermediate Ledger")throw new Error("The selected bank accounting hierarchy is invalid.");
+        const ledgerName=accountForm.bank_name.trim()+" - "+(accountForm.account_number.slice(-4)||"Account");
+        const ledgerCode="BANK"+Date.now().toString().slice(-7);
+        const {data:led,error:le}=await supabase.from("chart_of_accounts").insert({company_id:companyId,ledger_name:ledgerName,ledger_code:ledgerCode,group_id:parent.group_id,parent_ledger_id:parent.id,ledger_level:"Subledger",is_posting_enabled:true,opening_balance:0,opening_balance_type:"Debit",gst_applicable:false,is_system:false,is_active:true,description:"Automatically linked to bank account master"}).select("id").single();
+        if(le)throw le;ledgerId=led.id;
+      }
+      const {error:pe}=await supabase.from("bank_account_profiles").insert({company_id:companyId,ledger_id:ledgerId,account_number_hash:accountHashValue,bank_name:accountForm.bank_name.trim(),account_holder_name:accountForm.account_holder_name||null,account_number_masked:accountForm.account_number?"****"+accountForm.account_number.slice(-4):null,ifsc:accountForm.ifsc.toUpperCase()||null,branch_name:accountForm.branch_name||null,account_type:accountForm.account_type,is_active:true});
+      if(pe)throw pe;
+      setNotice("Bank account saved successfully"+(ledgerId?" with its accounting subledger.":" without accounting linkage because Accounting is disabled or its hierarchy is not configured."));
+      setAccountModal(false);setAccountForm({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});setBankMainLedgerId("");setBankIntermediateLedgerId("");
+      const {data:reload,error:re}=await supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true);
+      if(re)throw re;setRealAccounts(reload||[]);
+    }catch(err){setNotice("Could not save bank account: "+err.message);}finally{setAccountSaving(false);}
+  };
   const downloadBankStatementTemplate = () => {
     const headers = ["Transaction Date (YYYY-MM-DD)", "Description / Narration", "Reference Number", "Debit", "Credit", "Amount"];
     const csv = headers.join(",") + "\r\n";
