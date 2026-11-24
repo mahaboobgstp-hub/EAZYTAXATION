@@ -6,10 +6,10 @@
 const STORAGE_PREFIX = "syd_ai_session_v1:";
 const MAX_ENTRIES = 6;
 const MAX_AGE_MS = 2 * 60 * 60 * 1000;
-const SAFE_HEADER_KEYS = new Set(["invoice_date","expense_date","supplier_invoice_no","customer_name","vendor_name","supplier_name","payee_name","sale_type","payment_mode","place_of_supply","vendor_state","shipping_state","discount_type","remarks"]);
+const SAFE_HEADER_KEYS = new Set(["invoice_date","expense_date","customer_name","vendor_name","supplier_name","payee_name","sale_type","payment_mode","place_of_supply","vendor_state","shipping_state","discount_type","remarks"]);
 const SAFE_LINE_KEYS = new Set(["item_name","description","hsn_sac","unit","uom"]);
 const asText = (v,max=120) => typeof v === "string" ? v.trim().slice(0,max) : (typeof v === "number" ? String(v) : "");
-const storageKey = companyId => STORAGE_PREFIX + String(companyId || "no-company");
+const storageKey = companyId => STORAGE_PREFIX + String(companyId || "no-company");\nconst safeCommand = value => asText(value,300).replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi,"[email]").replace(/\\b[A-Z]{2,4}\\d{5,12}[A-Z0-9]{0,4}\\b/gi,"[identifier]").replace(/\\b\\d{8,}\\b/g,"[number]");
 export function readSYDSessionMemory(companyId) {
   if (!companyId || typeof sessionStorage === "undefined") return { version:1, companyId:null, updatedAt:null, entries:[], correctionNotes:[] };
   try {
@@ -41,7 +41,7 @@ export function recordSYDSessionTurn(companyId, {command, plan, selectedMasters=
   });
   const masters = {};
   Object.entries(selectedMasters).forEach(([type,row]) => { const name = row?.customer_name||row?.vendor_name||row?.item_name||row?.category_name; if(name) masters[type]=asText(name); });
-  const entry = { at:new Date().toISOString(), command:asText(command,300), screenId:plan?.screen_id||null, intent:plan?.intent||null, response:asText(plan?.response,400), headers, lines, masters };
+  const entry = { at:new Date().toISOString(), command:safeCommand(command), screenId:plan?.screen_id||null, intent:plan?.intent||null, response:asText(plan?.response,400), headers, lines, masters };
   memory.entries = [...memory.entries,entry].slice(-MAX_ENTRIES);
   return persist(companyId,memory) ? memory.entries[memory.entries.length-1] : null;
 }
