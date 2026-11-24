@@ -152,10 +152,13 @@ Deno.serve(async (req: Request) => {
     const allowedWorkflowIds = new Set(workflowCatalog.map((workflow: any) => String(workflow?.id || "")));
     const allowedMasterIds = new Set(masterCatalog.map((master: any) => String(master?.id || "")));
     if (!plan.workflow || typeof plan.workflow !== "object") plan.workflow = { workflow_id: null, steps: [], master_dependencies: [], confirmation_checkpoint: "Review the complete proposal and explicitly confirm before any action." };
-    if (!allowedWorkflowIds.has(String(plan.workflow.workflow_id || ""))) plan.workflow.workflow_id = null;
-    plan.workflow.steps = Array.isArray(plan.workflow.steps) ? plan.workflow.steps.slice(0, 12).map((step: any) => String(step).slice(0, 300)) : [];
-    plan.workflow.master_dependencies = Array.isArray(plan.workflow.master_dependencies) ? plan.workflow.master_dependencies.filter((id: any) => allowedMasterIds.has(String(id))).slice(0, 8) : [];
-    plan.workflow.confirmation_checkpoint = String(plan.workflow.confirmation_checkpoint || "Review the complete proposal and explicitly confirm before any action.").slice(0, 500);
+    const requestedWorkflow = workflowCatalog.find((workflow: any) => String(workflow?.id || "") === String(plan.workflow.workflow_id || ""));
+    const verifiedWorkflow = requestedWorkflow && requestedWorkflow.screenId === plan.screen_id ? requestedWorkflow : null;
+    plan.workflow.workflow_id = verifiedWorkflow ? verifiedWorkflow.id : null;
+    // Workflow steps and prerequisites are deterministic catalogue values, not model-generated claims.
+    plan.workflow.steps = verifiedWorkflow ? verifiedWorkflow.sequence.slice(0, 12) : [];
+    plan.workflow.master_dependencies = verifiedWorkflow ? verifiedWorkflow.masterDependencies.filter((id: string) => allowedMasterIds.has(id)).slice(0, 8) : [];
+    plan.workflow.confirmation_checkpoint = verifiedWorkflow ? String(verifiedWorkflow.confirmationGate).slice(0, 500) : "Review the complete proposal and explicitly confirm before any action. No execution is enabled.";
 
     return json({
       plan, requestId, model,
