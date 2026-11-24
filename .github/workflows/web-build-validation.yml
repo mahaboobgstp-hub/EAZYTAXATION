@@ -21,3 +21,5 @@ jobs:
         run: npm install
       - name: Production build
         run: npm run build
+
+# Build-only workflow keeps preview validation independent of Vercel deployment quota.
