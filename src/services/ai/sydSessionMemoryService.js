@@ -9,7 +9,8 @@ const MAX_AGE_MS = 2 * 60 * 60 * 1000;
 const SAFE_HEADER_KEYS = new Set(["invoice_date","expense_date","customer_name","vendor_name","supplier_name","payee_name","sale_type","payment_mode","place_of_supply","vendor_state","shipping_state","discount_type","remarks"]);
 const SAFE_LINE_KEYS = new Set(["item_name","description","hsn_sac","unit","uom"]);
 const asText = (v,max=120) => typeof v === "string" ? v.trim().slice(0,max) : (typeof v === "number" ? String(v) : "");
-const storageKey = companyId => STORAGE_PREFIX + String(companyId || "no-company");\nconst safeCommand = value => asText(value,300).replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi,"[email]").replace(/\\b[A-Z]{2,4}\\d{5,12}[A-Z0-9]{0,4}\\b/gi,"[identifier]").replace(/\\b\\d{8,}\\b/g,"[number]");
+const storageKey = companyId => STORAGE_PREFIX + String(companyId || "no-company");
+const safeCommand = value => asText(value,300).replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[email]").replace(/\b[A-Z]{2,4}\d{5,12}[A-Z0-9]{0,4}\b/gi,"[identifier]").replace(/\b\d{8,}\b/g,"[number]");
 export function readSYDSessionMemory(companyId) {
   if (!companyId || typeof sessionStorage === "undefined") return { version:1, companyId:null, updatedAt:null, entries:[], correctionNotes:[] };
   try {
