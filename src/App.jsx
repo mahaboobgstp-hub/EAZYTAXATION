@@ -78,7 +78,7 @@ import GSTR2B from "./pages/gst/GSTR2B";
 import EwayBills from "./pages/gst/EwayBills";
 import ReportsWorkspace from "./pages/reports.jsx";
 import AccountingWorkspace from "./pages/accounting/AccountingWorkspace";
-import AccountingMappings from "./pages/accounting/AccountingMappings";
+import AccountingMappings from "./pages/accounting/AccountingMappings";\nimport CashAccounts from "./pages/accounting/CashAccounts";
 
 /* ===========================
    RECRUITMENT MANAGEMENT
@@ -514,7 +514,7 @@ function App() {
 
           {/* ACCOUNTING WORKSPACE */}
           <Route path="accounting" element={<AccountingWorkspace />} />
-          <Route path="accounting-mappings" element={<AccountingMappings />} />
+          <Route path="accounting-mappings" element={<AccountingMappings />} />\n          <Route path="cash-accounts" element={<CashAccounts />} />
           <Route path="chart-of-accounts" element={<AccountingWorkspace />} />
           <Route path="journal-voucher" element={<AccountingWorkspace />} />
           <Route path="ledger" element={<AccountingWorkspace />} />
