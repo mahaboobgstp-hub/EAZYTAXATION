@@ -216,3 +216,29 @@ The shared service accepts command text, company context, current screen ID, pla
 - This stage is code-complete but not verified by a successful latest-commit CI build or live test. Production remains untouched and PR #9 remains draft/unmerged.
 
 - Stage 6 follow-up: live item lookup now also extracts the first item name/description from proposed `items`/`lines` arrays so the first invoice line can be matched; multi-line matching remains explicitly limited.
+
+
+## Stage 7 — Multi-line Transaction Intelligence, Line-by-Line Matching, Dynamic Validation & Draft Corrections (2026-11-24)
+
+### Implemented on `hybrid-accounting-integration`
+- Extended draft preparation to accept per-line item-master selections for each Sales Invoice and Purchase Invoice line (indexed line-by-line), instead of applying one selected item to the first line only.
+- Master lookup now independently searches each proposed transaction line's item name/description and returns line-indexed result groups. Customer, supplier and expense-category header searches remain separate.
+- SYD draft review now displays the matching candidates with explicit line numbers. Each item match is selected independently and remains a local review selection.
+- Added correction inputs for proposed header values and line-level values (description/item name, quantity, rate, GST/cess, discount, HSN/SAC and unit/UOM when present or relevant).
+- Draft validator merges only local corrections into the proposal, applies selected line masters per index, and runs dynamic numeric/date checks plus quantity, rate, discount percentage, GST percentage and Cess percentage bounds. Errors identify the affected line and field.
+- Master-selected item values can fill audited item ID, name, HSN, unit/UOM, GST rate and relevant sales/purchase rate only when the user explicitly selects that line's candidate.
+
+### Stage 7 safety boundaries
+- Line matching is read-only and company-scoped; candidate matches are not auto-selected.
+- Draft corrections are local UI state; they do not update masters or persist transactions.
+- Form handoff still requires validation success and company context. No auto-save, posting, payment, master creation or production deployment was added.
+- The matching service returns empty candidates for unmatched lines; user can correct the line description or proceed with a description where supported by validation.
+
+### Stage 7 status
+- Multi-line item search: **implemented**
+- Per-line master selection: **implemented**
+- Local header and line correction controls: **implemented**
+- Dynamic validation and line-specific errors: **implemented**
+- Build/CI and authenticated runtime verification: **pending**
+- Production/main merge/deploy: **not performed**
+- Android branch: **untouched**
