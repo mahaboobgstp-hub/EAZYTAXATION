@@ -41,7 +41,7 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
       for(const key of (screenId==="sales_invoice"?["item_id","item_name","hsn_sac","qty","unit","rate","gst_rate","cess_rate"]:screenId==="purchase_invoice"?["item_id","item_name","hsn_sac","qty","uom","rate","discount_percent","gst_rate"]:["description","hsn_sac","qty","uom","rate","gst_percent","discount_percent"])) {
         if(row[key]!==undefined && row[key]!==null && row[key]!=="") line[key]=row[key];
       }
-      return line;
+      if (screenId==="sales_invoice" && index===0 && selectedMasters.items?.id && !line.item_id) { line.item_id=selectedMasters.items.id; line.item_name=line.item_name||selectedMasters.items.item_name; line.hsn_sac=line.hsn_sac||selectedMasters.items.hsn_sac; line.unit=line.unit||selectedMasters.items.unit; line.gst_rate=line.gst_rate??selectedMasters.items.gst_rate; line.rate=line.rate??selectedMasters.items.sales_rate; }\n      return line;
     });
   }
   if (screenId==="expense_entry" && !values.payee_name && !selectedMasters.vendors?.id) errors.push("Enter a payee or choose a verified vendor.");
