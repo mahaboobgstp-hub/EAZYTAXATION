@@ -57,3 +57,33 @@ The shared service accepts command text, company context, current screen ID, pla
 - **Android branch:** Read-only inspection only; no edits made.
 - **Production/main:** Untouched; no merge or deployment.
 
+
+
+## Stage 2 — Shared Intelligence Core + Web Integration Foundation (2026-11-24)
+
+### Changes committed on the hybrid branch
+- Added `src/ai/registry/webScreenKnowledge.js`: web screen knowledge catalogue using route names verified against `src/App.jsx`. It registers 28 web screen definitions with stable IDs and platform support.
+- Exported the web knowledge catalogue through `src/ai/registry/index.js`.
+- Added `src/pages/ai/SYDIntelligenceWorkspace.jsx`: desktop/web AI prompt workspace using the existing shared `interpretSYDCommand` service, company context, current-route context, structured proposal display, error/loading states and explicit no-execution messaging.
+- Added `src/css/ai/SYDIntelligenceWorkspace.css` responsive styling.
+- Registered the route `/app/syd-intelligence` in `src/App.jsx`.
+- Added SYD Intelligence navigation link in `src/components/Sidebar.jsx`.
+
+### Registry accuracy safeguards
+- Screen routes are sourced from the current route table; definitions are descriptive, not permissions.
+- Field IDs and field definitions were deliberately **not invented**. The current shared service can transmit field definitions, but screen-specific form fields require a separate audit of the actual forms before registration.
+- No navigation, form mutation, save, or posting behavior was enabled.
+- Android branch was not edited.
+
+### Stage 2 verification
+- GitHub file writes were confirmed on `hybrid-accounting-integration` for each created/updated file.
+- A Vercel deployment was observed as `READY` for the earlier registry commit `e912d6791f5f33ffb8050122faa851c51e222fb9`; this deployment does **not** contain all later Stage 2 UI/route/sidebar commits, so it is not treated as Stage 2 build verification.
+- The connector does not expose a workflow-dispatch action, and no local checkout/build environment was available in this work. Full current-branch build verification remains pending.
+- No production deployment or merge to `main` was performed.
+
+### Stage 2 status
+- Shared registry extension: **completed**
+- Desktop AI workspace connected to shared service: **code completed**
+- Web route and sidebar entry: **completed**
+- Verified screen field definitions: **deferred intentionally until form audits**
+- Current-branch build verification: **pending**
