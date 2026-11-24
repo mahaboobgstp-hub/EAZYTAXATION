@@ -242,3 +242,26 @@ The shared service accepts command text, company context, current screen ID, pla
 - Build/CI and authenticated runtime verification: **pending**
 - Production/main merge/deploy: **not performed**
 - Android branch: **untouched**
+
+
+## Stage 8 — Transaction Context Intelligence, Cross-Field Dependencies, Confidence & Clarification (2026-11-24)
+
+### Implemented
+- Added `src/services/ai/sydTransactionContextService.js`, a deterministic context analyzer for supported transaction screens.
+- Computes a bounded readiness/confidence score with transparent reasons. It is a heuristic readiness indicator, not an AI probability or guarantee of correctness.
+- Resolves context dependencies: company context, party master verification, expense-category verification, transaction date, supplier bill number/date, line count, per-line item match, quantity/rate/tax completeness.
+- Adds cross-field checks and clarification cues for GST place-of-supply/state context, likely intra/inter-state indicator when comparable state values exist, supplier name/GSTIN verification dependency, invoice/bill date ordering, tax-inclusive rate context and numeric discount values.
+- Generates targeted clarification questions from missing or inconsistent context; removes duplicate questions.
+- Workspace displays confidence score, readiness level, reasons and clarification list. Values react to selected masters and local draft corrections.
+
+### Stage 8 safety boundaries
+- Score is deterministic, bounded, transparent and explicitly not a model probability.
+- No transaction is blocked or auto-submitted solely by this score; existing strict draft validator remains authoritative for form handoff.
+- Clarifications are advisory; user can edit draft values, re-check validation and control form handoff.
+- No master creation, transaction saving, posting, payments or production deployment.
+- Android branch untouched.
+
+### Stage 8 verification
+- GitHub Actions build validation triggered for the latest Stage 8 commits; final build result is pending at the time of documentation update.
+- Vercel preview checks may still report build-rate-limit; not treated as proof of source/build failure.
+- Authenticated runtime and form-handoff verification pending.
