@@ -5,7 +5,8 @@ import { useCompany } from "../../context/CompanyContext";
 import { interpretSYDCommand } from "../../services/ai/sydIntelligenceService";
 import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";
 import { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
-import { analyzeSYDTransactionContext } from "../../services/ai/sydTransactionContextService";\nimport { readSYDSessionMemory, buildSYDConversationContext, recordSYDSessionTurn, recordSYDSessionCorrection, clearSYDSessionMemory } from "../../services/ai/sydSessionMemoryService";
+import { analyzeSYDTransactionContext } from "../../services/ai/sydTransactionContextService";
+import { readSYDSessionMemory, buildSYDConversationContext, recordSYDSessionTurn, recordSYDSessionCorrection, clearSYDSessionMemory } from "../../services/ai/sydSessionMemoryService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
 import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import "../../css/ai/SYDIntelligenceWorkspace.css";
@@ -29,9 +30,12 @@ export default function SYDIntelligenceWorkspace() {
   const [draftCorrections, setDraftCorrections] = useState({ headers: {}, lines: {} });
   const [draftReviewOpen, setDraftReviewOpen] = useState(false);
   const [preparedDraft, setPreparedDraft] = useState(null);
-  const [draftErrors, setDraftErrors] = useState([]);\n  const [sessionMemory, setSessionMemory] = useState(() => readSYDSessionMemory(currentCompany?.id));\n  const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
+  const [draftErrors, setDraftErrors] = useState([]);
+  const [sessionMemory, setSessionMemory] = useState(() => readSYDSessionMemory(currentCompany?.id));
+  const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
 
-  useEffect(() => { registerSYDWebScreens(); }, []);\n  useEffect(() => { setSessionMemory(readSYDSessionMemory(currentCompany?.id)); }, [currentCompany?.id]);
+  useEffect(() => { registerSYDWebScreens(); }, []);
+  useEffect(() => { setSessionMemory(readSYDSessionMemory(currentCompany?.id)); }, [currentCompany?.id]);
   const currentScreen = useMemo(() => getSYDWebScreenByRoute(location.pathname), [location.pathname]);
 
   const submit = async (event) => {
@@ -40,8 +44,9 @@ export default function SYDIntelligenceWorkspace() {
     setLoading(true); setError(""); setResult(null); setMasterResults([]); setSelectedMasters({}); setSelectedLineItems({}); setDraftCorrections({ headers: {}, lines: {} }); setDraftReviewOpen(false); setPreparedDraft(null); setDraftErrors([]);
     try {
       registerSYDWebScreens();
-      const response = await interpretSYDCommand({ text: command, company: currentCompany, currentScreenId: currentScreen?.screenId || null, platform: "web" });
+      const response = await interpretSYDCommand({ text: command, company: currentCompany, currentScreenId: currentScreen?.screenId || null, platform: "web", conversationContext: buildSYDConversationContext(currentCompany?.id, sessionMemory) });
       setResult(response);
+      if (response?.plan && currentCompany?.id) { recordSYDSessionTurn(currentCompany.id, { command, plan: response.plan, selectedMasters, selectedLineItems, corrections: draftCorrections }); setSessionMemory(readSYDSessionMemory(currentCompany.id)); }
     } catch (err) { setError(err?.message || "SYD Intelligence is unavailable. Please try again."); }
     finally { setLoading(false); }
   };
@@ -67,8 +72,9 @@ export default function SYDIntelligenceWorkspace() {
   const selectedCount = Object.keys(selectedMasters).length + Object.keys(selectedLineItems).length;
   const lineField = (plan?.fields || []).find(field => ["items","lines"].includes(field.field_id) && Array.isArray(field.value));
   const proposedLines = lineField?.value || [];
-  const updateLineCorrection = (index, key, value) => setDraftCorrections(prev => ({ ...prev, lines: { ...prev.lines, [index]: { ...(prev.lines?.[index] || {}), [key]: value } } }));
-  const updateHeaderCorrection = (key, value) => setDraftCorrections(prev => ({ ...prev, headers: { ...prev.headers, [key]: value } }));
+  const updateLineCorrection = (index, key, value) => { const original = proposedLines[index]?.[key]; recordSYDSessionCorrection(currentCompany?.id, { field:key, scope:"line", before:original, after:value }); setDraftCorrections(prev => ({ ...prev, lines: { ...prev.lines, [index]: { ...(prev.lines?.[index] || {}), [key]: value } } })); setSessionMemory(readSYDSessionMemory(currentCompany?.id)); };
+  const updateHeaderCorrection = (key, value) => { const original = plan?.fields?.find(field=>field.field_id===key)?.value; recordSYDSessionCorrection(currentCompany?.id, { field:key, scope:"header", before:original, after:value }); setDraftCorrections(prev => ({ ...prev, headers: { ...prev.headers, [key]: value } })); setSessionMemory(readSYDSessionMemory(currentCompany?.id)); };
+  const clearSessionMemory = () => { clearSYDSessionMemory(currentCompany?.id); setSessionMemory(readSYDSessionMemory(currentCompany?.id)); setMemoryPanelOpen(false); };
   const contextAnalysis = plan ? analyzeSYDTransactionContext({ plan, companyId: currentCompany?.id, selectedMasters, selectedLineItems, corrections: draftCorrections }) : null;
   const prepareDraft = () => {
     const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters, selectedLineItems, corrections: draftCorrections });
@@ -88,6 +94,7 @@ export default function SYDIntelligenceWorkspace() {
         <div><span className="syd-ai-context-label">Operating mode</span><strong>{currentCompany?.accounting_enabled ? "Billing + Accounting" : "Billing only"}</strong></div>
         <div><span className="syd-ai-context-label">Current screen</span><strong>{currentScreen?.name || "General workspace"}</strong></div>
       </section>
+      <section className="syd-ai-session-memory"><div className="syd-ai-memory-heading"><div><strong>Conversational session memory</strong><small>Company-scoped · tab session · expires after 2 hours of inactivity</small></div><button type="button" onClick={()=>setMemoryPanelOpen(v=>!v)}>{memoryPanelOpen?"Hide memory":"Review memory"} ({sessionMemory.entries.length} turns · {sessionMemory.correctionNotes.length} corrections)</button></div>{memoryPanelOpen&&<div className="syd-ai-memory-content"><p>Limited continuity hints are stored for this company in this browser tab session only. No database persistence or model training. Sensitive identifiers are excluded from stored fields.</p>{sessionMemory.entries.length===0?<small>No session turns stored yet.</small>:<ol>{sessionMemory.entries.slice(-4).reverse().map((entry,index)=><li key={entry.at+index}><strong>{entry.screenId||"General"} · {new Date(entry.at).toLocaleString()}</strong><span>{entry.command}</span>{Object.keys(entry.masters||{}).length>0&&<small>Selected master names: {Object.values(entry.masters).join(", ")}</small>}</li>)}</ol>}{sessionMemory.correctionNotes.length>0&&<div><strong>Session correction notes</strong><ul>{sessionMemory.correctionNotes.slice(-4).reverse().map((note,index)=><li key={note.at+index}>{note.field}: “{note.from||"—"}” → “{note.to}”</li>)}</ul></div>}<button type="button" className="syd-ai-memory-clear" onClick={clearSessionMemory}>Clear session memory</button></div>}</section>
       <section className="syd-ai-card">
         <h2>What can I help you with?</h2>
         <p className="syd-ai-muted">Describe a task in everyday language. SYD can verify company masters, validate audited draft fields, and hand a draft to a supported form. It will never save or post automatically.</p>
