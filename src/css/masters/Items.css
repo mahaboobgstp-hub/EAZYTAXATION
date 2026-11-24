@@ -34,3 +34,40 @@
 .item-grid th {
   background: #f5f5f5;
 }
+
+.item-accounting-classification {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  background: #f7fafc;
+}
+.item-accounting-classification h3,
+.item-accounting-classification p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.item-accounting-classification label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.item-accounting-classification label select {
+  width: 100%;
+  min-width: 0;
+}
+.item-accounting-classification p {
+  font-size: 12px;
+  color: #52657a;
+}
+@media (max-width: 900px) {
+  .item-accounting-classification { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .item-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .item-accounting-classification { grid-template-columns: 1fr; }
+}
