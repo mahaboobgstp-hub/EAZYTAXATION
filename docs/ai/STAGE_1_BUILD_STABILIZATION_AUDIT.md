@@ -293,3 +293,33 @@ The shared service accepts command text, company context, current screen ID, pla
 - Browser runtime / session expiry / company isolation tests: **pending**
 - Production merge/deployment: **not performed**
 - Android branch: **untouched**
+
+
+## Stage 10 — Conversational Transaction Execution Orchestration (2026-11-24)
+
+### Implemented on hybrid branch
+- Added `src/services/ai/sydTransactionOrchestrationService.js` to derive an explicit guided workflow state for supported Sales Invoice, Purchase Invoice and Expense Entry proposals.
+- Orchestration stages: review interpreted request, confirm company context, verify party/item masters, review/correct draft, validate draft, and open the target form.
+- Stage state is derived from actual workspace inputs (company, live lookup results, selected master records, draft review state and validator result), not from AI claims.
+- Added a guided workflow panel with completion progress, step statuses, current next-action button and user-controlled transition.
+- Next action invokes only the existing safe workspace operations: read-only lookup, opening local draft review, deterministic draft validation, or validated form handoff. No automatic database write, save, post, payment or master creation.
+- Existing submission, master lookup and draft validation paths remain available. Unsupported screen plans are not eligible for guided orchestration.
+
+### Stage 10 safety / limits
+- No autonomous execution or silent step progression. The user activates the next action.
+- Handoff is only available after the existing draft validator returns `ok`.
+- Orchestration state is calculated locally and does not establish transaction validity or authority.
+
+### Stage 10 verification status
+- GitHub source writes: **confirmed**
+- Orchestration state service: **implemented**
+- Workspace guided panel: **implemented**
+- User-controlled next-step actions: **implemented**
+- Build / CI verification: **pending**
+- Browser runtime / transaction flow tests: **pending**
+- Production merge/deployment: **not performed**
+- Android branch: **untouched**
+
+### Remaining planned roadmap
+- Stage 11 — Transaction safety gates, explicit action confirmation and execution permissions
+- Stage 12 — End-to-end transaction workflow testing, edge-case coverage and release readiness
