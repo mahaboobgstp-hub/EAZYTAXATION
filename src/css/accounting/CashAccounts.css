@@ -1,0 +1,13 @@
+.syd-cash-accounts{max-width:1000px;margin:0 auto;padding:22px;display:flex;flex-direction:column;gap:18px;color:var(--text-primary,#162334)}
+.syd-cash-accounts header{display:flex;flex-direction:column;gap:6px}.syd-cash-accounts h1{margin:0;font-size:clamp(22px,3vw,30px)}.syd-cash-accounts header p{margin:0;color:var(--text-secondary,#63748a);max-width:780px}
+.syd-cash-accounts form{display:flex;flex-direction:column;gap:12px;border:1px solid var(--border-color,#d9e1ea);border-radius:12px;padding:14px;background:var(--surface,#fff)}
+.syd-cash-accounts form>label{display:flex;flex-direction:column;gap:6px;max-width:500px}
+.syd-cash-accounts input,.syd-cash-accounts select{padding:10px;border:1px solid #d5dfe9;border-radius:8px;background:var(--surface,#fff);width:100%;box-sizing:border-box}
+.cash-account-classification{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:#f7fafc;border:1px solid #d8e2ec;border-radius:10px;padding:12px}
+.cash-account-classification h3,.cash-account-classification small{grid-column:1/-1;margin:0}
+.cash-account-classification label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cash-account-classification small{color:#52657a;font-size:12px}
+.syd-cash-accounts form button{align-self:flex-start;padding:10px 16px;background:#173e5e;color:white;border:0;border-radius:8px}
+.cash-account-error,.cash-account-notice{padding:12px;border-radius:8px}.cash-account-error{background:#fff0f0;color:#9b3027}.cash-account-notice{background:#edf8f0;color:#176536}
+.cash-account-list{border:1px solid var(--border-color,#d9e1ea);border-radius:12px;padding:14px;background:var(--surface,#fff);overflow:auto}.cash-account-list h2{margin:0 0 10px}
+@media(max-width:600px){.cash-account-classification{grid-template-columns:1fr}.syd-cash-accounts{padding:12px}}
