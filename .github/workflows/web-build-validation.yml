@@ -19,6 +19,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: AI service regression tests
+        run: npm run test:ai
       - name: Production build
         run: npm run build
 
