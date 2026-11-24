@@ -5,7 +5,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { interpretSYDCommand } from "../../services/ai/sydIntelligenceService";
 import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";
 import { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
-import { analyzeSYDTransactionContext } from "../../services/ai/sydTransactionContextService";
+import { analyzeSYDTransactionContext } from "../../services/ai/sydTransactionContextService";\nimport { readSYDSessionMemory, buildSYDConversationContext, recordSYDSessionTurn, recordSYDSessionCorrection, clearSYDSessionMemory } from "../../services/ai/sydSessionMemoryService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
 import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import "../../css/ai/SYDIntelligenceWorkspace.css";
@@ -29,9 +29,9 @@ export default function SYDIntelligenceWorkspace() {
   const [draftCorrections, setDraftCorrections] = useState({ headers: {}, lines: {} });
   const [draftReviewOpen, setDraftReviewOpen] = useState(false);
   const [preparedDraft, setPreparedDraft] = useState(null);
-  const [draftErrors, setDraftErrors] = useState([]);
+  const [draftErrors, setDraftErrors] = useState([]);\n  const [sessionMemory, setSessionMemory] = useState(() => readSYDSessionMemory(currentCompany?.id));\n  const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
 
-  useEffect(() => { registerSYDWebScreens(); }, []);
+  useEffect(() => { registerSYDWebScreens(); }, []);\n  useEffect(() => { setSessionMemory(readSYDSessionMemory(currentCompany?.id)); }, [currentCompany?.id]);
   const currentScreen = useMemo(() => getSYDWebScreenByRoute(location.pathname), [location.pathname]);
 
   const submit = async (event) => {
