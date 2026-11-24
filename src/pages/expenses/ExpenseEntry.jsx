@@ -109,7 +109,7 @@ export default function ExpenseEntry(){
     const next={};safeKeys.forEach(key=>{if(values[key]!==undefined)next[key]=values[key];});
     if(category)next.category_id=category.id;
     if(vendor){next.vendor_id=vendor.id;next.payee_name=vendor.vendor_name||next.payee_name||"";}
-    setForm(prev=>({...prev,...next,payment_status:"Unpaid",status:"Draft"}));
+    setForm(prev=>({...prev,...next}));
     if(Array.isArray(values.lines)&&values.lines.length)setLines(values.lines.map(line=>({description:line.description||"",hsn_sac:line.hsn_sac||"",qty:String(line.qty??"1"),uom:line.uom||"",rate:String(line.rate??"0"),gst_percent:String(line.gst_percent??"0"),discount_percent:String(line.discount_percent??"0")})));
     setExpenseId(null);
     navigate(location.pathname,{replace:true,state:null});
