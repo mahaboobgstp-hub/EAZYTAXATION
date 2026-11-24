@@ -930,6 +930,43 @@ setCustomerDetails(
     editInvoice(invoiceId).then(() => navigate("/app/sales", { replace: true, state: null }));
   }, [currentCompanyId, location.state]);
 
+  // Stage 6: consume a validated SYD draft handoff once, after company masters are loaded.
+  useEffect(() => {
+    const draft = location.state?.sydDraft;
+    if (!draft || draft.screenId !== "sales_invoice" || draft.companyId !== currentCompanyId || !draft.ok || !currentCompanyId) return;
+    const values = draft.values || {};
+    const selectedCustomer = customers.find(row => row.id === values.customer_id);
+    if (values.customer_id && !selectedCustomer) return;
+    const safeKeys = ["invoice_date","billing_address","shipping_name","shipping_gstin","shipping_state","shipping_address","place_of_supply","vehicle_no","eway_bill_no","remarks"];
+    const safeValues = {};
+    safeKeys.forEach(key => { if (values[key] !== undefined) safeValues[key] = values[key]; });
+    if (selectedCustomer) {
+      safeValues.customer_id = selectedCustomer.id;
+      safeValues.customer_name = selectedCustomer.customer_name || "";
+      safeValues.customer_state = selectedCustomer.state || "";
+      safeValues.billing_address = selectedCustomer.address || safeValues.billing_address || "";
+      safeValues.shipping_name = safeValues.shipping_name || selectedCustomer.customer_name || "";
+      safeValues.shipping_gstin = safeValues.shipping_gstin || selectedCustomer.gstin || "";
+      safeValues.shipping_state = safeValues.shipping_state || selectedCustomer.state || "";
+      safeValues.shipping_address = safeValues.shipping_address || selectedCustomer.address || "";
+      safeValues.place_of_supply = safeValues.place_of_supply || selectedCustomer.state || "";
+    }
+    setFormData(prev => ({ ...prev, ...safeValues, company_id: currentCompanyId, company_name: currentCompany?.company_name || prev.company_name, company_state: currentCompany?.state || prev.company_state }));
+    if (values.sale_type) setSaleType(values.sale_type);
+    if (values.tax_inclusive !== undefined) setTaxInclusive(Boolean(values.tax_inclusive));
+    if (values.discount_type) setDiscountType(values.discount_type);
+    if (values.discount_value !== undefined) setDiscountValue(Number(values.discount_value) || 0);
+    if (values.other_amount !== undefined) setOtherAmount(Number(values.other_amount) || 0);
+    if (values.round_off !== undefined) setRoundOff(Number(values.round_off) || 0);
+    if (Array.isArray(values.items) && values.items.length) {
+      setItems(values.items.map(line => {
+        const matchedItem = itemsMaster.find(item => item.id === line.item_id);
+        return { item_id: matchedItem?.id || line.item_id || "", item_name: matchedItem?.item_name || line.item_name || "", hsn_sac: matchedItem?.hsn_sac || line.hsn_sac || "", unit: matchedItem?.unit || line.unit || "", gst_rate: Number(matchedItem?.gst_rate ?? line.gst_rate ?? 18), qty: Number(line.qty) || 1, rate: Number(matchedItem?.sales_rate ?? line.rate) || 0, amount: 0, cess_rate: Number(line.cess_rate) || 0, cess_amount: 0, tax_inclusive: Boolean(values.tax_inclusive) };
+      }));
+    }
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, currentCompanyId, customers, itemsMaster]);
+
   return (
     <div className="sales-page invoice-page">
       <div className="invoice-page-title">
