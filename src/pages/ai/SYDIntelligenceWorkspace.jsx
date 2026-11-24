@@ -5,6 +5,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { interpretSYDCommand } from "../../services/ai/sydIntelligenceService";
 import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";
 import { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
+import { analyzeSYDTransactionContext } from "../../services/ai/sydTransactionContextService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
 import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import "../../css/ai/SYDIntelligenceWorkspace.css";
@@ -68,6 +69,7 @@ export default function SYDIntelligenceWorkspace() {
   const proposedLines = lineField?.value || [];
   const updateLineCorrection = (index, key, value) => setDraftCorrections(prev => ({ ...prev, lines: { ...prev.lines, [index]: { ...(prev.lines?.[index] || {}), [key]: value } } }));
   const updateHeaderCorrection = (key, value) => setDraftCorrections(prev => ({ ...prev, headers: { ...prev.headers, [key]: value } }));
+  const contextAnalysis = plan ? analyzeSYDTransactionContext({ plan, companyId: currentCompany?.id, selectedMasters, selectedLineItems, corrections: draftCorrections }) : null;
   const prepareDraft = () => {
     const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters, selectedLineItems, corrections: draftCorrections });
     setPreparedDraft(prepared); setDraftErrors(prepared.errors || []);
@@ -102,7 +104,7 @@ export default function SYDIntelligenceWorkspace() {
         {plan?.screen_id && <div className="syd-ai-result-line"><FiCompass/><span>Suggested screen: <strong>{plan.screen_id}</strong></span></div>}
         {Array.isArray(plan?.fields) && plan.fields.length>0 && <div className="syd-ai-proposed-fields"><h3>Suggested field values</h3>{plan.fields.map((field,index)=><div className="syd-ai-field-row" key={field.field_id+index}><span>{field.field_id}</span><strong>{field.value ?? "—"}</strong></div>)}</div>}
         {Array.isArray(plan?.missing_information) && plan.missing_information.length>0 && <div className="syd-ai-missing"><h3>Information needed</h3><ul>{plan.missing_information.map((item,index)=><li key={index}>{item}</li>)}</ul></div>}
-        {plan?.workflow && <div className="syd-ai-workflow-panel">
+        {contextAnalysis?.supported && <section className="syd-ai-context-intelligence"><div className="syd-ai-context-score-header"><div><h3>Transaction context intelligence</h3><small>Deterministic readiness estimate — not an AI probability</small></div><div className={"syd-ai-confidence-score "+(contextAnalysis.level==="High"?"high":contextAnalysis.level==="Moderate"?"moderate":"low")}><strong>{contextAnalysis.score}%</strong><span>{contextAnalysis.level} confidence</span></div></div><div className="syd-ai-context-meter"><span style={{width:contextAnalysis.score+"%"}}/></div><div className="syd-ai-context-reasons">{contextAnalysis.reasons.map((reason,index)=><span key={index}>{reason}</span>)}</div>{contextAnalysis.questions.length>0?<div className="syd-ai-clarification-panel"><strong>SYD needs clarification</strong><p>Resolve these questions before preparing a reliable draft:</p><ol>{contextAnalysis.questions.map((question,index)=><li key={index}>{question}</li>)}</ol><small>You can answer by editing the header and line fields below, then re-check validation.</small></div>:<div className="syd-ai-clarification-clear">No outstanding context questions detected by the readiness analyzer.</div>}</section>}{plan?.workflow && <div className="syd-ai-workflow-panel">
           <h3>Workflow preparation</h3>{plan.workflow.workflow_id && <span className="syd-ai-workflow-chip">{plan.workflow.workflow_id.replaceAll("_"," ")}</span>}
           {Array.isArray(plan.workflow.steps)&&plan.workflow.steps.length>0&&<ol className="syd-ai-workflow-steps">{plan.workflow.steps.map((step,index)=><li key={index}>{step}</li>)}</ol>}
           {Array.isArray(plan.workflow.master_dependencies)&&plan.workflow.master_dependencies.length>0&&<div className="syd-ai-master-dependencies"><strong>Master dependencies</strong>{plan.workflow.master_dependencies.map((id,index)=>{const master=masterById.get(id);return <div className="syd-ai-master-row" key={id+index}><span>{master?.name||id}</span><small>Live lookup available for supported master types</small></div>})}</div>}
