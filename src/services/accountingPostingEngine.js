@@ -111,7 +111,7 @@ export async function autoPostSalesInvoice(companyId,invoiceId){
   if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"credit":"debit","Sales Round-off");
   const invoiceTotal=money(invoice.total_amount);
   if(Math.abs(sum(lines,"credit")-sum(lines,"debit")-invoiceTotal)>0.05)return await pending("sales_invoices",companyId,invoiceId,"Mapped accounting lines do not equal the invoice total; review mappings and invoice adjustments.");
-  addAmountLine(lines,customer.ledger_id,invoiceTotal,"debit","Customer Receivable");
+  addAmountLine(lines,debitLedger,invoiceTotal,"debit",invoice.sale_type==="CASH"?"Cash Sale":"Customer Receivable");
   const result=await postBusinessTransaction(companyId,{source_module:"sales_invoice",source_record_id:invoiceId,voucher_type:"Sales",voucher_date:invoice.invoice_date,voucher_number:"AUTO-SI-"+String(invoice.invoice_no||invoiceId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:invoice.invoice_no,narration:"Auto-posted Sales Invoice "+invoice.invoice_no,lines});
   await setSourceStatus("sales_invoices",companyId,invoiceId,"Posted","Automatically posted to accounting.",result.voucher_id);
   return result;
