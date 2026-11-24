@@ -1,4 +1,4 @@
-import { supabase } from "../supabase/supabaseClient";
+import { supabase } from "../supabase/supabaseClient";\nimport { autoPostSalesInvoice } from "./accountingPostingEngine";
 
 export async function getCustomersForDropdown(companyId) {
   const { data, error } = await supabase
@@ -140,86 +140,28 @@ export async function getSalesInvoiceItems(
 
     return data;
 }
-export async function updateSalesInvoice(
-    invoiceId,
-    invoiceHeader,
-    invoiceItems
-) {
-
-    const { error: headerError } =
-        await supabase
-            .from("sales_invoices")
-            .update({
-                ...invoiceHeader,
-                updated_at: new Date()
-            })
-            .eq("id", invoiceId);
-
-    if (headerError) {
-        throw headerError;
-    }
-
-    const { error: deleteError } =
-        await supabase
-            .from("sales_invoice_items")
-            .delete()
-            .eq("invoice_id", invoiceId);
-
-    if (deleteError) {
-        throw deleteError;
-    }
-
-    const itemsToInsert = invoiceItems.map((item, index) => ({
-  invoice_id: invoiceId,
-  line_no: index + 1,
-
-  item_id: item.item_id || null,
-  item_name: item.item_name,
-  particulars: item.item_name,
-  hsn_sac: item.hsn_sac,
-  unit: item.unit,
-
-  qty: Number(item.qty || 0),
-  rate: Number(item.rate || 0),
-  gst_rate: Number(item.gst_rate || 0),
-  amount: Number(item.amount || 0),
-
-  cess_rate: Number(item.cess_rate || 0),
-  cess_amount: Number(item.cess_amount || 0),
-  additional_cess_rate: Number(item.additional_cess_rate || 0),
-  additional_cess_amount: Number(item.additional_cess_amount || 0),
-  tax_inclusive: Boolean(item.tax_inclusive)
-}));
-
-    const { error: itemError } =
-        await supabase
-            .from("sales_invoice_items")
-            .insert(itemsToInsert);
-
-    if (itemError) {
-        throw itemError;
-    }
-
-    return true;
+export async function updateSalesInvoice(invoiceId,invoiceHeader,invoiceItems){
+ const companyId=invoiceHeader.company_id;
+ let existingQuery=supabase.from("sales_invoices").select("accounting_status,company_id").eq("id",invoiceId);
+ if(companyId)existingQuery=existingQuery.eq("company_id",companyId);
+ const {data:existing,error:existingError}=await existingQuery.single();if(existingError)throw existingError;
+ if(existing?.accounting_status==="Posted")throw new Error("This invoice is already posted to Accounting. Use the correction workflow instead of editing a posted invoice.");
+ let query=supabase.from("sales_invoices").update({...invoiceHeader,updated_at:new Date()}).eq("id",invoiceId);
+ if(companyId)query=query.eq("company_id",companyId);
+ const {error:headerError}=await query;if(headerError)throw headerError;
+ const {error:deleteError}=await supabase.from("sales_invoice_items").delete().eq("invoice_id",invoiceId);if(deleteError)throw deleteError;
+ const rows=invoiceItems.map((item,index)=>({invoice_id:invoiceId,line_no:index+1,item_id:item.item_id||null,item_name:item.item_name,particulars:item.item_name,hsn_sac:item.hsn_sac,unit:item.unit,qty:Number(item.qty||0),rate:Number(item.rate||0),gst_rate:Number(item.gst_rate||0),amount:Number(item.amount||0),cess_rate:Number(item.cess_rate||0),cess_amount:Number(item.cess_amount||0),additional_cess_rate:Number(item.additional_cess_rate||0),additional_cess_amount:Number(item.additional_cess_amount||0),tax_inclusive:Boolean(item.tax_inclusive)}));
+ const {error:itemError}=await supabase.from("sales_invoice_items").insert(rows);if(itemError)throw itemError;
+ if(companyId)await autoPostSalesInvoice(companyId,invoiceId);
+ return true;
 }
 
-export async function deleteSalesInvoice(
-    invoiceId
-) {
-
-    const { error } =
-        await supabase
-            .from("sales_invoices")
-            .update({
-                is_deleted: true,
-                updated_at: new Date()
-            })
-            .eq("id", invoiceId);
-
-    if (error) {
-        throw error;
-    }
-
-    return true;
+export async function deleteSalesInvoice(invoiceId,companyId){
+ let query=supabase.from("sales_invoices").select("accounting_status,company_id").eq("id",invoiceId);
+ if(companyId)query=query.eq("company_id",companyId);
+ const {data:existing,error:readError}=await query.single();if(readError)throw readError;
+ if(existing?.accounting_status==="Posted")throw new Error("Posted invoices cannot be deleted. Use a credit note or reversal workflow.");
+ let update=supabase.from("sales_invoices").update({is_deleted:true,updated_at:new Date()}).eq("id",invoiceId);
+ if(companyId)update=update.eq("company_id",companyId);
+ const {error}=await update;if(error)throw error;return true;
 }
-
