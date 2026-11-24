@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FiZap, FiSend, FiCompass, FiClipboard, FiShield, FiRefreshCw, FiSearch, FiCheckCircle } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
 import { interpretSYDCommand } from "../../services/ai/sydIntelligenceService";
-import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";
+import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";\nimport { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
 import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import "../../css/ai/SYDIntelligenceWorkspace.css";
@@ -12,7 +12,7 @@ const masterLabel = (type) => ({customers:"Customers",vendors:"Suppliers",items:
 const candidateName = (type, row) => row?.customer_name || row?.vendor_name || row?.item_name || row?.category_name || "Unnamed record";
 
 export default function SYDIntelligenceWorkspace() {
-  const { currentCompany } = useCompany();
+  const { currentCompany } = useCompany();\n  const navigate = useNavigate();
   const location = useLocation();
   const [command, setCommand] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function SYDIntelligenceWorkspace() {
   const [result, setResult] = useState(null);
   const [masterResults, setMasterResults] = useState([]);
   const [selectedMasters, setSelectedMasters] = useState({});
-  const [draftReviewOpen, setDraftReviewOpen] = useState(false);
+  const [draftReviewOpen, setDraftReviewOpen] = useState(false);\n  const [preparedDraft, setPreparedDraft] = useState(null);\n  const [draftErrors, setDraftErrors] = useState([]);
 
   useEffect(() => { registerSYDWebScreens(); }, []);
   const currentScreen = useMemo(() => getSYDWebScreenByRoute(location.pathname), [location.pathname]);
@@ -30,7 +30,7 @@ export default function SYDIntelligenceWorkspace() {
   const submit = async (event) => {
     event?.preventDefault();
     if (!command.trim() || loading) return;
-    setLoading(true); setError(""); setResult(null); setMasterResults([]); setSelectedMasters({}); setDraftReviewOpen(false);
+    setLoading(true); setError(""); setResult(null); setMasterResults([]); setSelectedMasters({}); setDraftReviewOpen(false); setPreparedDraft(null); setDraftErrors([]);
     try {
       registerSYDWebScreens();
       const response = await interpretSYDCommand({ text: command, company: currentCompany, currentScreenId: currentScreen?.screenId || null, platform: "web" });
@@ -57,7 +57,7 @@ export default function SYDIntelligenceWorkspace() {
   const masterById = new Map(operationalKnowledge.masterConcepts.map(master => [master.id, master]));
   const screens = ["Navigate to Sales Invoice", "Help me understand accounting for this company", "How do I record an expense?"];
   const toggleCandidate = (type, candidate) => setSelectedMasters(prev => ({ ...prev, [type]: candidate }));
-  const selectedCount = Object.keys(selectedMasters).length;
+  const selectedCount = Object.keys(selectedMasters).length;\n  const prepareDraft = () => {\n    const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters });\n    setPreparedDraft(prepared); setDraftErrors(prepared.errors || []);\n  };\n  const openPreparedForm = () => {\n    if (!preparedDraft?.ok) return;\n    const target = preparedDraft.screenId === "sales_invoice" ? "/app/sales" : preparedDraft.screenId === "purchase_invoice" ? "/app/purchases" : "/app/expenses";\n    navigate(target, { state: { sydDraft: preparedDraft } });\n  };
 
   return (
     <main className="syd-ai-workspace">
@@ -96,7 +96,7 @@ export default function SYDIntelligenceWorkspace() {
             {resultItem.candidates.length===0?<div className="syd-ai-no-match">No matching records found.</div>:resultItem.candidates.map(candidate=><button type="button" className={"syd-ai-candidate"+(selectedMasters[resultItem.masterType]?.id===candidate.id?" selected":"")} key={candidate.id} onClick={()=>toggleCandidate(resultItem.masterType,candidate)}><span>{candidateName(resultItem.masterType,candidate)}</span><small>{candidate.gstin||candidate.item_code||candidate.state||"Verified record"}</small>{selectedMasters[resultItem.masterType]?.id===candidate.id&&<FiCheckCircle/>}</button>)}
           </div>)}
           <button className="syd-ai-review-button" type="button" onClick={()=>setDraftReviewOpen(v=>!v)}>{draftReviewOpen?"Hide draft review":"Open draft review"} ({selectedCount} selected master{selectedCount===1?"":"s"})</button>
-          {draftReviewOpen&&<div className="syd-ai-draft-review"><h3>Draft review — not saved</h3><p>Company: <strong>{currentCompany?.company_name||"Not selected"}</strong></p><p>Intent: <strong>{plan?.intent||"—"}</strong></p><p>Screen: <strong>{plan?.screen_id||"—"}</strong></p><div className="syd-ai-draft-fields"><h4>Proposed values</h4>{(plan?.fields||[]).map((field,i)=><div key={field.field_id+i}><span>{field.field_id}</span><strong>{field.value??"—"}</strong></div>)}</div><h4>Confirmed master choices (review only)</h4>{Object.entries(selectedMasters).map(([type,record])=><div className="syd-ai-selected-master" key={type}><span>{masterLabel(type)}</span><strong>{candidateName(type,record)}</strong></div>)}<div className="syd-ai-review-warning">No transaction draft is persisted. No fields are filled. Save/post is disabled in Stage 5.</div></div>}
+          {draftReviewOpen&&<div className="syd-ai-draft-review"><h3>Draft review — not saved</h3><p>Company: <strong>{currentCompany?.company_name||"Not selected"}</strong></p><p>Intent: <strong>{plan?.intent||"—"}</strong></p><p>Screen: <strong>{plan?.screen_id||"—"}</strong></p><div className="syd-ai-draft-fields"><h4>Proposed values</h4>{(plan?.fields||[]).map((field,i)=><div key={field.field_id+i}><span>{field.field_id}</span><strong>{field.value??"—"}</strong></div>)}</div><h4>Confirmed master choices (review only)</h4>{Object.entries(selectedMasters).map(([type,record])=><div className="syd-ai-selected-master" key={type}><span>{masterLabel(type)}</span><strong>{candidateName(type,record)}</strong></div>)}<div className="syd-ai-review-warning">Draft preparation validates only audited fields. No saving or posting occurs. Form handoff is limited to supported audited screens.</div><button type="button" className="syd-ai-prepare-button" onClick={prepareDraft}>Validate draft for form handoff</button>{preparedDraft&&<div className="syd-ai-prepared-result"><strong>{preparedDraft.ok?"Draft validation passed":"Draft validation needs attention"}</strong>{draftErrors.length>0&&<ul>{draftErrors.map((e,i)=><li key={i}>{e}</li>)}</ul>}{preparedDraft.ok&&<button type="button" className="syd-ai-open-form" onClick={openPreparedForm}>Open target form with draft</button>}</div>}</div>}
         </section>}
         <div className="syd-ai-safe-note"><FiShield/><span>Proposal only. Master search is read-only and company-scoped. No navigation, form changes, transaction writes, or accounting posting were executed.</span></div>
         {result.requestId&&<small className="syd-ai-request-id">Request ID: {result.requestId}</small>}
