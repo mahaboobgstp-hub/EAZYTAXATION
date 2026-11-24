@@ -138,6 +138,7 @@ export async function autoPostPurchaseInvoice(companyId,invoiceId){
   const mappings=await getMappings(companyId),purchaseByLedger={};
   for(const line of items||[]){
    const item=line.item_id?itemMap[line.item_id]:null;
+   if(item?.item_type==="Goods"&&!item.accounting_item_type)return await pending("purchase_invoices",companyId,invoiceId,"Goods item classification is missing.");
    const isStock=item&&stockTypes.includes(item.accounting_item_type);
    const ledger=isStock?(item.inventory_ledger_id||mappings.inventory_ledger):(item?.purchase_ledger_id||mappings.default_purchase_ledger);
    if(!ledger)return await pending("purchase_invoices",companyId,invoiceId,"Purchase or inventory ledger mapping is missing for "+line.item_name+".");
@@ -145,8 +146,8 @@ export async function autoPostPurchaseInvoice(companyId,invoiceId){
   }
   const taxable=money(invoice.taxable);if(Math.abs(sum(items||[],"taxable_value")-taxable)>0.05)return await pending("purchase_invoices",companyId,invoiceId,"Invoice line totals do not match the header taxable value.");
   const lines=[];Object.entries(purchaseByLedger).forEach(([ledger,amount])=>addAmountLine(lines,ledger,amount,"debit","Purchase / Inventory"));
-  const taxes={cgst:invoice.cgst,sgst:invoice.sgst,igst:invoice.igst,cess:0,additionalCess:0};addTaxLines(lines,mappings,taxes,"debit","purchase");
-  const roundOff=money(invoice.round_off);if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"debit":"credit","Purchase Round-off");
+  const taxes={cgst:invoice.cgst,sgst:invoice.sgst,igst:invoice.igst,cess:0,additionalCess:0};for(const [tax,key] of Object.entries(taxMapping.purchase)){if(money(taxes[tax])&&!mappings[key])return await pending("purchase_invoices",companyId,invoiceId,"Missing input "+tax.toUpperCase()+" ledger mapping.");}addTaxLines(lines,mappings,taxes,"debit","purchase");
+  const roundOff=money(invoice.round_off);if(roundOff&&!mappings.round_off_ledger)return await pending("purchase_invoices",companyId,invoiceId,"Round-off ledger mapping is missing.");if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"debit":"credit","Purchase Round-off");
   const total=money(invoice.grand_total);addAmountLine(lines,vendor.ledger_id,total,"credit","Supplier Payable");
   if(Math.abs(sum(lines,"debit")-sum(lines,"credit"))>0.05)return await pending("purchase_invoices",companyId,invoiceId,"Mapped accounting lines do not equal the purchase invoice total; review mappings.");
   const result=await postBusinessTransaction(companyId,{source_module:"purchase_invoice",source_record_id:invoiceId,voucher_type:"Purchase",voucher_date:invoice.invoice_date,voucher_number:"AUTO-PI-"+String(invoice.invoice_no||invoiceId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:invoice.supplier_invoice_no||invoice.invoice_no,narration:"Auto-posted Purchase Invoice "+invoice.invoice_no,lines});
