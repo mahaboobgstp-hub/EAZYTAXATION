@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiZap, FiSend, FiCompass, FiClipboard, FiShield, FiRefreshCw, FiSearch, FiCheckCircle } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
 import { interpretSYDCommand } from "../../services/ai/sydIntelligenceService";
-import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";\nimport { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
+import { searchSYDWorkflowMasters } from "../../services/ai/sydMasterLookupService";
+import { prepareSYDValidatedDraft } from "../../services/ai/sydDraftPreparationService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
 import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import "../../css/ai/SYDIntelligenceWorkspace.css";
@@ -12,7 +13,8 @@ const masterLabel = (type) => ({customers:"Customers",vendors:"Suppliers",items:
 const candidateName = (type, row) => row?.customer_name || row?.vendor_name || row?.item_name || row?.category_name || "Unnamed record";
 
 export default function SYDIntelligenceWorkspace() {
-  const { currentCompany } = useCompany();\n  const navigate = useNavigate();
+  const { currentCompany } = useCompany();
+  const navigate = useNavigate();
   const location = useLocation();
   const [command, setCommand] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,9 @@ export default function SYDIntelligenceWorkspace() {
   const [result, setResult] = useState(null);
   const [masterResults, setMasterResults] = useState([]);
   const [selectedMasters, setSelectedMasters] = useState({});
-  const [draftReviewOpen, setDraftReviewOpen] = useState(false);\n  const [preparedDraft, setPreparedDraft] = useState(null);\n  const [draftErrors, setDraftErrors] = useState([]);
+  const [draftReviewOpen, setDraftReviewOpen] = useState(false);
+  const [preparedDraft, setPreparedDraft] = useState(null);
+  const [draftErrors, setDraftErrors] = useState([]);
 
   useEffect(() => { registerSYDWebScreens(); }, []);
   const currentScreen = useMemo(() => getSYDWebScreenByRoute(location.pathname), [location.pathname]);
@@ -57,7 +61,16 @@ export default function SYDIntelligenceWorkspace() {
   const masterById = new Map(operationalKnowledge.masterConcepts.map(master => [master.id, master]));
   const screens = ["Navigate to Sales Invoice", "Help me understand accounting for this company", "How do I record an expense?"];
   const toggleCandidate = (type, candidate) => setSelectedMasters(prev => ({ ...prev, [type]: candidate }));
-  const selectedCount = Object.keys(selectedMasters).length;\n  const prepareDraft = () => {\n    const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters });\n    setPreparedDraft(prepared); setDraftErrors(prepared.errors || []);\n  };\n  const openPreparedForm = () => {\n    if (!preparedDraft?.ok) return;\n    const target = preparedDraft.screenId === "sales_invoice" ? "/app/sales" : preparedDraft.screenId === "purchase_invoice" ? "/app/purchases" : "/app/expenses";\n    navigate(target, { state: { sydDraft: preparedDraft } });\n  };
+  const selectedCount = Object.keys(selectedMasters).length;
+  const prepareDraft = () => {
+    const prepared = prepareSYDValidatedDraft({ plan, companyId: currentCompany?.id, selectedMasters });
+    setPreparedDraft(prepared); setDraftErrors(prepared.errors || []);
+  };
+  const openPreparedForm = () => {
+    if (!preparedDraft?.ok) return;
+    const target = preparedDraft.screenId === "sales_invoice" ? "/app/sales" : preparedDraft.screenId === "purchase_invoice" ? "/app/purchases" : "/app/expenses";
+    navigate(target, { state: { sydDraft: preparedDraft } });
+  };
 
   return (
     <main className="syd-ai-workspace">
