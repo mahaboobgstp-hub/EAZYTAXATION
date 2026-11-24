@@ -8,7 +8,7 @@ const CONFIG = {
   register: {
     title: "Sales Register", table: "sales_invoices", date: "invoice_date", number: "invoice_no",
     metrics: ["Invoices", "Total sales", "Paid", "Outstanding"],
-    columns: ["Invoice No.", "Date", "Customer", "Type", "Payment status", "Total", "Paid", "Balance"],
+    columns: ["Invoice No.", "Date", "Customer", "Type", "Payment status", "Total", "Paid", "Balance", "Accounting"],
   },
   quotations: {
     title: "Quotations", table: "quotations", date: "invoice_date", number: "invoice_no",
@@ -213,7 +213,7 @@ export default function SalesWorkspace({ kind }) {
         const balance = kind === "register" ? (row.sale_type === "CASH" ? 0 : num(row.total_amount)) : null;
         return <tr key={row.id}>
           <td className="sw-docno">{row[config.number] || "—"}</td><td>{dateText(row[config.date])}</td><td>{row.customer_name || "—"}</td>
-          {kind === "register" && <><td><span className="sw-type">{row.sale_type === "CASH" ? "Cash sale" : "Credit sale"}</span></td><td><span className={`sw-status ${status.toLowerCase()}`}>{status}</span></td><td className="sw-money">{currency(row.total_amount)}</td><td className="sw-money">{currency(balance === 0 ? row.total_amount : 0)}</td><td className="sw-money">{currency(balance)}</td></>}
+          {kind === "register" && <><td><span className="sw-type">{row.sale_type === "CASH" ? "Cash sale" : "Credit sale"}</span></td><td><span className={`sw-status ${status.toLowerCase()}`}>{status}</span></td><td className="sw-money">{currency(row.total_amount)}</td><td className="sw-money">{currency(balance === 0 ? row.total_amount : 0)}</td><td className="sw-money">{currency(balance)}</td><td><span title={row.accounting_message||""} className={`sw-accounting-status ${String(row.accounting_status||"Not Posted").toLowerCase().replace(/ /g,"-")}`}>{row.accounting_status==="Posted"?"Posted":row.accounting_status==="Pending Mapping"?"Needs Mapping":row.accounting_status==="Failed"?"Failed":row.accounting_status==="Not Applicable"?"N/A":"Not Posted"}</span></td></>}
           {kind === "quotations" && <><td>{dateText(row.valid_until)}</td><td className="sw-money">{currency(row.total_amount)}</td><td><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "orders" && <><td>{dateText(row.expected_delivery_date)}</td><td className="sw-money">{currency(row.total_amount)}</td><td><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td>{row.sales_order_no || "—"}</td><td>{row.vehicle_no || "—"}</td><td><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}

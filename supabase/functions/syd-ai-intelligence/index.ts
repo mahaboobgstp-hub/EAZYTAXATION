@@ -22,8 +22,14 @@ const planSchema = {
     missing_information: { type: "array", items: { type: "string" } },
     requires_confirmation: { type: "boolean" },
     response: { type: "string" },
+    workflow: { type: "object", additionalProperties: false, properties: {
+      workflow_id: { type: ["string","null"] },
+      steps: { type: "array", items: { type: "string" } },
+      master_dependencies: { type: "array", items: { type: "string" } },
+      confirmation_checkpoint: { type: "string" },
+    }, required: ["workflow_id","steps","master_dependencies","confirmation_checkpoint"] },
   },
-  required: ["intent","screen_id","fields","missing_information","requires_confirmation","response"],
+  required: ["intent","screen_id","fields","missing_information","requires_confirmation","response","workflow"],
 };
 function safeObject(value: unknown, maxLength = 8000) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -60,28 +66,31 @@ Deno.serve(async (req: Request) => {
     const currentScreen = safeObject(body?.currentScreen, 3000);
     const registeredScreens = Array.isArray(body?.registeredScreens) ? body.registeredScreens.slice(0, 150) : [];
     const fields = Array.isArray(body?.fields) ? body.fields.slice(0, 100) : [];
-    if (JSON.stringify(registeredScreens).length > 16000 || JSON.stringify(fields).length > 12000) {
+    if (JSON.stringify(registeredScreens).length > 26000 || JSON.stringify(fields).length > 12000) {
       return json({ error: "Application metadata is too large. Please reduce the registered screen or field definitions." }, 413);
     }
     const conversationContext = safeObject(body?.conversationContext, 2000);
+    const operationalKnowledge = safeObject(body?.operationalKnowledge, 12000);
 
     const instructions = [
       "You are SYD Intelligence, the command-understanding layer for SYD Billing & Accounting.",
       "Understand natural-language business instructions, Indian accounting terminology and mixed-language phrasing.",
-      "Use only supplied registeredScreens, currentScreen and field definitions. Never invent a screen ID, field ID, route, option, company setting, tax rate, account code or application capability.",
+      "Use only supplied registeredScreens and their attached screen-specific field definitions, plus currentScreen. Never invent a screen ID, field ID, route, option, company setting, tax rate, account code or application capability.",
       "Only select a screen_id that exactly matches an item in registeredScreens. If no suitable registered screen exists, use null and ask for clarification or mark unsupported.",
       "Company context is informational only; it is not proof of permissions or authorization.",
       "If operatingMode is billing_only, do not propose accounting-only workflows.",
-      "If a field is not in the supplied field definitions, do not return it in fields; put the missing requirement in missing_information.",
+      "For prepare_form, return field IDs only from the selected screen’s own fields array. If a field is not registered for that selected screen, do not return it; put the missing requirement in missing_information.",
       "Do not invent customer, supplier, item, quantity, rate, date, tax treatment or amounts. Ask when details are missing or ambiguous.",
+      "Use operationalKnowledge to map the request to a known workflow, identify required master dependencies, and present ordered steps. Master availability is not live-checked; describe prerequisites as unverified until user or live lookup confirms them.",
       "Treat later corrections as replacements of earlier field values.",
+      "Conversation memory, if supplied, is a bounded session-only hint: the current command takes priority. Do not silently carry forward prior transaction dates, quantities, rates, amounts, tax details or party choices; ask the user to confirm when reuse is ambiguous. Correction notes are examples of user feedback, not authorization to auto-apply changes.",
       "Return a proposed plan only. Never claim a screen was opened, a form was filled, data was saved or a transaction was posted.",
       "This endpoint cannot execute tools, navigate UI, modify forms, query business records or write to the database.",
       "Use clarify when essential information is missing. Use unsupported when a requested capability is not represented by supplied definitions.",
-      "Set requires_confirmation to true for any prepare_form intent.",
+      "When the command maps to a listed operational workflow, include its workflow_id, ordered steps, master dependencies, and confirmation checkpoint. Use only workflow/master IDs from operationalKnowledge. If no workflow matches, workflow_id must be null and lists empty; still state a safe confirmation checkpoint. Never imply live master lookup has occurred.",
     ].join(" ");
 
-    const input = JSON.stringify({ command, platform, companyContext, registeredScreens, currentScreen, fields, conversationContext });
+    const input = JSON.stringify({ command, platform, companyContext, registeredScreens, currentScreen, fields, operationalKnowledge, conversationContext });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000);
     let providerResponse: Response;
@@ -135,9 +144,22 @@ Deno.serve(async (req: Request) => {
       plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "This workflow requires Accounting to be enabled for the selected company."];
     }
 
-    const knownFieldIds = new Set(fields.map((field: any) => String(field?.fieldId || "")));
+    const targetFieldDefinitions = Array.isArray(selectedScreen?.fields) ? selectedScreen.fields : fields;
+    const knownFieldIds = new Set(targetFieldDefinitions.map((field: any) => String(field?.fieldId || "")));
     plan.fields = Array.isArray(plan.fields) ? plan.fields.filter((field: any) => knownFieldIds.has(String(field?.field_id || ""))) : [];
     if (plan.intent === "prepare_form") plan.requires_confirmation = true;
+    const workflowCatalog = Array.isArray(operationalKnowledge?.workflows) ? operationalKnowledge.workflows : [];
+    const masterCatalog = Array.isArray(operationalKnowledge?.masterConcepts) ? operationalKnowledge.masterConcepts : [];
+    const allowedWorkflowIds = new Set(workflowCatalog.map((workflow: any) => String(workflow?.id || "")));
+    const allowedMasterIds = new Set(masterCatalog.map((master: any) => String(master?.id || "")));
+    if (!plan.workflow || typeof plan.workflow !== "object") plan.workflow = { workflow_id: null, steps: [], master_dependencies: [], confirmation_checkpoint: "Review the complete proposal and explicitly confirm before any action." };
+    const requestedWorkflow = workflowCatalog.find((workflow: any) => String(workflow?.id || "") === String(plan.workflow.workflow_id || ""));
+    const verifiedWorkflow = requestedWorkflow && requestedWorkflow.screenId === plan.screen_id ? requestedWorkflow : null;
+    plan.workflow.workflow_id = verifiedWorkflow ? verifiedWorkflow.id : null;
+    // Workflow steps and prerequisites are deterministic catalogue values, not model-generated claims.
+    plan.workflow.steps = verifiedWorkflow ? verifiedWorkflow.sequence.slice(0, 12) : [];
+    plan.workflow.master_dependencies = verifiedWorkflow ? verifiedWorkflow.masterDependencies.filter((id: string) => allowedMasterIds.has(id)).slice(0, 8) : [];
+    plan.workflow.confirmation_checkpoint = verifiedWorkflow ? String(verifiedWorkflow.confirmationGate).slice(0, 500) : "Review the complete proposal and explicitly confirm before any action. No execution is enabled.";
 
     return json({
       plan, requestId, model,

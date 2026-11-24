@@ -28,6 +28,7 @@ import {
   FiLock,
   FiRefreshCw,
   FiChevronLeft,
+  FiZap,
 } from "react-icons/fi";
 
 import "../css/Sidebar.css";
@@ -721,6 +722,11 @@ function Sidebar({ collapsed = false, mobileOpen = false, onNavigate, onClose, o
         {currentModule.groups.map((group) =>
           renderGroup(group, activeModule)
         )}
+
+        <NavLink to="/app/syd-intelligence" onClick={onNavigate} className={({ isActive }) => `menu-link ${isActive ? "active" : ""}`} title={collapsed ? "SYD Intelligence" : undefined}>
+          <FiZap />
+          <span>SYD Intelligence</span>
+        </NavLink>
 
         <div className="sidebar-section-label">ORGANIZATION &amp; SETTINGS</div>
 

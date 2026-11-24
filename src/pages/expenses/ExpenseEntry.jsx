@@ -96,6 +96,25 @@ export default function ExpenseEntry(){
   }
   function selectVendor(id){const v=vendors.find(x=>x.id===id);set("vendor_id",id);set("payee_name",v?.vendor_name||"");setSupplierState(v?.state||"");}
 
+  // Stage 6: accept validated SYD expense draft only for this selected company.
+  useEffect(()=>{
+    const draft=location.state?.sydDraft;
+    if(!draft||draft.screenId!=="expense_entry"||draft.companyId!==currentCompanyId||!draft.ok||!currentCompanyId)return;
+    const values=draft.values||{};
+    const category=categories.find(x=>x.id===values.category_id);
+    const vendor=vendors.find(x=>x.id===values.vendor_id);
+    if(values.category_id&&!category)return;
+    if(values.vendor_id&&!vendor)return;
+    const safeKeys=["expense_date","payee_name","supplier_invoice_no","supplier_invoice_date","payment_mode","payment_account","paid_by","due_date","reference_no","gst_treatment","discount_amount","other_charges","round_off","remarks"];
+    const next={};safeKeys.forEach(key=>{if(values[key]!==undefined)next[key]=values[key];});
+    if(category)next.category_id=category.id;
+    if(vendor){next.vendor_id=vendor.id;next.payee_name=vendor.vendor_name||next.payee_name||"";}
+    setForm(prev=>({...prev,...next}));
+    if(Array.isArray(values.lines)&&values.lines.length)setLines(values.lines.map(line=>({description:line.description||"",hsn_sac:line.hsn_sac||"",qty:String(line.qty??"1"),uom:line.uom||"",rate:String(line.rate??"0"),gst_percent:String(line.gst_percent??"0"),discount_percent:String(line.discount_percent??"0")})));
+    setExpenseId(null);
+    navigate(location.pathname,{replace:true,state:null});
+  },[location.state,currentCompanyId,categories,vendors]);
+
   return <main className="expense-page">
     <header className="ew-heading"><div><p className="ew-breadcrumb">Billing &amp; Accounting / Expenses / Add Expense</p><h1>{expenseId?"Edit Expense":"Create Expense"}</h1></div><button className="ew-soft" type="button" onClick={()=>navigate("/app/expense-register")}>Expense Register</button></header>
     <BulkTransactionImport kind="expenses" />

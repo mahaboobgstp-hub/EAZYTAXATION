@@ -122,6 +122,25 @@ export default function PurchaseInvoice() {
   const setField=(key,value)=>setFormData(f=>({...f,[key]:value}));
   const companyName=currentCompany?.company_name||"";
 
+  // Stage 6: controlled SYD purchase draft handoff; only verified vendor/item masters are used.
+  useEffect(()=>{
+    const draft=location.state?.sydDraft;
+    if(!draft||draft.screenId!=="purchase_invoice"||draft.companyId!==currentCompanyId||!draft.ok||!currentCompanyId)return;
+    const values=draft.values||{};
+    const vendor=vendors.find(row=>row.id===values.vendor_id);
+    if(values.vendor_id&&!vendor)return;
+    const keys=["invoice_date","supplier_invoice_no","supplier_invoice_date","gst_treatment","vendor_name","gstin","vendor_state","place_of_supply","billing_address","shipping_address","vehicle_no","eway_bill_no","remarks"];
+    const next={};keys.forEach(key=>{if(values[key]!==undefined)next[key]=values[key];});
+    if(vendor){next.vendor_id=vendor.id;next.vendor_name=vendor.vendor_name||"";next.vendor_state=vendor.state||next.vendor_state||"";next.gstin=vendor.gstin||next.gstin||"";next.billing_address=vendor.address||next.billing_address||"";}
+    setFormData(prev=>({...prev,...next}));
+    if(Array.isArray(values.lines)&&values.lines.length)setLines(values.lines.map(line=>{
+      const item=itemsMaster.find(row=>row.id===line.item_id);
+      return {item_id:item?.id||line.item_id||"",item_name:item?.item_name||line.item_name||"",hsn_sac:item?.hsn_sac||line.hsn_sac||"",uom:item?.unit||line.uom||"",qty:Number(line.qty)||1,rate:Number(item?.purchase_rate??line.rate)||0,discount_percent:Number(line.discount_percent)||0,gst_rate:Number(item?.gst_rate??line.gst_rate??0)};
+    }));
+    setEditingInvoiceId(null);
+    navigate(location.pathname,{replace:true,state:null});
+  },[location.state,currentCompanyId,vendors,itemsMaster]);
+
   return <main className="purchase-page">
     <header className="pw-heading"><div><p className="pw-breadcrumb">Billing &amp; Accounting / Purchases / Add Purchase Invoice</p><h1>{editingInvoiceId?"Edit Purchase Invoice":"Add Purchase Invoice"}</h1></div><button className="pw-secondary" onClick={()=>navigate("/app/purchase-register")}>Purchase Register</button></header>
     <BulkTransactionImport kind="purchases" />

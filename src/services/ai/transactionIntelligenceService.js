@@ -29,9 +29,23 @@ export function classifySYDTransaction(tx,ctx){
 export const classifySYDBatch=(rows,ctx)=>rows.map(transaction=>({transaction,result:classifySYDTransaction(transaction,ctx)}));
 export async function saveSYDClassificationRule(companyId,rule,userId){
  if(!companyId||!rule?.ledger_id||!rule?.match_value)throw new Error("Company, match pattern and ledger are required.");
- const matchValue=String(rule.match_value).trim(); if(!matchValue)throw new Error("Match pattern cannot be empty.");
- const {data:ledger,error:ledgerError}=await supabase.from("chart_of_accounts").select("id").eq("company_id",companyId).eq("id",rule.ledger_id).eq("is_active",true).maybeSingle(); if(ledgerError)throw ledgerError; if(!ledger)throw new Error("Selected ledger is not active or does not belong to this company.");
- const payload={company_id:companyId,rule_name:rule.rule_name||matchValue,match_type:rule.match_type||"contains_narration",match_value:matchValue,transaction_direction:rule.transaction_direction||"any",transaction_type:rule.transaction_type||null,ledger_id:rule.ledger_id,priority:Number(rule.priority||100),confirmed_by_user:true,auto_apply:!!rule.auto_apply,is_active:true,created_by:userId||null};
- const {data:existing,error:findError}=await supabase.from("syd_transaction_rules").select("id").eq("company_id",companyId).eq("match_type",payload.match_type).eq("match_value",payload.match_value).eq("transaction_direction",payload.transaction_direction).eq("ledger_id",payload.ledger_id).eq("is_active",true).limit(1); if(findError)throw findError; if(existing?.length){const {data,error}=await supabase.from("syd_transaction_rules").update({...payload,updated_at:new Date().toISOString()}).eq("id",existing[0].id).eq("company_id",companyId).select().single();if(error)throw error;return data;}
- const {data,error}=await supabase.from("syd_transaction_rules").insert(payload).select().single();if(error)throw error;return data;
+ const matchValue=String(rule.match_value).trim(); const normalized=norm(matchValue);
+ if(normalized.length<3)throw new Error("Keyword must contain at least 3 meaningful characters.");
+ const matchType=rule.match_type||"contains_narration", direction=rule.transaction_direction||"any";
+ if(matchType==="contains_narration"&&normalized.length<3)throw new Error("Keyword is too short.");
+ const {data:ledger,error:ledgerError}=await supabase.from("chart_of_accounts").select("id").eq("company_id",companyId).eq("id",rule.ledger_id).eq("is_active",true).maybeSingle();
+ if(ledgerError)throw ledgerError;if(!ledger)throw new Error("Selected ledger is not active or does not belong to this company.");
+ const {data:activeRules,error:rulesError}=await supabase.from("syd_transaction_rules").select("*").eq("company_id",companyId).eq("is_active",true).eq("match_type",matchType);
+ if(rulesError)throw rulesError;
+ const sameKeyword=(activeRules||[]).find(existing=>norm(existing.match_value)===normalized&&(existing.transaction_direction||"any")===direction);
+ if(sameKeyword&&sameKeyword.ledger_id!==rule.ledger_id){
+   throw new Error("This keyword already maps to "+(sameKeyword.rule_name||sameKeyword.match_value)+" with a different ledger. Resolve or edit the existing rule first.");
+ }
+ const payload={company_id:companyId,rule_name:rule.rule_name||matchValue,match_type:matchType,match_value:matchValue,transaction_direction:direction,transaction_type:rule.transaction_type||null,ledger_id:rule.ledger_id,priority:Number(rule.priority||100),confirmed_by_user:true,auto_apply:!!rule.auto_apply,is_active:true,created_by:userId||null};
+ if(sameKeyword){
+   const {data,error}=await supabase.from("syd_transaction_rules").update({...payload,updated_at:new Date().toISOString()}).eq("id",sameKeyword.id).eq("company_id",companyId).select().single();
+   if(error)throw error;return data;
+ }
+ const {data,error}=await supabase.from("syd_transaction_rules").insert(payload).select().single();
+ if(error)throw error;return data;
 }

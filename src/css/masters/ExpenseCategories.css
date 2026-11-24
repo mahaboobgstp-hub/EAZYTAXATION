@@ -31,3 +31,11 @@
 .expense-category-grid th {
   background: #f5f5f5;
 }
+
+.expense-category-accounting{width:100%;grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px;border:1px solid #d7e2ec;border-radius:10px;background:#f7fafc}
+.expense-category-accounting h3,.expense-category-accounting small{grid-column:1/-1;margin:0}
+.expense-category-accounting label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.expense-category-accounting select{min-width:0;width:100%}
+.expense-category-accounting small{color:#52657a;font-size:12px}
+@media(max-width:700px){.expense-category-accounting{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.expense-category-accounting{grid-template-columns:1fr}}

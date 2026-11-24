@@ -1,0 +1,12 @@
+alter table public.sales_invoices add column if not exists accounting_status text not null default 'Not Posted';
+alter table public.sales_invoices add column if not exists accounting_message text;
+alter table public.sales_invoices add column if not exists accounting_voucher_id uuid references public.accounting_vouchers(id) on delete set null;
+alter table public.purchase_invoices add column if not exists accounting_status text not null default 'Not Posted';
+alter table public.purchase_invoices add column if not exists accounting_message text;
+alter table public.purchase_invoices add column if not exists accounting_voucher_id uuid references public.accounting_vouchers(id) on delete set null;
+alter table public.expenses add column if not exists accounting_status text not null default 'Not Posted';
+alter table public.expenses add column if not exists accounting_message text;
+alter table public.expenses add column if not exists accounting_voucher_id uuid references public.accounting_vouchers(id) on delete set null;
+create index if not exists sales_invoices_company_accounting_status_idx on public.sales_invoices(company_id,accounting_status);
+create index if not exists purchase_invoices_company_accounting_status_idx on public.purchase_invoices(company_id,accounting_status);
+create index if not exists expenses_company_accounting_status_idx on public.expenses(company_id,accounting_status);

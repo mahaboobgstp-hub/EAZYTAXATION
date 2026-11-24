@@ -1,4 +1,5 @@
 import { supabase } from "../supabase/supabaseClient";
+import { autoPostExpense,autoPostExpensePayment } from "./accountingPostingEngine";
 
 const currentDate = () => new Date().toISOString().slice(0, 10);
 const moneyNumber = value => Number(value) || 0;
@@ -32,7 +33,7 @@ export async function getExpenseMasters(companyId) {
   const [vendors, categories] = await Promise.all([
     supabase.from("vendors").select("id,vendor_name,gstin,state,address,company_id")
       .eq("company_id", companyId).order("vendor_name"),
-    supabase.from("expense_categories").select("id,category_name").order("category_name")
+    supabase.from("expense_categories").select("id,category_name,ledger_id,main_group_id,intermediate_group_id,subgroup_id").or("company_id.eq."+companyId+",company_id.is.null").order("category_name")
   ]);
   if (vendors.error) throw vendors.error;
   if (categories.error) throw categories.error;
@@ -112,19 +113,22 @@ export async function saveExpense(header, items, companyId) {
     await supabase.from("expenses").delete().eq("id", expenseId).eq("company_id", companyId);
     throw itemError;
   }
+  if(companyId)await autoPostExpense(companyId,expenseId);
   await advanceExpenseSequence();
   return expenseId;
 }
 
 export async function updateExpense(id, header, items, companyId) {
-  const { error } = await supabase.from("expenses")
-    .update({ ...header, updated_at: new Date().toISOString() })
-    .eq("id", id).eq("company_id", companyId);
+  const {data:existing,error:readError}=await supabase.from("expenses").select("accounting_status,accounting_voucher_id").eq("id",id).eq("company_id",companyId).single();
+  if(readError)throw readError;
+  if(existing?.accounting_status==="Posted"||existing?.accounting_voucher_id)throw new Error("This expense is already linked to accounting. Use a correction workflow instead of editing it.");
+  const { error } = await supabase.from("expenses").update({ ...header, updated_at: new Date().toISOString() }).eq("id", id).eq("company_id", companyId);
   if (error) throw error;
   const { error: deleteError } = await supabase.from("expense_items").delete().eq("expense_id", id);
   if (deleteError) throw deleteError;
   const { error: insertError } = await supabase.from("expense_items").insert(normalizedItems(id, items));
   if (insertError) throw insertError;
+  if(companyId)await autoPostExpense(companyId,id);
   return id;
 }
 
@@ -206,18 +210,22 @@ export async function createExpensePayment(payment, companyId) {
     paid_to: payment.paid_to || expense?.payee_name || "Supplier"
   }]).select("id").single();
   if (error) throw error;
+  if (payment.status === "Completed") await autoPostExpensePayment(companyId,data.id);
   if (payment.status === "Completed" && payment.expense_id) await recalculateExpensePaid(payment.expense_id, companyId);
   return data.id;
 }
 
 export async function updateExpensePayment(id, payment, companyId) {
   const { data: previous, error: readError } = await supabase.from("expense_payments")
-    .select("expense_id").eq("id", id).eq("company_id", companyId).single();
+    .select("expense_id,accounting_status,accounting_voucher_id").eq("id", id).eq("company_id", companyId).single();
   if (readError) throw readError;
+  if(previous?.accounting_status==="Posted"||previous?.accounting_voucher_id)throw new Error("This expense payment is already posted. Use a reversal/correction workflow instead of editing it.");
   const { error } = await supabase.from("expense_payments")
     .update({ ...payment, updated_at: new Date().toISOString() }).eq("id", id).eq("company_id", companyId);
   if (error) throw error;
+  if(payment.status==="Completed")await autoPostExpensePayment(companyId,id);
   await recalculateExpensePaid(previous.expense_id, companyId);
   if (payment.expense_id !== previous.expense_id) await recalculateExpensePaid(payment.expense_id, companyId);
   return id;
 }
+

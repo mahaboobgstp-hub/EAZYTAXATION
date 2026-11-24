@@ -46,7 +46,8 @@ function AccountingWorkspace() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [showGroupForm, setShowGroupForm] = useState(false);\n  const [groupCreationMode, setGroupCreationMode] = useState("main");
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [groupCreationMode, setGroupCreationMode] = useState("main");
   const [showLedgerForm, setShowLedgerForm] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [selectedLedger, setSelectedLedger] = useState("");
@@ -272,7 +273,7 @@ function AccountingWorkspace() {
   const renderHeader = (title, description, actions = null) => (
     <div className="accounting-page-heading">
       <div><div className="accounting-eyebrow">EAZYTAXATION / ACCOUNTING</div><h1>{title}</h1><p>{description}</p></div>
-      <div className="accounting-heading-actions">{actions}</div>
+      <div className="accounting-heading-actions"><button className="btn-secondary" onClick={()=>navigate("/app/accounting-mappings")}>Automatic Accounting Mappings</button>{actions}</div>
     </div>
   );
 

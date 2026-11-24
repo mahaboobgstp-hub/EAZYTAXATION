@@ -21,3 +21,19 @@
 .bank-template-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 14px}.bank-template-actions small{font-size:10px;color:#7e8799;line-height:1.5;max-width:500px}
 
 .real-bank-account{border-top:3px solid #7047e8;background:linear-gradient(180deg,#fbfaff 0,#fff 38%)}.real-bank-logo{background:#eee8ff;color:#6540d6;border:1px solid #ded2ff}.bank-account-tile.real-bank-account:hover{transform:translateY(-2px);box-shadow:0 8px 24px #1c294012}.bank-account-actions button+button{padding-left:10px}.banking-page .bank-transactions-table select.bank-ledger-input{min-width:190px}
+
+.bank-account-classification {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+  border: 1px solid #d8e2ec;
+  border-radius: 10px;
+  background: #f7fafc;
+  padding: 12px;
+}
+.bank-account-classification h3,
+.bank-account-classification small { grid-column: 1 / -1; margin: 0; }
+.bank-account-classification label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.bank-account-classification select { min-width: 0; width: 100%; }
+.bank-account-classification small { color: #52657a; }
+@media (max-width: 560px) { .bank-account-classification { grid-template-columns: 1fr; } }

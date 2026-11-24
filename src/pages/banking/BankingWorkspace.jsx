@@ -10,7 +10,8 @@ import {
 } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
-import { loadTransactionIntelligence, classifySYDTransaction, saveSYDClassificationRule } from "../../services/ai/transactionIntelligenceService";
+import { loadTransactionIntelligence, classifySYDTransaction, saveSYDClassificationRule, normalizeSYDKeyword } from "../../services/ai/transactionIntelligenceService";
+import { getMasterAccountingSetup,mainGroupsForMaster,childGroupsForMaster } from "../../services/masterAccountingService";
 import "../../css/banking/BankingWorkspace.css";
 
 const initialTransactions = [
@@ -28,6 +29,7 @@ const bankAccounts = [
   { name: "ICICI Current Account", bank: "ICICI Bank", number: "•••• 4567", balance: 892130, date: "09 Jul 2026", color: "icici" }
 ];
 const categories = ["Unclassified", "Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];
+const accountHash = async value => { const normalized=String(value||"").replace(/\s+/g,"").toUpperCase(); if(!normalized)return null; if(!globalThis.crypto?.subtle)throw new Error("Secure duplicate checking is unavailable in this browser."); const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(normalized)); return Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join(""); };
 
 export default function BankingWorkspace() {
   const { currentCompany } = useCompany();
@@ -54,6 +56,9 @@ export default function BankingWorkspace() {
   const [settingsTab, setSettingsTab] = useState("Account Aggregator");
   const [realAccounts, setRealAccounts] = useState([]);
   const [accountLedgers, setAccountLedgers] = useState([]);
+  const [accountingSetup,setAccountingSetup]=useState({enabled:false,ledgers:[],groups:[]});
+  const [bankMainLedgerId,setBankMainLedgerId]=useState("");
+  const [bankIntermediateLedgerId,setBankIntermediateLedgerId]=useState("");
   const [accountModal, setAccountModal] = useState(false);
   const [accountForm, setAccountForm] = useState({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});
   const [accountSaving, setAccountSaving] = useState(false);
@@ -73,16 +78,41 @@ export default function BankingWorkspace() {
     if(linesError) setNotice("Transactions could not be loaded: "+linesError.message);
     else { let intelligenceContext=null; try { intelligenceContext=await loadTransactionIntelligence(companyId); } catch(intelligenceError) { console.warn("SYD transaction intelligence unavailable:",intelligenceError.message); } setTransactions((lines||[]).map(line=>{ const tx={id:line.id,accountId:line.bank_account_id,date:line.statement_date,narration:line.narration||"",description:line.narration||"",reference:line.reference_number||"",ref:line.reference_number||"",amount:(line.direction==="Debit"?-1:1)*Number(line.amount||0),direction:line.direction==="Debit"?"debit":"credit",partyName:line.party_name||"",gstin:line.gstin||"",type:line.category||"Unclassified",ledger:line.ledger_name||"",ledgerId:line.ledger_id||"",status:line.classification_status||"Unclassified",raw:line}; const intelligence=intelligenceContext?classifySYDTransaction(tx,intelligenceContext):null; return {...tx,intelligence,...(intelligence?.autoApply&&intelligence.ledger?{ledgerId:intelligence.ledger.id,ledger:intelligence.ledger.ledger_name,type:intelligence.type,status:"To Post"}:{})}; })); }
   };
-  useEffect(()=>{loadBankingData();},[companyId]);
+  useEffect(()=>{loadBankingData();if(companyId)getMasterAccountingSetup(companyId).then(setAccountingSetup).catch(e=>console.warn("Bank accounting setup:",e.message));else setAccountingSetup({enabled:false,ledgers:[],groups:[]});},[companyId]);
+  const bankMainLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Main Ledger"&&l.is_active!==false);
+  const bankIntermediateLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Intermediate Ledger"&&l.is_active!==false&&l.parent_ledger_id===bankMainLedgerId);
   useEffect(()=>{if(!companyId)return;supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code").eq("company_id",companyId).eq("is_active",true).order("ledger_name").then(({data,error})=>{if(error)setNotice(error.message);else setAccountLedgers(data||[]);});},[companyId]);
-  const saveBankAccount = async (e) => { e.preventDefault(); if(!companyId || !accountForm.bank_name.trim()) return; setAccountSaving(true); try {
-    const {data:gr,error:ge}=await supabase.from("account_groups").select("id").eq("company_id",companyId).eq("group_name","Bank Accounts").limit(1); if(ge)throw ge; let groupId=gr?.[0]?.id;
-    if(!groupId){const {data:ng,error:ne}=await supabase.from("account_groups").insert({company_id:companyId,group_name:"Bank Accounts",group_code:"BANK_ACCOUNTS",account_nature:"Asset",normal_balance:"Debit",statement_classification:"Balance Sheet"}).select("id").single();if(ne)throw ne;groupId=ng.id;}
-    const ledgerName=accountForm.bank_name.trim()+" - "+(accountForm.account_number.slice(-4)||"Account");
-    const {data:led,error:le}=await supabase.from("chart_of_accounts").insert({company_id:companyId,ledger_name:ledgerName,ledger_code:"BANK"+Date.now().toString().slice(-7),group_id:groupId,opening_balance:0,opening_balance_type:"Debit",gst_applicable:false,is_system:false,is_active:true}).select("id").single();if(le)throw le;
-    const {error:pe}=await supabase.from("bank_account_profiles").insert({company_id:companyId,ledger_id:led.id,bank_name:accountForm.bank_name.trim(),account_holder_name:accountForm.account_holder_name||null,account_number_masked:accountForm.account_number?"****"+accountForm.account_number.slice(-4):null,ifsc:accountForm.ifsc.toUpperCase()||null,branch_name:accountForm.branch_name||null,account_type:accountForm.account_type,is_active:true});if(pe)throw pe;
-    setNotice("Bank account saved successfully.");setAccountModal(false);setAccountForm({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});const {data:reload,error:re}=await supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true);if(re)throw re;setRealAccounts(reload||[]);
-  }catch(err){setNotice("Could not save bank account: "+err.message);}finally{setAccountSaving(false);}};
+  const saveBankAccount = async (e) => {
+    e.preventDefault();
+    if(!companyId||!accountForm.bank_name.trim())return;
+    if(accountingSetup.enabled&&bankMainGroups.length&&(!bankMainGroupId||(bankIntermediateGroups.length&&!bankIntermediateGroupId))){setNotice("Select the main and intermediate account groups for this bank account.");return;}
+    setAccountSaving(true);
+    try{
+      const accountHashValue=await accountHash(accountForm.account_number);
+      if(accountHashValue){
+        let duplicateQuery=supabase.from("bank_account_profiles").select("id,bank_name,account_number_masked,ifsc,ledger_id").eq("company_id",companyId).eq("account_number_hash",accountHashValue).eq("is_active",true);
+        if(accountForm.ifsc.trim())duplicateQuery=duplicateQuery.eq("ifsc",accountForm.ifsc.trim().toUpperCase());
+        const {data:duplicate,error:duplicateError}=await duplicateQuery.limit(1);
+        if(duplicateError)throw duplicateError;
+        if(duplicate?.length)throw new Error("This bank account already exists in SYD ("+duplicate[0].bank_name+" "+(duplicate[0].account_number_masked||"")+")");
+      }
+      let ledgerId=null;
+      if(accountingSetup.enabled&&bankFinalGroupId){
+        const selectedGroup=accountingSetup.groups.find(g=>g.id===bankFinalGroupId);
+        if(!selectedGroup||selectedGroup.account_nature!=="Asset"||!bankGroupPattern.test(selectedGroup.group_name))throw new Error("Select a bank or cash account group under Assets.");
+        const ledgerName=accountForm.bank_name.trim()+" - "+(accountForm.account_number.slice(-4)||"Account");
+        const ledgerCode="BANK"+Date.now().toString().slice(-7);
+        const {data:led,error:le}=await supabase.from("chart_of_accounts").insert({company_id:companyId,ledger_name:ledgerName,ledger_code:ledgerCode,group_id:bankFinalGroupId,parent_ledger_id:null,ledger_level:"Main Ledger",is_posting_enabled:true,opening_balance:0,opening_balance_type:"Debit",gst_applicable:false,is_system:false,is_active:true,description:"Automatically linked to bank account master"}).select("id").single();
+        if(le)throw le;ledgerId=led.id;
+      }
+      const {error:pe}=await supabase.from("bank_account_profiles").insert({company_id:companyId,ledger_id:ledgerId,account_number_hash:accountHashValue,bank_name:accountForm.bank_name.trim(),account_holder_name:accountForm.account_holder_name||null,account_number_masked:accountForm.account_number?"****"+accountForm.account_number.slice(-4):null,ifsc:accountForm.ifsc.toUpperCase()||null,branch_name:accountForm.branch_name||null,account_type:accountForm.account_type,is_active:true});
+      if(pe)throw pe;
+      setNotice("Bank account saved successfully"+(ledgerId?" with its accounting subledger.":" without accounting linkage because Accounting is disabled or its hierarchy is not configured."));
+      setAccountModal(false);setAccountForm({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});setBankMainGroupId("");setBankIntermediateGroupId("");setBankSubgroupId("");
+      const {data:reload,error:re}=await supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true);
+      if(re)throw re;setRealAccounts(reload||[]);
+    }catch(err){setNotice("Could not save bank account: "+err.message);}finally{setAccountSaving(false);}
+  };
   const downloadBankStatementTemplate = () => {
     const headers = ["Transaction Date (YYYY-MM-DD)", "Description / Narration", "Reference Number", "Debit", "Credit", "Amount"];
     const csv = headers.join(",") + "\r\n";
@@ -164,7 +194,52 @@ export default function BankingWorkspace() {
     setSelected([]);
     setNotice("Selected transactions have been marked as posted in this UI preview. Live voucher posting will be connected in the accounting integration phase.");
   };
-  const rememberTransactionRule = async (row) => { if(!companyId||!row.ledgerId||!row.narration?.trim())return; const keyword=window.prompt("Enter a keyword from this transaction description. Matching transactions will use this classification.",row.narration.trim()); if(!keyword||!keyword.trim())return; const cleanKeyword=keyword.trim(); try { const {data:userData,error:userError}=await supabase.auth.getUser(); if(userError)throw userError; await saveSYDClassificationRule(companyId,{rule_name:"Keyword: "+cleanKeyword,match_type:"contains_narration",match_value:cleanKeyword,transaction_direction:"any",transaction_type:row.type,ledger_id:row.ledgerId,priority:200,auto_apply:true},userData.user?.id); const targetLedger=accountLedgers.find(x=>x.id===row.ledgerId); const matches=transactions.filter(tx=>String(tx.narration||tx.description||"").toLowerCase().includes(cleanKeyword.toLowerCase())); let applied=0; for(const tx of matches){const {error}=await supabase.from("bank_statement_lines").update({category:row.type,ledger_id:row.ledgerId,ledger_name:targetLedger?.ledger_name||row.ledger,classification_status:"To Post"}).eq("id",tx.id).eq("company_id",companyId);if(error)throw error;applied++;} setTransactions(list=>list.map(tx=>String(tx.narration||tx.description||"").toLowerCase().includes(cleanKeyword.toLowerCase())?{...tx,type:row.type,ledger:targetLedger?.ledger_name||row.ledger,ledgerId:row.ledgerId,status:"To Post",intelligence:{ledger:targetLedger,confidence:0.99,source:"Learned keyword rule",autoApply:true,explanation:"Matched company keyword rule"}}:tx)); setNotice("Learned keyword '"+cleanKeyword+"' and applied it to "+applied+" matching bank transactions. Future matches will be recognized."); } catch(err) { setNotice("Could not save/apply keyword rule: "+err.message); } };\n  const toggleSelected = id => setSelected(rows => rows.includes(id) ? rows.filter(x => x !== id) : [...rows, id]);
+  const rememberTransactionRule = async (row) => {
+    if (!companyId || !row.ledgerId || !row.narration?.trim()) return;
+    const keyword = window.prompt("Enter a keyword from this transaction description. Matching transactions will use this classification.", row.narration.trim());
+    if (!keyword || !keyword.trim()) return;
+    const cleanKeyword = keyword.trim();
+    const normalizedKeyword = normalizeSYDKeyword(cleanKeyword);
+    if (normalizedKeyword.length < 3) { setNotice("Please use a keyword of at least 3 meaningful characters."); return; }
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      await saveSYDClassificationRule(companyId, {
+        rule_name: "Keyword: " + cleanKeyword,
+        match_type: "contains_narration",
+        match_value: cleanKeyword,
+        transaction_direction: "any",
+        transaction_type: row.type,
+        ledger_id: row.ledgerId,
+        priority: 200,
+        auto_apply: true
+      }, userData.user?.id);
+      const targetLedger = accountLedgers.find(x => x.id === row.ledgerId);
+      const matches = transactions.filter(tx => normalizeSYDKeyword([tx.narration,tx.description,tx.partyName,tx.reference].filter(Boolean).join(" ")).includes(normalizedKeyword));
+      let applied = 0, skippedMatched = 0;
+      for (const tx of matches) {
+        if (tx.raw?.match_status === "Matched" || tx.raw?.match_status === "Reconciled" || tx.status === "Posted") { skippedMatched++; continue; }
+        const { error } = await supabase.from("bank_statement_lines").update({
+          category: row.type,
+          ledger_id: row.ledgerId,
+          ledger_name: targetLedger?.ledger_name || row.ledger,
+          classification_status: "To Post"
+        }).eq("id", tx.id).eq("company_id", companyId);
+        if (error) throw error;
+        applied++;
+      }
+      setTransactions(list => list.map(tx => {
+        const matchesKeyword = normalizeSYDKeyword([tx.narration,tx.description,tx.partyName,tx.reference].filter(Boolean).join(" ")).includes(normalizedKeyword);
+        return matchesKeyword && tx.raw?.match_status !== "Matched" && tx.raw?.match_status !== "Reconciled" && tx.status !== "Posted"
+          ? {...tx,type:row.type,ledger:targetLedger?.ledger_name||row.ledger,ledgerId:row.ledgerId,status:"To Post",intelligence:{ledger:targetLedger,confidence:0.99,source:"Learned keyword rule",autoApply:true,explanation:"Matched confirmed company keyword rule"}}
+          : tx;
+      }));
+      setNotice("Learned keyword '"+cleanKeyword+"' and applied it to "+applied+" matching transactions"+(skippedMatched?" ("+skippedMatched+" already matched/posted were preserved)":"")+". Future matching bank transactions will be recognized.");
+    } catch (err) {
+      setNotice("Could not save/apply keyword rule: "+err.message);
+    }
+  };
+  const toggleSelected = id => setSelected(rows => rows.includes(id) ? rows.filter(x => x !== id) : [...rows, id]);
 
   return <main className="banking-page">
     <div className="banking-breadcrumb">Accounting <span>/</span> Banking <span>/</span> {tab}</div>
@@ -217,7 +292,7 @@ export default function BankingWorkspace() {
     {tab === "Bank Accounts" && <section className="banking-content">
       <div className="banking-section-title"><div><h2>Bank Accounts</h2><p>Manage the bank accounts linked to {currentCompany?.company_name || "your company"}.</p></div><button className="bank-btn bank-btn-primary" onClick={() => setAccountModal(true)}><FiPlus/> Add Bank Account</button></div>
       <BulkTransactionImport kind="bank-accounts" />
-      {accountModal && <div className="bank-modal-backdrop"><section className="bank-import-modal" role="dialog" aria-modal="true"><div className="bank-modal-heading"><div><h2>Add Bank Account</h2><p>Creates a bank ledger and stores account details.</p></div><button className="bank-icon-button" onClick={()=>setAccountModal(false)}><FiX/></button></div><form className="bank-account-form" onSubmit={saveBankAccount}><label>Bank Name<input required value={accountForm.bank_name} onChange={e=>setAccountForm({...accountForm,bank_name:e.target.value})}/></label><label>Account Holder<input value={accountForm.account_holder_name} onChange={e=>setAccountForm({...accountForm,account_holder_name:e.target.value})}/></label><label>Account Number<input value={accountForm.account_number} onChange={e=>setAccountForm({...accountForm,account_number:e.target.value})}/></label><label>IFSC<input value={accountForm.ifsc} onChange={e=>setAccountForm({...accountForm,ifsc:e.target.value})}/></label><label>Branch<input value={accountForm.branch_name} onChange={e=>setAccountForm({...accountForm,branch_name:e.target.value})}/></label><label>Account Type<select value={accountForm.account_type} onChange={e=>setAccountForm({...accountForm,account_type:e.target.value})}><option>Current</option><option>Savings</option><option>OD</option><option>CC</option></select></label><div className="bank-modal-actions"><button type="button" className="bank-btn bank-btn-light" onClick={()=>setAccountModal(false)}>Cancel</button><button className="bank-btn bank-btn-primary" disabled={accountSaving}>{accountSaving?"Saving...":"Save Account"}</button></div></form></section></div>}
+      {accountModal && <div className="bank-modal-backdrop"><section className="bank-import-modal" role="dialog" aria-modal="true"><div className="bank-modal-heading"><div><h2>Add Bank Account</h2><p>Stores bank details and links an accounting ledger when enabled.</p></div><button className="bank-icon-button" onClick={()=>setAccountModal(false)}><FiX/></button></div><form className="bank-account-form" onSubmit={saveBankAccount}><label>Bank Name<input required value={accountForm.bank_name} onChange={e=>setAccountForm({...accountForm,bank_name:e.target.value})}/></label><label>Account Holder<input value={accountForm.account_holder_name} onChange={e=>setAccountForm({...accountForm,account_holder_name:e.target.value})}/></label><label>Account Number<input value={accountForm.account_number} onChange={e=>setAccountForm({...accountForm,account_number:e.target.value})}/></label><label>IFSC<input value={accountForm.ifsc} onChange={e=>setAccountForm({...accountForm,ifsc:e.target.value})}/></label><label>Branch<input value={accountForm.branch_name} onChange={e=>setAccountForm({...accountForm,branch_name:e.target.value})}/></label><label>Account Type<select value={accountForm.account_type} onChange={e=>setAccountForm({...accountForm,account_type:e.target.value})}><option>Current</option><option>Savings</option><option>OD</option><option>CC</option></select></label>{accountingSetup.enabled&&<div className="bank-account-classification"><h3>Accounting Classification</h3><label>Main Group<select value={bankMainGroupId} onChange={e=>{setBankMainGroupId(e.target.value);setBankIntermediateGroupId("");setBankSubgroupId("");}}><option value="">Select main group</option>{bankMainGroups.map(g=><option key={g.id} value={g.id}>{g.group_name}</option>)}</select></label><label>Intermediate Group<select value={bankIntermediateGroupId} disabled={!bankMainGroupId} onChange={e=>{setBankIntermediateGroupId(e.target.value);setBankSubgroupId("");}}><option value="">Select intermediate group</option>{bankIntermediateGroups.map(g=><option key={g.id} value={g.id}>{g.group_name}</option>)}</select></label><label>Subgroup (optional)<select value={bankSubgroupId} disabled={!bankIntermediateGroupId} onChange={e=>setBankSubgroupId(e.target.value)}><option value="">Use intermediate group</option>{bankSubgroups.map(g=><option key={g.id} value={g.id}>{g.group_name}</option>)}</select></label><small>SYD creates the bank ledger under the selected account group. Leave blank only if the company’s Chart of Accounts group hierarchy is not configured.</small></div>}<div className="bank-modal-actions"><button type="button" className="bank-btn bank-btn-light" onClick={()=>setAccountModal(false)}>Cancel</button><button className="bank-btn bank-btn-primary" disabled={accountSaving}>{accountSaving?"Saving...":"Save Account"}</button></div></form></section></div>}
       {realAccounts.length>0 && <div className="bank-card" style={{marginBottom:16,padding:12}}><strong>Saved bank accounts ({realAccounts.length})</strong><ul>{realAccounts.map(a=><li key={a.id}>{a.bank_name} — {a.account_number_masked||"No account number"} ({a.account_type})</li>)}</ul></div>}
       <div className="bank-account-grid">{realAccounts.map(row=><article className="bank-card bank-account-tile real-bank-account" key={row.id}><div className="bank-logo real-bank-logo">{(row.bank_name||"Bank").split(" ").map(x=>x[0]).join("").slice(0,3).toUpperCase()}</div><div className="bank-account-status"><span className="bank-dot"/> Saved</div><h3>{row.bank_name}</h3><p>{row.account_number_masked||"Account details hidden"} · {row.account_type||"Bank"}</p><div className="bank-account-balance"><span>Imported transactions</span><strong>{transactions.filter(t=>t.accountId===row.id).length}</strong></div><div className="bank-account-actions"><button onClick={()=>{setAccount(row.id);setTab("Transactions")}}>View transactions</button><button onClick={()=>{setManualAccountId(row.id);setShowImport(true);}}>Import statement</button></div></article>)}</div>
     </section>}

@@ -1,0 +1,31 @@
+name: Web Build Validation
+on:
+  push:
+    branches:
+      - hybrid-accounting-integration
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: AI service regression tests
+        run: npm run test:ai
+      - name: Production build
+        run: npm run build
+
+# Build-only workflow keeps preview validation independent of Vercel deployment quota.
+
+# CI checkpoint after master classification and automatic posting hooks.
+
+# Validate auto-posting hooks and account-group master mappings.
