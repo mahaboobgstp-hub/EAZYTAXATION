@@ -149,3 +149,17 @@ The shared service accepts command text, company context, current screen ID, pla
 - Workflow proposal schema and deterministic workflow/dependency derivation: implemented.
 - UI workflow/dependency/checkpoint panel: implemented.
 - Static source inspection: completed; runtime verification pending.
+
+
+## Stage 3 build verification results
+
+- GitHub Actions run **#123** (Web Build Validation), commit `dde118f88e1f69eda3c6a2ad413847614cc5d411`: **completed successfully**.
+- Verified steps: Checkout repository ✓; Set up Node.js 22 ✓; Install dependencies ✓; Production build (`npm run build`) ✓.
+- This build included the Stage 3 frontend field catalogue, registry initialization, shared service changes, and the Stage 4 web review panel/styles present at that commit.
+- This proves the Vite production build for the checked commit passed. It does not verify Supabase Edge Function runtime/deployment or later Edge Function-only schema hardening commits. Vercel deployment statuses on the latest commit report build-rate-limit failures; these are deployment platform quota/status failures and not a successful preview.
+
+## Stage 4 follow-up hardening
+
+- Updated the strict structured-output schema to require the workflow object as well as its required members. This latest Edge Function-only schema correction was committed after the successful frontend build and is not included in that CI run.
+- Operational workflow steps and master dependency IDs are derived from the deterministic catalogue after model response, and only accepted when workflow ID matches the selected registered screen. This prevents the model from fabricating steps or cross-screen master dependencies.
+- **Latest Edge Function code remains un-deployed and runtime-unverified** in this session. A live authenticated request is required for runtime verification.
