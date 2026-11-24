@@ -41,7 +41,7 @@ export async function searchSYDWorkflowMasters({ plan, companyId }) {
     if(typeof text==="string"&&text.trim().length>=2) tasks.push(searchSYDMaster(target.masterType,text,companyId));
   }
   const lineField=fields.find(item=>["items","lines"].includes(item.field_id)&&Array.isArray(item.value));
-  if(lineField) {
+  if(lineField && ["sales_invoice","purchase_invoice"].includes(plan?.screen_id)) {
     const lineArray=lineField.value;
     for(let lineIndex=0;lineIndex<lineArray.length;lineIndex++) {
       const line=lineArray[lineIndex]||{};
