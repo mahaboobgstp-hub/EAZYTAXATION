@@ -4,7 +4,7 @@ import {getMasterAccountingSetup} from "./masterAccountingService";
 export const SYD_ACCOUNTING_MAPPING_OPTIONS=[
  {key:"default_sales_ledger",label:"Default Sales Ledger",group:"Sales & Income",description:"Fallback income account for sales items without an item-specific sales mapping."},
  {key:"default_purchase_ledger",label:"Default Purchase Ledger",group:"Purchases & Expenses",description:"Fallback purchase account for non-stock items without an item-specific purchase mapping."},
- {key:"default_expense_ledger",label:"Default Expense Ledger",group:"Purchases & Expenses",description:"Fallback ledger for expense categories without a linked ledger."},
+ {key:"default_expense_ledger",label:"Default Expense Ledger",group:"Purchases & Expenses",description:"Fallback ledger for expense categories without a linked ledger."},\n {key:"default_expense_payable_ledger",label:"Default Expense Payable Ledger",group:"Purchases & Expenses",description:"Liability ledger for expenses without a supplier party."},
  {key:"output_cgst_ledger",label:"Output CGST Ledger",group:"GST",description:"Output CGST liability account."},
  {key:"output_sgst_ledger",label:"Output SGST Ledger",group:"GST",description:"Output SGST liability account."},
  {key:"output_igst_ledger",label:"Output IGST Ledger",group:"GST",description:"Output IGST liability account."},
