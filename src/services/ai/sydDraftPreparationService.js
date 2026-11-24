@@ -44,6 +44,10 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
       if (screenId==="sales_invoice" && index===0 && selectedMasters.items?.id && !line.item_id) { line.item_id=selectedMasters.items.id; line.item_name=line.item_name||selectedMasters.items.item_name; line.hsn_sac=line.hsn_sac||selectedMasters.items.hsn_sac; line.unit=line.unit||selectedMasters.items.unit; line.gst_rate=line.gst_rate??selectedMasters.items.gst_rate; line.rate=line.rate??selectedMasters.items.sales_rate; }\n      return line;
     });
   }
+  const numericFields = screenId==="sales_invoice"?["discount_value","other_amount","round_off"]:screenId==="purchase_invoice"?[]:["discount_amount","other_charges","round_off"];
+  for(const key of numericFields) if(values[key]!==undefined && !Number.isFinite(Number(values[key]))) errors.push(`Invalid numeric value for ${key}.`);
+  if(values.invoice_date && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(values.invoice_date))) errors.push("Invoice date must use YYYY-MM-DD.");
+  if(values.expense_date && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(values.expense_date))) errors.push("Expense date must use YYYY-MM-DD.");
   if (screenId==="expense_entry" && !values.payee_name && !selectedMasters.vendors?.id) errors.push("Enter a payee or choose a verified vendor.");
   if (screenId==="expense_entry" && (!Array.isArray(values.lines)||!values.lines.length)) errors.push("Add at least one expense line.");
   if (screenId==="sales_invoice" && values.items && values.items.some(row=>!row.item_id && !row.item_name)) errors.push("Each sales line needs a verified item or a description.");
