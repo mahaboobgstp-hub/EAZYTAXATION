@@ -113,3 +113,11 @@ The shared service accepts command text, company context, current screen ID, pla
 - Screen-scoped AI field context: **code implemented**
 - AI proposal field filtering: **code implemented**
 - Build/test verification: **pending**
+
+
+### Stage 3 static checks (performed)
+- Re-fetched the committed field catalogue and checked every audited field ID against the registry's lowercase snake-case identifier rule: **passed** (79 IDs across the three screens; no invalid IDs or duplicate IDs within a screen).
+- Checked every field type against the field registry's allowed types: **passed**.
+- Confirmed the web service attaches per-screen field definitions and the Edge Function filters proposals against the selected screen's field IDs: **passed by source inspection**.
+- The Edge Function screen-metadata size guard was raised from 16 KB to 26 KB to accommodate the screen catalogue plus the newly attached audited fields while retaining a bounded payload.
+- These are source/static checks only. No full Vite build, CI run, or live Edge Function request was executed; runtime verification is still pending.
