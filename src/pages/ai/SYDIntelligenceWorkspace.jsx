@@ -22,6 +22,7 @@ export default function SYDIntelligenceWorkspace() {
     if (!command.trim() || loading) return;
     setLoading(true); setError(""); setResult(null);
     try {
+      registerSYDWebScreens();
       const response = await interpretSYDCommand({
         text: command, company: currentCompany, currentScreenId: currentScreen?.screenId || null,
         platform: "web",
