@@ -70,12 +70,14 @@ function UsersAccess() {
   const handleSave = async (event) => {
     event.preventDefault();
     if (!currentCompanyId) return;
+    if (!selectedId && form.password !== form.confirmPassword) { setError("Passwords do not match."); return; }
     setSaving(true); setError(""); setMessage("");
     try {
       if (selectedId) {
         await updateCompanyUser(selectedId, currentCompanyId, {
           full_name: form.fullName.trim(), role: form.role, status: form.status,
           permissions: form.permissions,
+          password: form.password,
         });
         setMessage("User access updated successfully.");
       } else {
