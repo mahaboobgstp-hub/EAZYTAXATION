@@ -102,5 +102,5 @@ export function registerSYDWebFieldKnowledge() {
 }
 export function getSYDWebFieldKnowledge(screenId) {
   const fields = AUDITED_FIELDS[screenId];
-  return fields ? fields.map(field => ({...field, validation:{...(field.validation||{})}, options:[...(field.options||[])})) : [];
+  return fields ? fields.map(field => ({...field, validation:{...(field.validation||{})}, options:[...(field.options||[])]})) : [];
 }
