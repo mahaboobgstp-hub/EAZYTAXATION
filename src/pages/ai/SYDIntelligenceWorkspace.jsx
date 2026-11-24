@@ -4,6 +4,7 @@ import { FiZap, FiSend, FiCompass, FiClipboard, FiShield, FiRefreshCw } from "re
 import { useCompany } from "../../context/CompanyContext";
 import { interpretSYDCommand } from "../../services/ai/sydIntelligenceService";
 import { registerSYDWebScreens, getSYDWebScreenByRoute } from "../../ai/registry/webScreenKnowledge";
+import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import "../../css/ai/SYDIntelligenceWorkspace.css";
 
 export default function SYDIntelligenceWorkspace() {
@@ -34,6 +35,8 @@ export default function SYDIntelligenceWorkspace() {
   };
 
   const plan = result?.plan;
+  const operationalKnowledge = getSYDOperationalKnowledge();
+  const masterById = new Map(operationalKnowledge.masterConcepts.map(master => [master.id, master]));
   const screens = ["Navigate to Sales Invoice", "Help me understand accounting for this company", "How do I record an expense?"];
 
   return (
@@ -72,6 +75,7 @@ export default function SYDIntelligenceWorkspace() {
           {plan?.screen_id && <div className="syd-ai-result-line"><FiCompass/><span>Suggested screen: <strong>{plan.screen_id}</strong></span></div>}
           {Array.isArray(plan?.fields) && plan.fields.length > 0 && <div className="syd-ai-proposed-fields"><h3>Suggested field values</h3>{plan.fields.map((field,index)=><div className="syd-ai-field-row" key={field.field_id+index}><span>{field.field_id}</span><strong>{field.value ?? "—"}</strong></div>)}</div>}
           {Array.isArray(plan?.missing_information) && plan.missing_information.length > 0 && <div className="syd-ai-missing"><h3>Information needed</h3><ul>{plan.missing_information.map((item,index)=><li key={index}>{item}</li>)}</ul></div>}
+          {plan?.workflow && <div className="syd-ai-workflow-panel"><h3>Workflow preparation</h3>{plan.workflow.workflow_id && <span className="syd-ai-workflow-chip">{plan.workflow.workflow_id.replaceAll("_"," ")}</span>}{Array.isArray(plan.workflow.steps) && plan.workflow.steps.length>0 && <ol className="syd-ai-workflow-steps">{plan.workflow.steps.map((step,index)=><li key={index}>{step}</li>)}</ol>}{Array.isArray(plan.workflow.master_dependencies) && plan.workflow.master_dependencies.length>0 && <div className="syd-ai-master-dependencies"><strong>Master dependencies (not live-checked)</strong>{plan.workflow.master_dependencies.map((id,index)=>{const master=masterById.get(id);return <div className="syd-ai-master-row" key={id+index}><span>{master?.name || id}</span><small>{master?.lookupAvailable ? "Live lookup supported" : "Availability not verified"}</small></div>})}</div>}<div className="syd-ai-confirmation-checkpoint"><strong>Confirmation checkpoint</strong><p>{plan.workflow.confirmation_checkpoint}</p><span>Draft/review only — execution and saving are disabled.</span></div></div>}
           <div className="syd-ai-safe-note"><FiShield/><span>Proposal only. No navigation, form changes, database writes, or accounting posting were executed.</span></div>
           {result.requestId && <small className="syd-ai-request-id">Request ID: {result.requestId}</small>}
         </section>
