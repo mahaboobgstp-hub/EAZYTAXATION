@@ -99,7 +99,7 @@ export default function BankingWorkspace() {
       let ledgerId=null;
       if(accountingSetup.enabled&&bankFinalGroupId){
         const selectedGroup=accountingSetup.groups.find(g=>g.id===bankFinalGroupId);
-        if(!selectedGroup||selectedGroup.account_nature!=="Asset")throw new Error("Selected bank account group must be a company asset group.");
+        if(!selectedGroup||selectedGroup.account_nature!=="Asset"||!bankGroupPattern.test(selectedGroup.group_name))throw new Error("Select a bank or cash account group under Assets.");
         const ledgerName=accountForm.bank_name.trim()+" - "+(accountForm.account_number.slice(-4)||"Account");
         const ledgerCode="BANK"+Date.now().toString().slice(-7);
         const {data:led,error:le}=await supabase.from("chart_of_accounts").insert({company_id:companyId,ledger_name:ledgerName,ledger_code:ledgerCode,group_id:bankFinalGroupId,parent_ledger_id:null,ledger_level:"Main Ledger",is_posting_enabled:true,opening_balance:0,opening_balance_type:"Debit",gst_applicable:false,is_system:false,is_active:true,description:"Automatically linked to bank account master"}).select("id").single();
