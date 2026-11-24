@@ -33,7 +33,17 @@ export function analyzeSYDTransactionContext({plan,companyId,selectedMasters={},
   const date=headers[screenId==="expense_entry"?"expense_date":"invoice_date"];
   if(present(date)){score+=8;reasons.push("Transaction date supplied");}else questions.push("What is the transaction date?");
   if(screenId==="purchase_invoice"&&present(headers.supplier_invoice_no)){score+=5;reasons.push("Supplier invoice number supplied");}else if(screenId==="purchase_invoice")questions.push("What is the supplier's invoice number?");
-  if(lines.length){score+=10;reasons.push(`${lines.length} transaction line(s) detected`);}else questions.push("What items or expense details should be entered?");
+  if(lines.length){score+=10;reasons.push(`${lines.length} transaction line(s) detected`);}
+  const companyState=plan?.company_context?.state||plan?.company_state||plan?.company?.state||null;
+  const partyState=headers.vendor_state||headers.shipping_state||headers.place_of_supply||null;
+  if(companyState&&partyState){score+=4;reasons.push("GST state context available");if(String(companyState).toLowerCase()===String(partyState).toLowerCase())reasons.push("Likely intra-state supply (state values match)");else reasons.push("Likely inter-state supply (state values differ)");}
+  else if(["sales_invoice","purchase_invoice"].includes(screenId))questions.push("Confirm place of supply/state so GST type (CGST+SGST or IGST) can be checked.");
+  if(screenId==="purchase_invoice"&&present(headers.supplier_invoice_date)&&present(headers.invoice_date)){const billDate=Date.parse(headers.supplier_invoice_date),entryDate=Date.parse(headers.invoice_date);if(!Number.isNaN(billDate)&&!Number.isNaN(entryDate)&&billDate>entryDate)questions.push("Supplier bill date is later than voucher date. Confirm both dates.");
+  }
+  if(present(headers.gstin)&&present(headers.vendor_name)&&!selectedMasters.vendors?.id)questions.push("Supplier name and GSTIN are both present but no verified supplier master is selected. Confirm they belong together.");
+  if(present(headers.tax_inclusive)&&!lines.some(line=>present(line.rate)))questions.push("Tax-inclusive pricing is indicated; confirm line rates before computing tax.");
+  if(present(headers.discount_type)&&present(headers.discount_value)&&!numeric(headers.discount_value))questions.push("Invoice discount value is not numeric; correct it before draft validation.");
+else questions.push("What items or expense details should be entered?");
   lines.forEach((line,i)=>{
     const label=`Line ${i+1}`;
     if(rule.lineMaster&&selectedLineItems[i]?.id){score+=3;reasons.push(`${label} item master matched`);}
