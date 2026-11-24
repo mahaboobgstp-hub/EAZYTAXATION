@@ -106,11 +106,11 @@ begin
   if (p_party_kind='customer' and v_group_nature<>'Asset') or (p_party_kind='vendor' and v_group_nature<>'Liability') then raise exception 'Select a main group compatible with the party type.'; end if;
   v_group_id:=v_main_group_id;
   if v_intermediate_group_id is not null then
-    if not exists(select 1 from public.account_groups where company_id=p_company_id and id=v_intermediate_group_id and parent_group_id=v_main_group_id and is_active=true) then raise exception 'Intermediate group does not belong to the selected main group.'; end if;
+    if not exists(select 1 from public.account_groups where company_id=p_company_id and id=v_intermediate_group_id and parent_group_id=v_main_group_id and is_active=true and account_nature=v_group_nature) then raise exception 'Intermediate group does not belong to the selected main group or has an incompatible nature.'; end if;
     v_group_id:=v_intermediate_group_id;
   end if;
   if v_subgroup_id is not null then
-    if v_intermediate_group_id is null or not exists(select 1 from public.account_groups where company_id=p_company_id and id=v_subgroup_id and parent_group_id=v_intermediate_group_id and is_active=true) then raise exception 'Subgroup does not belong to the selected intermediate group.'; end if;
+    if v_intermediate_group_id is null or not exists(select 1 from public.account_groups where company_id=p_company_id and id=v_subgroup_id and parent_group_id=v_intermediate_group_id and is_active=true and account_nature=v_group_nature) then raise exception 'Subgroup does not belong to the selected intermediate group or has an incompatible nature.'; end if;
     v_group_id:=v_subgroup_id;
   end if;
 
