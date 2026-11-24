@@ -273,7 +273,7 @@ function AccountingWorkspace() {
   const renderHeader = (title, description, actions = null) => (
     <div className="accounting-page-heading">
       <div><div className="accounting-eyebrow">EAZYTAXATION / ACCOUNTING</div><h1>{title}</h1><p>{description}</p></div>
-      <div className="accounting-heading-actions">{actions}</div>
+      <div className="accounting-heading-actions"><button className="btn-secondary" onClick={()=>navigate("/app/accounting-mappings")}>Automatic Accounting Mappings</button>{actions}</div>
     </div>
   );
 
