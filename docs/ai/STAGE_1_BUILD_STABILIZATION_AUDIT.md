@@ -214,3 +214,5 @@ The shared service accepts command text, company context, current screen ID, pla
 - Candidate item selection currently supports applying a selected item master to the first draft line; multi-item draft mapping needs additional line-level matching before it can be considered fully automated.
 - Purchase/expense line structures and React state are mapped from audited fields, but the latest frontend build and authenticated end-to-end test are still pending. Vercel build-rate-limit errors prevent a preview verification; no local checkout/runtime was available.
 - This stage is code-complete but not verified by a successful latest-commit CI build or live test. Production remains untouched and PR #9 remains draft/unmerged.
+
+- Stage 6 follow-up: live item lookup now also extracts the first item name/description from proposed `items`/`lines` arrays so the first invoice line can be matched; multi-line matching remains explicitly limited.
