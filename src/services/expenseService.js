@@ -118,14 +118,16 @@ export async function saveExpense(header, items, companyId) {
 }
 
 export async function updateExpense(id, header, items, companyId) {
-  const { error } = await supabase.from("expenses")
-    .update({ ...header, updated_at: new Date().toISOString() })
-    .eq("id", id).eq("company_id", companyId);
+  const {data:existing,error:readError}=await supabase.from("expenses").select("accounting_status,accounting_voucher_id").eq("id",id).eq("company_id",companyId).single();
+  if(readError)throw readError;
+  if(existing?.accounting_status==="Posted"||existing?.accounting_voucher_id)throw new Error("This expense is already linked to accounting. Use a correction workflow instead of editing it.");
+  const { error } = await supabase.from("expenses").update({ ...header, updated_at: new Date().toISOString() }).eq("id", id).eq("company_id", companyId);
   if (error) throw error;
   const { error: deleteError } = await supabase.from("expense_items").delete().eq("expense_id", id);
   if (deleteError) throw deleteError;
   const { error: insertError } = await supabase.from("expense_items").insert(normalizedItems(id, items));
   if (insertError) throw insertError;
+  if(companyId)await autoPostExpense(companyId,id);
   return id;
 }
 
