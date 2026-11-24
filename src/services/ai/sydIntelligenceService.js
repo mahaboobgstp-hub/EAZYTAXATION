@@ -1,4 +1,5 @@
 import { supabase } from "../../supabase/supabaseClient";
+import { getSYDWebFieldKnowledge } from "../../ai/registry/webFieldKnowledge";
 import {
   buildCompanyAIContext, getScreenDefinition, listScreenDefinitions,
   listFieldDefinitions, normalizeAICommandText,
@@ -20,6 +21,11 @@ export async function interpretSYDCommand({
     platformSupport: item.platformSupport,
     requiredPermissions: item.requiredPermissions,
     companyRequirements: item.companyRequirements,
+    fields: getSYDWebFieldKnowledge(item.screenId).map(field => ({
+      fieldId: field.fieldId, label: field.label, type: field.type,
+      required: field.required, description: field.description,
+      options: field.options, validation: field.validation,
+    })),
   }));
 
   const { data, error } = await supabase.functions.invoke("syd-ai-intelligence", {
