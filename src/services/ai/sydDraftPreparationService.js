@@ -30,7 +30,7 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
   const masterField = MASTER_ID_FIELD[screenId];
   if (chosenMaster?.id) values[masterField] = chosenMaster.id;
   if ((screenId==="sales_invoice" || screenId==="purchase_invoice") && !chosenMaster?.id) errors.push("Choose and verify the customer/supplier master before preparing this draft.");
-  if (screenId==="expense_entry" && chosenCategory?.id) values.category_id = chosenCategory.id;
+  if (screenId==="expense_entry" && chosenCategory?.id) values.category_id = chosenCategory.id;\n  if (screenId==="expense_entry") { delete values.status; delete values.payment_status; }
   if (screenId==="expense_entry" && !values.category_id) errors.push("Expense category is required and has not been verified.");
   const rawLines = values.items || values.lines;
   if (rawLines && !Array.isArray(rawLines)) errors.push("Line items must be an array to prepare safely.");
