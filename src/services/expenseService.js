@@ -1,5 +1,5 @@
 import { supabase } from "../supabase/supabaseClient";
-import { autoPostExpense } from "./accountingPostingEngine";
+import { autoPostExpense,autoPostExpensePayment } from "./accountingPostingEngine";
 
 const currentDate = () => new Date().toISOString().slice(0, 10);
 const moneyNumber = value => Number(value) || 0;
@@ -216,12 +216,15 @@ export async function createExpensePayment(payment, companyId) {
 
 export async function updateExpensePayment(id, payment, companyId) {
   const { data: previous, error: readError } = await supabase.from("expense_payments")
-    .select("expense_id").eq("id", id).eq("company_id", companyId).single();
+    .select("expense_id,accounting_status,accounting_voucher_id").eq("id", id).eq("company_id", companyId).single();
   if (readError) throw readError;
+  if(previous?.accounting_status==="Posted"||previous?.accounting_voucher_id)throw new Error("This expense payment is already posted. Use a reversal/correction workflow instead of editing it.");
   const { error } = await supabase.from("expense_payments")
     .update({ ...payment, updated_at: new Date().toISOString() }).eq("id", id).eq("company_id", companyId);
   if (error) throw error;
+  if(payment.status==="Completed")await autoPostExpensePayment(companyId,id);
   await recalculateExpensePaid(previous.expense_id, companyId);
   if (payment.expense_id !== previous.expense_id) await recalculateExpensePaid(payment.expense_id, companyId);
   return id;
 }
+
