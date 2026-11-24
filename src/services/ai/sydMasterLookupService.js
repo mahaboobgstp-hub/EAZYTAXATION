@@ -29,25 +29,30 @@ export async function searchSYDMaster(masterType, searchText, companyId) {
 
 export async function searchSYDWorkflowMasters({ plan, companyId }) {
   const fields = Array.isArray(plan?.fields) ? plan.fields : [];
-  const targets = [
-    { masterType: "customers", ids: ["customer_id"], textIds: ["customer_name","customer"] },
-    { masterType: "vendors", ids: ["vendor_id"], textIds: ["vendor_name","supplier_name","payee_name"] },
-    { masterType: "items", ids: ["item_id"], textIds: ["item_name","item","description"] },
-    { masterType: "expense_categories", ids: ["category_id"], textIds: ["category_name","expense_category"] },
+  const tasks = [];
+  const singleTargets = [
+    { masterType:"customers", ids:["customer_id"], textIds:["customer_name","customer"] },
+    { masterType:"vendors", ids:["vendor_id"], textIds:["vendor_name","supplier_name","payee_name"] },
+    { masterType:"expense_categories", ids:["category_id"], textIds:["category_name","expense_category"] },
   ];
-  const searchTasks = [];
-  for (const target of targets) {
-    const field = fields.find(item => target.ids.includes(item.field_id) || target.textIds.includes(item.field_id));
-    let text = field?.value;
-    if (target.masterType === "items" && (!text || typeof text !== "string")) {
-      const lineField = fields.find(item => ["items","lines"].includes(item.field_id) && Array.isArray(item.value));
-      const firstLine = lineField?.value?.[0];
-      text = firstLine?.item_name || firstLine?.description || firstLine?.item;
-    }
-    if (text && typeof text === "string" && text.trim().length >= 2) {
-      searchTasks.push(searchSYDMaster(target.masterType, text, companyId));
-    }
+  for(const target of singleTargets) {
+    const field=fields.find(item=>target.ids.includes(item.field_id)||target.textIds.includes(item.field_id));
+    const text=field?.value;
+    if(typeof text==="string"&&text.trim().length>=2) tasks.push(searchSYDMaster(target.masterType,text,companyId));
   }
-  const results = await Promise.all(searchTasks);
-  return results;
+  const lineField=fields.find(item=>["items","lines"].includes(item.field_id)&&Array.isArray(item.value));
+  if(lineField) {
+    const lineArray=lineField.value;
+    for(let lineIndex=0;lineIndex<lineArray.length;lineIndex++) {
+      const line=lineArray[lineIndex]||{};
+      const query=line.item_name||line.description||line.item||line.name;
+      if(typeof query==="string"&&query.trim().length>=2) {
+        tasks.push(searchSYDMaster("items",query,companyId).then(result=>({...result,lineIndex,lineDescription:query})));
+      }
+    }
+  } else {
+    const itemField=fields.find(item=>["item_name","item","description"].includes(item.field_id)&&typeof item.value==="string");
+    if(itemField?.value?.trim().length>=2) tasks.push(searchSYDMaster("items",itemField.value,companyId));
+  }
+  return Promise.all(tasks);
 }
