@@ -67,7 +67,7 @@ export async function postBusinessTransaction(companyId,transaction){
  if(lines.some(line=>{const ledger=ledgerMap.get(line.ledger_id);return !ledger||ledger.is_active===false||ledger.is_posting_enabled===false;}))throw new Error("One or more mapped ledgers are inactive, missing, or not posting-enabled.");
  const existingQuery=()=>supabase.from("accounting_vouchers").select("*").eq("company_id",companyId).eq("source_module",transaction.source_module).eq("source_record_id",transaction.source_record_id).neq("status","Reversed").limit(1);
  let {data:existing,error:existingError}=await existingQuery();if(existingError)throw existingError;
- if(existing?.length){if(existing[0].status==="Posted")return {status:"already_posted",voucher_id:existing[0].id,voucher:existing[0]};if(existing[0].status==="Draft"){const posted=await postVoucher(companyId,existing[0].id);return {status:"posted",voucher_id:existing[0].id,voucher:posted};}}
+ if(existing?.length){if(existing[0].status==="Posted")return {status:"already_posted",voucher_id:existing[0].id,voucher:existing[0]};if(existing[0].status==="Draft"){const {data:draftLines,error:draftError}=await supabase.from("accounting_voucher_lines").select("ledger_id,debit,credit").eq("company_id",companyId).eq("voucher_id",existing[0].id);if(draftError)throw draftError;const draftSorted=(draftLines||[]).slice().sort((a,b)=>String(a.ledger_id).localeCompare(String(b.ledger_id)));const expectedSorted=lines.slice().sort((a,b)=>String(a.ledger_id).localeCompare(String(b.ledger_id)));const draftMatches=draftSorted.length===expectedSorted.length&&draftSorted.every((line,i)=>line.ledger_id===expectedSorted[i].ledger_id&&Math.abs(Number(line.debit||0)-expectedSorted[i].debit)<0.005&&Math.abs(Number(line.credit||0)-expectedSorted[i].credit)<0.005);if(!draftMatches)throw new Error("A draft accounting voucher already exists for this source but its lines differ. It was not auto-posted.");const posted=await postVoucher(companyId,existing[0].id);return {status:"posted",voucher_id:existing[0].id,voucher:posted};}}
  const voucherNumber=transaction.voucher_number||("AUTO-"+transaction.source_module.toUpperCase()+"-"+String(transaction.source_record_id).slice(0,8));
  try{
   const voucher=await createVoucher(companyId,{voucher_number:voucherNumber,voucher_type:transaction.voucher_type||"Journal",voucher_date:transaction.voucher_date,reference_number:transaction.reference_number||null,narration:transaction.narration||null,source_module:transaction.source_module,source_record_id:transaction.source_record_id,status:"Draft"},lines);
@@ -97,7 +97,7 @@ export async function autoPostSalesInvoice(companyId,invoiceId){
   const lines=[],revenueByLedger={};
   for(const line of items||[]){
    const item=line.item_id?itemMap[line.item_id]:null;
-   if(item?.item_type==="Goods"&&stockTypes.includes(item.accounting_item_type))return await pending("sales_invoices",companyId,invoiceId,"Inventory sale requires verified cost-of-goods and stock valuation posting; it was not auto-posted.");
+   if(item?.item_type==="Goods"&&(!item.accounting_item_type||stockTypes.includes(item.accounting_item_type)))return await pending("sales_invoices",companyId,invoiceId,"Inventory sale requires verified cost-of-goods and stock valuation posting; it was not auto-posted.");
    const ledger=item?.sales_ledger_id||incomeLedger;if(!ledger)return await pending("sales_invoices",companyId,invoiceId,"Sales ledger mapping is missing for "+line.item_name+".");
    const value=money(line.amount);revenueByLedger[ledger]=money((revenueByLedger[ledger]||0)+value);
   }
@@ -115,7 +115,7 @@ export async function autoPostSalesInvoice(companyId,invoiceId){
   const result=await postBusinessTransaction(companyId,{source_module:"sales_invoice",source_record_id:invoiceId,voucher_type:"Sales",voucher_date:invoice.invoice_date,voucher_number:"AUTO-SI-"+String(invoice.invoice_no||invoiceId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:invoice.invoice_no,narration:"Auto-posted Sales Invoice "+invoice.invoice_no,lines});
   await setSourceStatus("sales_invoices",companyId,invoiceId,"Posted","Automatically posted to accounting.",result.voucher_id);
   return result;
- }catch(error){await setSourceStatus("sales_invoices",companyId,invoiceId,"Failed",error.message,null);return {status:"Failed",reason:error.message};}
+ }catch(error){const {data:existing}=await supabase.from("accounting_vouchers").select("id").eq("company_id",companyId).eq("source_module","sales_invoice").eq("source_record_id",invoiceId).neq("status","Reversed").maybeSingle();await setSourceStatus("sales_invoices",companyId,invoiceId,"Failed",error.message,existing?.id||null);return {status:"Failed",reason:error.message};}
 }
 
 export async function autoPostPurchaseInvoice(companyId,invoiceId){
@@ -128,7 +128,7 @@ export async function autoPostPurchaseInvoice(companyId,invoiceId){
   const {data:vendor,error:vendorError}=await supabase.from("vendors").select("ledger_id").eq("company_id",companyId).eq("id",invoice.vendor_id).single();if(vendorError)throw vendorError;
   if(!vendor.ledger_id)return await pending("purchase_invoices",companyId,invoiceId,"Supplier has no linked payable ledger.");
   const ids=[...new Set((items||[]).map(i=>i.item_id).filter(Boolean))];let itemMap={};
-  if(ids.length){const {data:masterItems,error:itemsError}=await supabase.from("items").select("id,accounting_item_type,purchase_ledger_id,inventory_ledger_id").eq("company_id",companyId).in("id",ids);if(itemsError)throw itemsError;itemMap=Object.fromEntries((masterItems||[]).map(i=>[i.id,i]));}
+  if(ids.length){const {data:masterItems,error:itemsError}=await supabase.from("items").select("id,item_type,accounting_item_type,purchase_ledger_id,inventory_ledger_id").eq("company_id",companyId).in("id",ids);if(itemsError)throw itemsError;itemMap=Object.fromEntries((masterItems||[]).map(i=>[i.id,i]));}
   const mappings=await getMappings(companyId),purchaseByLedger={};
   for(const line of items||[]){
    const item=line.item_id?itemMap[line.item_id]:null;
@@ -145,5 +145,5 @@ export async function autoPostPurchaseInvoice(companyId,invoiceId){
   if(Math.abs(sum(lines,"debit")-sum(lines,"credit"))>0.05)return await pending("purchase_invoices",companyId,invoiceId,"Mapped accounting lines do not equal the purchase invoice total; review mappings.");
   const result=await postBusinessTransaction(companyId,{source_module:"purchase_invoice",source_record_id:invoiceId,voucher_type:"Purchase",voucher_date:invoice.invoice_date,voucher_number:"AUTO-PI-"+String(invoice.invoice_no||invoiceId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:invoice.supplier_invoice_no||invoice.invoice_no,narration:"Auto-posted Purchase Invoice "+invoice.invoice_no,lines});
   await setSourceStatus("purchase_invoices",companyId,invoiceId,"Posted","Automatically posted to accounting.",result.voucher_id);return result;
- }catch(error){await setSourceStatus("purchase_invoices",companyId,invoiceId,"Failed",error.message,null);return {status:"Failed",reason:error.message};}
+ }catch(error){const {data:existing}=await supabase.from("accounting_vouchers").select("id").eq("company_id",companyId).eq("source_module","purchase_invoice").eq("source_record_id",invoiceId).neq("status","Reversed").maybeSingle();await setSourceStatus("purchase_invoices",companyId,invoiceId,"Failed",error.message,existing?.id||null);return {status:"Failed",reason:error.message};}
 }
