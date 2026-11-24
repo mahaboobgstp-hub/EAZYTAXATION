@@ -104,7 +104,8 @@ begin
 
   v_main_id:=nullif(p_payload->>'main_ledger_id','')::uuid;
   v_intermediate_id:=nullif(p_payload->>'intermediate_ledger_id','')::uuid;
-  if v_intermediate_id is null then raise exception 'Select an accounting intermediate group for this party.'; end if;
+  if v_intermediate_id is null and v_main_id is null then return v_party; end if;
+  if v_intermediate_id is null or v_main_id is null then raise exception 'Select both the main and intermediate ledgers, or leave both blank to save without accounting linkage.'; end if;
 
   select id,group_id into v_parent_id,v_group_id from public.chart_of_accounts
    where company_id=p_company_id and id=v_intermediate_id and ledger_level='Intermediate Ledger' and is_active=true;
