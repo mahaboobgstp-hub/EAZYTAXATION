@@ -1,5 +1,6 @@
 import { supabase } from "../../supabase/supabaseClient";
 import { getSYDWebFieldKnowledge } from "../../ai/registry/webFieldKnowledge";
+import { getSYDOperationalKnowledge } from "../../ai/registry/operationalKnowledge";
 import {
   buildCompanyAIContext, getScreenDefinition, listScreenDefinitions,
   listFieldDefinitions, normalizeAICommandText,
@@ -31,6 +32,7 @@ export async function interpretSYDCommand({
   const { data, error } = await supabase.functions.invoke("syd-ai-intelligence", {
     body: {
       command, platform, companyContext: buildCompanyAIContext(company),
+      operationalKnowledge: getSYDOperationalKnowledge(),
       registeredScreens,
       currentScreen: screen ? {
         screenId: screen.screenId, name: screen.name, module: screen.module,
