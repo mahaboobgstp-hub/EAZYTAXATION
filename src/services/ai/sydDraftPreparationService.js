@@ -41,7 +41,7 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
       for(const key of (screenId==="sales_invoice"?["item_id","item_name","hsn_sac","qty","unit","rate","gst_rate","cess_rate"]:screenId==="purchase_invoice"?["item_id","item_name","hsn_sac","qty","uom","rate","discount_percent","gst_rate"]:["description","hsn_sac","qty","uom","rate","gst_percent","discount_percent"])) {
         if(row[key]!==undefined && row[key]!==null && row[key]!=="") line[key]=row[key];
       }
-      if (screenId==="sales_invoice" && index===0 && selectedMasters.items?.id && !line.item_id) { line.item_id=selectedMasters.items.id; line.item_name=line.item_name||selectedMasters.items.item_name; line.hsn_sac=line.hsn_sac||selectedMasters.items.hsn_sac; line.unit=line.unit||selectedMasters.items.unit; line.gst_rate=line.gst_rate??selectedMasters.items.gst_rate; line.rate=line.rate??selectedMasters.items.sales_rate; }\n      return line;
+      if ((screenId==="sales_invoice" || screenId==="purchase_invoice") && index===0 && selectedMasters.items?.id && !line.item_id) { line.item_id=selectedMasters.items.id; line.item_name=line.item_name||selectedMasters.items.item_name; line.hsn_sac=line.hsn_sac||selectedMasters.items.hsn_sac; line.unit=line.unit||selectedMasters.items.unit; line.gst_rate=line.gst_rate??selectedMasters.items.gst_rate; line.rate=line.rate??(screenId==="sales_invoice"?selectedMasters.items.sales_rate:selectedMasters.items.purchase_rate); }\n      return line;
     });
   }
   const numericFields = screenId==="sales_invoice"?["discount_value","other_amount","round_off"]:screenId==="purchase_invoice"?[]:["discount_amount","other_charges","round_off"];
@@ -49,7 +49,7 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
   if(values.invoice_date && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(values.invoice_date))) errors.push("Invoice date must use YYYY-MM-DD.");
   if(values.expense_date && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(values.expense_date))) errors.push("Expense date must use YYYY-MM-DD.");
   if (screenId==="expense_entry" && !values.payee_name && !selectedMasters.vendors?.id) errors.push("Enter a payee or choose a verified vendor.");
-  if (screenId==="expense_entry" && (!Array.isArray(values.lines)||!values.lines.length)) errors.push("Add at least one expense line.");
-  if (screenId==="sales_invoice" && values.items && values.items.some(row=>!row.item_id && !row.item_name)) errors.push("Each sales line needs a verified item or a description.");
+  if (screenId==="expense_entry" && (!Array.isArray(values.lines)||!values.lines.length)) errors.push("Add at least one expense line.");\n  if (screenId==="purchase_invoice" && (!Array.isArray(values.lines)||!values.lines.length)) errors.push("Add at least one purchase line.");
+  if (screenId==="sales_invoice" && values.items && values.items.some(row=>!row.item_id && !row.item_name)) errors.push("Each sales line needs a verified item or a description.");\n  if (screenId==="purchase_invoice" && values.lines && values.lines.some(row=>!row.item_id && !row.item_name)) errors.push("Each purchase line needs an item or description.");
   return { ok:errors.length===0, screenId, companyId, values, selectedMasters, errors, preparedAt:new Date().toISOString(), source:"syd-ai-proposal" };
 }
