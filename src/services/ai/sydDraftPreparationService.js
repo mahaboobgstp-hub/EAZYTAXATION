@@ -8,14 +8,14 @@ const ALLOWED = {
   expense_entry: new Set(["expense_date","payment_mode","payee_name","supplier_invoice_no","supplier_invoice_date","payment_account","paid_by","due_date","reference_no","gst_treatment","discount_amount","other_charges","round_off","remarks","payment_status","status","lines","description","hsn_sac","qty","uom","rate","gst_percent","discount_percent"]),
 };
 const LINE_FIELDS = {
-  sales_invoice:["item_id","item_name","hsn_sac","qty","unit","rate","gst_rate","cess_rate"],
+  sales_invoice:["item_id","item_name","hsn_sac","qty","unit","rate","gst_rate","cess_rate","discount_percent"],
   purchase_invoice:["item_id","item_name","hsn_sac","qty","uom","rate","discount_percent","gst_rate"],
   expense_entry:["description","hsn_sac","qty","uom","rate","gst_percent","discount_percent"],
 };
 const MASTER_ID_FIELD = { sales_invoice:"customer_id", purchase_invoice:"vendor_id", expense_entry:"vendor_id" };
 const MASTER_TYPES = { sales_invoice:"customers", purchase_invoice:"vendors", expense_entry:"vendors" };
 const numericLineFields = new Set(["qty","rate","gst_rate","cess_rate","discount_percent","gst_percent"]);
-const validDate = value => /^\\d{4}-\\d{2}-\\d{2}$/.test(String(value||"")) && !Number.isNaN(Date.parse(String(value)+"T00:00:00"));
+const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value||"")) && !Number.isNaN(Date.parse(String(value)+"T00:00:00"));
 
 export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}, selectedLineItems = {}, corrections = {} }) {
   const screenId = plan?.screen_id;
