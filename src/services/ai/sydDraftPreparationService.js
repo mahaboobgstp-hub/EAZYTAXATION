@@ -53,7 +53,10 @@ export function prepareSYDValidatedDraft({ plan, companyId, selectedMasters = {}
   if (screenId==="expense_entry" && !values.payee_name && !selectedMasters.vendors?.id) errors.push("Enter a payee or choose a verified vendor.");
   if (screenId==="expense_entry" && (!Array.isArray(values.lines)||!values.lines.length)) errors.push("Add at least one expense line.");
   if (screenId==="purchase_invoice" && (!Array.isArray(values.lines)||!values.lines.length)) errors.push("Add at least one purchase line.");
+  if (screenId==="sales_invoice" && (!Array.isArray(values.items)||!values.items.length)) errors.push("Add at least one sales item line.");
   if (screenId==="sales_invoice" && values.items && values.items.some(row=>!row.item_id && !row.item_name)) errors.push("Each sales line needs a verified item or a description.");
   if (screenId==="purchase_invoice" && values.lines && values.lines.some(row=>!row.item_id && !row.item_name)) errors.push("Each purchase line needs an item or description.");
+  const lineRows=screenId==="sales_invoice"?values.items:values.lines;
+  if(Array.isArray(lineRows)) lineRows.forEach((row,index)=>{ if(row.qty!==undefined && Number(row.qty)<=0) errors.push(`Line ${index+1}: quantity must be greater than zero.`); if(row.rate!==undefined && Number(row.rate)<0) errors.push(`Line ${index+1}: rate cannot be negative.`); });
   return { ok:errors.length===0, screenId, companyId, values, selectedMasters, errors, preparedAt:new Date().toISOString(), source:"syd-ai-proposal" };
 }
