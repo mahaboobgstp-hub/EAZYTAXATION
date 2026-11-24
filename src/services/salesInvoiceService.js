@@ -1,4 +1,5 @@
-import { supabase } from "../supabase/supabaseClient";\nimport { autoPostSalesInvoice } from "./accountingPostingEngine";
+import { supabase } from "../supabase/supabaseClient";
+import { autoPostSalesInvoice } from "./accountingPostingEngine";
 
 export async function getCustomersForDropdown(companyId) {
   const { data, error } = await supabase
