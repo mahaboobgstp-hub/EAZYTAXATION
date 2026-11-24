@@ -323,3 +323,31 @@ The shared service accepts command text, company context, current screen ID, pla
 ### Remaining planned roadmap
 - Stage 11 — Transaction safety gates, explicit action confirmation and execution permissions
 - Stage 12 — End-to-end transaction workflow testing, edge-case coverage and release readiness
+
+## Stage 11 — Transaction Safety Gates, Explicit Action Confirmation & Execution Permissions (2026-11-24)
+
+### Implemented on hybrid branch
+- Added `src/services/ai/sydActionPermissionService.js` with deterministic permission levels L0–L6 and action categories for read, analysis, draft, form handoff, writes, financial execution, and destructive actions. Unknown actions default to the highest-impact classification.
+- Added `src/services/ai/sydActionSafetyService.js` to evaluate company context, company consistency, required validated-draft state for write-class actions, action fingerprint presence, and review checkpoints. Its result explicitly marks the check advisory-only.
+- Added `src/services/ai/sydActionAuthorizationService.js` for short-lived, single-action authorization grants with exact action fingerprint, company scope, action type, expiry and single-use verification.
+- Added `src/services/ai/sydActionLifecycleService.js` to track allowed local lifecycle transitions (proposed/awaiting approval → authorized → executing → completed/failed/partial) and reject invalid transitions.
+- Integrated Stage 11 authorization review into the SYD Intelligence workspace for validated draft form handoff. The user must review the action scope and explicitly approve before opening the target form. The authorization is tied to company and proposal details and is re-verified before handoff.
+- Added a visible authorization review panel and action lifecycle status.
+
+### Stage 11 safety boundaries
+- Authorization is currently client-side, in-memory and advisory; it is not cryptographic or a security boundary. Server-side permission checks, Supabase RLS and trusted execution validation remain mandatory before any future transaction writes.
+- Stage 11 does not add transaction saving, posting, payment execution, master creation, deletion, bulk actions, or autonomous execution.
+- The currently integrated approval authorizes only validated draft form navigation. It does not authorize saving or posting.
+
+### Stage 11 verification status
+- GitHub source writes: **confirmed**
+- Permission classification service: **implemented**
+- Safety evaluation service: **implemented**
+- Action-specific short-lived authorization: **implemented**
+- Lifecycle transition helper: **implemented**
+- Workspace handoff approval integration: **implemented**
+- Build / CI verification: **pending**
+- Browser/runtime security and company-isolation testing: **pending**
+- Production merge/deployment: **not performed**
+- Android branch: **untouched**
+
