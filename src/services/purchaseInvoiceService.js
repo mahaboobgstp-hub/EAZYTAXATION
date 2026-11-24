@@ -81,10 +81,10 @@ export async function getPurchaseInvoiceItems(invoiceId,companyId) {
 
 export async function updatePurchaseInvoice(invoiceId,invoiceHeader,invoiceItems,companyId) {
  const scopedCompany=companyId||invoiceHeader.company_id;
- let read=supabase.from("purchase_invoices").select("accounting_status,company_id").eq("id",invoiceId);
+ let read=supabase.from("purchase_invoices").select("accounting_status,accounting_voucher_id,company_id").eq("id",invoiceId);
  read=scoped(read,scopedCompany);
  const {data:existing,error:readError}=await read.single();if(readError)throw readError;
- if(existing?.accounting_status==="Posted")throw new Error("This purchase invoice is already posted to Accounting. Use a correction workflow instead of editing a posted invoice.");
+ if(existing?.accounting_status==="Posted"||existing?.accounting_voucher_id)throw new Error("This purchase invoice is already posted to Accounting. Use a correction workflow instead of editing a posted invoice.");
  let update=supabase.from("purchase_invoices").update({...invoiceHeader,updated_at:new Date().toISOString()}).eq("id",invoiceId);
  update=scoped(update,scopedCompany);const {error:headerError}=await update;if(headerError)throw headerError;
  const {error:deleteError}=await supabase.from("purchase_invoice_items").delete().eq("invoice_id",invoiceId);if(deleteError)throw deleteError;
@@ -94,10 +94,10 @@ export async function updatePurchaseInvoice(invoiceId,invoiceHeader,invoiceItems
 }
 
 export async function deletePurchaseInvoice(invoiceId,companyId) {
- let query=supabase.from("purchase_invoices").select("accounting_status,company_id").eq("id",invoiceId);
+ let query=supabase.from("purchase_invoices").select("accounting_status,accounting_voucher_id,company_id").eq("id",invoiceId);
  query=scoped(query,companyId);
  const {data:existing,error:readError}=await query.single();if(readError)throw readError;
- if(existing?.accounting_status==="Posted")throw new Error("Posted purchase invoices cannot be deleted. Use a debit note or reversal workflow.");
+ if(existing?.accounting_status==="Posted"||existing?.accounting_voucher_id)throw new Error("Purchase invoices with posted or draft accounting vouchers cannot be deleted. Use a debit note or reversal workflow.");
  let update=supabase.from("purchase_invoices").update({is_deleted:true,updated_at:new Date().toISOString()}).eq("id",invoiceId);
  update=scoped(update,companyId);const {error}=await update;if(error)throw error;return true;
 }
