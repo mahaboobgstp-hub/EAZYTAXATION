@@ -32,7 +32,7 @@ export async function getExpenseMasters(companyId) {
   const [vendors, categories] = await Promise.all([
     supabase.from("vendors").select("id,vendor_name,gstin,state,address,company_id")
       .eq("company_id", companyId).order("vendor_name"),
-    supabase.from("expense_categories").select("id,category_name").order("category_name")
+    supabase.from("expense_categories").select("id,category_name,ledger_id,main_group_id,intermediate_group_id,subgroup_id").or("company_id.eq."+companyId+",company_id.is.null").order("category_name")
   ]);
   if (vendors.error) throw vendors.error;
   if (categories.error) throw categories.error;
