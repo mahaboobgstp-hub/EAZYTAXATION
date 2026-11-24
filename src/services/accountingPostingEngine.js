@@ -147,3 +147,33 @@ export async function autoPostPurchaseInvoice(companyId,invoiceId){
   await setSourceStatus("purchase_invoices",companyId,invoiceId,"Posted","Automatically posted to accounting.",result.voucher_id);return result;
  }catch(error){const {data:existing}=await supabase.from("accounting_vouchers").select("id").eq("company_id",companyId).eq("source_module","purchase_invoice").eq("source_record_id",invoiceId).neq("status","Reversed").maybeSingle();await setSourceStatus("purchase_invoices",companyId,invoiceId,"Failed",error.message,existing?.id||null);return {status:"Failed",reason:error.message};}
 }
+
+export async function autoPostExpense(companyId,expenseId){
+ try{
+  const capability=await getCompanyAccountingCapability(companyId);
+  if(!capability.enabled)return await pending("expenses",companyId,expenseId,capability.reason,"Not Applicable");
+  const {data:expense,error}=await supabase.from("expenses").select("*").eq("company_id",companyId).eq("id",expenseId).single();if(error)throw error;
+  const mappings=await getMappings(companyId);
+  let categoryLedger=null;
+  if(expense.category_id){const {data:category,error:categoryError}=await supabase.from("expense_categories").select("ledger_id,company_id").eq("id",expense.category_id).or("company_id.eq."+companyId+",company_id.is.null").maybeSingle();if(categoryError)throw categoryError;categoryLedger=category?.company_id===companyId?category.ledger_id:null;}
+  const expenseLedger=categoryLedger||mappings.default_expense_ledger;
+  if(!expenseLedger)return await pending("expenses",companyId,expenseId,"Expense category ledger or default expense ledger is not mapped.");
+  let payableLedger=mappings.default_expense_payable_ledger;
+  if(expense.vendor_id){const {data:vendor,error:vendorError}=await supabase.from("vendors").select("ledger_id").eq("company_id",companyId).eq("id",expense.vendor_id).single();if(vendorError)throw vendorError;payableLedger=vendor.ledger_id||payableLedger;}
+  if(!payableLedger)return await pending("expenses",companyId,expenseId,"Supplier payable or default expense payable ledger is not mapped.");
+  const taxes={cgst:expense.cgst,sgst:expense.sgst,igst:expense.igst,cess:0,additionalCess:0};
+  for(const [tax,key] of Object.entries(taxMapping.purchase)){if(money(taxes[tax])&&!mappings[key])return await pending("expenses",companyId,expenseId,"Missing input "+tax.toUpperCase()+" ledger mapping.");
+  }
+  const lines=[];
+  addAmountLine(lines,expenseLedger,expense.taxable_amount,"debit","Expense");
+  addTaxLines(lines,mappings,taxes,"debit","purchase");
+  addAmountLine(lines,expenseLedger,expense.other_charges,"debit","Other Charges");
+  const roundOff=money(expense.round_off);
+  if(roundOff&&!mappings.round_off_ledger)return await pending("expenses",companyId,expenseId,"Round-off ledger mapping is missing.");
+  if(roundOff)addAmountLine(lines,mappings.round_off_ledger,Math.abs(roundOff),roundOff>0?"debit":"credit","Expense Round-off");
+  addAmountLine(lines,payableLedger,expense.total_amount,"credit","Expense Payable");
+  if(Math.abs(sum(lines,"debit")-sum(lines,"credit"))>0.05)return await pending("expenses",companyId,expenseId,"Expense accounting lines do not equal the expense total.");
+  const result=await postBusinessTransaction(companyId,{source_module:"expense",source_record_id:expenseId,voucher_type:"Journal",voucher_date:expense.expense_date,voucher_number:"AUTO-EXP-"+String(expense.expense_no||expenseId).replace(/[^A-Z0-9]/gi,"").slice(-10),reference_number:expense.reference_no,narration:"Auto-posted Expense "+expense.expense_no,lines});
+  await setSourceStatus("expenses",companyId,expenseId,"Posted","Automatically posted to accounting.",result.voucher_id);return result;
+ }catch(error){const {data:existing}=await supabase.from("accounting_vouchers").select("id").eq("company_id",companyId).eq("source_module","expense").eq("source_record_id",expenseId).neq("status","Reversed").maybeSingle();await setSourceStatus("expenses",companyId,expenseId,"Failed",error.message,existing?.id||null);return {status:"Failed",reason:error.message};}
+}
