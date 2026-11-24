@@ -265,3 +265,31 @@ The shared service accepts command text, company context, current screen ID, pla
 - GitHub Actions build validation triggered for the latest Stage 8 commits; final build result is pending at the time of documentation update.
 - Vercel preview checks may still report build-rate-limit; not treated as proof of source/build failure.
 - Authenticated runtime and form-handoff verification pending.
+
+
+## Stage 9 — Conversational Session Memory, Multi-turn Continuity & Correction Learning (2026-11-24)
+
+### Implemented on hybrid branch
+- Added `src/services/ai/sydSessionMemoryService.js` for company-scoped, browser-tab session memory.
+- Memory is stored in `sessionStorage` (not the database), with a two-hour expiry, bounded history (up to six turns/correction notes), and a user clear action.
+- Memory entries include a limited allowlist of conversational transaction context: command text, supported screen/intent, short proposal summary, selected master names, and selected descriptive header/line fields. Sensitive identifiers and numeric financial line values are not retained in memory fields.
+- SYD Intelligence now sends the latest bounded memory as `conversationContext` to the existing shared Edge Function request, including explicit guidance to treat memory as hints and confirm ambiguity. Current company context is isolated by the storage key and checked again in stored data.
+- Correction notes are session-local, allowlisted, capped, visible in the memory review panel, and supplied to subsequent turns as context. They are not automatically applied to new transactions or written to master data.
+- Added memory review/clear controls and a small UI panel showing recent turns and correction notes.
+- Fixed an adjacent Stage 8 clarification conditional discovered during inspection: the “What items or expense details should be entered?” prompt now only appears when the proposal has no transaction lines, instead of being attached to the discount validation branch.
+
+### Safety / limits
+- Session memory is advisory only. No database persistence, model training, automatic correction application, master creation, save, posting, or payment action was added.
+- Memory is company-scoped and limited to the current browser tab session; user can clear it from the panel.
+- Correction “learning” means contextually remembering explicit edits for the active session only, not permanent AI training or global behavior changes.
+
+### Stage 9 verification status
+- GitHub source writes: **confirmed**
+- Session memory service: **implemented**
+- Workspace multi-turn context integration: **implemented**
+- Session review and clear controls: **implemented**
+- Correction notes and context feedback: **implemented**
+- Build / CI verification: **pending**
+- Browser runtime / session expiry / company isolation tests: **pending**
+- Production merge/deployment: **not performed**
+- Android branch: **untouched**
