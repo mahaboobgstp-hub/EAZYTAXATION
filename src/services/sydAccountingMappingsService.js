@@ -34,8 +34,9 @@ export async function getSYDAccountingMappings(companyId){
 
 export async function saveSYDAccountingMapping(companyId,mappingKey,ledgerId){
  if(!companyId||!mappingKey||!ledgerId)throw new Error("Company, mapping and ledger are required.");
- const {data:ledger,error:ledgerError}=await supabase.from("chart_of_accounts").select("id").eq("company_id",companyId).eq("id",ledgerId).eq("is_active",true).eq("is_posting_enabled",true).maybeSingle();
- if(ledgerError)throw ledgerError;if(!ledger)throw new Error("Selected ledger is not valid for this company.");\n const option=SYD_ACCOUNTING_MAPPING_OPTIONS.find(x=>x.key===mappingKey);if(option?.nature){const {data:group,error:groupError}=await supabase.from("account_groups").select("account_nature").eq("company_id",companyId).eq("id",ledger.group_id).maybeSingle();if(groupError)throw groupError;if(group?.account_nature!==option.nature)throw new Error("Select a ledger from the "+option.nature+" account group for this mapping.");}
+ const {data:ledger,error:ledgerError}=await supabase.from("chart_of_accounts").select("id,group_id").eq("company_id",companyId).eq("id",ledgerId).eq("is_active",true).eq("is_posting_enabled",true).maybeSingle();
+ if(ledgerError)throw ledgerError;if(!ledger)throw new Error("Selected ledger is not valid for this company.");
+ const option=SYD_ACCOUNTING_MAPPING_OPTIONS.find(x=>x.key===mappingKey);if(option?.nature){const {data:group,error:groupError}=await supabase.from("account_groups").select("account_nature").eq("company_id",companyId).eq("id",ledger.group_id).maybeSingle();if(groupError)throw groupError;if(group?.account_nature!==option.nature)throw new Error("Select a ledger from the "+option.nature+" account group for this mapping.");}
  const {error}=await supabase.from("syd_accounting_mappings").upsert({company_id:companyId,mapping_key:mappingKey,ledger_id:ledgerId,updated_at:new Date().toISOString()},{onConflict:"company_id,mapping_key"});
  if(error)throw error;
  return true;
