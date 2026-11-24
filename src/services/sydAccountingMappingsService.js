@@ -20,7 +20,7 @@ export const SYD_ACCOUNTING_MAPPING_OPTIONS=[
  {key:"inventory_ledger",label:"Default Inventory Ledger",group:"Inventory",nature:"Asset",description:"Fallback inventory/stock value account."},
  {key:"cogs_ledger",label:"Default Cost of Goods Sold Ledger",group:"Inventory",nature:"Expense",description:"Fallback cost-of-goods-sold account."},
  {key:"cash_ledger",label:"Default Cash Ledger",group:"Cash & Banking",nature:"Asset",description:"Fallback cash ledger."},
- {key:"bank_ledger",label:"Default Bank Ledger",group:"Cash & Banking",nature:"Asset",description:"Fallback bank ledger where no bank master is linked."}
+ {key:"bank_ledger",label:"Default Bank Ledger",group:"Cash & Banking",nature:"Asset",description:"Fallback bank ledger where no bank master is linked."},\n {key:"credit_card_ledger",label:"Default Credit Card Ledger",group:"Cash & Banking",nature:"Liability",description:"Credit card liability account for expense payments."}
 ];
 
 export async function getSYDAccountingMappings(companyId){
