@@ -143,10 +143,10 @@ export async function getSalesInvoiceItems(
 }
 export async function updateSalesInvoice(invoiceId,invoiceHeader,invoiceItems){
  const companyId=invoiceHeader.company_id;
- let existingQuery=supabase.from("sales_invoices").select("accounting_status,company_id").eq("id",invoiceId);
+ let existingQuery=supabase.from("sales_invoices").select("accounting_status,accounting_voucher_id,company_id").eq("id",invoiceId);
  if(companyId)existingQuery=existingQuery.eq("company_id",companyId);
  const {data:existing,error:existingError}=await existingQuery.single();if(existingError)throw existingError;
- if(existing?.accounting_status==="Posted")throw new Error("This invoice is already posted to Accounting. Use the correction workflow instead of editing a posted invoice.");
+ if(existing?.accounting_status==="Posted"||existing?.accounting_voucher_id)throw new Error("This invoice is already posted to Accounting. Use the correction workflow instead of editing a posted invoice.");
  let query=supabase.from("sales_invoices").update({...invoiceHeader,updated_at:new Date()}).eq("id",invoiceId);
  if(companyId)query=query.eq("company_id",companyId);
  const {error:headerError}=await query;if(headerError)throw headerError;
@@ -158,10 +158,10 @@ export async function updateSalesInvoice(invoiceId,invoiceHeader,invoiceItems){
 }
 
 export async function deleteSalesInvoice(invoiceId,companyId){
- let query=supabase.from("sales_invoices").select("accounting_status,company_id").eq("id",invoiceId);
+ let query=supabase.from("sales_invoices").select("accounting_status,accounting_voucher_id,company_id").eq("id",invoiceId);
  if(companyId)query=query.eq("company_id",companyId);
  const {data:existing,error:readError}=await query.single();if(readError)throw readError;
- if(existing?.accounting_status==="Posted")throw new Error("Posted invoices cannot be deleted. Use a credit note or reversal workflow.");
+ if(existing?.accounting_status==="Posted"||existing?.accounting_voucher_id)throw new Error("Invoices with posted or draft accounting vouchers cannot be deleted. Use a credit note or reversal workflow.");
  let update=supabase.from("sales_invoices").update({is_deleted:true,updated_at:new Date()}).eq("id",invoiceId);
  if(companyId)update=update.eq("company_id",companyId);
  const {error}=await update;if(error)throw error;return true;
