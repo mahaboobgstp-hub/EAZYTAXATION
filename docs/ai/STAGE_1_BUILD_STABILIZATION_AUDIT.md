@@ -87,3 +87,29 @@ The shared service accepts command text, company context, current screen ID, pla
 - Web route and sidebar entry: **completed**
 - Verified screen field definitions: **deferred intentionally until form audits**
 - Current-branch build verification: **pending**
+
+
+## Stage 3 — Verified Screens & Field Intelligence (2026-11-24)
+
+### Screens audited against source
+- Sales Invoice: `src/pages/sales/SalesInvoice.jsx` — verified invoice date/number, Customer Master lookup, Cash/Credit sale type, billing/shipping address controls, same-as-billing behavior, place of supply/state behavior, vehicle and e-way bill, item suggestion/master lookup and custom item text, HSN/SAC, quantity, unit, rate, GST rate, cess rate, tax-inclusive switch, invoice discount type/value, other charges, round off, remarks, save-time item-name validation and invoice header values.
+- Purchase Invoice: `src/pages/PurchaseInvoice/PurchaseInvoice.jsx` — verified voucher date/number, supplier bill number/date, GST treatment options, supplier lookup, supplier GSTIN/state/place of supply, billing/shipping addresses, vehicle/e-way bill, remarks, purchase lines with item master/custom item, HSN/SAC, quantity/UOM/rate/discount/GST, tax summary and save-time supplier/bill-number/line validation.
+- Expense Entry: `src/pages/expenses/ExpenseEntry.jsx` — verified expense voucher/date, payment method options, supplier/payee selection and text, category lookup, reference, GST treatment options, bill details, payment account/paid-by/due date, remarks, header discount/other charges/round-off, payment status, attachment upload, expense lines and save-time category/payee/line validation.
+
+### Code changes
+- Added `src/ai/registry/webFieldKnowledge.js` with screen-scoped field definitions for the three audited forms. The definitions use existing state/form keys and include descriptions, types, verified select options, required markers and simple numeric constraints.
+- `webScreenKnowledge.js` now registers the screen catalogue and audited field catalogue together on initialization.
+- `sydIntelligenceService.js` now attaches each registered screen's own field catalogue to the screen metadata sent to the Edge Function. This makes field context available even when the user asks from the SYD Intelligence workspace rather than being on the target transaction screen.
+- `syd-ai-intelligence/index.ts` prompt and response filtering now use the selected screen's attached field catalogue, preventing cross-screen field IDs from being accepted as proposals.
+
+### Safety and scope
+- This remains proposal-only. No auto-fill, navigation, save, posting, transaction retrieval or field mutation is enabled.
+- Field mappings are descriptive and sourced from audited form/state names. No database schema mappings were added or assumed.
+- No Android branch edits, main merge, production deployment or database migrations.
+
+### Stage 3 status
+- Form-source audits: **completed for Sales Invoice, Purchase Invoice and Expense Entry**
+- Field catalogue registration: **code implemented**
+- Screen-scoped AI field context: **code implemented**
+- AI proposal field filtering: **code implemented**
+- Build/test verification: **pending**
