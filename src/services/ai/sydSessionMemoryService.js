@@ -51,7 +51,7 @@ export function recordSYDSessionCorrection(companyId, {field, before, after, sco
   if (!newValue || oldValue===newValue) return null;
   const memory=readSYDSessionMemory(companyId);
   const note={at:new Date().toISOString(),field,scope,from:oldValue,to:newValue};
-  memory.correctionNotes=[...memory.correctionNotes,note].slice(-MAX_ENTRIES);
+  memory.correctionNotes=[...memory.correctionNotes.filter(item=>!(item.field===field&&item.scope===scope)),note].slice(-MAX_ENTRIES);
   return persist(companyId,memory) ? note : null;
 }
 export function clearSYDSessionMemory(companyId) {
