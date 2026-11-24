@@ -28,7 +28,8 @@ const bankAccounts = [
   { name: "SBI Current Account", bank: "State Bank of India", number: "•••• 9012", balance: 1240560.75, date: "10 Jul 2026", color: "sbi" },
   { name: "ICICI Current Account", bank: "ICICI Bank", number: "•••• 4567", balance: 892130, date: "09 Jul 2026", color: "icici" }
 ];
-const categories = ["Unclassified", "Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];\nconst accountHash = async value => { const normalized=String(value||"").replace(/\\s+/g,"").toUpperCase(); if(!normalized)return null; if(!globalThis.crypto?.subtle)throw new Error("Secure duplicate checking is unavailable in this browser."); const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(normalized)); return Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join(""); };
+const categories = ["Unclassified", "Purchase / Supplier Payment", "Receipt from Customer", "Expenses", "Bank Charges", "Contra / Transfer", "Loan / EMI", "Salary Payment", "Tax Payment", "Capital / Investment", "Other"];
+const accountHash = async value => { const normalized=String(value||"").replace(/\\s+/g,"").toUpperCase(); if(!normalized)return null; if(!globalThis.crypto?.subtle)throw new Error("Secure duplicate checking is unavailable in this browser."); const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(normalized)); return Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join(""); };
 
 export default function BankingWorkspace() {
   const { currentCompany } = useCompany();
@@ -54,7 +55,10 @@ export default function BankingWorkspace() {
   const [period, setPeriod] = useState("Apr 2025");
   const [settingsTab, setSettingsTab] = useState("Account Aggregator");
   const [realAccounts, setRealAccounts] = useState([]);
-  const [accountLedgers, setAccountLedgers] = useState([]);\n  const [accountingSetup,setAccountingSetup]=useState({enabled:false,ledgers:[],groups:[]});\n  const [bankMainLedgerId,setBankMainLedgerId]=useState("");\n  const [bankIntermediateLedgerId,setBankIntermediateLedgerId]=useState("");
+  const [accountLedgers, setAccountLedgers] = useState([]);
+  const [accountingSetup,setAccountingSetup]=useState({enabled:false,ledgers:[],groups:[]});
+  const [bankMainLedgerId,setBankMainLedgerId]=useState("");
+  const [bankIntermediateLedgerId,setBankIntermediateLedgerId]=useState("");
   const [accountModal, setAccountModal] = useState(false);
   const [accountForm, setAccountForm] = useState({bank_name:"",account_holder_name:"",account_number:"",ifsc:"",branch_name:"",account_type:"Current"});
   const [accountSaving, setAccountSaving] = useState(false);
@@ -74,7 +78,9 @@ export default function BankingWorkspace() {
     if(linesError) setNotice("Transactions could not be loaded: "+linesError.message);
     else { let intelligenceContext=null; try { intelligenceContext=await loadTransactionIntelligence(companyId); } catch(intelligenceError) { console.warn("SYD transaction intelligence unavailable:",intelligenceError.message); } setTransactions((lines||[]).map(line=>{ const tx={id:line.id,accountId:line.bank_account_id,date:line.statement_date,narration:line.narration||"",description:line.narration||"",reference:line.reference_number||"",ref:line.reference_number||"",amount:(line.direction==="Debit"?-1:1)*Number(line.amount||0),direction:line.direction==="Debit"?"debit":"credit",partyName:line.party_name||"",gstin:line.gstin||"",type:line.category||"Unclassified",ledger:line.ledger_name||"",ledgerId:line.ledger_id||"",status:line.classification_status||"Unclassified",raw:line}; const intelligence=intelligenceContext?classifySYDTransaction(tx,intelligenceContext):null; return {...tx,intelligence,...(intelligence?.autoApply&&intelligence.ledger?{ledgerId:intelligence.ledger.id,ledger:intelligence.ledger.ledger_name,type:intelligence.type,status:"To Post"}:{})}; })); }
   };
-  useEffect(()=>{loadBankingData();if(companyId)getMasterAccountingSetup(companyId).then(setAccountingSetup).catch(e=>console.warn("Bank accounting setup:",e.message));else setAccountingSetup({enabled:false,ledgers:[],groups:[]});},[companyId]);\n  const bankMainLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Main Ledger"&&l.is_active!==false);\n  const bankIntermediateLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Intermediate Ledger"&&l.is_active!==false&&l.parent_ledger_id===bankMainLedgerId);
+  useEffect(()=>{loadBankingData();if(companyId)getMasterAccountingSetup(companyId).then(setAccountingSetup).catch(e=>console.warn("Bank accounting setup:",e.message));else setAccountingSetup({enabled:false,ledgers:[],groups:[]});},[companyId]);
+  const bankMainLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Main Ledger"&&l.is_active!==false);
+  const bankIntermediateLedgers=accountingSetup.ledgers.filter(l=>l.ledger_level==="Intermediate Ledger"&&l.is_active!==false&&l.parent_ledger_id===bankMainLedgerId);
   useEffect(()=>{if(!companyId)return;supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code").eq("company_id",companyId).eq("is_active",true).order("ledger_name").then(({data,error})=>{if(error)setNotice(error.message);else setAccountLedgers(data||[]);});},[companyId]);
   const saveBankAccount = async (e) => {
     e.preventDefault();
