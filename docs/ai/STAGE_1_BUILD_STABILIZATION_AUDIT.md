@@ -163,3 +163,28 @@ The shared service accepts command text, company context, current screen ID, pla
 - Updated the strict structured-output schema to require the workflow object as well as its required members. This latest Edge Function-only schema correction was committed after the successful frontend build and is not included in that CI run.
 - Operational workflow steps and master dependency IDs are derived from the deterministic catalogue after model response, and only accepted when workflow ID matches the selected registered screen. This prevents the model from fabricating steps or cross-screen master dependencies.
 - **Latest Edge Function code remains un-deployed and runtime-unverified** in this session. A live authenticated request is required for runtime verification.
+
+
+## Stage 5 — Live Master Intelligence + Draft Workflow Review (2026-11-24)
+
+### Implementation committed on `hybrid-accounting-integration`
+- Added `src/services/ai/sydMasterLookupService.js`: company-scoped, read-only searches for Customers, Vendors, Items and Expense Categories. Customer/vendor/item queries are constrained to `company_id`; expense categories include the selected company and global (`company_id IS NULL`) categories, matching the existing expense master service pattern.
+- Master searches use name partial matching, result limit (8), and return candidate records only. The service rejects unsupported master types and requires a company context. It performs no inserts, updates or deletes.
+- Updated `src/pages/ai/SYDIntelligenceWorkspace.jsx`: added live lookup action after an AI proposal, candidate matching, user-selected candidate state, and an in-memory draft review panel showing proposed fields, selected company, intent, screen, and chosen master candidates.
+- Updated `src/css/ai/SYDIntelligenceWorkspace.css` with responsive lookup and review styles.
+- Updated the operational catalogue to indicate live read-only lookup for the supported master types.
+- No cash/bank account or ledger lookup was enabled because table/column schemas were not sufficiently verified in this Stage 5 audit.
+
+### Stage 5 safety and limits
+- Live lookup is read-only and only returns candidate masters; it does not automatically pick a record or populate a form.
+- Candidate selection is held only in component memory. No transaction draft is persisted, no form mutation, navigation, save, posting or payment action is available.
+- Searchable master types: Customers, Vendors, Items, Expense Categories.
+- Unavailable/unverified master types: Cash/Bank Accounts and Chart of Accounts/Ledger Mapping.
+- No production company data was changed by these code changes.
+
+### Stage 5 validation status
+- Code changes have been committed to the hybrid branch via GitHub contents commits.
+- CI/build verification is pending for the latest Stage 5 commits. No local checkout or runtime environment was available to run the Vite build or authenticated company-scoped Supabase lookup tests.
+- Edge Function runtime and database RLS behavior for the new lookup client still require an authenticated test against a test company.
+- Draft PR #9 remains unmerged; no production merge/deployment was performed.
+- Android branch remains untouched.
