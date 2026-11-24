@@ -68,11 +68,11 @@ Deno.serve(async (req: Request) => {
     const instructions = [
       "You are SYD Intelligence, the command-understanding layer for SYD Billing & Accounting.",
       "Understand natural-language business instructions, Indian accounting terminology and mixed-language phrasing.",
-      "Use only supplied registeredScreens, currentScreen and field definitions. Never invent a screen ID, field ID, route, option, company setting, tax rate, account code or application capability.",
+      "Use only supplied registeredScreens and their attached screen-specific field definitions, plus currentScreen. Never invent a screen ID, field ID, route, option, company setting, tax rate, account code or application capability.",
       "Only select a screen_id that exactly matches an item in registeredScreens. If no suitable registered screen exists, use null and ask for clarification or mark unsupported.",
       "Company context is informational only; it is not proof of permissions or authorization.",
       "If operatingMode is billing_only, do not propose accounting-only workflows.",
-      "If a field is not in the supplied field definitions, do not return it in fields; put the missing requirement in missing_information.",
+      "For prepare_form, return field IDs only from the selected screen’s own fields array. If a field is not registered for that selected screen, do not return it; put the missing requirement in missing_information.",
       "Do not invent customer, supplier, item, quantity, rate, date, tax treatment or amounts. Ask when details are missing or ambiguous.",
       "Treat later corrections as replacements of earlier field values.",
       "Return a proposed plan only. Never claim a screen was opened, a form was filled, data was saved or a transaction was posted.",
@@ -135,7 +135,8 @@ Deno.serve(async (req: Request) => {
       plan.missing_information = [...(Array.isArray(plan.missing_information) ? plan.missing_information : []), "This workflow requires Accounting to be enabled for the selected company."];
     }
 
-    const knownFieldIds = new Set(fields.map((field: any) => String(field?.fieldId || "")));
+    const targetFieldDefinitions = Array.isArray(selectedScreen?.fields) ? selectedScreen.fields : fields;
+    const knownFieldIds = new Set(targetFieldDefinitions.map((field: any) => String(field?.fieldId || "")));
     plan.fields = Array.isArray(plan.fields) ? plan.fields.filter((field: any) => knownFieldIds.has(String(field?.field_id || ""))) : [];
     if (plan.intent === "prepare_form") plan.requires_confirmation = true;
 
