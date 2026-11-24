@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
     const currentScreen = safeObject(body?.currentScreen, 3000);
     const registeredScreens = Array.isArray(body?.registeredScreens) ? body.registeredScreens.slice(0, 150) : [];
     const fields = Array.isArray(body?.fields) ? body.fields.slice(0, 100) : [];
-    if (JSON.stringify(registeredScreens).length > 16000 || JSON.stringify(fields).length > 12000) {
+    if (JSON.stringify(registeredScreens).length > 26000 || JSON.stringify(fields).length > 12000) {
       return json({ error: "Application metadata is too large. Please reduce the registered screen or field definitions." }, 413);
     }
     const conversationContext = safeObject(body?.conversationContext, 2000);
