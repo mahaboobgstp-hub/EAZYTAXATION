@@ -10,7 +10,7 @@ import {
 } from "react-icons/fi";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
-import { loadTransactionIntelligence, classifySYDTransaction, saveSYDClassificationRule } from "../../services/ai/transactionIntelligenceService";
+import { loadTransactionIntelligence, classifySYDTransaction, saveSYDClassificationRule, normalizeSYDKeyword } from "../../services/ai/transactionIntelligenceService";
 import "../../css/banking/BankingWorkspace.css";
 
 const initialTransactions = [
@@ -164,7 +164,52 @@ export default function BankingWorkspace() {
     setSelected([]);
     setNotice("Selected transactions have been marked as posted in this UI preview. Live voucher posting will be connected in the accounting integration phase.");
   };
-  const rememberTransactionRule = async (row) => { if(!companyId||!row.ledgerId||!row.narration?.trim())return; const keyword=window.prompt("Enter a keyword from this transaction description. Matching transactions will use this classification.",row.narration.trim()); if(!keyword||!keyword.trim())return; const cleanKeyword=keyword.trim(); try { const {data:userData,error:userError}=await supabase.auth.getUser(); if(userError)throw userError; await saveSYDClassificationRule(companyId,{rule_name:"Keyword: "+cleanKeyword,match_type:"contains_narration",match_value:cleanKeyword,transaction_direction:"any",transaction_type:row.type,ledger_id:row.ledgerId,priority:200,auto_apply:true},userData.user?.id); const targetLedger=accountLedgers.find(x=>x.id===row.ledgerId); const matches=transactions.filter(tx=>String(tx.narration||tx.description||"").toLowerCase().includes(cleanKeyword.toLowerCase())); let applied=0; for(const tx of matches){const {error}=await supabase.from("bank_statement_lines").update({category:row.type,ledger_id:row.ledgerId,ledger_name:targetLedger?.ledger_name||row.ledger,classification_status:"To Post"}).eq("id",tx.id).eq("company_id",companyId);if(error)throw error;applied++;} setTransactions(list=>list.map(tx=>String(tx.narration||tx.description||"").toLowerCase().includes(cleanKeyword.toLowerCase())?{...tx,type:row.type,ledger:targetLedger?.ledger_name||row.ledger,ledgerId:row.ledgerId,status:"To Post",intelligence:{ledger:targetLedger,confidence:0.99,source:"Learned keyword rule",autoApply:true,explanation:"Matched company keyword rule"}}:tx)); setNotice("Learned keyword '"+cleanKeyword+"' and applied it to "+applied+" matching bank transactions. Future matches will be recognized."); } catch(err) { setNotice("Could not save/apply keyword rule: "+err.message); } };\n  const toggleSelected = id => setSelected(rows => rows.includes(id) ? rows.filter(x => x !== id) : [...rows, id]);
+  const rememberTransactionRule = async (row) => {
+    if (!companyId || !row.ledgerId || !row.narration?.trim()) return;
+    const keyword = window.prompt("Enter a keyword from this transaction description. Matching transactions will use this classification.", row.narration.trim());
+    if (!keyword || !keyword.trim()) return;
+    const cleanKeyword = keyword.trim();
+    const normalizedKeyword = normalizeSYDKeyword(cleanKeyword);
+    if (normalizedKeyword.length < 3) { setNotice("Please use a keyword of at least 3 meaningful characters."); return; }
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      await saveSYDClassificationRule(companyId, {
+        rule_name: "Keyword: " + cleanKeyword,
+        match_type: "contains_narration",
+        match_value: cleanKeyword,
+        transaction_direction: "any",
+        transaction_type: row.type,
+        ledger_id: row.ledgerId,
+        priority: 200,
+        auto_apply: true
+      }, userData.user?.id);
+      const targetLedger = accountLedgers.find(x => x.id === row.ledgerId);
+      const matches = transactions.filter(tx => normalizeSYDKeyword([tx.narration,tx.description,tx.partyName,tx.reference].filter(Boolean).join(" ")).includes(normalizedKeyword));
+      let applied = 0, skippedMatched = 0;
+      for (const tx of matches) {
+        if (tx.raw?.match_status === "Matched" || tx.raw?.match_status === "Reconciled" || tx.status === "Posted") { skippedMatched++; continue; }
+        const { error } = await supabase.from("bank_statement_lines").update({
+          category: row.type,
+          ledger_id: row.ledgerId,
+          ledger_name: targetLedger?.ledger_name || row.ledger,
+          classification_status: "To Post"
+        }).eq("id", tx.id).eq("company_id", companyId);
+        if (error) throw error;
+        applied++;
+      }
+      setTransactions(list => list.map(tx => {
+        const matchesKeyword = normalizeSYDKeyword([tx.narration,tx.description,tx.partyName,tx.reference].filter(Boolean).join(" ")).includes(normalizedKeyword);
+        return matchesKeyword && tx.raw?.match_status !== "Matched" && tx.raw?.match_status !== "Reconciled" && tx.status !== "Posted"
+          ? {...tx,type:row.type,ledger:targetLedger?.ledger_name||row.ledger,ledgerId:row.ledgerId,status:"To Post",intelligence:{ledger:targetLedger,confidence:0.99,source:"Learned keyword rule",autoApply:true,explanation:"Matched confirmed company keyword rule"}}
+          : tx;
+      }));
+      setNotice("Learned keyword '"+cleanKeyword+"' and applied it to "+applied+" matching transactions"+(skippedMatched?" ("+skippedMatched+" already matched/posted were preserved)":"")+". Future matching bank transactions will be recognized.");
+    } catch (err) {
+      setNotice("Could not save/apply keyword rule: "+err.message);
+    }
+  };
+  const toggleSelected = id => setSelected(rows => rows.includes(id) ? rows.filter(x => x !== id) : [...rows, id]);
 
   return <main className="banking-page">
     <div className="banking-breadcrumb">Accounting <span>/</span> Banking <span>/</span> {tab}</div>
