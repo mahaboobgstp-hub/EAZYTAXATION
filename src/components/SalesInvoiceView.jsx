@@ -29,7 +29,7 @@ function EwayBillSandboxPanel({ invoice }) {
 
   const current = records[0];
   const label = current?.status || 'not_generated';
-  const readable = label.replace(/_/g, ' ').replace(/\\b\\w/g, (c) => c.toUpperCase());
+  const readable = label.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <section style={{ margin: '20px 0', padding: 16, border: '1px solid #b8d6e8', borderRadius: 12, background: '#f3f9fd' }}>
