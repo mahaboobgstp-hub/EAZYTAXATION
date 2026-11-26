@@ -44,7 +44,7 @@ const normalizeItems = (invoiceId, invoiceItems) => invoiceItems.map((item,index
   discount_percent:Number(item.discount_percent)||0,discount_amount:Number(item.discount_amount)||0,
   taxable_value:Number(item.taxable_value)||0,gst_rate:Number(item.gst_rate)||0,
   cgst_amount:Number(item.cgst_amount)||0,sgst_amount:Number(item.sgst_amount)||0,igst_amount:Number(item.igst_amount)||0,
-  line_total:Number(item.line_total)||0,remarks:item.remarks||""
+  line_total:Number(item.line_total)||0,remarks:item.remarks||"",purchase_ledger_id:item.purchase_ledger_id||null
 }));
 
 export async function savePurchaseInvoice(invoiceHeader, invoiceItems) {
