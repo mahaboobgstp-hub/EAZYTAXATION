@@ -12,6 +12,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import { loadTransactionIntelligence, classifySYDTransaction, saveSYDClassificationRule } from "../../services/ai/transactionIntelligenceService";
 import "../../css/banking/BankingWorkspace.css";
+import { postBankStatementLine } from "../../services/sourceVoucherPostingService";
 
 const initialTransactions = [
   { id: 1, date: "11 Jul 2026", narration: "NEFT - ABC Suppliers Pvt Ltd", ref: "NEFT452316", amount: -250000, type: "Purchase / Supplier Payment", ledger: "Purchase - ABC Suppliers", status: "To Post" },
@@ -159,10 +160,20 @@ export default function BankingWorkspace() {
       if(error)setNotice("Ledger mapping save failed: "+error.message);
     }
   };
-  const postSelected = () => {
-    setTransactions(rows => rows.map(row => selected.includes(row.id) ? { ...row, status: "Posted" } : row));
+  const postSelected = async () => {
+    if (!companyId || !selected.length) return;
+    setNotice("Posting selected bank transactions...");
+    const selectedRows = transactions.filter(row => selected.includes(row.id));
+    let posted = 0, failures = [];
+    for (const row of selectedRows) {
+      try {
+        await postBankStatementLine(companyId, { id: row.id, bank_account_id: row.bank_account_id, statement_date: row.statement_date, reference_number: row.reference_number || row.ref, narration: row.narration || row.description, amount: row.amount, direction: row.direction, ledger_id: row.ledgerId || row.ledger_id, matched_voucher_id: row.matched_voucher_id });
+        posted++;
+      } catch (error) { failures.push((row.narration || row.description || row.id) + ": " + error.message); }
+    }
+    await loadBankingData();
     setSelected([]);
-    setNotice("Selected transactions have been marked as posted in this UI preview. Live voucher posting will be connected in the accounting integration phase.");
+    setNotice(posted + " transaction(s) posted to accounting vouchers." + (failures.length ? " Failed: " + failures.slice(0,3).join(" | ") : ""));
   };
   const rememberTransactionRule = async (row) => { if(!companyId||!row.ledgerId||!row.narration?.trim())return; const keyword=window.prompt("Enter a keyword from this transaction description. Matching transactions will use this classification.",row.narration.trim()); if(!keyword||!keyword.trim())return; const cleanKeyword=keyword.trim(); try { const {data:userData,error:userError}=await supabase.auth.getUser(); if(userError)throw userError; await saveSYDClassificationRule(companyId,{rule_name:"Keyword: "+cleanKeyword,match_type:"contains_narration",match_value:cleanKeyword,transaction_direction:"any",transaction_type:row.type,ledger_id:row.ledgerId,priority:200,auto_apply:true},userData.user?.id); const targetLedger=accountLedgers.find(x=>x.id===row.ledgerId); const matches=transactions.filter(tx=>String(tx.narration||tx.description||"").toLowerCase().includes(cleanKeyword.toLowerCase())); let applied=0; for(const tx of matches){const {error}=await supabase.from("bank_statement_lines").update({category:row.type,ledger_id:row.ledgerId,ledger_name:targetLedger?.ledger_name||row.ledger,classification_status:"To Post"}).eq("id",tx.id).eq("company_id",companyId);if(error)throw error;applied++;} setTransactions(list=>list.map(tx=>String(tx.narration||tx.description||"").toLowerCase().includes(cleanKeyword.toLowerCase())?{...tx,type:row.type,ledger:targetLedger?.ledger_name||row.ledger,ledgerId:row.ledgerId,status:"To Post",intelligence:{ledger:targetLedger,confidence:0.99,source:"Learned keyword rule",autoApply:true,explanation:"Matched company keyword rule"}}:tx)); setNotice("Learned keyword '"+cleanKeyword+"' and applied it to "+applied+" matching bank transactions. Future matches will be recognized."); } catch(err) { setNotice("Could not save/apply keyword rule: "+err.message); } };
   const toggleSelected = id => setSelected(rows => rows.includes(id) ? rows.filter(x => x !== id) : [...rows, id]);
