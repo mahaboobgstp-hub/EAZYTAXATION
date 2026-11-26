@@ -64,12 +64,30 @@ export default function BankingWorkspace() {
   const [manualError, setManualError] = useState("");
   const [manualSaving, setManualSaving] = useState(false);
   const companyId = currentCompany?.id || currentCompany?.company_id;
+  // Fetch complete Supabase datasets in pages; default PostgREST row cap is commonly 1,000.
+  const fetchAllRows = async (query, pageSize = 1000) => {
+    const allRows = [];
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await query.range(from, from + pageSize - 1);
+      if (error) throw error;
+      const page = data || [];
+      allRows.push(...page);
+      if (page.length < pageSize) break;
+    }
+    return allRows;
+  };
   const loadBankingData = async () => {
     if (!companyId) return;
-    const [{data: accounts, error: accountError}, {data: lines, error: linesError}] = await Promise.all([
-      supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true).order("created_at",{ascending:true}),
-      supabase.from("bank_statement_lines").select("*").eq("company_id",companyId).order("statement_date",{ascending:false})
-    ]);
+    let accounts, lines, accountError, linesError;
+    try {
+      [accounts, lines] = await Promise.all([
+        fetchAllRows(supabase.from("bank_account_profiles").select("*").eq("company_id",companyId).eq("is_active",true).order("created_at",{ascending:true})),
+        fetchAllRows(supabase.from("bank_statement_lines").select("*").eq("company_id",companyId).order("statement_date",{ascending:false}).order("id",{ascending:true}))
+      ]);
+    } catch (error) {
+      setNotice("Banking data could not be fully loaded: "+error.message);
+      return;
+    }
     if(accountError) setNotice("Bank accounts could not be loaded: "+accountError.message); else setRealAccounts(accounts||[]);
     if(linesError) setNotice("Transactions could not be loaded: "+linesError.message);
     else { let intelligenceContext=null; try { intelligenceContext=await loadTransactionIntelligence(companyId); } catch(intelligenceError) { console.warn("SYD transaction intelligence unavailable:",intelligenceError.message); } setTransactions((lines||[]).map(line=>{ const tx={id:line.id,accountId:line.bank_account_id,date:line.statement_date,narration:line.narration||"",description:line.narration||"",reference:line.reference_number||"",ref:line.reference_number||"",amount:(line.direction==="Debit"?-1:1)*Number(line.amount||0),direction:line.direction==="Debit"?"debit":"credit",partyName:line.party_name||"",gstin:line.gstin||"",type:line.category||"Unclassified",ledger:line.ledger_name||"",ledgerId:line.ledger_id||"",status:line.classification_status||"Unclassified",raw:line}; const intelligence=intelligenceContext?classifySYDTransaction(tx,intelligenceContext):null; return {...tx,intelligence,...(intelligence?.autoApply&&intelligence.ledger?{ledgerId:intelligence.ledger.id,ledger:intelligence.ledger.ledger_name,type:intelligence.type,status:"To Post"}:{})}; })); }
