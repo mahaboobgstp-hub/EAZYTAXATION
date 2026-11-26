@@ -12,7 +12,7 @@ const requiredLedger=async(companyId,patterns,label)=>{
  if(!l)throw new Error("Missing "+label+" ledger in Chart of Accounts. Create/map it before posting.");
  return l;
 };
-const postVoucher=async({companyId,module,sourceId,type,date,ref,narration,lines})=>{\n const debit=n(lines.reduce((s,l)=>s+n(l.debit),0));\n const credit=n(lines.reduce((s,l)=>s+n(l.credit),0);ength<2||Math.abs(debit-credit)>0.01)throw new Error("Posting rejected: voucher is not balanced.");
+const postVoucher=async({companyId,module,sourceId,type,date,ref,narration,lines})=>{\n const debit=n(lines.reduce((s,l)=>s+n(l.debit),0));\n const credit=n(lines.reduce((s,l)=>s+n(l.credit),0));ength<2||Math.abs(debit-credit)>0.01)throw new Error("Posting rejected: voucher is not balanced.");
  const {data,error}=await supabase.rpc("post_accounting_source_voucher",{p_company_id:companyId,p_source_module:module,p_source_record_id:sourceId,p_voucher_type:type,p_voucher_date:date,p_reference_number:ref||null,p_narration:narration,p_lines:lines});
  if(error)throw error;
  return data;
