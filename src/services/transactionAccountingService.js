@@ -31,7 +31,7 @@ export async function classifyPurchaseInvoices(companyId, invoiceIds, purchaseLe
     if (vendorError) throw vendorError;
     const { error: ruleError } = await saveAccountingClassificationRule(id, { source_module: "Purchase", match_type: "Supplier", match_value: vendorId, debit_ledger_id: purchaseLedgerId, priority: 300, auto_apply: true });
     if (ruleError) throw ruleError;
-    const { error: bulkError } = await supabase.from("purchase_invoices").update({ purchase_ledger_id: purchaseLedgerId, accounting_classification_status: "Categorized" }).eq("company_id", id).eq("vendor_id", vendorId).eq("is_deleted", false).is("accounting_voucher_id", null);
+    const { error: bulkError } = await supabase.from("purchase_invoices").update({ purchase_ledger_id: purchaseLedgerId, accounting_classification_status: "Categorized" }).eq("company_id", id).eq("vendor_id", vendorId).eq("is_deleted", false).eq("accounting_classification_status", "Uncategorized").is("accounting_voucher_id", null);
     if (bulkError) throw bulkError;
   }
   return true;
@@ -47,7 +47,7 @@ export async function classifySalesInvoices(companyId, invoiceIds, salesLedgerId
     const { error: customerError } = await supabase.from("customers").update({ default_sales_ledger_id: salesLedgerId }).eq("company_id", id).eq("id", customerId);
     if (customerError) throw customerError;
     await saveAccountingClassificationRule(id, { source_module: "Sales", match_type: "Customer", match_value: customerId, credit_ledger_id: salesLedgerId, priority: 300, auto_apply: true });
-    const { error: bulkError } = await supabase.from("sales_invoices").update({ sales_ledger_id: salesLedgerId, accounting_classification_status: "Categorized" }).eq("company_id", id).eq("customer_id", customerId).eq("is_deleted", false).is("accounting_voucher_id", null);
+    const { error: bulkError } = await supabase.from("sales_invoices").update({ sales_ledger_id: salesLedgerId, accounting_classification_status: "Categorized" }).eq("company_id", id).eq("customer_id", customerId).eq("is_deleted", false).eq("accounting_classification_status", "Uncategorized").is("accounting_voucher_id", null);
     if (bulkError) throw bulkError;
   }
   return true;
