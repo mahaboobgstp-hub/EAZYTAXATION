@@ -51,7 +51,20 @@ export async function postPurchaseInvoice(companyId, invoice) {
       lines.push({ ledger_id: ledger.id, debit: amount, credit: 0, narration: "Input GST " + key.toUpperCase() });
     }
   }
+  const purchaseCess = round2(invoice.cess || invoice.cess_amount);
+  if (purchaseCess > 0) {
+    const cessLedger = await requireLedger(companyId, [/input.*cess/i, /cess.*input/i], "Input Cess");
+    lines.push({ ledger_id: cessLedger.id, debit: purchaseCess, credit: 0, narration: "Input Cess" });
+  }
   lines.push({ ledger_id: vendor.ledger_id, debit: 0, credit: round2(invoice.grand_total), narration: "Supplier payable - " + vendor.vendor_name });
+  const debitSum = round2(lines.reduce((sum, line) => sum + round2(line.debit), 0));
+  const creditSum = round2(lines.reduce((sum, line) => sum + round2(line.credit), 0));
+  const difference = round2(debitSum - creditSum);
+  if (Math.abs(difference) > 0.01) {
+    if (Math.abs(difference) > 1) throw new Error("Invoice tax and total differ by more than ₹1.00. Review the invoice totals before posting.");
+    const roundOffLedger = await requireLedger(companyId, [/round.?off/i], "Round Off");
+    lines.push({ ledger_id: roundOffLedger.id, debit: difference < 0 ? Math.abs(difference) : 0, credit: difference > 0 ? difference : 0, narration: "Purchase invoice rounding adjustment" });
+  }
   const voucherId = await postVoucher({ companyId, module: "Purchase", sourceId: invoice.id, type: "Purchase", date: invoice.invoice_date, ref: invoice.supplier_invoice_no || invoice.invoice_no, narration: "Purchase " + (invoice.invoice_no || "") + " - " + vendor.vendor_name, lines });
   const { error: updateError } = await supabase.from("purchase_invoices").update({ accounting_status: "Posted", accounting_voucher_id: voucherId, accounting_message: null }).eq("company_id", companyId).eq("id", invoice.id);
   if (updateError) throw updateError;
@@ -80,6 +93,18 @@ export async function postSalesInvoice(companyId, invoice) {
     }
   }
   lines.push({ ledger_id: invoice.sales_ledger_id, debit: 0, credit: round2(invoice.taxable_value), narration: "Sales income" });
+  const salesCess = round2(invoice.cess_amount);
+  const salesAdditionalCess = round2(invoice.additional_cess_amount);
+  if (salesCess > 0) { const cessLedger = await requireLedger(companyId, [/output.*cess/i, /cess.*output/i], "Output Cess"); lines.push({ ledger_id: cessLedger.id, debit: 0, credit: salesCess, narration: "Output Cess" }); }
+  if (salesAdditionalCess > 0) { const additionalLedger = await requireLedger(companyId, [/additional.*cess/i, /cess.*additional/i], "Additional Cess"); lines.push({ ledger_id: additionalLedger.id, debit: 0, credit: salesAdditionalCess, narration: "Additional Output Cess" }); }
+  const salesDebitSum = round2(lines.reduce((sum, line) => sum + round2(line.debit), 0));
+  const salesCreditSum = round2(lines.reduce((sum, line) => sum + round2(line.credit), 0));
+  const salesDifference = round2(salesDebitSum - salesCreditSum);
+  if (Math.abs(salesDifference) > 0.01) {
+    if (Math.abs(salesDifference) > 1) throw new Error("Sales invoice tax and total differ by more than ₹1.00. Review invoice totals before posting.");
+    const roundOffLedger = await requireLedger(companyId, [/round.?off/i], "Round Off");
+    lines.push({ ledger_id: roundOffLedger.id, debit: salesDifference < 0 ? Math.abs(salesDifference) : 0, credit: salesDifference > 0 ? salesDifference : 0, narration: "Sales invoice rounding adjustment" });
+  }
   const voucherId = await postVoucher({ companyId, module: "Sales", sourceId: invoice.id, type: "Sales", date: invoice.invoice_date, ref: invoice.invoice_no, narration: "Sales " + (invoice.invoice_no || "") + " - " + customer.customer_name, lines });
   const { error: updateError } = await supabase.from("sales_invoices").update({ accounting_status: "Posted", accounting_voucher_id: voucherId, accounting_message: null }).eq("company_id", companyId).eq("id", invoice.id);
   if (updateError) throw updateError;
