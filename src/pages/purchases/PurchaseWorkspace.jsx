@@ -5,6 +5,7 @@ import { supabase } from "../../supabase/supabaseClient";
 import PurchaseDocumentPreview from "./PurchaseDocumentPreview";
 import { downloadPurchasePdf } from "../../utils/purchaseDocumentPdf";
 import "./PurchaseWorkspace.css";
+import AccountingCategorization from "../../components/accounting/AccountingCategorization";
 
 const CONFIG = {
   register: { title: "Purchase Register", table: "purchase_invoices", date: "invoice_date", number: "invoice_no", prefix: "PI", child: "purchase_invoice_items", parent: "invoice_id", metrics: ["Purchase Invoices", "Total Purchases", "Input Tax Credit (ITC)", "Outstanding"] },
@@ -289,7 +290,7 @@ export default function PurchaseWorkspace({ kind }) {
       <label>Date from<input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>Date to<input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
       <button className="pw-apply" onClick={() => setPage(1)}>Apply</button><button className="pw-reset" onClick={() => { setSearch(""); setVendorFilter("All Suppliers"); setStatusFilter("All Statuses"); setDateFrom(""); setDateTo(""); setPage(1); }}>Reset</button>
     </section>
-    <section className="pw-table-card"><div className="pw-table-heading"><h2>{config.title}</h2><span>{filtered.length} records</span></div>
+    {kind === "register" && <AccountingCategorization module="Purchase" />}\n    <section className="pw-table-card"><div className="pw-table-heading"><h2>{config.title}</h2><span>{filtered.length} records</span></div>
       {loading ? <div className="pw-empty">Loading records…</div> : !filtered.length ? <div className="pw-empty"><strong>No records yet</strong><span>Create a purchase document to see it here.</span><button className="pw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
       <div className="pw-table-scroll"><table><thead><tr>
         {kind === "register" && ["Purchase No.", "Supplier Invoice No.", "Date", "Supplier", "GSTIN", "Taxable Value", "GST", "Total Amount", "Status", "Actions"].map(x => <th key={x}>{x}</th>)}
