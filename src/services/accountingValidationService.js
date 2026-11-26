@@ -24,7 +24,7 @@ export async function validateAccountingIntegrity(companyId) {
   const imbalance = voucherRows.map(v => {
     const total = sums.get(v.id) || { debit: 0, credit: 0, lineCount: 0 };
     return { ...v, lineDebit: money(total.debit), lineCredit: money(total.credit), lineCount: total.lineCount, difference: money(total.debit-total.credit) };
-  }).filter(v => v.lineCount < 2 || Math.abs(v.difference) > 0.01 || Math.abs(money(v.total_debit)-v.lineDebit)>0.01 || Math.abs(money(v.total_credit)-v.lineCredit)>0.01);
+  }).filter(v => v.status === "Posted" && (v.lineCount < 2 || Math.abs(v.difference) > 0.01 || Math.abs(money(v.total_debit)-v.lineDebit)>0.01 || Math.abs(money(v.total_credit)-v.lineCredit)>0.01));
   const groupMap=new Map((groups.data||[]).map(g=>[g.id,g]));
   const ledgerMap=new Map((ledgers.data||[]).map(l=>[l.id,l]));
   const accountBalances=new Map();
