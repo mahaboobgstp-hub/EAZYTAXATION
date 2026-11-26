@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useCompany } from '../../context/CompanyContext';
 import UomDropdown from "../../components/dropdowns/UomDropdown";
 import GstRateDropdown from "../../components/dropdowns/GstRateDropdown";
+import { supabase } from "../../supabase/supabaseClient";
 import '../../css/masters/Items.css';
 
 import {
@@ -26,8 +27,10 @@ function Items() {
     unit: '',
     gst_rate: 18,
     sales_rate: '',
-    purchase_rate: ''
+    purchase_rate: '',
+    purchase_ledger_id: ''
   });
+  const [purchaseLedgers, setPurchaseLedgers] = useState([]);
 
  useEffect(() => {
 
@@ -37,6 +40,7 @@ function Items() {
   }
 
   loadItems();
+  supabase.from("chart_of_accounts").select("id,ledger_name,ledger_code").eq("company_id",currentCompanyId).eq("is_active",true).order("ledger_name").then(({data,error})=>{if(error)console.warn("Purchase ledgers unavailable",error);else setPurchaseLedgers(data||[]);});
 
 }, [currentCompanyId]);
 
@@ -85,7 +89,8 @@ const handleEdit = (item) => {
         unit: item.unit,
         gst_rate: item.gst_rate,
         sales_rate: item.sales_rate,
-        purchase_rate: item.purchase_rate
+        purchase_rate: item.purchase_rate,
+        purchase_ledger_id: item.purchase_ledger_id || ''
 
     });
 
@@ -122,7 +127,7 @@ if (!currentCompanyId) {
       alert('Please select a Current Company.');
       return;
     }
-      await createItem(formData, currentCompanyId);
+      await createItem(formData, currentCompanyId, editingId);
 
       alert('Item Saved Successfully');
 
@@ -134,8 +139,10 @@ if (!currentCompanyId) {
         unit: '',
         gst_rate: 18,
         sales_rate: '',
-        purchase_rate: ''
+        purchase_rate: '',
+        purchase_ledger_id: ''
       });
+      setEditingId(null);
 
       loadItems();
 
@@ -218,6 +225,10 @@ if (!currentCompanyId) {
           value={formData.purchase_rate}
           onChange={handleChange}
         />
+        <select name="purchase_ledger_id" value={formData.purchase_ledger_id} onChange={handleChange}>
+          <option value="">Purchase Ledger (optional)</option>
+          {purchaseLedgers.map(ledger=><option key={ledger.id} value={ledger.id}>{ledger.ledger_name}{ledger.ledger_code?" · "+ledger.ledger_code:""}</option>)}
+        </select>
 
         <button type="submit">
     {editingId ? "Update Item" : "Save Item"}
