@@ -48,7 +48,16 @@ const normalizeItems = (invoiceId, invoiceItems) => invoiceItems.map((item,index
 }));
 
 export async function savePurchaseInvoice(invoiceHeader, invoiceItems) {
-  const {data:headerData,error:headerError}=await supabase.from("purchase_invoices").insert([invoiceHeader]).select("id").single();
+  let header = { ...invoiceHeader };
+  if (header.company_id && header.vendor_id) {
+    const { data: vendor, error: vendorError } = await supabase.from("vendors").select("default_purchase_ledger_id,ledger_id").eq("company_id", header.company_id).eq("id", header.vendor_id).maybeSingle();
+    if (vendorError) throw vendorError;
+    if (vendor?.default_purchase_ledger_id) {
+      header.purchase_ledger_id = vendor.default_purchase_ledger_id;
+      header.accounting_classification_status = "Categorized";
+    }
+  }
+  const {data:headerData,error:headerError}=await supabase.from("purchase_invoices").insert([header]).select("id").single();
   if(headerError) throw headerError;
   const invoiceId=headerData.id;
   const {error:itemError}=await supabase.from("purchase_invoice_items").insert(normalizeItems(invoiceId,invoiceItems));
