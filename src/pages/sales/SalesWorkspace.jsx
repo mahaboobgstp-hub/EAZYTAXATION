@@ -4,6 +4,7 @@ import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import "../../css/sales/SalesWorkspace.css";
 import AccountingCategorization from "../../components/accounting/AccountingCategorization";
+import { postSalesInvoice } from "../../services/sourceVoucherPostingService";
 
 const CONFIG = {
   register: {
@@ -219,7 +220,7 @@ export default function SalesWorkspace({ kind }) {
           {kind === "orders" && <><td>{dateText(row.expected_delivery_date)}</td><td className="sw-money">{currency(row.total_amount)}</td><td><select className="sw-status-select" value={row.fulfillment_status || "Pending"} onChange={e => updateStatus(row, e.target.value, "fulfillment_status")}>{["Pending", "Partially Fulfilled", "Fulfilled", "Cancelled"].map(s => <option key={s}>{s}</option>)}</select></td><td><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "challans" && <><td>{row.sales_order_no || "—"}</td><td>{row.vehicle_no || "—"}</td><td><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
           {kind === "credits" && <><td>{row.original_invoice_no || "—"}</td><td>{row.reason || "—"}</td><td className="sw-money">{currency(row.total_amount)}</td><td><select className="sw-status-select" value={status} onChange={e => updateStatus(row, e.target.value)}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td></>}
-          <td><div className="sw-actions"><button onClick={() => view(row)}>View</button>{kind === "register" && <button onClick={() => printInvoice(row)}>Print</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div></td>
+          <td><div className="sw-actions"><button onClick={() => view(row)}>View</button>{kind === "register" && !row.accounting_voucher_id && <button onClick={async () => { try { setMessage("Posting sales invoice..."); await postSalesInvoice(currentCompanyId,row); setMessage("Sales invoice posted to General Ledger."); await load(); } catch (error) { setMessage("Posting failed: "+error.message); } }}>Post</button>{kind === "register" && <button onClick={() => printInvoice(row)}>Print</button>}{kind !== "register" && <button className="sw-delete" onClick={() => deleteRow(row)}>Delete</button>}</div></td>
         </tr>;
       })}</tbody></table></div>}
     </section></>}
