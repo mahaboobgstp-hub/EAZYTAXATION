@@ -363,6 +363,24 @@ export default function BulkTransactionImport({ kind, onImported }) {
         obj.address=[obj.billing_address_line1,obj.billing_address_line2,obj.billing_city,obj.billing_state,obj.billing_pin,obj.billing_country].filter(Boolean).join(", ") || obj.address || "";
         obj.state=obj.billing_state||obj.state||"";
       }
+      // Vendor CSV imports must not include customer-only columns (e.g. customer_code).
+      // Filter against the vendors table contract before insert.
+      if (kind === "vendors") {
+        const vendorAllowed = new Set([
+          "vendor_name","legal_name","vendor_code","vendor_type","vendor_group","constitution",
+          "is_active","gst_registration_type","gstin","pan","gst_registered","place_of_supply",
+          "composition_scheme","reverse_charge_applicable","tds_applicable","tcs_applicable",
+          "e_invoice_applicable","opening_balance","opening_balance_type","credit_limit",
+          "credit_period_days","payment_terms","default_purchase_ledger","default_payment_mode",
+          "billing_address_line1","billing_address_line2","billing_city","billing_state","billing_pin",
+          "billing_country","shipping_same_as_billing","shipping_address_line1","shipping_address_line2",
+          "shipping_city","shipping_state","shipping_pin","shipping_country","contact_person","designation",
+          "mobile","alternate_mobile","email","website","bank_account_holder","bank_name",
+          "bank_account_number","bank_ifsc","bank_branch","bank_account_type","msme_udyam_number",
+          "vendor_category","remarks","address","state"
+        ]);
+        Object.keys(obj).forEach(key => { if (!vendorAllowed.has(key)) delete obj[key]; });
+      }
       obj.company_id=currentCompanyId;
       records.push(obj);
     });
