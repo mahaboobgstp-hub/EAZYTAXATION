@@ -167,7 +167,7 @@ export default function BankingWorkspace() {
     let posted = 0, failures = [];
     for (const row of selectedRows) {
       try {
-        await postBankStatementLine(companyId, { id: row.id, bank_account_id: row.bank_account_id, statement_date: row.statement_date, reference_number: row.reference_number || row.ref, narration: row.narration || row.description, amount: row.amount, direction: row.direction, ledger_id: row.ledgerId || row.ledger_id, matched_voucher_id: row.matched_voucher_id });
+        await postBankStatementLine(companyId, { id: row.id, bank_account_id: row.accountId || row.raw.bank_account_id, statement_date: row.date || row.raw.statement_date, reference_number: row.reference || row.raw.reference_number, narration: row.narration || row.description, amount: row.raw.amount, direction: row.raw.direction, ledger_id: row.ledgerId || row.raw.ledger_id, matched_voucher_id: row.raw.matched_voucher_id });
         posted++;
       } catch (error) { failures.push((row.narration || row.description || row.id) + ": " + error.message); }
     }
