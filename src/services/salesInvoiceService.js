@@ -1,4 +1,5 @@
 import { supabase } from "../supabase/supabaseClient";
+import { postSalesInvoice } from "./sourceVoucherPostingService";
 
 export async function getCustomersForDropdown(companyId) {
   const { data, error } = await supabase
@@ -97,6 +98,10 @@ export async function saveSalesInvoice(invoiceHeader, invoiceItems) {
         throw itemError;
     }
 
+    if (header.sales_ledger_id) {
+      try { await postSalesInvoice(header.company_id, { ...header, id: invoiceId }); }
+      catch (postingError) { await supabase.from("sales_invoices").update({ accounting_status: "Posting Error", accounting_message: postingError.message }).eq("company_id", header.company_id).eq("id", invoiceId); }
+    }
     return invoiceId;
 }
 
