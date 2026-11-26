@@ -13,7 +13,7 @@ const requiredLedger=async(companyId,patterns,label)=>{
  return l;
 };
 const postVoucher=async({companyId,module,sourceId,type,date,ref,narration,lines})=>{
- const debit=n(lines.reduce((s,l)=>s+n(n(l.debit)),0);
+ const debit=n(lines.reduce((s,l)=>s+n(n(l.debit)),0));
  const credit=n(lines.reduce((s,l)=>s+n(n(l.credit),0));
  if(lines.length<2||Math.abs(debit-credit)>0.01)throw new Error("Posting rejected: voucher is not balanced.");
  const {data,error}=await supabase.rpc("post_accounting_source_voucher",{p_company_id:companyId,p_source_module:module,p_source_record_id:sourceId,p_voucher_type:type,p_voucher_date:date,p_reference_number:ref||null,p_narration:narration,p_lines:lines});
