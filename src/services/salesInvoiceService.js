@@ -44,19 +44,21 @@ export async function generateInvoiceNumber(companyId, invoiceDate, reserve = fa
   return data;
 }
 
-export async function saveSalesInvoice(
-    invoiceHeader,
-    invoiceItems
-) {
-
-    const {
-        data: headerData,
-        error: headerError
-    } = await supabase
+export async function saveSalesInvoice(invoiceHeader, invoiceItems) {
+    let header = { ...invoiceHeader };
+    if (header.company_id && header.customer_id) {
+      const { data: customer, error: customerError } = await supabase.from("customers").select("default_sales_ledger_id,ledger_id").eq("company_id", header.company_id).eq("id", header.customer_id).maybeSingle();
+      if (customerError) throw customerError;
+      if (customer?.default_sales_ledger_id) {
+        header.sales_ledger_id = customer.default_sales_ledger_id;
+        header.accounting_classification_status = "Categorized";
+      }
+    }
+    const { data: headerData, error: headerError } = await supabase
         .from("sales_invoices")
-        .insert([invoiceHeader])
+        .insert([header])
         .select();
-
+    
     if (headerError) {
         throw headerError;
     }
