@@ -92,3 +92,5 @@
 .chart-bar{display:block;width:min(17px,35%);min-height:0;border-radius:4px 4px 0 0;transition:height .2s ease}
 .chart-month small{font-size:10px;color:#8995a7;padding:7px 0 9px}
 .chart-footnote{font-size:10px;color:#94a3b8;margin-top:10px}
+
+.ac-validation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin-top:14px}.ac-validation-grid>div{border:1px solid #e2e8f0;border-radius:9px;padding:10px;background:#f8fafc;display:flex;flex-direction:column;gap:5px}.ac-validation-grid span{font-size:11px;color:#64748b}.ac-validation-grid strong{font-size:18px;color:#172b48}.validation-ok{color:#177443;font-weight:600;font-size:13px}.validation-error{color:#b42318;font-weight:600;font-size:13px}.ac-bulk-post{margin:12px 0}.ac-bulk-post button{padding:10px 14px;border-radius:8px;border:0;background:#145ce5;color:white;font-weight:700}.ac-bulk-post button:disabled{opacity:.45}
