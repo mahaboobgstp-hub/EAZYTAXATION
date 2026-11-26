@@ -33,12 +33,26 @@ async function postVoucher({ companyId, module, sourceId, type, date, ref, narra
 export async function postPurchaseInvoice(companyId, invoice) {
   if (!companyId || !invoice?.id) throw new Error("Company and purchase invoice are required.");
   if (invoice.accounting_voucher_id) return invoice.accounting_voucher_id;
-  if (!invoice.purchase_ledger_id) throw new Error("Categorize the purchase invoice before posting.");
+  const { data: invoiceItems, error: itemsError } = await supabase.from("purchase_invoice_items").select("purchase_ledger_id,taxable_value,item_name").eq("invoice_id", invoice.id).order("line_no");
+  if (itemsError) throw itemsError;
+  const hasAllItemMappings = (invoiceItems||[]).length>0 && (invoiceItems||[]).every(item=>item.purchase_ledger_id);
+  if (!invoice.purchase_ledger_id && !hasAllItemMappings) throw new Error("Assign purchase ledgers to all items or classify the invoice before posting.");
   const { data: vendor, error } = await supabase.from("vendors").select("ledger_id,vendor_name")
     .eq("company_id", companyId).eq("id", invoice.vendor_id).single();
   if (error) throw error;
   if (!vendor.ledger_id) throw new Error("Supplier has no linked payable ledger.");
-  const lines = [{ ledger_id: invoice.purchase_ledger_id, debit: round2(invoice.taxable), credit: 0, narration: "Purchase taxable value" }];
+  const lines = [];
+  if (hasAllItemMappings) {
+    const grouped = new Map();
+    for (const item of invoiceItems) {
+      const amount = round2(item.taxable_value);
+      if (amount<=0) continue;
+      grouped.set(item.purchase_ledger_id,(grouped.get(item.purchase_ledger_id)||0)+amount);
+    }
+    for (const [ledger_id,debit] of grouped) lines.push({ledger_id,debit:round2(debit),credit:0,narration:"Purchase items mapped to ledger"});
+  } else {
+    lines.push({ ledger_id: invoice.purchase_ledger_id, debit: round2(invoice.taxable), credit: 0, narration: "Purchase taxable value" });
+  }
   const taxMappings = [
     ["cgst", [/input.*cgst/i, /cgst.*input/i, /central.*input.*tax/i]],
     ["sgst", [/input.*sgst/i, /sgst.*input/i, /state.*input.*tax/i]],
