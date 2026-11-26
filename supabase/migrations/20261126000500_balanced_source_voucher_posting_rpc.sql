@@ -32,6 +32,9 @@ begin
   if p_company_id is null or p_source_module not in ('Purchase','Sales','Bank') or p_source_record_id is null then
     raise exception 'Company, supported source module, and source record are required';
   end if;
+  if not exists(select 1 from public.companies where id=p_company_id and owner_user_id=auth.uid()) then
+    raise exception 'Company access denied for accounting voucher posting';
+  end if;
   if jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) < 2 then
     raise exception 'A voucher must contain at least two accounting lines';
   end if;
