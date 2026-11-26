@@ -1,6 +1,6 @@
 import { supabase } from "../supabase/supabaseClient";
 
-export async function createItem(data, companyId) {
+export async function createItem(data, companyId, itemId = null) {
 
   if (!companyId) {
     throw new Error("Please select a Current Company.");
@@ -11,12 +11,12 @@ export async function createItem(data, companyId) {
     company_id: companyId
   };
 
-  const { error } = await supabase
-    .from("items")
-    .insert([itemData]);
+  const query = itemId
+    ? supabase.from("items").update(itemData).eq("id", itemId).eq("company_id", companyId)
+    : supabase.from("items").insert([itemData]);
 
+  const { error } = await query;
   if (error) throw error;
-
   return true;
 }
 
