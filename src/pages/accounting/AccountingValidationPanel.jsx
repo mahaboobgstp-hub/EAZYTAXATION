@@ -1,0 +1,13 @@
+import React,{useState} from "react";
+import {useCompany} from "../../context/CompanyContext";
+import {validateAccountingIntegrity} from "../../services/accountingValidationService";
+
+export default function AccountingValidationPanel(){
+ const {currentCompanyId}=useCompany();
+ const [busy,setBusy]=useState(false),[report,setReport]=useState(null),[error,setError]=useState("");
+ const run=async()=>{setBusy(true);setError("");try{setReport(await validateAccountingIntegrity(currentCompanyId));}catch(e){setError(e.message||"Validation failed.");}finally{setBusy(false);}};
+ return <section className="accounting-panel ac-validation-panel"><div className="panel-heading"><div><h3>Accounting Integrity Check</h3><p>Validate posted vouchers, transaction links and unposted imports.</p></div><button className="text-action" onClick={run} disabled={busy||!currentCompanyId}>{busy?"Checking…":"Run validation"}</button></div>
+ {error&&<p className="validation-error">{error}</p>}
+ {report&&<><div className="ac-validation-grid"><div><span>Vouchers</span><strong>{report.voucherCount}</strong></div><div><span>Voucher lines</span><strong>{report.voucherLineCount}</strong></div><div><span>Unbalanced vouchers</span><strong className={report.imbalanceCount?"validation-error":""}>{report.imbalanceCount}</strong></div><div><span>Unposted purchases</span><strong>{report.unpostedPurchaseCount}</strong></div><div><span>Unposted sales</span><strong>{report.unpostedSalesCount}</strong></div><div><span>Unposted bank items</span><strong>{report.unpostedBankLineCount}</strong></div><div><span>Uncategorized purchases</span><strong>{report.unclassifiedPurchaseCount}</strong></div><div><span>Uncategorized sales</span><strong>{report.unclassifiedSalesCount}</strong></div><div><span>Bank lines missing ledger</span><strong>{report.bankWithoutCounterpartCount}</strong></div></div><p className={report.balanced?"validation-ok":"validation-error"}>{report.balanced?"All vouchers are balanced and their totals agree with stored voucher totals.":"Voucher imbalance or missing/mismatched voucher lines detected."}</p></>}
+ </section>;
+}
