@@ -11,6 +11,7 @@ import {
   postVoucher
 } from "../../services/accountingService";
 import "../../css/accounting/AccountingWorkspace.css";
+import AccountingValidationPanel from "./AccountingValidationPanel";
 
 const money = (value) => new Intl.NumberFormat("en-IN", {
   style: "currency", currency: "INR", maximumFractionDigits: 2
@@ -328,6 +329,7 @@ function AccountingWorkspace() {
           </div>
         </section>
       </div>
+      <AccountingValidationPanel />
       <section className="accounting-panel">
         <div className="panel-heading"><div><h3>Recent Journal Vouchers</h3><p>Latest accounting activity</p></div><button className="text-action" onClick={() => navigate("/app/journal-voucher")}>View all</button></div>
         <div className="table-scroll"><table className="accounting-table"><thead><tr><th>Voucher No.</th><th>Date</th><th>Type</th><th>Status</th><th className="align-right">Amount</th></tr></thead><tbody>
