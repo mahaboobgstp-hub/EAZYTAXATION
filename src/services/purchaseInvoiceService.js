@@ -1,4 +1,5 @@
 import { supabase } from "../supabase/supabaseClient";
+import { postPurchaseInvoice } from "./sourceVoucherPostingService";
 
 const scoped = (query, companyId) => companyId ? query.eq("company_id", companyId) : query;
 
@@ -64,6 +65,10 @@ export async function savePurchaseInvoice(invoiceHeader, invoiceItems) {
   if(itemError) {
     await supabase.from("purchase_invoices").delete().eq("id",invoiceId);
     throw itemError;
+  }
+  if (header.purchase_ledger_id) {
+    try { await postPurchaseInvoice(header.company_id, { ...header, id: invoiceId }); }
+    catch (postingError) { await supabase.from("purchase_invoices").update({ accounting_status: "Posting Error", accounting_message: postingError.message }).eq("company_id", header.company_id).eq("id", invoiceId); }
   }
   return invoiceId;
 }
