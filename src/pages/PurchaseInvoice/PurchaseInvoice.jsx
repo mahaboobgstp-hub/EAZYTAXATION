@@ -15,7 +15,7 @@ import "../../css/AndroidWorkflow.css";
 const n = v => Number(v) || 0;
 const money = v => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n(v));
 const today = () => new Date().toISOString().slice(0,10);
-const emptyLine = () => ({ item_id:"", item_name:"", hsn_sac:"", uom:"", qty:"1", rate:"0", discount_percent:"0", gst_rate:"18" });
+const emptyLine = () => ({ item_id:"", item_name:"", hsn_sac:"", uom:"", qty:"1", rate:"0", discount_percent:"0", gst_rate:"18", purchase_ledger_id:"" });
 
 export default function PurchaseInvoice() {
   const { currentCompany, currentCompanyId } = useCompany();
@@ -88,7 +88,7 @@ export default function PurchaseInvoice() {
           eway_bill_no:header.eway_bill_no||"",transporter_name:header.transporter_name||"",transporter_id:header.transporter_id||"",transport_doc_no:header.transport_doc_no||"",transport_doc_date:header.transport_doc_date||"",remarks:header.remarks||"",
           gst_treatment:header.gst_treatment||"Regular Supplier (Registered)", purchase_type:header.purchase_type||"Goods"
         });
-        setLines(items.map(i=>({item_id:i.item_id||"",item_name:i.item_name||"",hsn_sac:i.hsn_sac||"",uom:i.uom||"",qty:String(i.qty??1),rate:String(i.rate??0),discount_percent:String(i.discount_percent??0),gst_rate:String(i.gst_rate??0)})));
+        setLines(items.map(i=>{const master=itemsMaster.find(m=>m.id===i.item_id);return {item_id:i.item_id||"",item_name:i.item_name||"",hsn_sac:i.hsn_sac||"",uom:i.uom||"",qty:String(i.qty??1),rate:String(i.rate??0),discount_percent:String(i.discount_percent??0),gst_rate:String(i.gst_rate??0),purchase_ledger_id:i.purchase_ledger_id||master?.purchase_ledger_id||""};}));
         navigate("/app/purchases",{replace:true,state:null});
       }catch(e){setMessage(e.message||"Unable to load this purchase invoice.");}
     })();
@@ -111,7 +111,7 @@ export default function PurchaseInvoice() {
   const updateLine=(index,key,value)=>setLines(prev=>prev.map((line,i)=>i===index?{...line,[key]:value}:line));
   const chooseItem=(index,itemId)=>{
     const item=itemsMaster.find(i=>i.id===itemId);
-    setLines(prev=>prev.map((line,i)=>i===index?item?{...line,item_id:item.id,item_name:item.item_name,hsn_sac:item.hsn_sac||"",uom:item.uom||item.unit||"",rate:String(item.purchase_rate||0),gst_rate:String(item.gst_rate??18)}:{...line,item_id:""}:line));
+    setLines(prev=>prev.map((line,i)=>i===index?item?{...line,item_id:item.id,item_name:item.item_name,hsn_sac:item.hsn_sac||"",uom:item.uom||item.unit||"",rate:String(item.purchase_rate||0),gst_rate:String(item.gst_rate??18),purchase_ledger_id:item.purchase_ledger_id||""}:{...line,item_id:"",purchase_ledger_id:""}:line));
   };
   const chooseVendor=id=>{
     const vendor=vendors.find(v=>v.id===id);
