@@ -45,18 +45,19 @@ const normalizeItems = (invoiceId, invoiceItems) => invoiceItems.map((item,index
   discount_percent:Number(item.discount_percent)||0,discount_amount:Number(item.discount_amount)||0,
   taxable_value:Number(item.taxable_value)||0,gst_rate:Number(item.gst_rate)||0,
   cgst_amount:Number(item.cgst_amount)||0,sgst_amount:Number(item.sgst_amount)||0,igst_amount:Number(item.igst_amount)||0,
-  line_total:Number(item.line_total)||0,remarks:item.remarks||""
+  line_total:Number(item.line_total)||0,remarks:item.remarks||"",purchase_ledger_id:item.purchase_ledger_id||null
 }));
 
 export async function savePurchaseInvoice(invoiceHeader, invoiceItems) {
   let header = { ...invoiceHeader };
+  const normalizedLines = normalizeItems("pending", invoiceItems);
   if (header.company_id && header.vendor_id) {
     const { data: vendor, error: vendorError } = await supabase.from("vendors").select("default_purchase_ledger_id,ledger_id").eq("company_id", header.company_id).eq("id", header.vendor_id).maybeSingle();
     if (vendorError) throw vendorError;
-    if (vendor?.default_purchase_ledger_id) {
-      header.purchase_ledger_id = vendor.default_purchase_ledger_id;
-      header.accounting_classification_status = "Categorized";
-    }
+    const itemLedgers = [...new Set(normalizedLines.map(i=>i.purchase_ledger_id).filter(Boolean))];
+    if (itemLedgers.length === 1 && normalizedLines.every(i=>i.purchase_ledger_id)) header.purchase_ledger_id = itemLedgers[0];
+    else if (vendor?.default_purchase_ledger_id) header.purchase_ledger_id = vendor.default_purchase_ledger_id;
+    if (header.purchase_ledger_id) header.accounting_classification_status = "Categorized";
   }
   const {data:headerData,error:headerError}=await supabase.from("purchase_invoices").insert([header]).select("id").single();
   if(headerError) throw headerError;
@@ -66,7 +67,8 @@ export async function savePurchaseInvoice(invoiceHeader, invoiceItems) {
     await supabase.from("purchase_invoices").delete().eq("id",invoiceId);
     throw itemError;
   }
-  if (header.purchase_ledger_id) {
+  const allLinesMapped = normalizedLines.length>0 && normalizedLines.every(i=>i.purchase_ledger_id);
+  if (allLinesMapped || header.purchase_ledger_id) {
     try { await postPurchaseInvoice(header.company_id, { ...header, id: invoiceId }); }
     catch (postingError) { await supabase.from("purchase_invoices").update({ accounting_status: "Posting Error", accounting_message: postingError.message }).eq("company_id", header.company_id).eq("id", invoiceId); }
   }
