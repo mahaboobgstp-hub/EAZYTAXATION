@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCompany } from "../../context/CompanyContext";
 import { supabase } from "../../supabase/supabaseClient";
 import "../../css/sales/SalesWorkspace.css";
+import AccountingCategorization from "../../components/accounting/AccountingCategorization";
 
 const CONFIG = {
   register: {
@@ -206,7 +207,7 @@ export default function SalesWorkspace({ kind }) {
       <label>From <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label><label>To <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
       <button className="sw-reset" onClick={() => { setSearch(""); setStatusFilter("All statuses"); setDateFrom(""); setDateTo(""); }}>Reset</button>
     </section>
-    <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div><button className="sw-export" onClick={() => window.print()}>Print list</button></div>
+    {kind === "register" && <AccountingCategorization module="Sales" />}\n    <section className="sw-table-card"><div className="sw-table-top"><div><h2>{config.title}</h2><span>{filtered.length} records</span></div><button className="sw-export" onClick={() => window.print()}>Print list</button></div>
       {loading ? <div className="sw-empty">Loading records…</div> : filtered.length === 0 ? <div className="sw-empty"><strong>No records found</strong><span>Create your first {config.title.toLowerCase()} to see it here.</span><button className="sw-primary" onClick={createAction}>＋ {actionLabel}</button></div> :
       <div className="sw-table-scroll"><table><thead><tr>{config.columns.map(c => <th key={c}>{c}</th>)}<th>Actions</th></tr></thead><tbody>{filtered.map(row => {
         const status = kind === "register" ? (row.sale_type === "CASH" ? "Paid" : "Outstanding") : row.status || "Draft";
