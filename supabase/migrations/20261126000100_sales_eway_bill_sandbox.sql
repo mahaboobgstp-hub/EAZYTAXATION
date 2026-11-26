@@ -28,19 +28,10 @@ create table if not exists public.sales_eway_bills (
 -- Enforce that an e-way bill's invoice belongs to the same company (composite FK).
 create unique index if not exists sales_invoices_id_company_id_uq
   on public.sales_invoices(id,company_id);
-do $
-begin
-  if not exists (
-    select 1 from pg_constraint
-    where conname='sales_eway_bills_invoice_company_fk'
-      and conrelid='public.sales_eway_bills'::regclass
-  ) then
-    alter table public.sales_eway_bills
-      add constraint sales_eway_bills_invoice_company_fk
-      foreign key (invoice_id,company_id)
-      references public.sales_invoices(id,company_id);
-  end if;
-end $;
+alter table public.sales_eway_bills
+  add constraint sales_eway_bills_invoice_company_fk
+  foreign key (invoice_id,company_id)
+  references public.sales_invoices(id,company_id);
 
 create index if not exists sales_eway_bills_company_status_idx
   on public.sales_eway_bills(company_id,status,created_at desc);
